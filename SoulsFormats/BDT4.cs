@@ -237,7 +237,7 @@ namespace SoulsFormats
                     if (unicode)
                         bw.WriteUTF16(file.Name, true);
                     else
-                        bw.WriteASCII(file.Name, true);
+                        bw.WriteShiftJIS(file.Name, true);
                 }
                 bw.Pad(0x8);
 
@@ -279,15 +279,15 @@ namespace SoulsFormats
                     if (unicode)
                         Name = br.GetUTF16(nameOffset);
                     else
-                        Name = br.GetASCII(nameOffset);
+                        Name = br.GetShiftJIS(nameOffset);
                 }
 
                 public static void Write(BinaryWriterEx bw, File file, int offset, int index)
                 {
                     bw.WriteInt32(0x40);
                     bw.WriteInt32(-1);
-                    bw.WriteInt64(file.Bytes.Length);
-                    bw.WriteInt64(file.Bytes.Length);
+                    bw.WriteInt64(file.Bytes.LongLength);
+                    bw.WriteInt64(file.Bytes.LongLength);
                     bw.WriteInt32(offset);
                     bw.WriteInt32(file.ID);
                     bw.ReserveInt32($"FileName{index}");

@@ -59,7 +59,7 @@ namespace SoulsFormats
             return br.ReadBytes(length);
         }
 
-        public byte GetByte(int offset)
+        public byte GetByte(long offset)
         {
             long pos = stream.Position;
             stream.Position = offset;
@@ -68,7 +68,7 @@ namespace SoulsFormats
             return result;
         }
 
-        public byte[] GetBytes(int offset, int length)
+        public byte[] GetBytes(long offset, int length)
         {
             long pos = stream.Position;
             stream.Position = offset;
@@ -92,7 +92,7 @@ namespace SoulsFormats
             return BitConverter.ToUInt16(ReadEndian(2), 0);
         }
 
-        public short GetInt16(int offset)
+        public short GetInt16(long offset)
         {
             long position = stream.Position;
             stream.Position = offset;
@@ -132,7 +132,7 @@ namespace SoulsFormats
             return result;
         }
 
-        public float[] GetSingles(int offset, int count)
+        public float[] GetSingles(long offset, int count)
         {
             long position = stream.Position;
             stream.Position = offset;
@@ -167,7 +167,7 @@ namespace SoulsFormats
             return readChars(ASCII, length);
         }
 
-        public string GetASCII(int offset)
+        public string GetASCII(long offset)
         {
             long pos = stream.Position;
             stream.Position = offset;
@@ -192,7 +192,7 @@ namespace SoulsFormats
             return result;
         }
 
-        public string GetShiftJIS(int offset)
+        public string GetShiftJIS(long offset)
         {
             long pos = stream.Position;
             stream.Position = offset;
@@ -214,7 +214,7 @@ namespace SoulsFormats
             return UTF16.GetString(bytes.ToArray());
         }
 
-        public string GetUTF16(int offset)
+        public string GetUTF16(long offset)
         {
             long pos = stream.Position;
             stream.Position = offset;
