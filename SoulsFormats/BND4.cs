@@ -156,15 +156,14 @@ namespace SoulsFormats
                     unkEntry2.Write(bw);
                 }
             }
-            else
-            {
-                bw.Pad(0x10);
-            }
 
             bw.FillInt64("DataStart", bw.Position);
             for (int i = 0; i < Files.Count; i++)
             {
-                bw.Pad(0x10);
+                File file = Files[i];
+                if (file.Bytes.LongLength > 0)
+                    bw.Pad(0x10);
+
                 bw.FillInt32($"FileData{i}", (int)bw.Position);
                 bw.WriteBytes(Files[i].Bytes);
             }

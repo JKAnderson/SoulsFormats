@@ -55,6 +55,26 @@ namespace SoulsFormats
                 WriteByte(0);
         }
 
+        private void Reserve(string name, int bytes)
+        {
+            if (reservations.ContainsKey(name))
+                throw new ArgumentException("Key already reserved: " + name);
+
+            reservations[name] = stream.Position;
+            for (int i = 0; i < bytes; i++)
+                WriteByte(0xFE);
+        }
+
+        private long Unreserve(string name)
+        {
+            if (!reservations.ContainsKey(name))
+                throw new ArgumentException("Key is not reserved: " + name);
+
+            long position = reservations[name];
+            reservations.Remove(name);
+            return position;
+        }
+
         private void WriteEndian(byte[] bytes)
         {
             if (BigEndian)
@@ -95,20 +115,13 @@ namespace SoulsFormats
 
         public void ReserveInt32(string name)
         {
-            if (reservations.ContainsKey(name))
-                throw new ArgumentException("Key already reserved: " + name);
-
-            reservations[name] = stream.Position;
-            WriteInt32(0);
+            Reserve(name + ":Int32", 4);
         }
 
         public void FillInt32(string name, int value)
         {
-            if (!reservations.ContainsKey(name))
-                throw new ArgumentException("Key was not reserved: " + name);
-
             long pos = stream.Position;
-            stream.Position = reservations[name];
+            stream.Position = Unreserve(name + ":Int32");
             WriteInt32(value);
             stream.Position = pos;
         }
@@ -120,20 +133,13 @@ namespace SoulsFormats
 
         public void ReserveInt64(string name)
         {
-            if (reservations.ContainsKey(name))
-                throw new ArgumentException("Key already reserved: " + name);
-
-            reservations[name] = stream.Position;
-            WriteInt64(0);
+            Reserve(name + ":Int64", 8);
         }
 
         public void FillInt64(string name, long value)
         {
-            if (!reservations.ContainsKey(name))
-                throw new ArgumentException("Key was not reserved: " + name);
-
             long pos = stream.Position;
-            stream.Position = reservations[name];
+            stream.Position = Unreserve(name + ":Int64");
             WriteInt64(value);
             stream.Position = pos;
         }
