@@ -57,17 +57,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BDT3.cs" />
-    <Compile Include="BDT4.cs" />
+    <Compile Include="Formats\BDT3.cs" />
+    <Compile Include="Formats\BDT4.cs" />
     <Compile Include="BinaryReaderEx.cs" />
     <Compile Include="BinaryWriterEx.cs" />
-    <Compile Include="BND3.cs" />
-    <Compile Include="BND4.cs" />
-    <Compile Include="DCX.cs" />
-    <Compile Include="DRB.cs" />
-    <Compile Include="MTD.cs" />
+    <Compile Include="Formats\BND3.cs" />
+    <Compile Include="Formats\BND4.cs" />
+    <Compile Include="Formats\DCX.cs" />
+    <Compile Include="Formats\DRB.cs" />
+    <Compile Include="Formats\MTD.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TPF.cs" />
+    <Compile Include="Formats\TPF.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
