@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.IO.Compression;
 
 namespace SoulsFormats
@@ -57,7 +58,7 @@ namespace SoulsFormats
             else if (type == Type.DarkSouls1 || type == Type.DarkSouls3)
                 return DecompressDarkSouls(br, type);
             else
-                return null;
+                throw new FormatException("Unknown DCX format.");
         }
 
         private static byte[] DecompressDemonsSoulsDFLT(BinaryReaderEx br)
@@ -224,6 +225,50 @@ namespace SoulsFormats
         #endregion
 
         private static void Compress(byte[] data, BinaryWriterEx bw, Type type)
+        {
+            if (type == Type.DemonsSoulsDFLT)
+                CompressDemonsSoulsDFLT(data, bw);
+            if (type == Type.DarkSouls1 || type == Type.DarkSouls3)
+                CompressDarkSouls(data, bw, type);
+            else if (type == Type.Unknown)
+                throw new ArgumentException("You cannot compress a DCX with an unknown type.");
+            else
+                throw new NotImplementedException("Compression for the given type is not implemented.");
+        }
+
+        private static void CompressDemonsSoulsDFLT(byte[] data, BinaryWriterEx bw)
+        {
+            byte[] compressed;
+            using (MemoryStream cmpStream = new MemoryStream())
+            using (MemoryStream dcmpStream = new MemoryStream(data))
+            {
+                DeflateStream dfltStream = new DeflateStream(cmpStream, CompressionMode.Compress);
+                dcmpStream.CopyTo(dfltStream);
+                dfltStream.Close();
+                compressed = cmpStream.ToArray();
+            }
+
+            bw.WriteASCII("DCP\0");
+            bw.WriteASCII("DFLT");
+            bw.WriteInt32(0x20);
+            bw.WriteInt32(0x9000000);
+            bw.WriteInt32(0);
+            bw.WriteInt32(0);
+            bw.WriteInt32(0);
+            bw.WriteInt32(0x00010100);
+
+            bw.WriteASCII("DCS\0");
+            bw.WriteInt32(data.Length);
+            bw.WriteInt32(compressed.Length + 2);
+            bw.WriteByte(0x78);
+            bw.WriteByte(0xDA);
+            bw.WriteBytes(compressed);
+
+            bw.WriteASCII("DCA\0");
+            bw.WriteInt32(8);
+        }
+
+        private static void CompressDarkSouls(byte[] data, BinaryWriterEx bw, Type type)
         {
             byte[] compressed;
             using (MemoryStream cmpStream = new MemoryStream())
