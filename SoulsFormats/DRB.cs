@@ -31,23 +31,23 @@ namespace SoulsFormats
             br.AssertInt32(0);
             br.AssertInt32(0);
 
-            strings = readSTR(br);
-            textures = readTEXI(br, strings);
-            int shprOffset = readSHPR(br);
-            int ctprOffset = readCTPR(br);
-            int anipOffset = readANIP(br);
-            int intpOffset = readINTP(br);
-            int scdpOffset = readSCDP(br);
-            shapEntries = readSHAP(br, dsr, strings, shprOffset);
-            ctrlEntries = readCTRL(br, strings, ctprOffset);
-            anikEntries = readANIK(br, strings, intpOffset, anipOffset);
-            anioEntries = readANIO(br, anikEntries);
-            animEntries = readANIM(br, strings, anioEntries);
-            scdkEntries = readSCDK(br, strings, scdpOffset);
-            scdoEntries = readSCDO(br, strings, scdkEntries);
-            scdlEntries = readSCDL(br, strings, scdoEntries);
-            dlgoEntries = readDLGO(br, strings, shapEntries, ctrlEntries);
-            dlgEntries = readDLG(br, strings, shapEntries, ctrlEntries, dlgoEntries);
+            strings = ReadSTR(br);
+            textures = ReadTEXI(br, strings);
+            int shprOffset = ReadSHPR(br);
+            int ctprOffset = ReadCTPR(br);
+            int anipOffset = ReadANIP(br);
+            int intpOffset = ReadINTP(br);
+            int scdpOffset = ReadSCDP(br);
+            shapEntries = ReadSHAP(br, dsr, strings, shprOffset);
+            ctrlEntries = ReadCTRL(br, strings, ctprOffset);
+            anikEntries = ReadANIK(br, strings, intpOffset, anipOffset);
+            anioEntries = ReadANIO(br, anikEntries);
+            animEntries = ReadANIM(br, strings, anioEntries);
+            scdkEntries = ReadSCDK(br, strings, scdpOffset);
+            scdoEntries = ReadSCDO(br, strings, scdkEntries);
+            scdlEntries = ReadSCDL(br, strings, scdoEntries);
+            dlgoEntries = ReadDLGO(br, strings, shapEntries, ctrlEntries);
+            dlgEntries = ReadDLG(br, strings, shapEntries, ctrlEntries, dlgoEntries);
 
             br.AssertASCII("END\0");
             br.AssertInt32(0);
@@ -55,7 +55,7 @@ namespace SoulsFormats
             br.AssertInt32(0);
         }
 
-        private static void readSectionHeader(BinaryReaderEx br, string name, out int entrySize, out int entryCount)
+        private static void ReadSectionHeader(BinaryReaderEx br, string name, out int entrySize, out int entryCount)
         {
             br.AssertASCII(name);
             entrySize = br.ReadInt32();
@@ -63,7 +63,7 @@ namespace SoulsFormats
             br.AssertInt32(0);
         }
 
-        private static void readSectionHeaderSingle(BinaryReaderEx br, string name, out int entrySize)
+        private static void ReadSectionHeaderSingle(BinaryReaderEx br, string name, out int entrySize)
         {
             br.AssertASCII(name);
             entrySize = br.ReadInt32();
@@ -71,9 +71,9 @@ namespace SoulsFormats
             br.AssertInt32(0);
         }
 
-        private static Dictionary<int, string> readSTR(BinaryReaderEx br)
+        private static Dictionary<int, string> ReadSTR(BinaryReaderEx br)
         {
-            readSectionHeader(br, "STR\0", out int entrySize, out int entryCount);
+            ReadSectionHeader(br, "STR\0", out int entrySize, out int entryCount);
 
             int startPosition = (int)br.Position;
             Dictionary<int, string> strings = new Dictionary<int, string>();
@@ -87,9 +87,9 @@ namespace SoulsFormats
             return strings;
         }
 
-        private static List<TEXIEntry> readTEXI(BinaryReaderEx br, Dictionary<int, string> strings)
+        private static List<TEXIEntry> ReadTEXI(BinaryReaderEx br, Dictionary<int, string> strings)
         {
-            readSectionHeader(br, "TEXI", out int entrySize, out int entryCount);
+            ReadSectionHeader(br, "TEXI", out int entrySize, out int entryCount);
 
             int startPosition = (int)br.Position;
             List<TEXIEntry> textures = new List<TEXIEntry>();
@@ -119,54 +119,54 @@ namespace SoulsFormats
             }
         }
 
-        private static int readSHPR(BinaryReaderEx br)
+        private static int ReadSHPR(BinaryReaderEx br)
         {
-            readSectionHeaderSingle(br, "SHPR", out int entrySize);
+            ReadSectionHeaderSingle(br, "SHPR", out int entrySize);
             int position = (int)br.Position;
             br.Skip(entrySize);
             br.Pad(0x10);
             return position;
         }
 
-        private static int readCTPR(BinaryReaderEx br)
+        private static int ReadCTPR(BinaryReaderEx br)
         {
-            readSectionHeaderSingle(br, "CTPR", out int entrySize);
+            ReadSectionHeaderSingle(br, "CTPR", out int entrySize);
             int position = (int)br.Position;
             br.Skip(entrySize);
             br.Pad(0x10);
             return position;
         }
 
-        private static int readANIP(BinaryReaderEx br)
+        private static int ReadANIP(BinaryReaderEx br)
         {
-            readSectionHeaderSingle(br, "ANIP", out int entrySize);
+            ReadSectionHeaderSingle(br, "ANIP", out int entrySize);
             int position = (int)br.Position;
             br.Skip(entrySize);
             br.Pad(0x10);
             return position;
         }
 
-        private static int readINTP(BinaryReaderEx br)
+        private static int ReadINTP(BinaryReaderEx br)
         {
-            readSectionHeaderSingle(br, "INTP", out int entrySize);
+            ReadSectionHeaderSingle(br, "INTP", out int entrySize);
             int position = (int)br.Position;
             br.Skip(entrySize);
             br.Pad(0x10);
             return position;
         }
 
-        private static int readSCDP(BinaryReaderEx br)
+        private static int ReadSCDP(BinaryReaderEx br)
         {
-            readSectionHeaderSingle(br, "SCDP", out int entrySize);
+            ReadSectionHeaderSingle(br, "SCDP", out int entrySize);
             int position = (int)br.Position;
             br.Skip(entrySize);
             br.Pad(0x10);
             return position;
         }
 
-        private static Dictionary<int, SHAPEntry> readSHAP(BinaryReaderEx br, bool dsr, Dictionary<int, string> strings, int shprOffset)
+        private static Dictionary<int, SHAPEntry> ReadSHAP(BinaryReaderEx br, bool dsr, Dictionary<int, string> strings, int shprOffset)
         {
-            readSectionHeader(br, "SHAP", out int entrySize, out int entryCount);
+            ReadSectionHeader(br, "SHAP", out int entrySize, out int entryCount);
 
             int startPosition = (int)br.Position;
             Dictionary<int, SHAPEntry> shapEntries = new Dictionary<int, SHAPEntry>();
@@ -494,9 +494,9 @@ namespace SoulsFormats
         }
         #endregion
 
-        private static Dictionary<int, CTRLEntry> readCTRL(BinaryReaderEx br, Dictionary<int, string> strings, int ctprOffset)
+        private static Dictionary<int, CTRLEntry> ReadCTRL(BinaryReaderEx br, Dictionary<int, string> strings, int ctprOffset)
         {
-            readSectionHeader(br, "CTRL", out int entrySize, out int entryCount);
+            ReadSectionHeader(br, "CTRL", out int entrySize, out int entryCount);
 
             int startPosition = (int)br.Position;
             Dictionary<int, CTRLEntry> ctrlEntries = new Dictionary<int, CTRLEntry>();
@@ -574,9 +574,9 @@ namespace SoulsFormats
         }
         #endregion
 
-        private static Dictionary<int, ANIKEntry> readANIK(BinaryReaderEx br, Dictionary<int, string> strings, int intpOffset, int anipOffset)
+        private static Dictionary<int, ANIKEntry> ReadANIK(BinaryReaderEx br, Dictionary<int, string> strings, int intpOffset, int anipOffset)
         {
-            readSectionHeader(br, "ANIK", out int entrySize, out int entryCount);
+            ReadSectionHeader(br, "ANIK", out int entrySize, out int entryCount);
 
             int startPosition = (int)br.Position;
             Dictionary<int, ANIKEntry> anikEntries = new Dictionary<int, ANIKEntry>();
@@ -611,9 +611,9 @@ namespace SoulsFormats
             }
         }
 
-        private static Dictionary<int, ANIOEntry> readANIO(BinaryReaderEx br, Dictionary<int, ANIKEntry> anikEntries)
+        private static Dictionary<int, ANIOEntry> ReadANIO(BinaryReaderEx br, Dictionary<int, ANIKEntry> anikEntries)
         {
-            readSectionHeader(br, "ANIO", out int entrySize, out int entryCount);
+            ReadSectionHeader(br, "ANIO", out int entrySize, out int entryCount);
 
             int startPosition = (int)br.Position;
             Dictionary<int, ANIOEntry> anioEntries = new Dictionary<int, ANIOEntry>();
@@ -649,9 +649,9 @@ namespace SoulsFormats
             }
         }
 
-        private static Dictionary<int, ANIMEntry> readANIM(BinaryReaderEx br, Dictionary<int, string> strings, Dictionary<int, ANIOEntry> anioEntries)
+        private static Dictionary<int, ANIMEntry> ReadANIM(BinaryReaderEx br, Dictionary<int, string> strings, Dictionary<int, ANIOEntry> anioEntries)
         {
-            readSectionHeader(br, "ANIM", out int entrySize, out int entryCount);
+            ReadSectionHeader(br, "ANIM", out int entrySize, out int entryCount);
 
             int startPosition = (int)br.Position;
             Dictionary<int, ANIMEntry> animEntries = new Dictionary<int, ANIMEntry>();
@@ -691,9 +691,9 @@ namespace SoulsFormats
             }
         }
 
-        private static Dictionary<int, SCDKEntry> readSCDK(BinaryReaderEx br, Dictionary<int, string> strings, int scdpOffset)
+        private static Dictionary<int, SCDKEntry> ReadSCDK(BinaryReaderEx br, Dictionary<int, string> strings, int scdpOffset)
         {
-            readSectionHeader(br, "SCDK", out int entrySize, out int entryCount);
+            ReadSectionHeader(br, "SCDK", out int entrySize, out int entryCount);
 
             int startPosition = (int)br.Position;
             Dictionary<int, SCDKEntry> scdkEntries = new Dictionary<int, SCDKEntry>();
@@ -729,9 +729,9 @@ namespace SoulsFormats
             }
         }
 
-        private static Dictionary<int, SCDOEntry> readSCDO(BinaryReaderEx br, Dictionary<int, string> strings, Dictionary<int, SCDKEntry> scdkEntries)
+        private static Dictionary<int, SCDOEntry> ReadSCDO(BinaryReaderEx br, Dictionary<int, string> strings, Dictionary<int, SCDKEntry> scdkEntries)
         {
-            readSectionHeader(br, "SCDO", out int entrySize, out int entryCount);
+            ReadSectionHeader(br, "SCDO", out int entrySize, out int entryCount);
 
             int startPosition = (int)br.Position;
             Dictionary<int, SCDOEntry> scdoEntries = new Dictionary<int, SCDOEntry>();
@@ -764,9 +764,9 @@ namespace SoulsFormats
             }
         }
 
-        private static Dictionary<int, SCDLEntry> readSCDL(BinaryReaderEx br, Dictionary<int, string> strings, Dictionary<int, SCDOEntry> scdoEntries)
+        private static Dictionary<int, SCDLEntry> ReadSCDL(BinaryReaderEx br, Dictionary<int, string> strings, Dictionary<int, SCDOEntry> scdoEntries)
         {
-            readSectionHeader(br, "SCDL", out int entrySize, out int entryCount);
+            ReadSectionHeader(br, "SCDL", out int entrySize, out int entryCount);
 
             int startPosition = (int)br.Position;
             Dictionary<int, SCDLEntry> scdlEntries = new Dictionary<int, SCDLEntry>();
@@ -799,9 +799,9 @@ namespace SoulsFormats
             }
         }
 
-        private static Dictionary<int, DLGOEntry> readDLGO(BinaryReaderEx br, Dictionary<int, string> strings, Dictionary<int, SHAPEntry> shapEntries, Dictionary<int, CTRLEntry> ctrlEntries)
+        private static Dictionary<int, DLGOEntry> ReadDLGO(BinaryReaderEx br, Dictionary<int, string> strings, Dictionary<int, SHAPEntry> shapEntries, Dictionary<int, CTRLEntry> ctrlEntries)
         {
-            readSectionHeader(br, "DLGO", out int entrySize, out int entryCount);
+            ReadSectionHeader(br, "DLGO", out int entrySize, out int entryCount);
 
             int startPosition = (int)br.Position;
             Dictionary<int, DLGOEntry> dlgoEntries = new Dictionary<int, DLGOEntry>();
@@ -838,10 +838,10 @@ namespace SoulsFormats
             }
         }
 
-        private static Dictionary<int, DLGEntry> readDLG(BinaryReaderEx br, Dictionary<int, string> strings,
+        private static Dictionary<int, DLGEntry> ReadDLG(BinaryReaderEx br, Dictionary<int, string> strings,
             Dictionary<int, SHAPEntry> shapEntries, Dictionary<int, CTRLEntry> ctrlEntries, Dictionary<int, DLGOEntry> dlgoEntries)
         {
-            readSectionHeader(br, "DLG\0", out int entrySize, out int entryCount);
+            ReadSectionHeader(br, "DLG\0", out int entrySize, out int entryCount);
 
             int startPosition = (int)br.Position;
             Dictionary<int, DLGEntry> dlgEntries = new Dictionary<int, DLGEntry>();

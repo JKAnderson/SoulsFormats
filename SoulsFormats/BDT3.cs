@@ -9,6 +9,7 @@ namespace SoulsFormats
         public List<File> Files;
         private int flag;
 
+        #region Public Read
         public static BDT3 Read(byte[] bhdBytes, byte[] bdtBytes)
         {
             BinaryReaderEx bhdReader = new BinaryReaderEx(false, bhdBytes);
@@ -46,6 +47,7 @@ namespace SoulsFormats
                 return new BDT3(bhdReader, bdtReader);
             }
         }
+        #endregion
 
         private BDT3(BinaryReaderEx bhdReader, BinaryReaderEx bdtReader)
         {
@@ -72,11 +74,12 @@ namespace SoulsFormats
             }
         }
 
+        #region Public Write
         public void Write(out byte[] bhdBytes, out byte[] bdtBytes)
         {
             BinaryWriterEx bhdWriter = new BinaryWriterEx(false);
             BinaryWriterEx bdtWriter = new BinaryWriterEx(false);
-            write(bhdWriter, bdtWriter);
+            Write(bhdWriter, bdtWriter);
             bhdBytes = bhdWriter.FinishBytes();
             bdtBytes = bdtWriter.FinishBytes();
         }
@@ -87,7 +90,7 @@ namespace SoulsFormats
             {
                 BinaryWriterEx bhdWriter = new BinaryWriterEx(false);
                 BinaryWriterEx bdtWriter = new BinaryWriterEx(false, bdtStream);
-                write(bhdWriter, bdtWriter);
+                Write(bhdWriter, bdtWriter);
                 bdtWriter.Finish();
                 bhdBytes = bhdWriter.FinishBytes();
             }
@@ -99,7 +102,7 @@ namespace SoulsFormats
             {
                 BinaryWriterEx bhdWriter = new BinaryWriterEx(false, bhdStream);
                 BinaryWriterEx bdtWriter = new BinaryWriterEx(false);
-                write(bhdWriter, bdtWriter);
+                Write(bhdWriter, bdtWriter);
                 bhdWriter.Finish();
                 bdtBytes = bdtWriter.FinishBytes();
             }
@@ -112,13 +115,14 @@ namespace SoulsFormats
             {
                 BinaryWriterEx bhdWriter = new BinaryWriterEx(false, bhdStream);
                 BinaryWriterEx bdtWriter = new BinaryWriterEx(false, bdtStream);
-                write(bhdWriter, bdtWriter);
+                Write(bhdWriter, bdtWriter);
                 bhdWriter.Finish();
                 bdtWriter.Finish();
             }
         }
+        #endregion
 
-        private void write(BinaryWriterEx bhdWriter, BinaryWriterEx bdtWriter)
+        private void Write(BinaryWriterEx bhdWriter, BinaryWriterEx bdtWriter)
         {
             bhdWriter.WriteASCII("BHF3");
             bhdWriter.WriteASCII("07D7R6\0\0");
@@ -180,7 +184,6 @@ namespace SoulsFormats
                     int fileOffset = br.ReadInt32();
                     br.AssertInt32(i);
                     int fileNameOffset = br.ReadInt32();
-                    // Why is this here twice?
                     br.AssertInt32(fileSize);
 
                     string name = br.GetShiftJIS(fileNameOffset);

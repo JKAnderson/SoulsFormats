@@ -23,9 +23,9 @@ namespace SoulsFormats
         #endregion
 
         public List<File> Files;
-        private List<UnkEntry1> unkEntries1;
-        private List<UnkEntry2> unkEntries2;
-        private string signature;
+        public List<PathHash> PathHashes;
+        public List<HashGroup> HashGroups;
+        public string Signature;
         private bool unicode;
         private byte flag;
         private byte extended;
@@ -38,7 +38,7 @@ namespace SoulsFormats
             int fileCount = br.ReadInt32();
             // Header size
             br.AssertInt64(0x40);
-            signature = br.ReadASCII(8);
+            Signature = br.ReadASCII(8);
             // File header size
             br.AssertInt64(0x24);
             long dataStart = br.ReadInt64();
@@ -67,17 +67,17 @@ namespace SoulsFormats
                 // Probably 4 bytes
                 br.AssertInt32(0x00080810);
 
-                unkEntries1 = new List<UnkEntry1>();
+                PathHashes = new List<PathHash>();
                 for (int i = 0; i < unkEntry1Count; i++)
                 {
-                    unkEntries1.Add(new UnkEntry1(br));
+                    PathHashes.Add(new PathHash(br));
                 }
 
                 br.Position = unkSection2Offset;
-                unkEntries2 = new List<UnkEntry2>();
+                HashGroups = new List<HashGroup>();
                 for (int i = 0; i < fileCount; i++)
                 {
-                    unkEntries2.Add(new UnkEntry2(br));
+                    HashGroups.Add(new HashGroup(br));
                 }
             }
         }
@@ -108,7 +108,7 @@ namespace SoulsFormats
             bw.WriteInt32(0x10000);
             bw.WriteInt32(Files.Count);
             bw.WriteInt64(0x40);
-            bw.WriteASCII(signature);
+            bw.WriteASCII(Signature);
             bw.WriteInt64(0x24);
             bw.ReserveInt64("DataStart");
             bw.WriteBoolean(unicode);
@@ -141,17 +141,17 @@ namespace SoulsFormats
                 bw.Pad(0x8);
                 bw.FillInt64("UnkSection1", bw.Position);
                 bw.ReserveInt64("UnkSection2");
-                bw.WriteInt32(unkEntries1.Count);
+                bw.WriteInt32(PathHashes.Count);
                 bw.WriteInt32(0x00080810);
 
-                foreach (UnkEntry1 unkEntry1 in unkEntries1)
+                foreach (PathHash unkEntry1 in PathHashes)
                 {
                     unkEntry1.Write(bw);
                 }
 
                 // No padding after section 1
                 bw.FillInt64("UnkSection2", bw.Position);
-                foreach (UnkEntry2 unkEntry2 in unkEntries2)
+                foreach (HashGroup unkEntry2 in HashGroups)
                 {
                     unkEntry2.Write(bw);
                 }
@@ -204,37 +204,38 @@ namespace SoulsFormats
             }
         }
 
-        private class UnkEntry1
+        public class PathHash
         {
-            private int unk1, unk2;
+            public int Index;
+            public uint Hash;
 
-            public UnkEntry1(BinaryReaderEx br)
+            internal PathHash(BinaryReaderEx br)
             {
-                unk1 = br.ReadInt32();
-                unk2 = br.ReadInt32();
+                Hash = br.ReadUInt32();
+                Index = br.ReadInt32();
             }
 
-            public void Write(BinaryWriterEx bw)
+            internal void Write(BinaryWriterEx bw)
             {
-                bw.WriteInt32(unk1);
-                bw.WriteInt32(unk2);
+                bw.WriteUInt32(Hash);
+                bw.WriteInt32(Index);
             }
         }
 
-        private class UnkEntry2
+        public class HashGroup
         {
-            private int unk1, unk2;
+            public int Index, Length;
 
-            public UnkEntry2(BinaryReaderEx br)
+            internal HashGroup(BinaryReaderEx br)
             {
-                unk1 = br.ReadInt32();
-                unk2 = br.ReadInt32();
+                Length = br.ReadInt32();
+                Index = br.ReadInt32();
             }
 
-            public void Write(BinaryWriterEx bw)
+            internal void Write(BinaryWriterEx bw)
             {
-                bw.WriteInt32(unk1);
-                bw.WriteInt32(unk2);
+                bw.WriteInt32(Length);
+                bw.WriteInt32(Index);
             }
         }
     }

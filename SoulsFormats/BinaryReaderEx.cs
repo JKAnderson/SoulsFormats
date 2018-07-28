@@ -13,8 +13,9 @@ namespace SoulsFormats
 
         private Stream stream;
         private BinaryReader br;
+        private Stack<long> steps;
 
-        public bool BigEndian = false;
+        public bool BigEndian;
         public long Position
         {
             get { return stream.Position; }
@@ -26,6 +27,7 @@ namespace SoulsFormats
         public BinaryReaderEx(bool bigEndian, Stream stream)
         {
             BigEndian = bigEndian;
+            steps = new Stack<long>();
             this.stream = stream;
             br = new BinaryReader(stream);
         }
@@ -36,6 +38,67 @@ namespace SoulsFormats
             if (BigEndian)
                 Array.Reverse(bytes);
             return bytes;
+        }
+
+        private void StepIn(long offset)
+        {
+            steps.Push(stream.Position);
+            stream.Position = offset;
+        }
+
+        private void StepOut()
+        {
+            if (steps.Count == 0)
+                throw new InvalidOperationException("Reader is already stepped all the way out.");
+
+            stream.Position = steps.Pop();
+        }
+
+        private T[] ReadValues<T>(Func<T> readValue, int count)
+        {
+            T[] result = new T[count];
+            for (int i = 0; i < count; i++)
+                result[i] = readValue();
+            return result;
+        }
+
+        private T GetValue<T>(Func<T> readValue, long offset)
+        {
+            StepIn(offset);
+            T result = readValue();
+            StepOut();
+            return result;
+        }
+
+        private T[] GetValues<T>(Func<int, T[]> readValues, long offset, int count)
+        {
+            StepIn(offset);
+            T[] result = readValues(count);
+            StepOut();
+            return result;
+        }
+
+        private T AssertValue<T>(Func<T> readValue, string typeName, string valueFormat, T[] options) where T : IEquatable<T>
+        {
+            T value = readValue();
+            bool valid = false;
+            foreach (T option in options)
+                if (value.Equals(option))
+                    valid = true;
+
+            if (!valid)
+            {
+                string strValue = string.Format(valueFormat, value);
+
+                List<string> strOptions = new List<string>();
+                foreach (T option in options)
+                    strOptions.Add(string.Format(valueFormat, option));
+
+                throw new InvalidDataException(string.Format(
+                    "Read {0}: {1} | Expected {0}: {2}", typeName, strValue, string.Join(", ", strOptions)));
+            }
+
+            return value;
         }
 
         public void Pad(int align)
@@ -49,58 +112,150 @@ namespace SoulsFormats
             stream.Position += count;
         }
 
-        public byte ReadByte()
-        {
-            return br.ReadByte();
-        }
-
-        public byte[] ReadBytes(int length)
-        {
-            return br.ReadBytes(length);
-        }
-
-        public byte GetByte(long offset)
-        {
-            long pos = stream.Position;
-            stream.Position = offset;
-            byte result = ReadByte();
-            stream.Position = pos;
-            return result;
-        }
-
-        public byte[] GetBytes(long offset, int length)
-        {
-            long pos = stream.Position;
-            stream.Position = offset;
-            byte[] result = ReadBytes(length);
-            stream.Position = pos;
-            return result;
-        }
-
+        #region Boolean
         public bool ReadBoolean()
         {
             return br.ReadBoolean();
         }
 
+        public bool[] ReadBooleans(int count)
+        {
+            return ReadValues(ReadBoolean, count);
+        }
+
+        public bool GetBoolean(long offset)
+        {
+            return GetValue(ReadBoolean, offset);
+        }
+
+        public bool[] GetBooleans(long offset, int count)
+        {
+            return GetValues(ReadBooleans, offset, count);
+        }
+
+        public void AssertBoolean(bool option)
+        {
+            bool value = ReadBoolean();
+            if (value != option)
+            {
+                throw new InvalidDataException(string.Format(
+                    "Read Boolean: {0} | Expected Boolean: {1}", value, option));
+            }
+        }
+        #endregion
+
+        #region SByte
+        public sbyte ReadSByte()
+        {
+            return br.ReadSByte();
+        }
+
+        public sbyte[] ReadSBytes(int count)
+        {
+            return ReadValues(ReadSByte, count);
+        }
+
+        public sbyte GetSByte(long offset)
+        {
+            return GetValue(ReadSByte, offset);
+        }
+
+        public sbyte[] GetSBytes(long offset, int count)
+        {
+            return GetValues(ReadSBytes, offset, count);
+        }
+
+        public sbyte AssertSByte(params sbyte[] options)
+        {
+            return AssertValue(ReadSByte, "SByte", "0x{0:X}", options);
+        }
+        #endregion
+
+        #region Byte
+        public byte ReadByte()
+        {
+            return br.ReadByte();
+        }
+
+        public byte[] ReadBytes(int count)
+        {
+            return br.ReadBytes(count);
+        }
+
+        public byte GetByte(long offset)
+        {
+            return GetValue(ReadByte, offset);
+        }
+
+        public byte[] GetBytes(long offset, int count)
+        {
+            StepIn(offset);
+            byte[] result = ReadBytes(count);
+            StepOut();
+            return result;
+        }
+
+        public byte AssertByte(params byte[] options)
+        {
+            return AssertValue(ReadByte, "Byte", "0x{0:X}", options);
+        }
+        #endregion
+
+        #region Int16
         public short ReadInt16()
         {
             return BitConverter.ToInt16(ReadEndian(2), 0);
         }
 
+        public short[] ReadInt16s(int count)
+        {
+            return ReadValues(ReadInt16, count);
+        }
+
+        public short GetInt16(long offset)
+        {
+            return GetValue(ReadInt16, offset);
+        }
+
+        public short[] GetInt16s(long offset, int count)
+        {
+            return GetValues(ReadInt16s, offset, count);
+        }
+
+        public short AssertInt16(params short[] options)
+        {
+            return AssertValue(ReadInt16, "Int16", "0x{0:X}", options);
+        }
+        #endregion
+
+        #region UInt16
         public ushort ReadUInt16()
         {
             return BitConverter.ToUInt16(ReadEndian(2), 0);
         }
 
-        public short GetInt16(long offset)
+        public ushort[] ReadUInt16s(int count)
         {
-            long position = stream.Position;
-            stream.Position = offset;
-            short result = ReadInt16();
-            stream.Position = position;
-            return result;
+            return ReadValues(ReadUInt16, count);
         }
 
+        public ushort GetUInt16(long offset)
+        {
+            return GetValue(ReadUInt16, offset);
+        }
+
+        public ushort[] GetUInt16s(long offset, int count)
+        {
+            return GetValues(ReadUInt16s, offset, count);
+        }
+
+        public ushort AssertUInt16(params ushort[] options)
+        {
+            return AssertValue(ReadUInt16, "UInt16", "0x{0:X}", options);
+        }
+        #endregion
+
+        #region Int32
         public int ReadInt32()
         {
             return BitConverter.ToInt32(ReadEndian(4), 0);
@@ -108,17 +263,107 @@ namespace SoulsFormats
 
         public int[] ReadInt32s(int count)
         {
-            int[] result = new int[count];
-            for (int i = 0; i < count; i++)
-                result[i] = ReadInt32();
-            return result;
+            return ReadValues(ReadInt32, count);
         }
 
+        public int GetInt32(long offset)
+        {
+            return GetValue(ReadInt32, offset);
+        }
+
+        public int[] GetInt32s(long offset, int count)
+        {
+            return GetValues(ReadInt32s, offset, count);
+        }
+
+        public int AssertInt32(params int[] options)
+        {
+            return AssertValue(ReadInt32, "Int32", "0x{0:X}", options);
+        }
+        #endregion
+
+        #region UInt32
+        public uint ReadUInt32()
+        {
+            return BitConverter.ToUInt32(ReadEndian(4), 0);
+        }
+
+        public uint[] ReadUInt32s(int count)
+        {
+            return ReadValues(ReadUInt32, count);
+        }
+
+        public uint GetUInt32(long offset)
+        {
+            return GetValue(ReadUInt32, offset);
+        }
+
+        public uint[] GetUInt32s(long offset, int count)
+        {
+            return GetValues(ReadUInt32s, offset, count);
+        }
+
+        public uint AssertUInt32(params uint[] options)
+        {
+            return AssertValue(ReadUInt32, "UInt32", "0x{0:X}", options);
+        }
+        #endregion
+
+        #region Int64
         public long ReadInt64()
         {
             return BitConverter.ToInt64(ReadEndian(8), 0);
         }
 
+        public long[] ReadInt64s(int count)
+        {
+            return ReadValues(ReadInt64, count);
+        }
+
+        public long GetInt64(long offset)
+        {
+            return GetValue(ReadInt64, offset);
+        }
+
+        public long[] GetInt64s(long offset, int count)
+        {
+            return GetValues(ReadInt64s, offset, count);
+        }
+
+        public long AssertInt64(params long[] options)
+        {
+            return AssertValue(ReadInt64, "Int64", "0x{0:X}", options);
+        }
+        #endregion
+
+        #region UInt64
+        public ulong ReadUInt64()
+        {
+            return BitConverter.ToUInt64(ReadEndian(8), 0);
+        }
+
+        public ulong[] ReadUInt64s(int count)
+        {
+            return ReadValues(ReadUInt64, count);
+        }
+
+        public ulong GetUInt64(long offset)
+        {
+            return GetValue(ReadUInt64, offset);
+        }
+
+        public ulong[] GetUInt64s(long offset, int count)
+        {
+            return GetValues(ReadUInt64s, offset, count);
+        }
+
+        public ulong AssertUInt64(params ulong[] options)
+        {
+            return AssertValue(ReadUInt64, "UInt64", "0x{0:X}", options);
+        }
+        #endregion
+
+        #region Single
         public float ReadSingle()
         {
             return BitConverter.ToSingle(ReadEndian(4), 0);
@@ -126,22 +371,54 @@ namespace SoulsFormats
 
         public float[] ReadSingles(int count)
         {
-            float[] result = new float[count];
-            for (int i = 0; i < count; i++)
-                result[i] = ReadSingle();
-            return result;
+            return ReadValues(ReadSingle, count);
+        }
+
+        public float GetSingle(long offset)
+        {
+            return GetValue(ReadSingle, offset);
         }
 
         public float[] GetSingles(long offset, int count)
         {
-            long position = stream.Position;
-            stream.Position = offset;
-            float[] result = ReadSingles(count);
-            stream.Position = position;
-            return result;
+            return GetValues(ReadSingles, offset, count);
         }
 
-        private string readChars(Encoding encoding, int length)
+        public float AssertSingle(params float[] options)
+        {
+            return AssertValue(ReadSingle, "Single", "0x{0:X}", options);
+        }
+        #endregion
+
+        #region Double
+        public double ReadDouble()
+        {
+            return BitConverter.ToDouble(ReadEndian(8), 0);
+        }
+
+        public double[] ReadDoubles(int count)
+        {
+            return ReadValues(ReadDouble, count);
+        }
+
+        public double GetDouble(long offset)
+        {
+            return GetValue(ReadDouble, offset);
+        }
+
+        public double[] GetDoubles(long offset, int count)
+        {
+            return GetValues(ReadDoubles, offset, count);
+        }
+
+        public double AssertDouble(params double[] options)
+        {
+            return AssertValue(ReadDouble, "Double", "0x{0:X}", options);
+        }
+        #endregion
+
+        #region String
+        private string ReadChars(Encoding encoding, int length)
         {
             byte[] bytes;
             if (length == 0)
@@ -164,21 +441,30 @@ namespace SoulsFormats
 
         public string ReadASCII(int length = 0)
         {
-            return readChars(ASCII, length);
+            return ReadChars(ASCII, length);
         }
 
-        public string GetASCII(long offset)
+        public string GetASCII(long offset, int length = 0)
         {
-            long pos = stream.Position;
-            stream.Position = offset;
-            string result = ReadASCII();
-            stream.Position = pos;
+            StepIn(offset);
+            string result = ReadASCII(length);
+            StepOut();
             return result;
+        }
+
+        public void AssertASCII(string value)
+        {
+            string s = ReadASCII(value.Length);
+            if (s != value)
+            {
+                throw new InvalidDataException(string.Format(
+                    "Read ASCII: {0} | Expected ASCII: {1}", s, value));
+            }
         }
 
         public string ReadShiftJIS(int length = 0)
         {
-            return readChars(ShiftJIS, length);
+            return ReadChars(ShiftJIS, length);
         }
 
         public string ReadShiftJISLengthPrefixed(byte delimiter)
@@ -186,7 +472,7 @@ namespace SoulsFormats
             int length = ReadInt32();
             string result = "";
             if (length > 0)
-                result = readChars(ShiftJIS, length);
+                result = ReadChars(ShiftJIS, length);
             AssertByte(delimiter);
             Pad(4);
             return result;
@@ -194,10 +480,9 @@ namespace SoulsFormats
 
         public string GetShiftJIS(long offset)
         {
-            long pos = stream.Position;
-            stream.Position = offset;
+            StepIn(offset);
             string result = ReadShiftJIS();
-            stream.Position = pos;
+            StepOut();
             return result;
         }
 
@@ -216,102 +501,11 @@ namespace SoulsFormats
 
         public string GetUTF16(long offset)
         {
-            long pos = stream.Position;
-            stream.Position = offset;
+            StepIn(offset);
             string result = ReadUTF16();
-            stream.Position = pos;
+            StepOut();
             return result;
         }
-
-        public byte AssertByte(params byte[] values)
-        {
-            byte b = ReadByte();
-            bool valid = false;
-            foreach (byte value in values)
-                if (b == value)
-                    valid = true;
-
-            if (!valid)
-            {
-                StringBuilder sbValues = new StringBuilder();
-                for (int i = 0; i < values.Length; i++)
-                {
-                    if (i != 0)
-                        sbValues.Append(", ");
-                    sbValues.Append("0x" + values[i].ToString("X"));
-                }
-                throw new InvalidDataException(string.Format(
-                    "Read byte: 0x{0:X} | Expected byte: {1}", b, sbValues.ToString()));
-            }
-
-            return b;
-        }
-
-        public void AssertBytes(params byte[] values)
-        {
-            foreach (byte value in values)
-            {
-                byte b = ReadByte();
-                if (b != value)
-                {
-                    throw new InvalidDataException(string.Format(
-                        "Read byte: 0x{0:X} | Expected byte: 0x{1:X}", b, value));
-                }
-            }
-        }
-
-        public void AssertInt16(short value)
-        {
-            short s = ReadInt16();
-            if (s != value)
-            {
-                throw new InvalidDataException(string.Format(
-                    "Read short: 0x{0:X} | Expected short: 0x{1:X}", s, value));
-            }
-        }
-
-        public int AssertInt32(params int[] values)
-        {
-            int i = ReadInt32();
-            bool valid = false;
-            foreach (int value in values)
-                if (i == value)
-                    valid = true;
-
-            if (!valid)
-            {
-                StringBuilder sbValues = new StringBuilder();
-                for (int index = 0; i < values.Length; i++)
-                {
-                    if (index != 0)
-                        sbValues.Append(", ");
-                    sbValues.Append("0x" + values[index].ToString("X"));
-                }
-                throw new InvalidDataException(string.Format(
-                    "Read byte: 0x{0:X} | Expected byte: {1}", i, sbValues.ToString()));
-            }
-
-            return i;
-        }
-
-        public void AssertInt64(long value)
-        {
-            long l = ReadInt64();
-            if (l != value)
-            {
-                throw new InvalidDataException(string.Format(
-                    "Read long: 0x{0:X} | Expected long: 0x{1:X}", l, value));
-            }
-        }
-
-        public void AssertASCII(string value)
-        {
-            string s = ReadASCII(value.Length);
-            if (s != value)
-            {
-                throw new InvalidDataException(string.Format(
-                    "Read string: {0} | Expected string: {1}", s, value));
-            }
-        }
+        #endregion
     }
 }
