@@ -24,8 +24,9 @@ namespace SoulsFormats
         #endregion
 
         public string Signature;
-        private byte format;
+        public byte Format;
         private bool bigEndian, unk1;
+        private bool writeNameEnd;
         private int unk2;
         public List<File> Files;
 
@@ -33,21 +34,22 @@ namespace SoulsFormats
         {
             br.AssertASCII("BND3");
             Signature = br.ReadASCII(8);
-            format = br.AssertByte(0xE, 0x2E, 0x54, 0x70, 0x74);
+            Format = br.AssertByte(0x0E, 0x2E, 0x54, 0x60, 0x64, 0x70, 0x74, 0xE0, 0xF0);
             bigEndian = br.ReadBoolean();
             unk1 = br.ReadBoolean();
             br.AssertByte(0);
 
-            br.BigEndian = bigEndian;
+            br.BigEndian = bigEndian || Format == 0xE0 || Format == 0xF0;
             int fileCount = br.ReadInt32();
             int fileNameEnd = br.ReadInt32();
+            writeNameEnd = fileNameEnd != 0;
             unk2 = br.ReadInt32();
             br.AssertInt32(0);
 
             Files = new List<File>();
             for (int i = 0; i < fileCount; i++)
             {
-                Files.Add(new File(br, format));
+                Files.Add(new File(br, Format));
             }
         }
 
@@ -74,12 +76,12 @@ namespace SoulsFormats
         {
             bw.WriteASCII("BND3");
             bw.WriteASCII(Signature);
-            bw.WriteByte(format);
+            bw.WriteByte(Format);
             bw.WriteBoolean(bigEndian);
             bw.WriteBoolean(unk1);
             bw.WriteByte(0);
 
-            bw.BigEndian = bigEndian;
+            bw.BigEndian = bigEndian || Format == 0xE0 || Format == 0xF0;
             bw.WriteInt32(Files.Count);
             bw.ReserveInt32("NameEnd");
             bw.WriteInt32(unk2);
@@ -87,7 +89,7 @@ namespace SoulsFormats
 
             for (int i = 0; i < Files.Count; i++)
             {
-                Files[i].Write(bw, i, format);
+                Files[i].Write(bw, i, Format);
             }
 
             for (int i = 0; i < Files.Count; i++)
@@ -96,13 +98,20 @@ namespace SoulsFormats
                 bw.FillInt32($"FileName{i}", (int)bw.Position);
                 bw.WriteShiftJIS(file.Name, true);
             }
-            bw.FillInt32($"NameEnd", (int)bw.Position);
+            bw.FillInt32($"NameEnd", writeNameEnd ? (int)bw.Position : 0);
 
+            if (Format == 0xE0)
+                bw.Pad(0x20);
             for (int i = 0; i < Files.Count; i++)
             {
                 File file = Files[i];
                 if (file.Bytes.LongLength > 0)
-                    bw.Pad(0x10);
+                {
+                    if (bigEndian && Format == 0x74)
+                        bw.Pad(0x4);
+                    else
+                        bw.Pad(0x10);
+                }
 
                 bw.FillInt32($"FileData{i}", (int)bw.Position);
                 bw.WriteBytes(file.Bytes);
@@ -114,13 +123,20 @@ namespace SoulsFormats
             public string Name;
             public int ID;
             public byte[] Bytes;
+            public byte Unk1;
+            public uint NBUnk1;
 
             internal File(BinaryReaderEx br, byte format)
             {
-                if (format == 0xE || format == 0x2E)
-                    br.AssertInt32(0x2000000);
-                else
-                    br.AssertInt32(0x40);
+                if (format == 0x0E || format == 0x2E)
+                    Unk1 = br.AssertByte(0x20);
+                else if (format == 0x54 || format == 0x60 || format == 0x70 || format == 0x74 || format == 0xE0 || format == 0xF0)
+                    Unk1 = br.AssertByte(0x40);
+                else if (format == 0x64)
+                    Unk1 = br.AssertByte(0x40, 0xC0);
+                br.AssertByte(0);
+                br.AssertByte(0);
+                br.AssertByte(0);
 
                 int fileSize = br.ReadInt32();
                 int fileOffset = br.ReadInt32();
@@ -130,6 +146,8 @@ namespace SoulsFormats
 
                 if (format == 0x2E || format == 0x54 || format == 0x74)
                     br.AssertInt32(fileSize);
+                else if (format == 0x64)
+                    NBUnk1 = br.ReadUInt32();
 
                 Name = br.GetShiftJIS(fileNameOffset);
                 Bytes = br.GetBytes(fileOffset, fileSize);
@@ -137,10 +155,10 @@ namespace SoulsFormats
 
             internal void Write(BinaryWriterEx bw, int index, byte format)
             {
-                if (format == 0xE || format == 0x2E)
-                    bw.WriteInt32(0x2000000);
-                else
-                    bw.WriteInt32(0x40);
+                bw.WriteByte(Unk1);
+                bw.WriteByte(0);
+                bw.WriteByte(0);
+                bw.WriteByte(0);
 
                 bw.WriteInt32(Bytes.Length);
                 bw.ReserveInt32($"FileData{index}");
@@ -149,6 +167,8 @@ namespace SoulsFormats
 
                 if (format == 0x2E || format == 0x54 || format == 0x74)
                     bw.WriteInt32(Bytes.Length);
+                else if (format == 0x64)
+                    bw.WriteUInt32(NBUnk1);
             }
         }
     }
