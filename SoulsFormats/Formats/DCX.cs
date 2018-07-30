@@ -242,7 +242,7 @@ namespace SoulsFormats
             using (MemoryStream cmpStream = new MemoryStream())
             using (MemoryStream dcmpStream = new MemoryStream(data))
             {
-                DeflateStream dfltStream = new DeflateStream(cmpStream, CompressionMode.Compress);
+                DeflateStream dfltStream = new DeflateStream(cmpStream, CompressionLevel.Optimal);
                 dcmpStream.CopyTo(dfltStream);
                 dfltStream.Close();
                 compressed = cmpStream.ToArray();
@@ -259,10 +259,19 @@ namespace SoulsFormats
 
             bw.WriteASCII("DCS\0");
             bw.WriteInt32(data.Length);
-            bw.WriteInt32(compressed.Length + 2);
+            bw.WriteInt32(compressed.Length + 2 + 4);
             bw.WriteByte(0x78);
             bw.WriteByte(0xDA);
             bw.WriteBytes(compressed);
+
+            uint adlerA = 1;
+            uint adlerB = 0;
+            foreach (byte b in data)
+            {
+                adlerA = (adlerA + b) % 65521;
+                adlerB = (adlerB + adlerA) % 65521;
+            }
+            bw.WriteUInt32((adlerB << 16) | adlerA);
 
             bw.WriteASCII("DCA\0");
             bw.WriteInt32(8);
@@ -274,7 +283,7 @@ namespace SoulsFormats
             using (MemoryStream cmpStream = new MemoryStream())
             using (MemoryStream dcmpStream = new MemoryStream(data))
             {
-                DeflateStream dfltStream = new DeflateStream(cmpStream, CompressionMode.Compress);
+                DeflateStream dfltStream = new DeflateStream(cmpStream, CompressionLevel.Optimal);
                 dcmpStream.CopyTo(dfltStream);
                 dfltStream.Close();
                 compressed = cmpStream.ToArray();
@@ -299,7 +308,7 @@ namespace SoulsFormats
             bw.WriteASCII("DCS\0");
             bw.WriteInt32(data.Length);
             // Size includes 78DA
-            bw.WriteInt32(compressed.Length + 2);
+            bw.WriteInt32(compressed.Length + 2 + 4);
             bw.WriteASCII("DCP\0");
             bw.WriteASCII("DFLT");
             bw.WriteInt32(0x20);
@@ -310,9 +319,19 @@ namespace SoulsFormats
             bw.WriteInt32(0x00010100);
             bw.WriteASCII("DCA\0");
             bw.WriteInt32(0x8);
+
             bw.WriteByte(0x78);
             bw.WriteByte(0xDA);
             bw.WriteBytes(compressed);
+
+            uint adlerA = 1;
+            uint adlerB = 0;
+            foreach (byte b in data)
+            {
+                adlerA = (adlerA + b) % 65521;
+                adlerB = (adlerB + adlerA) % 65521;
+            }
+            bw.WriteUInt32((adlerB << 16) | adlerA);
         }
 
         public enum Type

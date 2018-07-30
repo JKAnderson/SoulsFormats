@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 
 namespace SoulsFormats
 {
@@ -34,6 +35,7 @@ namespace SoulsFormats
         {
             br.AssertASCII("BND3");
             Signature = br.ReadASCII(8);
+
             Format = br.AssertByte(0x0E, 0x2E, 0x54, 0x60, 0x64, 0x70, 0x74, 0xE0, 0xF0);
             bigEndian = br.ReadBoolean();
             unk1 = br.ReadBoolean();
@@ -45,7 +47,7 @@ namespace SoulsFormats
             writeNameEnd = fileNameEnd != 0;
             unk2 = br.ReadInt32();
             br.AssertInt32(0);
-
+            
             Files = new List<File>();
             for (int i = 0; i < fileCount; i++)
             {
@@ -100,21 +102,46 @@ namespace SoulsFormats
             }
             bw.FillInt32($"NameEnd", writeNameEnd ? (int)bw.Position : 0);
 
-            if (Format == 0xE0)
-                bw.Pad(0x20);
             for (int i = 0; i < Files.Count; i++)
             {
                 File file = Files[i];
-                if (file.Bytes.LongLength > 0)
-                {
-                    if (bigEndian && Format == 0x74)
-                        bw.Pad(0x4);
-                    else
-                        bw.Pad(0x10);
-                }
+                if (file.Bytes.Length > 0)
+                    bw.Pad(0x10);
 
                 bw.FillInt32($"FileData{i}", (int)bw.Position);
-                bw.WriteBytes(file.Bytes);
+
+                byte[] bytes = file.Bytes;
+                if ((file.Flags & 0x80) != 0)
+                {
+                    byte[] compressed;
+                    using (MemoryStream cmpStream = new MemoryStream())
+                    using (MemoryStream dcmpStream = new MemoryStream(bytes))
+                    {
+                        DeflateStream dfltStream = new DeflateStream(cmpStream, CompressionMode.Compress);
+                        dcmpStream.CopyTo(dfltStream);
+                        dfltStream.Close();
+                        compressed = cmpStream.ToArray();
+                    }
+
+                    BinaryWriterEx byteWriter = new BinaryWriterEx(true);
+                    byteWriter.WriteByte(0x78);
+                    byteWriter.WriteByte(0x9C);
+                    byteWriter.WriteBytes(compressed);
+                    
+                    uint adlerA = 1;
+                    uint adlerB = 0;
+                    foreach (byte b in bytes)
+                    {
+                        adlerA = (adlerA + b) % 65521;
+                        adlerB = (adlerB + adlerA) % 65521;
+                    }
+                    byteWriter.WriteUInt32((adlerB << 16) | adlerA);
+
+                    bytes = byteWriter.FinishBytes();
+                }
+
+                bw.WriteBytes(bytes);
+                bw.FillInt32($"CompressedSize{i}", bytes.Length);
             }
         }
 
@@ -123,52 +150,63 @@ namespace SoulsFormats
             public string Name;
             public int ID;
             public byte[] Bytes;
-            public byte Unk1;
-            public uint NBUnk1;
+            public byte Flags;
 
             internal File(BinaryReaderEx br, byte format)
             {
-                if (format == 0x0E || format == 0x2E)
-                    Unk1 = br.AssertByte(0x20);
-                else if (format == 0x54 || format == 0x60 || format == 0x70 || format == 0x74 || format == 0xE0 || format == 0xF0)
-                    Unk1 = br.AssertByte(0x40);
-                else if (format == 0x64)
-                    Unk1 = br.AssertByte(0x40, 0xC0);
+                Flags = br.AssertByte(0x02, 0x40, 0xC0);
                 br.AssertByte(0);
                 br.AssertByte(0);
                 br.AssertByte(0);
 
                 int fileSize = br.ReadInt32();
                 int fileOffset = br.ReadInt32();
-                // This is not the same as the index
                 ID = br.ReadInt32();
                 int fileNameOffset = br.ReadInt32();
-
-                if (format == 0x2E || format == 0x54 || format == 0x74)
-                    br.AssertInt32(fileSize);
-                else if (format == 0x64)
-                    NBUnk1 = br.ReadUInt32();
+                
+                int uncompressedSize = fileSize;
+                if (format == 0x2E || format == 0x54 || format == 0x64 || format == 0x74)
+                    uncompressedSize = br.ReadInt32();
 
                 Name = br.GetShiftJIS(fileNameOffset);
-                Bytes = br.GetBytes(fileOffset, fileSize);
+
+                // Compressed
+                if ((Flags & 0x80) != 0)
+                {
+                    long position = br.Position;
+                    br.Position = fileOffset;
+                    br.AssertByte(0x78);
+                    br.AssertByte(0x9C);
+                    byte[] compressed = br.ReadBytes(fileSize - 2);
+
+                    Bytes = new byte[uncompressedSize];
+                    using (MemoryStream cmpStream = new MemoryStream(compressed))
+                    using (DeflateStream dfltStream = new DeflateStream(cmpStream, CompressionMode.Decompress))
+                    using (MemoryStream dcmpStream = new MemoryStream(Bytes))
+                        dfltStream.CopyTo(dcmpStream);
+
+                    br.Position = position;
+                }
+                else
+                {
+                    Bytes = br.GetBytes(fileOffset, fileSize);
+                }
             }
 
             internal void Write(BinaryWriterEx bw, int index, byte format)
             {
-                bw.WriteByte(Unk1);
+                bw.WriteByte(Flags);
                 bw.WriteByte(0);
                 bw.WriteByte(0);
                 bw.WriteByte(0);
 
-                bw.WriteInt32(Bytes.Length);
+                bw.ReserveInt32($"CompressedSize{index}");
                 bw.ReserveInt32($"FileData{index}");
                 bw.WriteInt32(ID);
                 bw.ReserveInt32($"FileName{index}");
 
-                if (format == 0x2E || format == 0x54 || format == 0x74)
+                if (format == 0x2E || format == 0x54 || format == 0x64 || format == 0x74)
                     bw.WriteInt32(Bytes.Length);
-                else if (format == 0x64)
-                    bw.WriteUInt32(NBUnk1);
             }
         }
     }

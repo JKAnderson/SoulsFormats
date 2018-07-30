@@ -76,6 +76,7 @@ namespace SoulsFormats
             {
                 Textures[i].Write(bw, i);
             }
+            bw.Pad(0x10);
 
             for (int i = 0; i < Textures.Count; i++)
             {
@@ -86,15 +87,16 @@ namespace SoulsFormats
                 else if (encoding == 2)
                     bw.WriteASCII(texture.Name, true);
             }
-            bw.Pad(0x10);
 
             int dataStart = (int)bw.Position;
             for (int i = 0; i < Textures.Count; i++)
             {
                 Texture texture = Textures[i];
+                if (texture.Bytes.Length > 0)
+                    bw.Pad(0x10);
+
                 bw.FillInt32($"FileData{i}", (int)bw.Position);
                 bw.WriteBytes(texture.Bytes);
-                bw.Pad(0x10);
             }
             bw.FillInt32("DataSize", (int)bw.Position - dataStart);
         }
