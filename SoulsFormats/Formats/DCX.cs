@@ -123,10 +123,17 @@ namespace SoulsFormats
             br.AssertInt32(0x24);
             br.AssertInt32(0x10);
             br.AssertInt32(0x10000);
-            int unk2 = br.ReadInt32();
-            int unk3 = br.ReadInt32();
+            // Uncompressed size of last block
+            int trailingUncompressedSize = br.AssertInt32(uncompressedSize % 0x10000);
+            int egdtSize = br.ReadInt32();
             int chunkCount = br.ReadInt32();
             br.AssertInt32(0x100000);
+
+            if (unk1 != 0x50 + chunkCount * 0x10)
+                throw new InvalidDataException("Unexpected unk1 value in EDGE DCX.");
+
+            if (egdtSize != 0x24 + chunkCount * 0x10)
+                throw new InvalidDataException("Unexpected EgdT size in EDGE DCX.");
 
             byte[] decompressed = new byte[uncompressedSize];
             using (MemoryStream dcmpStream = new MemoryStream(decompressed))
@@ -162,6 +169,7 @@ namespace SoulsFormats
             br.AssertInt32(0x10000);
             br.AssertInt32(0x18);
             br.AssertInt32(0x24);
+
             if (type == Type.DarkSouls1)
             {
                 br.AssertInt32(0x24);
@@ -213,7 +221,7 @@ namespace SoulsFormats
             return bw.FinishBytes();
         }
 
-        public static void Compress(byte[] data, string path, Type type)
+        public static void Compress(byte[] data, Type type, string path)
         {
             using (FileStream stream = File.Create(path))
             {
@@ -277,6 +285,11 @@ namespace SoulsFormats
             bw.WriteInt32(8);
         }
 
+        private static void CompressDemonsSoulsEDGE(byte[] data, BinaryWriterEx bw)
+        {
+
+        }
+
         private static void CompressDarkSouls(byte[] data, BinaryWriterEx bw, Type type)
         {
             byte[] compressed;
@@ -299,7 +312,7 @@ namespace SoulsFormats
                 bw.WriteInt32(0x24);
                 bw.WriteInt32(0x2C);
             }
-            else
+            else if (type == Type.DarkSouls3)
             {
                 bw.WriteInt32(0x44);
                 bw.WriteInt32(0x4C);
