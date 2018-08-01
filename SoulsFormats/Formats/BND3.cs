@@ -48,6 +48,11 @@ namespace SoulsFormats
             unk2 = br.ReadInt32();
             br.AssertInt32(0);
 
+            // There are 12 DeS BNDs with 0 count and all file header fields blank except the name offset
+            // No idea what to do about it. Ex: chr\0300\c0300.anibnd
+            if (fileCount == 0)
+                throw new NotImplementedException("Zero-count BND3 is not supported.");
+
             Files = new List<File>();
             for (int i = 0; i < fileCount; i++)
             {
