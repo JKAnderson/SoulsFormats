@@ -11,15 +11,17 @@ namespace SoulsFormats
         private static readonly Encoding ShiftJIS = Encoding.GetEncoding("shift-jis");
         private static readonly Encoding UTF16 = Encoding.Unicode;
 
-        private Stream stream;
         private BinaryReader br;
         private Stack<long> steps;
 
         public bool BigEndian;
+
+        public Stream Stream { get; private set; }
+
         public long Position
         {
-            get { return stream.Position; }
-            set { stream.Position = value; }
+            get { return Stream.Position; }
+            set { Stream.Position = value; }
         }
 
         public BinaryReaderEx(bool bigEndian, byte[] input) : this(bigEndian, new MemoryStream(input)) { }
@@ -28,7 +30,7 @@ namespace SoulsFormats
         {
             BigEndian = bigEndian;
             steps = new Stack<long>();
-            this.stream = stream;
+            Stream = stream;
             br = new BinaryReader(stream);
         }
 
@@ -38,20 +40,6 @@ namespace SoulsFormats
             if (BigEndian)
                 Array.Reverse(bytes);
             return bytes;
-        }
-
-        private void StepIn(long offset)
-        {
-            steps.Push(stream.Position);
-            stream.Position = offset;
-        }
-
-        private void StepOut()
-        {
-            if (steps.Count == 0)
-                throw new InvalidOperationException("Reader is already stepped all the way out.");
-
-            stream.Position = steps.Pop();
         }
 
         private T[] ReadValues<T>(Func<T> readValue, int count)
@@ -101,15 +89,29 @@ namespace SoulsFormats
             return value;
         }
 
+        public void StepIn(long offset)
+        {
+            steps.Push(Stream.Position);
+            Stream.Position = offset;
+        }
+
+        public void StepOut()
+        {
+            if (steps.Count == 0)
+                throw new InvalidOperationException("Reader is already stepped all the way out.");
+
+            Stream.Position = steps.Pop();
+        }
+
         public void Pad(int align)
         {
-            if (stream.Position % align > 0)
-                stream.Position += align - (stream.Position % align);
+            if (Stream.Position % align > 0)
+                Stream.Position += align - (Stream.Position % align);
         }
 
         public void Skip(int count)
         {
-            stream.Position += count;
+            Stream.Position += count;
         }
 
         #region Boolean

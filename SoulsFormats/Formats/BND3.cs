@@ -47,7 +47,7 @@ namespace SoulsFormats
             writeNameEnd = fileNameEnd != 0;
             unk2 = br.ReadInt32();
             br.AssertInt32(0);
-            
+
             Files = new List<File>();
             for (int i = 0; i < fileCount; i++)
             {
@@ -111,36 +111,17 @@ namespace SoulsFormats
                 bw.FillInt32($"FileData{i}", (int)bw.Position);
 
                 byte[] bytes = file.Bytes;
+                int compressedSize = bytes.Length;
+
                 if ((file.Flags & 0x80) != 0)
                 {
-                    byte[] compressed;
-                    using (MemoryStream cmpStream = new MemoryStream())
-                    using (MemoryStream dcmpStream = new MemoryStream(bytes))
-                    {
-                        DeflateStream dfltStream = new DeflateStream(cmpStream, CompressionMode.Compress);
-                        dcmpStream.CopyTo(dfltStream);
-                        dfltStream.Close();
-                        compressed = cmpStream.ToArray();
-                    }
-
-                    BinaryWriterEx byteWriter = new BinaryWriterEx(true);
-                    byteWriter.WriteByte(0x78);
-                    byteWriter.WriteByte(0x9C);
-                    byteWriter.WriteBytes(compressed);
-                    
-                    uint adlerA = 1;
-                    uint adlerB = 0;
-                    foreach (byte b in bytes)
-                    {
-                        adlerA = (adlerA + b) % 65521;
-                        adlerB = (adlerB + adlerA) % 65521;
-                    }
-                    byteWriter.WriteUInt32((adlerB << 16) | adlerA);
-
-                    bytes = byteWriter.FinishBytes();
+                    compressedSize = Util.WriteZlib(bw, 0x9C, bytes);
+                }
+                else
+                {
+                    bw.WriteBytes(bytes);
                 }
 
-                bw.WriteBytes(bytes);
                 bw.FillInt32($"CompressedSize{i}", bytes.Length);
             }
         }
@@ -159,12 +140,12 @@ namespace SoulsFormats
                 br.AssertByte(0);
                 br.AssertByte(0);
 
-                int fileSize = br.ReadInt32();
+                int compressedSize = br.ReadInt32();
                 int fileOffset = br.ReadInt32();
                 ID = br.ReadInt32();
                 int fileNameOffset = br.ReadInt32();
-                
-                int uncompressedSize = fileSize;
+
+                int uncompressedSize = compressedSize;
                 if (format == 0x2E || format == 0x54 || format == 0x64 || format == 0x74)
                     uncompressedSize = br.ReadInt32();
 
@@ -173,23 +154,13 @@ namespace SoulsFormats
                 // Compressed
                 if ((Flags & 0x80) != 0)
                 {
-                    long position = br.Position;
-                    br.Position = fileOffset;
-                    br.AssertByte(0x78);
-                    br.AssertByte(0x9C);
-                    byte[] compressed = br.ReadBytes(fileSize - 2);
-
-                    Bytes = new byte[uncompressedSize];
-                    using (MemoryStream cmpStream = new MemoryStream(compressed))
-                    using (DeflateStream dfltStream = new DeflateStream(cmpStream, CompressionMode.Decompress))
-                    using (MemoryStream dcmpStream = new MemoryStream(Bytes))
-                        dfltStream.CopyTo(dcmpStream);
-
-                    br.Position = position;
+                    br.StepIn(fileOffset);
+                    Bytes = Util.ReadZlib(br, 0x9C, compressedSize);
+                    br.StepOut();
                 }
                 else
                 {
-                    Bytes = br.GetBytes(fileOffset, fileSize);
+                    Bytes = br.GetBytes(fileOffset, compressedSize);
                 }
             }
 

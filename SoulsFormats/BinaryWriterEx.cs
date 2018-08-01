@@ -11,16 +11,18 @@ namespace SoulsFormats
         private static readonly Encoding ShiftJIS = Encoding.GetEncoding("shift-jis");
         private static readonly Encoding UTF16 = Encoding.Unicode;
 
-        private Stream stream;
         private BinaryWriter bw;
         private Stack<long> steps;
         private Dictionary<string, long> reservations;
 
         public bool BigEndian;
+
+        public Stream Stream { get; private set; }
+
         public long Position
         {
-            get { return stream.Position; }
-            set { stream.Position = value; }
+            get { return Stream.Position; }
+            set { Stream.Position = value; }
         }
 
         public BinaryWriterEx(bool bigEndian) : this(bigEndian, new MemoryStream()) { }
@@ -30,7 +32,7 @@ namespace SoulsFormats
             BigEndian = bigEndian;
             steps = new Stack<long>();
             reservations = new Dictionary<string, long>();
-            this.stream = stream;
+            Stream = stream;
             bw = new BinaryWriter(stream);
         }
 
@@ -41,27 +43,13 @@ namespace SoulsFormats
             bw.Write(bytes);
         }
 
-        private void StepIn(long offset)
-        {
-            steps.Push(stream.Position);
-            stream.Position = offset;
-        }
-
-        private void StepOut()
-        {
-            if (steps.Count == 0)
-                throw new InvalidOperationException("Writer is already stepped all the way out.");
-
-            stream.Position = steps.Pop();
-        }
-
         private void Reserve(string name, string typeName, int bytes)
         {
             name += ":" + typeName;
             if (reservations.ContainsKey(name))
                 throw new ArgumentException("Key already reserved: " + name);
 
-            reservations[name] = stream.Position;
+            reservations[name] = Stream.Position;
             for (int i = 0; i < bytes; i++)
                 WriteByte(0xFE);
         }
@@ -89,15 +77,29 @@ namespace SoulsFormats
 
         public byte[] FinishBytes()
         {
-            MemoryStream ms = (MemoryStream)stream;
+            MemoryStream ms = (MemoryStream)Stream;
             byte[] result = ms.ToArray();
             Finish();
             return result;
         }
 
+        public void StepIn(long offset)
+        {
+            steps.Push(Stream.Position);
+            Stream.Position = offset;
+        }
+
+        public void StepOut()
+        {
+            if (steps.Count == 0)
+                throw new InvalidOperationException("Writer is already stepped all the way out.");
+
+            Stream.Position = steps.Pop();
+        }
+
         public void Pad(int align)
         {
-            while (stream.Position % align > 0)
+            while (Stream.Position % align > 0)
                 WriteByte(0);
         }
 

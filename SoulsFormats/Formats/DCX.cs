@@ -75,16 +75,8 @@ namespace SoulsFormats
             br.AssertASCII("DCS\0");
             int uncompressedSize = br.ReadInt32();
             int compressedSize = br.ReadInt32();
-            br.AssertByte(0x78);
-            br.AssertByte(0xDA);
 
-            byte[] compressed = br.ReadBytes(compressedSize - 2);
-            byte[] decompressed = new byte[uncompressedSize];
-
-            using (MemoryStream cmpStream = new MemoryStream(compressed))
-            using (DeflateStream dfltStream = new DeflateStream(cmpStream, CompressionMode.Decompress))
-            using (MemoryStream dcmpStream = new MemoryStream(decompressed))
-                dfltStream.CopyTo(dcmpStream);
+            byte[] decompressed = Util.ReadZlib(br, 0xDA, compressedSize);
 
             br.AssertASCII("DCA\0");
             br.AssertInt32(8);
@@ -164,7 +156,7 @@ namespace SoulsFormats
         }
 
         private static byte[] DecompressDarkSouls(BinaryReaderEx br, Type type)
-        { 
+        {
             br.AssertASCII("DCX\0");
             br.AssertInt32(0x10000);
             br.AssertInt32(0x18);
@@ -180,7 +172,7 @@ namespace SoulsFormats
                 br.AssertInt32(0x44);
                 br.AssertInt32(0x4C);
             }
-            
+
             br.AssertASCII("DCS\0");
             int uncompressedSize = br.ReadInt32();
             int compressedSize = br.ReadInt32();
@@ -197,20 +189,8 @@ namespace SoulsFormats
 
             br.AssertASCII("DCA\0");
             int compressedHeaderLength = br.ReadInt32();
-            // Some kind of magic values for zlib
-            br.AssertByte(0x78);
-            br.AssertByte(0xDA);
 
-            // Size includes 78DA
-            byte[] compressed = br.ReadBytes(compressedSize - 2);
-            byte[] decompressed = new byte[uncompressedSize];
-
-            using (MemoryStream cmpStream = new MemoryStream(compressed))
-            using (DeflateStream dfltStream = new DeflateStream(cmpStream, CompressionMode.Decompress))
-            using (MemoryStream dcmpStream = new MemoryStream(decompressed))
-                dfltStream.CopyTo(dcmpStream);
-
-            return decompressed;
+            return Util.ReadZlib(br, 0xDA, uncompressedSize);
         }
 
         #region Public Compress
@@ -236,7 +216,9 @@ namespace SoulsFormats
         {
             if (type == Type.DemonsSoulsDFLT)
                 CompressDemonsSoulsDFLT(data, bw);
-            if (type == Type.DarkSouls1 || type == Type.DarkSouls3)
+            else if (type == Type.DemonsSoulsEDGE)
+                CompressDemonsSoulsEDGE(data, bw);
+            else if (type == Type.DarkSouls1 || type == Type.DarkSouls3)
                 CompressDarkSouls(data, bw, type);
             else if (type == Type.Unknown)
                 throw new ArgumentException("You cannot compress a DCX with an unknown type.");
@@ -246,16 +228,6 @@ namespace SoulsFormats
 
         private static void CompressDemonsSoulsDFLT(byte[] data, BinaryWriterEx bw)
         {
-            byte[] compressed;
-            using (MemoryStream cmpStream = new MemoryStream())
-            using (MemoryStream dcmpStream = new MemoryStream(data))
-            {
-                DeflateStream dfltStream = new DeflateStream(cmpStream, CompressionLevel.Optimal);
-                dcmpStream.CopyTo(dfltStream);
-                dfltStream.Close();
-                compressed = cmpStream.ToArray();
-            }
-
             bw.WriteASCII("DCP\0");
             bw.WriteASCII("DFLT");
             bw.WriteInt32(0x20);
@@ -267,19 +239,10 @@ namespace SoulsFormats
 
             bw.WriteASCII("DCS\0");
             bw.WriteInt32(data.Length);
-            bw.WriteInt32(compressed.Length + 2 + 4);
-            bw.WriteByte(0x78);
-            bw.WriteByte(0xDA);
-            bw.WriteBytes(compressed);
+            bw.ReserveInt32("CompressedSize");
 
-            uint adlerA = 1;
-            uint adlerB = 0;
-            foreach (byte b in data)
-            {
-                adlerA = (adlerA + b) % 65521;
-                adlerB = (adlerB + adlerA) % 65521;
-            }
-            bw.WriteUInt32((adlerB << 16) | adlerA);
+            int compressedSize = Util.WriteZlib(bw, 0xDA, data);
+            bw.FillInt32("CompressedSize", compressedSize);
 
             bw.WriteASCII("DCA\0");
             bw.WriteInt32(8);
@@ -287,21 +250,92 @@ namespace SoulsFormats
 
         private static void CompressDemonsSoulsEDGE(byte[] data, BinaryWriterEx bw)
         {
+            int chunkCount = data.Length / 0x10000;
+            if (data.Length % 0x10000 > 0)
+                chunkCount++;
 
+            bw.WriteASCII("DCX\0");
+            bw.WriteInt32(0x10000);
+            bw.WriteInt32(0x18);
+            bw.WriteInt32(0x24);
+            bw.WriteInt32(0x24);
+            bw.WriteInt32(0x50 + chunkCount * 0x10);
+
+            bw.WriteASCII("DCS\0");
+            bw.WriteInt32(data.Length);
+            bw.ReserveInt32("CompressedSize");
+
+            bw.WriteASCII("DCP\0");
+            bw.WriteASCII("EDGE");
+            bw.WriteInt32(0x20);
+            bw.WriteInt32(0x9000000);
+            bw.WriteInt32(0x10000);
+            bw.WriteInt32(0);
+            bw.WriteInt32(0);
+            bw.WriteInt32(0x00100100);
+
+            long dcaStart = bw.Position;
+            bw.WriteASCII("DCA\0");
+            bw.ReserveInt32("DCASize");
+            long egdtStart = bw.Position;
+            bw.WriteASCII("EgdT");
+            bw.WriteInt32(0x00010100);
+            bw.WriteInt32(0x24);
+            bw.WriteInt32(0x10);
+            bw.WriteInt32(0x10000);
+            bw.WriteInt32(data.Length % 0x10000);
+            bw.ReserveInt32("EGDTSize");
+            bw.WriteInt32(chunkCount);
+            bw.WriteInt32(0x100000);
+
+            for (int i = 0; i < chunkCount; i++)
+            {
+                bw.WriteInt32(0);
+                bw.ReserveInt32($"ChunkOffset{i}");
+                bw.ReserveInt32($"ChunkSize{i}");
+                bw.ReserveInt32($"ChunkCompressed{i}");
+            }
+
+            bw.FillInt32("DCASize", (int)(bw.Position - dcaStart));
+            bw.FillInt32("EGDTSize", (int)(bw.Position - egdtStart));
+
+            int compressedSize = 0;
+            for (int i = 0; i < chunkCount; i++)
+            {
+                int chunkSize = 0x10000;
+                if (i == chunkCount - 1)
+                    chunkSize = data.Length % 0x10000;
+
+                byte[] chunk;
+                using (MemoryStream cmpStream = new MemoryStream())
+                using (MemoryStream dcmpStream = new MemoryStream(data, i * 0x10000, chunkSize))
+                {
+                    DeflateStream dfltStream = new DeflateStream(cmpStream, CompressionMode.Compress);
+                    dcmpStream.CopyTo(dfltStream);
+                    dfltStream.Close();
+                    chunk = cmpStream.ToArray();
+                }
+
+                if (chunk.Length < chunkSize)
+                    bw.FillInt32($"ChunkCompressed{i}", 1);
+                else
+                {
+                    bw.FillInt32($"ChunkCompressed{i}", 0);
+                    chunk = data;
+                }
+
+                compressedSize += chunk.Length;
+                bw.FillInt32($"ChunkOffset{i}", (int)bw.Position);
+                bw.FillInt32($"ChunkSize{i}", chunk.Length);
+                bw.WriteBytes(chunk);
+                bw.Pad(0x10);
+            }
+
+            bw.FillInt32("CompressedSize", compressedSize);
         }
 
         private static void CompressDarkSouls(byte[] data, BinaryWriterEx bw, Type type)
         {
-            byte[] compressed;
-            using (MemoryStream cmpStream = new MemoryStream())
-            using (MemoryStream dcmpStream = new MemoryStream(data))
-            {
-                DeflateStream dfltStream = new DeflateStream(cmpStream, CompressionLevel.Optimal);
-                dcmpStream.CopyTo(dfltStream);
-                dfltStream.Close();
-                compressed = cmpStream.ToArray();
-            }
-
             bw.WriteASCII("DCX\0");
             bw.WriteInt32(0x10000);
             bw.WriteInt32(0x18);
@@ -320,8 +354,7 @@ namespace SoulsFormats
 
             bw.WriteASCII("DCS\0");
             bw.WriteInt32(data.Length);
-            // Size includes 78DA
-            bw.WriteInt32(compressed.Length + 2 + 4);
+            bw.ReserveInt32("CompressedSize");
             bw.WriteASCII("DCP\0");
             bw.WriteASCII("DFLT");
             bw.WriteInt32(0x20);
@@ -333,18 +366,9 @@ namespace SoulsFormats
             bw.WriteASCII("DCA\0");
             bw.WriteInt32(0x8);
 
-            bw.WriteByte(0x78);
-            bw.WriteByte(0xDA);
-            bw.WriteBytes(compressed);
-
-            uint adlerA = 1;
-            uint adlerB = 0;
-            foreach (byte b in data)
-            {
-                adlerA = (adlerA + b) % 65521;
-                adlerB = (adlerB + adlerA) % 65521;
-            }
-            bw.WriteUInt32((adlerB << 16) | adlerA);
+            long compressedStart = bw.Position;
+            Util.WriteZlib(bw, 0xDA, data);
+            bw.FillInt32("CompressedSize", (int)(bw.Position - compressedStart));
         }
 
         public enum Type
