@@ -4,15 +4,32 @@ using System.IO.Compression;
 
 namespace SoulsFormats
 {
+    /// <summary>
+    /// A general-purpose single compressed file wrapper used in DS1, DSR, DS2, DS3, DeS, and BB.
+    /// </summary>
     public static class DCX
     {
         #region Public Decompress
+        /// <summary>
+        /// Decompress a DCX file from an array of bytes and return the detected DCX type.
+        /// </summary>
         public static byte[] Decompress(byte[] data, out Type type)
         {
             BinaryReaderEx br = new BinaryReaderEx(true, data);
             return Decompress(br, out type);
         }
 
+        /// <summary>
+        /// Decompress a DCX file from an array of bytes.
+        /// </summary>
+        public static byte[] Decompress(byte[] data)
+        {
+            return Decompress(data, out _);
+        }
+
+        /// <summary>
+        /// Decompress a DCX file from the specified path and return the detected DCX type.
+        /// </summary>
         public static byte[] Decompress(string path, out Type type)
         {
             using (FileStream stream = File.OpenRead(path))
@@ -20,6 +37,14 @@ namespace SoulsFormats
                 BinaryReaderEx br = new BinaryReaderEx(true, stream);
                 return Decompress(br, out type);
             }
+        }
+
+        /// <summary>
+        /// Decompress a DCX file from the specified path.
+        /// </summary>
+        public static byte[] Decompress(string path)
+        {
+            return Decompress(path, out _);
         }
         #endregion
 
@@ -194,6 +219,9 @@ namespace SoulsFormats
         }
 
         #region Public Compress
+        /// <summary>
+        /// Compress a DCX file to an array of bytes using the specified DCX type.
+        /// </summary>
         public static byte[] Compress(byte[] data, Type type)
         {
             BinaryWriterEx bw = new BinaryWriterEx(true);
@@ -201,6 +229,9 @@ namespace SoulsFormats
             return bw.FinishBytes();
         }
 
+        /// <summary>
+        /// Compress a DCX file to the specified path using the specified DCX type.
+        /// </summary>
         public static void Compress(byte[] data, Type type, string path)
         {
             using (FileStream stream = File.Create(path))
@@ -371,12 +402,34 @@ namespace SoulsFormats
             bw.FillInt32("CompressedSize", (int)(bw.Position - compressedStart));
         }
 
+        /// <summary>
+        /// Specific DCX format used for a certain file.
+        /// </summary>
         public enum Type
         {
+            /// <summary>
+            /// DCX type could not be detected.
+            /// </summary>
             Unknown,
+
+            /// <summary>
+            /// An odd single-block format used for DeS debug map files.
+            /// </summary>
             DemonsSoulsDFLT,
+
+            /// <summary>
+            /// A multi-block format used for most DeS files.
+            /// </summary>
             DemonsSoulsEDGE,
+
+            /// <summary>
+            /// The standard single-block format used in DS1, DSR, and DS2.
+            /// </summary>
             DarkSouls1,
+
+            /// <summary>
+            /// The standard single-block format used in DS3 and BB.
+            /// </summary>
             DarkSouls3,
         }
     }

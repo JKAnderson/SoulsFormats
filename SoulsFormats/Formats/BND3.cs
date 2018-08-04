@@ -1,19 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 
 namespace SoulsFormats
 {
+    /// <summary>
+    /// A general-purpose file container used in DS1, DSR, DeS, and NB. Extension: .*bnd
+    /// </summary>
     public class BND3
     {
         #region Public Read
+        /// <summary>
+        /// Reads an array of bytes as a BND3.
+        /// </summary>
         public static BND3 Read(byte[] bytes)
         {
             BinaryReaderEx br = new BinaryReaderEx(false, bytes);
             return new BND3(br);
         }
 
+        /// <summary>
+        /// Reads a file as a BND3 using file streams.
+        /// </summary>
         public static BND3 Read(string path)
         {
             using (FileStream stream = System.IO.File.OpenRead(path))
@@ -24,17 +32,29 @@ namespace SoulsFormats
         }
         #endregion
 
-        public string Signature;
+        /// <summary>
+        /// A timestamp of unknown purpose.
+        /// </summary>
+        public DateTime Timestamp;
+
+        /// <summary>
+        /// Indicates the format of the BND3.
+        /// </summary>
         public byte Format;
+
+        /// <summary>
+        /// The files contained within this BND3.
+        /// </summary>
+        public List<File> Files;
+
         private bool bigEndian, unk1;
         private bool writeNameEnd;
         private int unk2;
-        public List<File> Files;
 
         private BND3(BinaryReaderEx br)
         {
             br.AssertASCII("BND3");
-            Signature = br.ReadASCII(8);
+            Timestamp = Util.ParseBNDTimestamp(br.ReadASCII(8));
 
             Format = br.AssertByte(0x0E, 0x2E, 0x54, 0x60, 0x64, 0x70, 0x74, 0xE0, 0xF0);
             bigEndian = br.ReadBoolean();
@@ -61,6 +81,9 @@ namespace SoulsFormats
         }
 
         #region Public Write
+        /// <summary>
+        /// Writes a BND3 file as an array of bytes.
+        /// </summary>
         public byte[] Write()
         {
             BinaryWriterEx bw = new BinaryWriterEx(false);
@@ -68,6 +91,9 @@ namespace SoulsFormats
             return bw.FinishBytes();
         }
 
+        /// <summary>
+        /// Writes a BND3 file to the specified path using file streams.
+        /// </summary>
         public void Write(string path)
         {
             using (FileStream stream = System.IO.File.Create(path))
@@ -82,7 +108,7 @@ namespace SoulsFormats
         private void Write(BinaryWriterEx bw)
         {
             bw.WriteASCII("BND3");
-            bw.WriteASCII(Signature);
+            bw.WriteASCII(Util.UnparseBNDTimestamp(Timestamp));
             bw.WriteByte(Format);
             bw.WriteBoolean(bigEndian);
             bw.WriteBoolean(unk1);
@@ -131,12 +157,30 @@ namespace SoulsFormats
             }
         }
 
+        /// <summary>
+        /// A generic file in a BND3 container.
+        /// </summary>
         public class File
         {
+            /// <summary>
+            /// The name of the file, typically a virtual path.
+            /// </summary>
             public string Name;
+
+            /// <summary>
+            /// The ID number of the file.
+            /// </summary>
             public int ID;
-            public byte[] Bytes;
+
+            /// <summary>
+            /// Flags indicating whether to compress the file (0x80) and other things we don't understand.
+            /// </summary>
             public byte Flags;
+
+            /// <summary>
+            /// The raw data of the file.
+            /// </summary>
+            public byte[] Bytes;
 
             internal File(BinaryReaderEx br, byte format)
             {

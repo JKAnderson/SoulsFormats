@@ -3,8 +3,12 @@ using System.Collections.Generic;
 
 namespace SoulsFormats
 {
+    /// <summary>
+    /// An interface configuration file used in DS1, DSR, DeS, and NB. Very poorly supported at the moment.
+    /// </summary>
     public class DRB
     {
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         public Dictionary<int, string> strings;
         public List<TEXIEntry> textures;
         public Dictionary<int, SHAPEntry> shapEntries;
@@ -895,5 +899,6 @@ namespace SoulsFormats
                 DLGO = dlgoEntries[dlgoOffset];
             }
         }
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }

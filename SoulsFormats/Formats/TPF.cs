@@ -3,15 +3,24 @@ using System.IO;
 
 namespace SoulsFormats
 {
+    /// <summary>
+    /// A multi-file DDS container used in DS1, DSR, DS2, DS3, DeS, BB, and NB.
+    /// </summary>
     public class TPF
     {
         #region Public Read
+        /// <summary>
+        /// Reads an array of bytes as a TPF.
+        /// </summary>
         public static TPF Read(byte[] bytes)
         {
             BinaryReaderEx br = new BinaryReaderEx(false, bytes);
             return new TPF(br);
         }
 
+        /// <summary>
+        /// Reads a file as a TPF using file streams.
+        /// </summary>
         public static TPF Read(string path)
         {
             using (FileStream stream = File.OpenRead(path))
@@ -22,7 +31,11 @@ namespace SoulsFormats
         }
         #endregion
 
+        /// <summary>
+        /// The textures contained within this TPF.
+        /// </summary>
         public List<Texture> Textures;
+
         private byte flag1, flag2, encoding, flag4;
 
         private TPF(BinaryReaderEx br)
@@ -44,6 +57,9 @@ namespace SoulsFormats
         }
 
         #region Public Write
+        /// <summary>
+        /// Writes a TPF file to an array of bytes.
+        /// </summary>
         public byte[] Write()
         {
             BinaryWriterEx bw = new BinaryWriterEx(false);
@@ -51,6 +67,9 @@ namespace SoulsFormats
             return bw.FinishBytes();
         }
 
+        /// <summary>
+        /// Writes a TPF file to the specified path using file streams.
+        /// </summary>
         public void Write(string path)
         {
             using (FileStream stream = File.Create(path))
@@ -101,10 +120,24 @@ namespace SoulsFormats
             bw.FillInt32("DataSize", (int)bw.Position - dataStart);
         }
 
+        /// <summary>
+        /// A DDS texture in a TPF container.
+        /// </summary>
         public class Texture
         {
+            /// <summary>
+            /// The name of the texture; should not include a path or extension.
+            /// </summary>
             public string Name;
+
+            /// <summary>
+            /// Flags indicating something or other.
+            /// </summary>
             public int Flags1, Flags2;
+
+            /// <summary>
+            /// The raw data of the texture.
+            /// </summary>
             public byte[] Bytes;
 
             internal Texture(BinaryReaderEx br, byte encoding)

@@ -1,57 +1,82 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace SoulsFormats
 {
-    public class BDT4
+    /// <summary>
+    /// A general-purpose headered file container used in DS2, DS3, and BB. Extensions: .*bhd (header) and .*bdt (data)
+    /// </summary>
+    public class BXF4
     {
         #region Public Read
-        public static BDT4 Read(byte[] bhdBytes, byte[] bdtBytes)
+        /// <summary>
+        /// Reads two arrays of bytes as the BHD and BDT.
+        /// </summary>
+        public static BXF4 Read(byte[] bhdBytes, byte[] bdtBytes)
         {
             BinaryReaderEx bhdReader = new BinaryReaderEx(false, bhdBytes);
             BinaryReaderEx bdtReader = new BinaryReaderEx(false, bdtBytes);
-            return new BDT4(bhdReader, bdtReader);
+            return new BXF4(bhdReader, bdtReader);
         }
 
-        public static BDT4 Read(byte[] bhdBytes, string bdtPath)
+        /// <summary>
+        /// Reads an array of bytes as the BHD and a file as the BDT.
+        /// </summary>
+        public static BXF4 Read(byte[] bhdBytes, string bdtPath)
         {
             using (FileStream bdtStream = System.IO.File.OpenRead(bdtPath))
             {
                 BinaryReaderEx bhdReader = new BinaryReaderEx(false, bhdBytes);
                 BinaryReaderEx bdtReader = new BinaryReaderEx(false, bdtStream);
-                return new BDT4(bhdReader, bdtReader);
+                return new BXF4(bhdReader, bdtReader);
             }
         }
 
-        public static BDT4 Read(string bhdPath, byte[] bdtBytes)
+        /// <summary>
+        /// Reads a file as the BHD and an array of bytes as the BDT.
+        /// </summary>
+        public static BXF4 Read(string bhdPath, byte[] bdtBytes)
         {
             using (FileStream bhdStream = System.IO.File.OpenRead(bhdPath))
             {
                 BinaryReaderEx bhdReader = new BinaryReaderEx(false, bhdStream);
                 BinaryReaderEx bdtReader = new BinaryReaderEx(false, bdtBytes);
-                return new BDT4(bhdReader, bdtReader);
+                return new BXF4(bhdReader, bdtReader);
             }
         }
 
-        public static BDT4 Read(string bhdPath, string bdtPath)
+        /// <summary>
+        /// Reads two files as the BHD and BDT.
+        /// </summary>
+        public static BXF4 Read(string bhdPath, string bdtPath)
         {
             using (FileStream bhdStream = System.IO.File.OpenRead(bhdPath))
             using (FileStream bdtStream = System.IO.File.OpenRead(bdtPath))
             {
                 BinaryReaderEx bhdReader = new BinaryReaderEx(false, bhdStream);
                 BinaryReaderEx bdtReader = new BinaryReaderEx(false, bdtStream);
-                return new BDT4(bhdReader, bdtReader);
+                return new BXF4(bhdReader, bdtReader);
             }
         }
         #endregion
 
-        public List<File> Files;
-        private BHD4 bhd;
-        private string signature;
+        /// <summary>
+        /// A timestamp of unknown purpose.
+        /// </summary>
+        public DateTime BHDTimestamp, BDTTimestamp;
 
-        private BDT4(BinaryReaderEx bhdReader, BinaryReaderEx bdtReader)
+        /// <summary>
+        /// The files contained within this BXF4.
+        /// </summary>
+        public List<File> Files;
+
+        private BHD4 bhd;
+
+        private BXF4(BinaryReaderEx bhdReader, BinaryReaderEx bdtReader)
         {
             bhd = new BHD4(bhdReader);
+            BHDTimestamp = bhd.Timestamp;
 
             bdtReader.AssertASCII("BDF4");
             bdtReader.AssertInt32(0);
@@ -59,7 +84,7 @@ namespace SoulsFormats
             bdtReader.AssertInt32(0);
             // Data start
             bdtReader.AssertInt64(0x30);
-            signature = bdtReader.ReadASCII(8);
+            BDTTimestamp = Util.ParseBNDTimestamp(bdtReader.ReadASCII(8));
             bdtReader.AssertInt64(0);
             bdtReader.AssertInt64(0);
 
@@ -71,6 +96,9 @@ namespace SoulsFormats
         }
 
         #region Public Write
+        /// <summary>
+        /// Writes the BHD and BDT as two arrays of bytes.
+        /// </summary>
         public void Write(out byte[] bhdBytes, out byte[] bdtBytes)
         {
             BinaryWriterEx bhdWriter = new BinaryWriterEx(false);
@@ -80,6 +108,9 @@ namespace SoulsFormats
             bdtBytes = bdtWriter.FinishBytes();
         }
 
+        /// <summary>
+        /// Writes the BHD as an array of bytes and the BDT as a file.
+        /// </summary>
         public void Write(out byte[] bhdBytes, string bdtPath)
         {
             using (FileStream bdtStream = System.IO.File.Create(bdtPath))
@@ -92,6 +123,9 @@ namespace SoulsFormats
             }
         }
 
+        /// <summary>
+        /// Writes the BHD as a file and the BDT as an array of bytes.
+        /// </summary>
         public void Write(string bhdPath, out byte[] bdtBytes)
         {
             using (FileStream bhdStream = System.IO.File.Create(bhdPath))
@@ -104,6 +138,9 @@ namespace SoulsFormats
             }
         }
 
+        /// <summary>
+        /// Writes the BHD and BDT as two files.
+        /// </summary>
         public void Write(string bhdPath, string bdtPath)
         {
             using (FileStream bhdStream = System.IO.File.Create(bhdPath))
@@ -125,7 +162,7 @@ namespace SoulsFormats
             bdtWriter.WriteInt32(0x10000);
             bdtWriter.WriteInt32(0);
             bdtWriter.WriteInt64(0x30);
-            bdtWriter.WriteASCII(signature);
+            bdtWriter.WriteASCII(Util.UnparseBNDTimestamp(BDTTimestamp));
             bdtWriter.WriteInt64(0);
             bdtWriter.WriteInt64(0);
 
@@ -136,13 +173,29 @@ namespace SoulsFormats
                 offsets.Add((int)bdtWriter.Position);
                 bdtWriter.WriteBytes(file.Bytes);
             }
+
+            bhd.Timestamp = BHDTimestamp;
             bhd.Write(bhdWriter, Files, offsets);
         }
 
+        /// <summary>
+        /// A generic file in a BXF4 container.
+        /// </summary>
         public class File
         {
+            /// <summary>
+            /// The name of the file, typically a virtual path.
+            /// </summary>
             public string Name;
+
+            /// <summary>
+            /// The ID number of the file.
+            /// </summary>
             public int ID;
+
+            /// <summary>
+            /// The raw data of the file.
+            /// </summary>
             public byte[] Bytes;
 
             internal File(BinaryReaderEx br, BHD4.FileHeader fileHeader)
@@ -156,10 +209,10 @@ namespace SoulsFormats
         internal class BHD4
         {
             public List<FileHeader> FileHeaders;
+            public DateTime Timestamp;
 
             private List<UnkEntry1> unkEntries1;
             private List<UnkEntry2> unkEntries2;
-            private string signature;
             private bool unicode;
 
             public BHD4(BinaryReaderEx br)
@@ -170,7 +223,7 @@ namespace SoulsFormats
                 int fileCount = br.ReadInt32();
                 // File headers start
                 br.AssertInt64(0x40);
-                signature = br.ReadASCII(8);
+                Timestamp = Util.ParseBNDTimestamp(br.ReadASCII(8));
                 // File header size
                 br.AssertInt64(0x24);
                 // Would be data start in BND4
@@ -215,7 +268,7 @@ namespace SoulsFormats
                 bw.WriteInt32(0x10000);
                 bw.WriteInt32(files.Count);
                 bw.WriteInt64(0x40);
-                bw.WriteASCII(signature);
+                bw.WriteASCII(Util.UnparseBNDTimestamp(Timestamp));
                 bw.WriteInt64(0x24);
                 bw.WriteInt64(0);
                 bw.WriteBoolean(unicode);

@@ -1,10 +1,12 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace SoulsFormats
 {
-    static class Util
+    internal static class Util
     {
         public static uint FromPathHash(string text)
         {
@@ -30,6 +32,36 @@ namespace SoulsFormats
             }
 
             return true;
+        }
+
+        private static readonly Regex timestampRx = new Regex(@"(\d\d)(\w)(\d+)(\w)(\d+)");
+        public static DateTime ParseBNDTimestamp(string timestamp)
+        {
+            Match match = timestampRx.Match(timestamp);
+            if (!match.Success)
+                throw new InvalidDataException("Unrecognized timestamp format.");
+
+            int year = Int32.Parse(match.Groups[1].Value) + 2000;
+            int month = match.Groups[2].Value[0] - 'A';
+            int day = Int32.Parse(match.Groups[3].Value);
+            int hour = match.Groups[4].Value[0] - 'A';
+            int minute = Int32.Parse(match.Groups[5].Value);
+
+            return new DateTime(year, month, day, hour, minute, 0);
+        }
+
+        public static string UnparseBNDTimestamp(DateTime dateTime)
+        {
+            int year = dateTime.Year - 2000;
+            if (year < 0 || year > 99)
+                throw new InvalidDataException("BND timestamp year must be between 2000 and 2099 inclusive.");
+
+            char month = (char)(dateTime.Month + 'A');
+            int day = dateTime.Day;
+            char hour = (char)(dateTime.Hour + 'A');
+            int minute = dateTime.Minute;
+
+            return $"{year:D2}{month}{day}{hour}{minute}".PadRight(8, '\0');
         }
 
         public static int WriteZlib(BinaryWriterEx bw, byte formatByte, byte[] input)
