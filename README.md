@@ -65,10 +65,10 @@ A general-purpose file container used from DS2 onwards.
 Extension: `.*bnd`
 * DS1: N/A
 * DSR: N/A
-* DS2: Untested
+* DS2: Full Read and Write
 * DS3: Full Read and Write
 * DeS: N/A
-* BB: Untested
+* BB: Full Read and Write
 * NB: N/A
 
 ### BXF3
@@ -87,10 +87,10 @@ Essentially a BND4 split into separate header and data files.
 Extensions: `.*bhd` (header) and `.*bdt` (data)
 * DS1: N/A
 * DSR: N/A
-* DS2: Untested
+* DS2: Full Read and Write
 * DS3: Full Read and Write
 * DeS: N/A
-* BB: Untested
+* BB: Full Read and Write
 * NB: N/A
 
 ### DCX

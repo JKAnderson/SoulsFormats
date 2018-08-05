@@ -165,7 +165,7 @@ namespace SoulsFormats
             bdtWriter.WriteASCII(Util.UnparseBNDTimestamp(BDTTimestamp));
             bdtWriter.WriteInt64(0);
             bdtWriter.WriteInt64(0);
-
+            
             var offsets = new List<int>();
             foreach (File file in Files)
             {
@@ -211,9 +211,8 @@ namespace SoulsFormats
             public List<FileHeader> FileHeaders;
             public DateTime Timestamp;
 
-            private List<UnkEntry1> unkEntries1;
-            private List<UnkEntry2> unkEntries2;
             private bool unicode;
+            private byte extended;
 
             public BHD4(BinaryReaderEx br)
             {
@@ -230,10 +229,10 @@ namespace SoulsFormats
                 br.AssertInt64(0);
                 unicode = br.ReadBoolean();
                 br.AssertByte(0x74);
-                br.AssertByte(4);
+                extended = br.AssertByte(0, 4);
                 br.AssertByte(0);
                 br.AssertInt32(0);
-                long unkSection1Offset = br.ReadInt64();
+                long hashGroupsOffset = br.ReadInt64();
 
                 FileHeaders = new List<FileHeader>();
                 for (int i = 0; i < fileCount; i++)
@@ -241,23 +240,26 @@ namespace SoulsFormats
                     FileHeaders.Add(new FileHeader(br, unicode));
                 }
 
-                br.Position = unkSection1Offset;
-                long unkSection2Offset = br.ReadInt64();
-                int unkEntry1Count = br.ReadInt32();
-                // Probably 4 bytes
-                br.AssertInt32(0x00080810);
-
-                unkEntries1 = new List<UnkEntry1>();
-                for (int i = 0; i < unkEntry1Count; i++)
+                if (extended == 4)
                 {
-                    unkEntries1.Add(new UnkEntry1(br));
-                }
+                    br.Position = hashGroupsOffset;
+                    long pathHashesOffset = br.ReadInt64();
+                    int hashGroupsCount = br.ReadInt32();
+                    // Probably 4 bytes
+                    br.AssertInt32(0x00080810);
 
-                br.Position = unkSection2Offset;
-                unkEntries2 = new List<UnkEntry2>();
-                for (int i = 0; i < fileCount; i++)
-                {
-                    unkEntries2.Add(new UnkEntry2(br));
+                    var hashGroups = new List<HashGroup>();
+                    for (int i = 0; i < hashGroupsCount; i++)
+                    {
+                        hashGroups.Add(new HashGroup(br));
+                    }
+
+                    br.Position = pathHashesOffset;
+                    var pathHashes = new List<PathHash>();
+                    for (int i = 0; i < fileCount; i++)
+                    {
+                        pathHashes.Add(new PathHash(br));
+                    }
                 }
             }
 
@@ -273,10 +275,13 @@ namespace SoulsFormats
                 bw.WriteInt64(0);
                 bw.WriteBoolean(unicode);
                 bw.WriteByte(0x74);
-                bw.WriteByte(4);
+                bw.WriteByte(extended);
                 bw.WriteByte(0);
                 bw.WriteInt32(0);
-                bw.ReserveInt64("UnkSection1");
+                if (extended == 4)
+                    bw.ReserveInt64("HashGroups");
+                else
+                    bw.WriteInt64(0);
 
                 for (int i = 0; i < files.Count; i++)
                 {
@@ -292,23 +297,65 @@ namespace SoulsFormats
                     else
                         bw.WriteShiftJIS(file.Name, true);
                 }
-                bw.Pad(0x8);
-
-                bw.FillInt64("UnkSection1", bw.Position);
-                bw.ReserveInt64("UnkSection2");
-                bw.WriteInt32(unkEntries1.Count);
-                bw.WriteInt32(0x00080810);
-
-                foreach (UnkEntry1 unkEntry1 in unkEntries1)
+                
+                if (extended == 4)
                 {
-                    unkEntry1.Write(bw);
-                }
+                    uint groupCount = 0;
+                    for (uint p = (uint)files.Count / 7; p <= 100000; p++)
+                    {
+                        if (Util.IsPrime(p))
+                        {
+                            groupCount = p;
+                            break;
+                        }
+                    }
 
-                // No padding after section 1
-                bw.FillInt64("UnkSection2", bw.Position);
-                foreach (UnkEntry2 unkEntry2 in unkEntries2)
-                {
-                    unkEntry2.Write(bw);
+                    if (groupCount == 0)
+                        throw new InvalidOperationException("Hash group count not determined in BXF4.");
+
+                    var hashLists = new List<PathHash>[groupCount];
+                    for (int i = 0; i < groupCount; i++)
+                        hashLists[i] = new List<PathHash>();
+
+                    for (int i = 0; i < files.Count; i++)
+                    {
+                        var pathHash = new PathHash(i, files[i].Name);
+                        uint group = pathHash.Hash % groupCount;
+                        hashLists[group].Add(pathHash);
+                    }
+
+                    for (int i = 0; i < groupCount; i++)
+                        hashLists[i].Sort((ph1, ph2) => ph1.Hash.CompareTo(ph2.Hash));
+
+                    var hashGroups = new List<HashGroup>();
+                    var pathHashes = new List<PathHash>();
+
+                    int count = 0;
+                    foreach (List<PathHash> hashList in hashLists)
+                    {
+                        int index = count;
+                        foreach (PathHash pathHash in hashList)
+                        {
+                            pathHashes.Add(pathHash);
+                            count++;
+                        }
+
+                        hashGroups.Add(new HashGroup(index, count - index));
+                    }
+
+                    bw.Pad(0x8);
+                    bw.FillInt64("HashGroups", bw.Position);
+                    bw.ReserveInt64("PathHashes");
+                    bw.WriteUInt32(groupCount);
+                    bw.WriteInt32(0x00080810);
+
+                    foreach (HashGroup hashGroup in hashGroups)
+                        hashGroup.Write(bw);
+
+                    // No padding after section 1
+                    bw.FillInt64("PathHashes", bw.Position);
+                    foreach (PathHash pathHash in pathHashes)
+                        pathHash.Write(bw);
                 }
             }
 
@@ -347,37 +394,50 @@ namespace SoulsFormats
                 }
             }
 
-            private class UnkEntry1
+            private class PathHash
             {
-                private int unk1, unk2;
+                public int Index;
+                public uint Hash;
 
-                public UnkEntry1(BinaryReaderEx br)
+                public PathHash(BinaryReaderEx br)
                 {
-                    unk1 = br.ReadInt32();
-                    unk2 = br.ReadInt32();
+                    Hash = br.ReadUInt32();
+                    Index = br.ReadInt32();
+                }
+
+                public PathHash(int index, string path)
+                {
+                    Index = index;
+                    Hash = Util.FromPathHash(path);
                 }
 
                 public void Write(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(unk1);
-                    bw.WriteInt32(unk2);
+                    bw.WriteUInt32(Hash);
+                    bw.WriteInt32(Index);
                 }
             }
 
-            private class UnkEntry2
+            private class HashGroup
             {
-                private int unk1, unk2;
+                public int Index, Length;
 
-                public UnkEntry2(BinaryReaderEx br)
+                public HashGroup(BinaryReaderEx br)
                 {
-                    unk1 = br.ReadInt32();
-                    unk2 = br.ReadInt32();
+                    Length = br.ReadInt32();
+                    Index = br.ReadInt32();
+                }
+
+                public HashGroup(int index, int length)
+                {
+                    Index = index;
+                    Length = length;
                 }
 
                 public void Write(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(unk1);
-                    bw.WriteInt32(unk2);
+                    bw.WriteInt32(Length);
+                    bw.WriteInt32(Index);
                 }
             }
         }

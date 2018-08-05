@@ -43,7 +43,7 @@ namespace SoulsFormats
         public List<File> Files;
 
         private bool unicode;
-        private byte flag;
+        private byte format;
         private byte extended;
 
         private BND4(BinaryReaderEx br)
@@ -56,12 +56,17 @@ namespace SoulsFormats
             br.AssertInt64(0x40);
             Timestamp = Util.ParseBNDTimestamp(br.ReadASCII(8));
             // File header size
-            br.AssertInt64(0x24);
+            long fileHeaderSize = br.AssertInt64(0x1C, 0x24);
             long dataStart = br.ReadInt64();
+
             unicode = br.ReadBoolean();
-            flag = br.AssertByte(0x54, 0x74);
-            extended = br.AssertByte(0, 4);
+            if (fileHeaderSize == 0x1C)
+                format = br.AssertByte(0x70);
+            else
+                format = br.AssertByte(0x54, 0x74);
+            extended = br.AssertByte(0, 1, 4);
             br.AssertByte(0);
+
             br.AssertInt32(0);
             long hashGroupsOffset = 0;
             if (extended == 4)
@@ -72,7 +77,7 @@ namespace SoulsFormats
             Files = new List<File>();
             for (int i = 0; i < fileCount; i++)
             {
-                Files.Add(new File(br, unicode));
+                Files.Add(new File(br, unicode, format));
             }
 
             if (extended == 4)
@@ -131,10 +136,13 @@ namespace SoulsFormats
             bw.WriteInt32(Files.Count);
             bw.WriteInt64(0x40);
             bw.WriteASCII(Util.UnparseBNDTimestamp(Timestamp));
-            bw.WriteInt64(0x24);
+            if (format == 0x70)
+                bw.WriteInt64(0x1C);
+            else
+                bw.WriteInt64(0x24);
             bw.ReserveInt64("DataStart");
             bw.WriteBoolean(unicode);
-            bw.WriteByte(flag);
+            bw.WriteByte(format);
             bw.WriteByte(extended);
             bw.WriteByte(0);
             bw.WriteInt32(0);
@@ -145,7 +153,7 @@ namespace SoulsFormats
 
             for (int i = 0; i < Files.Count; i++)
             {
-                Files[i].Write(bw, i);
+                Files[i].Write(bw, i, format);
             }
 
             for (int i = 0; i < Files.Count; i++)
@@ -226,7 +234,20 @@ namespace SoulsFormats
                     bw.Pad(0x10);
 
                 bw.FillInt32($"FileData{i}", (int)bw.Position);
-                bw.WriteBytes(Files[i].Bytes);
+
+                byte[] bytes = file.Bytes;
+                int compressedSize = bytes.Length;
+
+                if ((file.Flags & 0x80) != 0)
+                {
+                    compressedSize = Util.WriteZlib(bw, 0x9C, bytes);
+                }
+                else
+                {
+                    bw.WriteBytes(bytes);
+                }
+
+                bw.FillInt64($"CompressedSize{i}", bytes.Length);
             }
         }
 
@@ -246,33 +267,59 @@ namespace SoulsFormats
             public int ID;
 
             /// <summary>
+            /// Flags indicating whether to compress the file (0xC0) and other things we don't understand.
+            /// </summary>
+            public byte Flags;
+
+            /// <summary>
             /// The raw data of the file.
             /// </summary>
             public byte[] Bytes;
 
-            internal File(BinaryReaderEx br, bool unicode)
+            internal File(BinaryReaderEx br, bool unicode, byte format)
             {
-                br.AssertInt32(0x40);
+                Flags = br.AssertByte(0x40, 0xC0);
+                br.AssertByte(0);
+                br.AssertByte(0);
+                br.AssertByte(0);
+
                 br.AssertInt32(-1);
-                long fileSize = br.ReadInt64();
-                br.AssertInt64(fileSize);
+                long compressedSize = br.ReadInt64();
+                long uncompressedSize = 0;
+                if (format == 0x54 || format == 0x74)
+                    uncompressedSize = br.ReadInt64();
                 int fileOffset = br.ReadInt32();
                 ID = br.ReadInt32();
                 int nameOffset = br.ReadInt32();
 
-                Bytes = br.GetBytes(fileOffset, (int)fileSize);
                 if (unicode)
                     Name = br.GetUTF16(nameOffset);
                 else
                     Name = br.GetShiftJIS(nameOffset);
+
+                if ((Flags & 0x80) != 0)
+                {
+                    br.StepIn(fileOffset);
+                    Bytes = Util.ReadZlib(br, 0x9C, (int)compressedSize);
+                    br.StepOut();
+                }
+                else
+                {
+                    Bytes = br.GetBytes(fileOffset, (int)compressedSize);
+                }
             }
 
-            internal void Write(BinaryWriterEx bw, int index)
+            internal void Write(BinaryWriterEx bw, int index, byte format)
             {
-                bw.WriteInt32(0x40);
+                bw.WriteByte(Flags);
+                bw.WriteByte(0);
+                bw.WriteByte(0);
+                bw.WriteByte(0);
+
                 bw.WriteInt32(-1);
-                bw.WriteInt64(Bytes.LongLength);
-                bw.WriteInt64(Bytes.LongLength);
+                bw.ReserveInt64($"CompressedSize{index}");
+                if (format == 0x54 || format == 0x74)
+                    bw.WriteInt64(Bytes.LongLength);
                 bw.ReserveInt32($"FileData{index}");
                 bw.WriteInt32(ID);
                 bw.ReserveInt32($"FileName{index}");
