@@ -165,17 +165,23 @@ namespace SoulsFormats
             bdtWriter.WriteASCII(Util.UnparseBNDTimestamp(BDTTimestamp));
             bdtWriter.WriteInt64(0);
             bdtWriter.WriteInt64(0);
-            
-            var offsets = new List<int>();
-            foreach (File file in Files)
-            {
-                bdtWriter.Pad(0x10);
-                offsets.Add((int)bdtWriter.Position);
-                bdtWriter.WriteBytes(file.Bytes);
-            }
 
             bhd.Timestamp = BHDTimestamp;
-            bhd.Write(bhdWriter, Files, offsets);
+            bhd.Write(bhdWriter, Files);
+
+            for (int i = 0; i < Files.Count; i++)
+            {
+                File file = Files[i];
+                bdtWriter.Pad(0x10);
+
+                byte[] bytes = file.Bytes;
+                if (file.Flags == 0xC0)
+                    bytes = DCX.Compress(bytes, DCX.Type.DarkSouls1);
+
+                bhdWriter.FillUInt32($"FileOffset{i}", (uint)bhdWriter.Position);
+                bhdWriter.FillInt64($"FileSize{i}", bytes.LongLength);
+                bdtWriter.WriteBytes(bytes);
+            }
         }
 
         /// <summary>
@@ -189,9 +195,14 @@ namespace SoulsFormats
             public string Name;
 
             /// <summary>
+            /// Flags indicating compression (0x80) and possibly some other things.
+            /// </summary>
+            public byte Flags;
+
+            /// <summary>
             /// The ID number of the file.
             /// </summary>
-            public int ID;
+            public int? ID;
 
             /// <summary>
             /// The raw data of the file.
@@ -201,8 +212,11 @@ namespace SoulsFormats
             internal File(BinaryReaderEx br, BHD4.FileHeader fileHeader)
             {
                 Name = fileHeader.Name;
+                Flags = fileHeader.Flags;
                 ID = fileHeader.ID;
                 Bytes = br.GetBytes(fileHeader.Offset, (int)fileHeader.Size);
+                if (Flags == 0xC0)
+                    Bytes = DCX.Decompress(Bytes, out DCX.Type type);
             }
         }
 
@@ -210,6 +224,7 @@ namespace SoulsFormats
         {
             public List<FileHeader> FileHeaders;
             public DateTime Timestamp;
+            public byte Format;
 
             private bool unicode;
             private byte extended;
@@ -224,20 +239,25 @@ namespace SoulsFormats
                 br.AssertInt64(0x40);
                 Timestamp = Util.ParseBNDTimestamp(br.ReadASCII(8));
                 // File header size
-                br.AssertInt64(0x24);
+                long fileHeaderSize = br.AssertInt64(0x18, 0x24);
                 // Would be data start in BND4
                 br.AssertInt64(0);
+
                 unicode = br.ReadBoolean();
-                br.AssertByte(0x74);
+                if (fileHeaderSize == 0x18)
+                    Format = br.AssertByte(0x30);
+                else if (fileHeaderSize == 0x24)
+                    Format = br.AssertByte(0x74);
                 extended = br.AssertByte(0, 4);
                 br.AssertByte(0);
+
                 br.AssertInt32(0);
                 long hashGroupsOffset = br.ReadInt64();
 
                 FileHeaders = new List<FileHeader>();
                 for (int i = 0; i < fileCount; i++)
                 {
-                    FileHeaders.Add(new FileHeader(br, unicode));
+                    FileHeaders.Add(new FileHeader(br, unicode, Format));
                 }
 
                 if (extended == 4)
@@ -263,7 +283,7 @@ namespace SoulsFormats
                 }
             }
 
-            public void Write(BinaryWriterEx bw, List<File> files, List<int> offsets)
+            public void Write(BinaryWriterEx bw, List<File> files)
             {
                 bw.WriteASCII("BHF4");
                 bw.WriteInt32(0);
@@ -271,12 +291,17 @@ namespace SoulsFormats
                 bw.WriteInt32(files.Count);
                 bw.WriteInt64(0x40);
                 bw.WriteASCII(Util.UnparseBNDTimestamp(Timestamp));
-                bw.WriteInt64(0x24);
+                if (Format == 0x30)
+                    bw.WriteInt64(0x18);
+                else if (Format == 0x74)
+                    bw.WriteInt64(0x24);
                 bw.WriteInt64(0);
+
                 bw.WriteBoolean(unicode);
-                bw.WriteByte(0x74);
+                bw.WriteByte(Format);
                 bw.WriteByte(extended);
                 bw.WriteByte(0);
+
                 bw.WriteInt32(0);
                 if (extended == 4)
                     bw.ReserveInt64("HashGroups");
@@ -285,7 +310,7 @@ namespace SoulsFormats
 
                 for (int i = 0; i < files.Count; i++)
                 {
-                    FileHeader.Write(bw, files[i], offsets[i], i);
+                    FileHeader.Write(bw, files[i], i, Format);
                 }
 
                 for (int i = 0; i < files.Count; i++)
@@ -297,7 +322,7 @@ namespace SoulsFormats
                     else
                         bw.WriteShiftJIS(file.Name, true);
                 }
-                
+
                 if (extended == 4)
                 {
                     uint groupCount = 0;
@@ -362,18 +387,27 @@ namespace SoulsFormats
             public class FileHeader
             {
                 public string Name;
-                public int Offset;
+                public byte Flags;
+                public uint Offset;
                 public long Size;
-                public int ID;
+                public int? ID;
 
-                public FileHeader(BinaryReaderEx br, bool unicode)
+                public FileHeader(BinaryReaderEx br, bool unicode, byte format)
                 {
-                    br.AssertInt32(0x40);
+                    Flags = br.AssertByte(0x00, 0x40, 0xC0);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+
                     br.AssertInt32(-1);
                     Size = br.ReadInt64();
-                    br.AssertInt64(Size);
-                    Offset = br.ReadInt32();
-                    ID = br.ReadInt32();
+                    if (format == 0x74)
+                        br.AssertInt64(Size);
+                    Offset = br.ReadUInt32();
+                    if (format == 0x74)
+                        ID = br.ReadInt32();
+                    else
+                        ID = null;
 
                     int nameOffset = br.ReadInt32();
                     if (unicode)
@@ -382,14 +416,16 @@ namespace SoulsFormats
                         Name = br.GetShiftJIS(nameOffset);
                 }
 
-                public static void Write(BinaryWriterEx bw, File file, int offset, int index)
+                public static void Write(BinaryWriterEx bw, File file, int index, byte format)
                 {
-                    bw.WriteInt32(0x40);
+                    bw.WriteInt32(file.Flags);
                     bw.WriteInt32(-1);
-                    bw.WriteInt64(file.Bytes.LongLength);
-                    bw.WriteInt64(file.Bytes.LongLength);
-                    bw.WriteInt32(offset);
-                    bw.WriteInt32(file.ID);
+                    bw.ReserveInt64($"FileSize{index}");
+                    if (format == 0x74)
+                        bw.WriteInt64(file.Bytes.LongLength);
+                    bw.ReserveUInt32($"FileOffset{index}");
+                    if (format == 0x74)
+                        bw.WriteInt32(file.ID ?? 0);
                     bw.ReserveInt32($"FileName{index}");
                 }
             }
