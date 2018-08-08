@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace SoulsFormats
 {
-    internal static class Util
+    public static class Util
     {
         public static uint FromPathHash(string text)
         {

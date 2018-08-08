@@ -36,23 +36,27 @@ namespace SoulsFormats
         /// </summary>
         public List<Texture> Textures;
 
-        private byte flag1, flag2, encoding, flag4;
+        public byte Format;
+
+        private byte flag2, encoding;
 
         private TPF(BinaryReaderEx br)
         {
             br.AssertASCII("TPF\0");
+            br.BigEndian = br.GetByte(0xC) == 2;
+
             int totalFileSize = br.ReadInt32();
             int fileCount = br.ReadInt32();
 
-            flag1 = br.ReadByte();
-            flag2 = br.ReadByte();
-            encoding = br.AssertByte(1, 2);
-            flag4 = br.ReadByte();
+            Format = br.AssertByte(0, 2, 4, 5);
+            flag2 = br.AssertByte(1, 2, 3);
+            encoding = br.AssertByte(0, 1, 2);
+            br.AssertByte(0);
 
             Textures = new List<Texture>();
             for (int i = 0; i < fileCount; i++)
             {
-                Textures.Add(new Texture(br, encoding));
+                Textures.Add(new Texture(br, Format, encoding));
             }
         }
 
@@ -86,10 +90,10 @@ namespace SoulsFormats
             bw.WriteASCII("TPF\0");
             bw.ReserveInt32("DataSize");
             bw.WriteInt32(Textures.Count);
-            bw.WriteByte(flag1);
+            bw.WriteByte(Format);
             bw.WriteByte(flag2);
             bw.WriteByte(encoding);
-            bw.WriteByte(flag4);
+            bw.WriteByte(0);
 
             for (int i = 0; i < Textures.Count; i++)
             {
@@ -130,28 +134,71 @@ namespace SoulsFormats
             /// </summary>
             public string Name;
 
+            public byte Format;
+            public bool Cubemap;
+            public byte Mipmaps;
+
             /// <summary>
             /// Flags indicating something or other.
             /// </summary>
-            public int Flags1, Flags2;
+            public int Flags2;
 
             /// <summary>
             /// The raw data of the texture.
             /// </summary>
             public byte[] Bytes;
 
-            internal Texture(BinaryReaderEx br, byte encoding)
+            public TexHeader Header;
+
+            internal Texture(BinaryReaderEx br, byte format, byte encoding)
             {
                 int fileOffset = br.ReadInt32();
                 int fileSize = br.ReadInt32();
-                Flags1 = br.ReadInt32();
-                int nameOffset = br.ReadInt32();
-                Flags2 = br.ReadInt32();
+
+                Format = br.ReadByte();
+                Cubemap = br.ReadBoolean();
+                Mipmaps = br.ReadByte();
+                br.AssertByte(0);
+
+                int nameOffset = 0;
+                if (format == 0)
+                {
+                    Header = null;
+                    nameOffset = br.ReadInt32();
+                    Flags2 = br.AssertInt32(0, 1);
+                }
+                else if (format == 2)
+                {
+                    Header = new TexHeader();
+                    Header.Width = br.ReadInt16();
+                    Header.Height = br.ReadInt16();
+                    br.AssertInt32(0);
+                    Header.Unk2 = br.AssertInt32(0, 0xAAE4);
+                    nameOffset = br.ReadInt32();
+                    Flags2 = br.AssertInt32(0, 1);
+                }
+                else if (format == 4 || format == 5)
+                {
+                    Header = new TexHeader();
+                    Header.Width = br.ReadInt16();
+                    Header.Height = br.ReadInt16();
+
+                    Header.TextureCount = br.AssertByte(1, 6);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+
+                    Header.Unk2 = br.AssertInt32(0xD);
+
+                    nameOffset = br.ReadInt32();
+                    Flags2 = br.AssertInt32(0, 1);
+                    Header.DXGIFormat = br.ReadInt32();
+                }
 
                 Bytes = br.GetBytes(fileOffset, fileSize);
                 if (encoding == 1)
                     Name = br.GetUTF16(nameOffset);
-                else if (encoding == 2)
+                else if (encoding == 0 || encoding == 2)
                     Name = br.GetASCII(nameOffset);
             }
 
@@ -159,9 +206,45 @@ namespace SoulsFormats
             {
                 bw.ReserveInt32($"FileData{index}");
                 bw.WriteInt32(Bytes.Length);
-                bw.WriteInt32(Flags1);
+
+                bw.WriteByte(Format);
+                bw.WriteBoolean(Cubemap);
+                bw.WriteByte(Mipmaps);
+                bw.WriteByte(0);
+
                 bw.ReserveInt32($"FileName{index}");
                 bw.WriteInt32(Flags2);
+            }
+
+            /// <summary>
+            /// Metadata for headerless textures used in console versions.
+            /// </summary>
+            public class TexHeader
+            {
+                /// <summary>
+                /// Width of the texture, in pixels.
+                /// </summary>
+                public short Width;
+
+                /// <summary>
+                /// Height of the texture, in pixels.
+                /// </summary>
+                public short Height;
+
+                /// <summary>
+                /// Number of textures in the array, either 1 for normal textures or 6 for cubemaps.
+                /// </summary>
+                public byte TextureCount;
+
+                /// <summary>
+                /// Unknown; always 0xD.
+                /// </summary>
+                public int Unk2;
+
+                /// <summary>
+                /// Microsoft DXGI_FORMAT.
+                /// </summary>
+                public int DXGIFormat;
             }
         }
     }

@@ -169,7 +169,14 @@ namespace SoulsFormats
         /// </summary>
         public bool ReadBoolean()
         {
-            return br.ReadBoolean();
+            // BinaryReader.ReadBoolean accepts any non-zero value as true, which I don't want.
+            byte b = br.ReadByte();
+            if (b == 0)
+                return false;
+            else if (b == 1)
+                return true;
+            else
+                throw new InvalidDataException($"ReadBoolean encountered non-boolean value: 0x{b:X2}");
         }
 
         /// <summary>

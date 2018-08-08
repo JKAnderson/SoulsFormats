@@ -35,7 +35,7 @@ namespace SoulsFormats
         /// <summary>
         /// A timestamp of unknown purpose.
         /// </summary>
-        public DateTime Timestamp;
+        public string Timestamp;
 
         /// <summary>
         /// The files contained within this BND4.
@@ -54,7 +54,7 @@ namespace SoulsFormats
             int fileCount = br.ReadInt32();
             // Header size
             br.AssertInt64(0x40);
-            Timestamp = Util.ParseBNDTimestamp(br.ReadASCII(8));
+            Timestamp = br.ReadASCII(8);
             // File header size
             long fileHeaderSize = br.AssertInt64(0x1C, 0x24);
             long dataStart = br.ReadInt64();
@@ -135,7 +135,7 @@ namespace SoulsFormats
             bw.WriteInt32(0x10000);
             bw.WriteInt32(Files.Count);
             bw.WriteInt64(0x40);
-            bw.WriteASCII(Util.UnparseBNDTimestamp(Timestamp));
+            bw.WriteASCII(Timestamp);
             if (format == 0x70)
                 bw.WriteInt64(0x1C);
             else
