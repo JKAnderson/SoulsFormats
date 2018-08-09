@@ -6,8 +6,14 @@ using System.Text.RegularExpressions;
 
 namespace SoulsFormats
 {
+    /// <summary>
+    /// Miscellaneous utility functions for SoulsFormats, mostly for internal use.
+    /// </summary>
     public static class Util
     {
+        /// <summary>
+        /// FromSoft's basic filename hashing algorithm, used in some BND and BXF formats.
+        /// </summary>
         public static uint FromPathHash(string text)
         {
             string hashable = text.ToLowerInvariant().Replace('\\', '/');
@@ -16,6 +22,9 @@ namespace SoulsFormats
             return hashable.Aggregate(0u, (i, c) => i * 37u + c);
         }
 
+        /// <summary>
+        /// Determines whether a number is prime or not.
+        /// </summary>
         public static bool IsPrime(uint candidate)
         {
             if (candidate < 2)
@@ -35,6 +44,10 @@ namespace SoulsFormats
         }
 
         private static readonly Regex timestampRx = new Regex(@"(\d\d)(\w)(\d+)(\w)(\d+)");
+
+        /// <summary>
+        /// Converts a BND/BXF timestamp string to a DateTime object.
+        /// </summary>
         public static DateTime ParseBNDTimestamp(string timestamp)
         {
             Match match = timestampRx.Match(timestamp);
@@ -50,6 +63,9 @@ namespace SoulsFormats
             return new DateTime(year, month, day, hour, minute, 0);
         }
 
+        /// <summary>
+        /// Converts a DateTime object to a BND/BXF timestamp string.
+        /// </summary>
         public static string UnparseBNDTimestamp(DateTime dateTime)
         {
             int year = dateTime.Year - 2000;
@@ -64,6 +80,9 @@ namespace SoulsFormats
             return $"{year:D2}{month}{day}{hour}{minute}".PadRight(8, '\0');
         }
 
+        /// <summary>
+        /// Compresses data and writes it to a BinaryWriterEx with Zlib wrapper.
+        /// </summary>
         public static int WriteZlib(BinaryWriterEx bw, byte formatByte, byte[] input)
         {
             long start = bw.Position;
@@ -79,6 +98,9 @@ namespace SoulsFormats
             return (int)(bw.Position - start);
         }
 
+        /// <summary>
+        /// Reads a Zlib block from a BinaryReaderEx and returns the uncompressed data.
+        /// </summary>
         public static byte[] ReadZlib(BinaryReaderEx br, byte formatByte, int compressedSize)
         {
             br.AssertByte(0x78);
@@ -96,6 +118,9 @@ namespace SoulsFormats
             }
         }
 
+        /// <summary>
+        /// Computes an Adler32 checksum used by Zlib.
+        /// </summary>
         public static uint Adler32(byte[] data)
         {
             uint adlerA = 1;

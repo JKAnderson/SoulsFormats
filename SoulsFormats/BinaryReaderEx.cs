@@ -635,6 +635,64 @@ namespace SoulsFormats
         }
         #endregion
 
+        #region Enum
+        /// <summary>
+        /// Reads a one-byte value as the specified enum, throwing an exception if not present.
+        /// </summary>
+        public TEnum ReadEnum8<TEnum>() where TEnum : Enum
+        {
+            byte b = ReadByte();
+            if (!Enum.IsDefined(typeof(TEnum), b))
+            {
+                throw new InvalidDataException(string.Format(
+                    "Read Byte not present in enum: 0x{0:X}", b));
+            }
+            return (TEnum)(object)b;
+        }
+
+        /// <summary>
+        /// Reads a two-byte value as the specified enum, throwing an exception if not present.
+        /// </summary>
+        public TEnum ReadEnum16<TEnum>() where TEnum : Enum
+        {
+            ushort s = ReadUInt16();
+            if (!Enum.IsDefined(typeof(TEnum), s))
+            {
+                throw new InvalidDataException(string.Format(
+                    "Read UInt16 not present in enum: 0x{0:X}", s));
+            }
+            return (TEnum)(object)s;
+        }
+
+        /// <summary>
+        /// Reads a four-byte value as the specified enum, throwing an exception if not present.
+        /// </summary>
+        public TEnum ReadEnum32<TEnum>() where TEnum : Enum
+        {
+            uint i = ReadUInt32();
+            if (!Enum.IsDefined(typeof(TEnum), i))
+            {
+                throw new InvalidDataException(string.Format(
+                    "Read UInt32 not present in enum: 0x{0:X}", i));
+            }
+            return (TEnum)(object)i;
+        }
+
+        /// <summary>
+        /// Reads an eight-byte value as the specified enum, throwing an exception if not present.
+        /// </summary>
+        public TEnum ReadEnum64<TEnum>() where TEnum : Enum
+        {
+            ulong l = ReadUInt64();
+            if (!Enum.IsDefined(typeof(TEnum), l))
+            {
+                throw new InvalidDataException(string.Format(
+                    "Read UInt64 not present in enum: 0x{0:X}", l));
+            }
+            return (TEnum)(object)l;
+        }
+        #endregion
+
         #region String
         /// <summary>
         /// Reads the specified number of bytes and interprets them according to the specified encoding.

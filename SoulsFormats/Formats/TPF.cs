@@ -36,9 +36,20 @@ namespace SoulsFormats
         /// </summary>
         public List<Texture> Textures;
 
-        public byte Format;
+        /// <summary>
+        /// The platform this TPF will be used on.
+        /// </summary>
+        public TPFPlatform Platform;
 
-        private byte flag2, encoding;
+        /// <summary>
+        /// Indicates encoding used for texture names.
+        /// </summary>
+        public byte Encoding;
+
+        /// <summary>
+        /// Unknown.
+        /// </summary>
+        public byte Flag2;
 
         private TPF(BinaryReaderEx br)
         {
@@ -48,15 +59,15 @@ namespace SoulsFormats
             int totalFileSize = br.ReadInt32();
             int fileCount = br.ReadInt32();
 
-            Format = br.AssertByte(0, 2, 4, 5);
-            flag2 = br.AssertByte(1, 2, 3);
-            encoding = br.AssertByte(0, 1, 2);
+            Platform = br.ReadEnum8<TPFPlatform>();
+            Flag2 = br.AssertByte(1, 2, 3);
+            Encoding = br.AssertByte(0, 1, 2);
             br.AssertByte(0);
 
             Textures = new List<Texture>();
             for (int i = 0; i < fileCount; i++)
             {
-                Textures.Add(new Texture(br, Format, encoding));
+                Textures.Add(new Texture(br, Platform, Encoding));
             }
         }
 
@@ -90,9 +101,9 @@ namespace SoulsFormats
             bw.WriteASCII("TPF\0");
             bw.ReserveInt32("DataSize");
             bw.WriteInt32(Textures.Count);
-            bw.WriteByte(Format);
-            bw.WriteByte(flag2);
-            bw.WriteByte(encoding);
+            bw.WriteByte((byte)Platform);
+            bw.WriteByte(Flag2);
+            bw.WriteByte(Encoding);
             bw.WriteByte(0);
 
             for (int i = 0; i < Textures.Count; i++)
@@ -105,9 +116,9 @@ namespace SoulsFormats
             {
                 Texture texture = Textures[i];
                 bw.FillInt32($"FileName{i}", (int)bw.Position);
-                if (encoding == 1)
+                if (Encoding == 1)
                     bw.WriteUTF16(texture.Name, true);
-                else if (encoding == 2)
+                else if (Encoding == 2)
                     bw.WriteASCII(texture.Name, true);
             }
 
@@ -134,12 +145,23 @@ namespace SoulsFormats
             /// </summary>
             public string Name;
 
+            /// <summary>
+            /// Indicates format of the texture.
+            /// </summary>
             public byte Format;
+
+            /// <summary>
+            /// Whether this texture is a cubemap.
+            /// </summary>
             public bool Cubemap;
+
+            /// <summary>
+            /// Number of mipmap levels in this texture.
+            /// </summary>
             public byte Mipmaps;
 
             /// <summary>
-            /// Flags indicating something or other.
+            /// Unknown.
             /// </summary>
             public int Flags2;
 
@@ -148,9 +170,12 @@ namespace SoulsFormats
             /// </summary>
             public byte[] Bytes;
 
+            /// <summary>
+            /// Extended metadata present in headerless console TPF textures.
+            /// </summary>
             public TexHeader Header;
 
-            internal Texture(BinaryReaderEx br, byte format, byte encoding)
+            internal Texture(BinaryReaderEx br, TPFPlatform platform, byte encoding)
             {
                 int fileOffset = br.ReadInt32();
                 int fileSize = br.ReadInt32();
@@ -161,13 +186,13 @@ namespace SoulsFormats
                 br.AssertByte(0);
 
                 int nameOffset = 0;
-                if (format == 0)
+                if (platform == TPFPlatform.PC)
                 {
                     Header = null;
                     nameOffset = br.ReadInt32();
                     Flags2 = br.AssertInt32(0, 1);
                 }
-                else if (format == 2)
+                else if (platform == TPFPlatform.PS3)
                 {
                     Header = new TexHeader();
                     Header.Width = br.ReadInt16();
@@ -177,7 +202,7 @@ namespace SoulsFormats
                     nameOffset = br.ReadInt32();
                     Flags2 = br.AssertInt32(0, 1);
                 }
-                else if (format == 4 || format == 5)
+                else if (platform == TPFPlatform.PS4 || platform == TPFPlatform.Xbone)
                 {
                     Header = new TexHeader();
                     Header.Width = br.ReadInt16();
@@ -237,7 +262,7 @@ namespace SoulsFormats
                 public byte TextureCount;
 
                 /// <summary>
-                /// Unknown; always 0xD.
+                /// Unknown; 0x0 or 0xAAE4 in DeS, 0xD in DS3.
                 /// </summary>
                 public int Unk2;
 
@@ -246,6 +271,32 @@ namespace SoulsFormats
                 /// </summary>
                 public int DXGIFormat;
             }
+        }
+
+        /// <summary>
+        /// The platform of the game a TPF is for.
+        /// </summary>
+        public enum TPFPlatform : byte
+        {
+            /// <summary>
+            /// Headered DDS with minimal metadata.
+            /// </summary>
+            PC = 0,
+
+            /// <summary>
+            /// Headerless DDS with pre-DX10 metadata.
+            /// </summary>
+            PS3 = 2,
+
+            /// <summary>
+            /// Headerless DDS with DX10 metadata.
+            /// </summary>
+            PS4 = 4,
+
+            /// <summary>
+            /// Headerless DDS with DX10 metadata.
+            /// </summary>
+            Xbone = 5,
         }
     }
 }
