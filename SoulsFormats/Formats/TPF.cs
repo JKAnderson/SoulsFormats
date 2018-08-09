@@ -108,7 +108,7 @@ namespace SoulsFormats
 
             for (int i = 0; i < Textures.Count; i++)
             {
-                Textures[i].Write(bw, i);
+                Textures[i].Write(bw, i, Platform);
             }
             bw.Pad(0x10);
 
@@ -214,7 +214,6 @@ namespace SoulsFormats
                     br.AssertByte(0);
 
                     Header.Unk2 = br.AssertInt32(0xD);
-
                     nameOffset = br.ReadInt32();
                     Flags2 = br.AssertInt32(0, 1);
                     Header.DXGIFormat = br.ReadInt32();
@@ -227,7 +226,7 @@ namespace SoulsFormats
                     Name = br.GetASCII(nameOffset);
             }
 
-            internal void Write(BinaryWriterEx bw, int index)
+            internal void Write(BinaryWriterEx bw, int index, TPFPlatform platform)
             {
                 bw.ReserveInt32($"FileData{index}");
                 bw.WriteInt32(Bytes.Length);
@@ -237,8 +236,35 @@ namespace SoulsFormats
                 bw.WriteByte(Mipmaps);
                 bw.WriteByte(0);
 
-                bw.ReserveInt32($"FileName{index}");
-                bw.WriteInt32(Flags2);
+                if (platform == TPFPlatform.PC)
+                {
+                    bw.ReserveInt32($"FileName{index}");
+                    bw.WriteInt32(Flags2);
+                }
+                else if (platform == TPFPlatform.PS3)
+                {
+                    bw.WriteInt16(Header.Width);
+                    bw.WriteInt16(Header.Height);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(Header.Unk2);
+                    bw.ReserveInt32($"FileName{index}");
+                    bw.WriteInt32(Flags2);
+                }
+                else if (platform == TPFPlatform.PS4 || platform == TPFPlatform.Xbone)
+                {
+                    bw.WriteInt16(Header.Width);
+                    bw.WriteInt16(Header.Height);
+
+                    bw.WriteByte(Header.TextureCount);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+
+                    bw.WriteInt32(Header.Unk2);
+                    bw.ReserveInt32($"FileName{index}");
+                    bw.WriteInt32(Flags2);
+                    bw.WriteInt32(Header.DXGIFormat);
+                }
             }
 
             /// <summary>
