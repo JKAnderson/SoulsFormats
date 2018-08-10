@@ -56,7 +56,7 @@ namespace SoulsFormats
             br.AssertASCII("BND3");
             Timestamp = Util.ParseBNDTimestamp(br.ReadASCII(8));
 
-            Format = br.AssertByte(0x0E, 0x2E, 0x54, 0x60, 0x64, 0x70, 0x74, 0xE0, 0xF0);
+            Format = br.AssertByte(0x0E, 0x2E, 0x40, 0x54, 0x60, 0x64, 0x70, 0x74, 0xE0, 0xF0);
             bigEndian = br.ReadBoolean();
             unk1 = br.ReadBoolean();
             br.AssertByte(0);
@@ -192,13 +192,20 @@ namespace SoulsFormats
                 int compressedSize = br.ReadInt32();
                 int fileOffset = br.ReadInt32();
                 ID = br.ReadInt32();
-                int fileNameOffset = br.ReadInt32();
+
+                if (format == 0x40)
+                {
+                    Name = null;
+                }
+                else
+                {
+                    int fileNameOffset = br.ReadInt32();
+                    Name = br.GetShiftJIS(fileNameOffset);
+                }
 
                 int uncompressedSize = compressedSize;
                 if (format == 0x2E || format == 0x54 || format == 0x64 || format == 0x74)
                     uncompressedSize = br.ReadInt32();
-
-                Name = br.GetShiftJIS(fileNameOffset);
 
                 // Compressed
                 if ((Flags & 0x80) != 0)
