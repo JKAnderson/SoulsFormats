@@ -48,7 +48,7 @@ namespace SoulsFormats
         public List<File> Files;
 
         private bool bigEndian, unk1;
-        private bool writeNameEnd;
+        private bool writeHeaderEnd;
         private int unk2;
 
         private BND3(BinaryReaderEx br)
@@ -63,8 +63,8 @@ namespace SoulsFormats
 
             br.BigEndian = bigEndian || Format == 0xE0 || Format == 0xF0;
             int fileCount = br.ReadInt32();
-            int fileNameEnd = br.ReadInt32();
-            writeNameEnd = fileNameEnd != 0;
+            int headerEnd = br.ReadInt32();
+            writeHeaderEnd = headerEnd != 0;
             unk2 = br.ReadInt32();
             br.AssertInt32(0);
 
@@ -116,7 +116,7 @@ namespace SoulsFormats
 
             bw.BigEndian = bigEndian || Format == 0xE0 || Format == 0xF0;
             bw.WriteInt32(Files.Count);
-            bw.ReserveInt32("NameEnd");
+            bw.ReserveInt32("HeaderEnd");
             bw.WriteInt32(unk2);
             bw.WriteInt32(0);
 
@@ -125,13 +125,17 @@ namespace SoulsFormats
                 Files[i].Write(bw, i, Format);
             }
 
-            for (int i = 0; i < Files.Count; i++)
+            if (Format != 0x40)
             {
-                File file = Files[i];
-                bw.FillInt32($"FileName{i}", (int)bw.Position);
-                bw.WriteShiftJIS(file.Name, true);
+                for (int i = 0; i < Files.Count; i++)
+                {
+                    File file = Files[i];
+                    bw.FillInt32($"FileName{i}", (int)bw.Position);
+                    bw.WriteShiftJIS(file.Name, true);
+                }
             }
-            bw.FillInt32($"NameEnd", writeNameEnd ? (int)bw.Position : 0);
+
+            bw.FillInt32($"HeaderEnd", writeHeaderEnd ? (int)bw.Position : 0);
 
             for (int i = 0; i < Files.Count; i++)
             {
@@ -230,7 +234,9 @@ namespace SoulsFormats
                 bw.ReserveInt32($"CompressedSize{index}");
                 bw.ReserveInt32($"FileData{index}");
                 bw.WriteInt32(ID);
-                bw.ReserveInt32($"FileName{index}");
+
+                if (format != 0x40)
+                    bw.ReserveInt32($"FileName{index}");
 
                 if (format == 0x2E || format == 0x54 || format == 0x64 || format == 0x74)
                     bw.WriteInt32(Bytes.Length);
