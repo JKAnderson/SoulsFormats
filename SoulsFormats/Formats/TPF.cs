@@ -83,8 +83,8 @@ namespace SoulsFormats
                 bw.FillInt32($"FileName{i}", (int)bw.Position);
                 if (Encoding == 1)
                     bw.WriteUTF16(texture.Name, true);
-                else if (Encoding == 2)
-                    bw.WriteASCII(texture.Name, true);
+                else if (Encoding == 0 || Encoding == 2)
+                    bw.WriteShiftJIS(texture.Name, true);
             }
 
             int dataStart = (int)bw.Position;
@@ -201,7 +201,7 @@ namespace SoulsFormats
                 if (encoding == 1)
                     Name = br.GetUTF16(nameOffset);
                 else if (encoding == 0 || encoding == 2)
-                    Name = br.GetASCII(nameOffset);
+                    Name = br.GetShiftJIS(nameOffset);
             }
 
             internal void Write(BinaryWriterEx bw, int index, TPFPlatform platform)
