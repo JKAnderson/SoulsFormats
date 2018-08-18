@@ -48,45 +48,60 @@ namespace SoulsFormats
         }
         #endregion
 
-        private static byte[] Decompress(BinaryReaderEx br, out Type type)
+        internal static byte[] Decompress(BinaryReaderEx br, out Type type)
         {
+            br.BigEndian = true;
             type = Type.Unknown;
 
             string magic = br.ReadASCII(4);
             if (magic == "DCP\0")
             {
-                type = Type.DemonsSoulsDFLT;
+                string format = br.GetASCII(0x4, 4);
+                if (format == "DFLT")
+                {
+                    type = Type.DemonsSoulsDFLT;
+                }
+                else if (format == "EDGE")
+                {
+                    type = Type.ACEREDGE;
+                }
             }
             else if (magic == "DCX\0")
             {
-                int flag = br.GetInt32(0x10);
+
                 string format = br.GetASCII(0x28, 4);
                 if (format == "EDGE")
                 {
                     type = Type.DemonsSoulsEDGE;
                 }
-                else if (flag == 0x24)
+                else if (format == "DFLT")
                 {
-                    type = Type.DarkSouls1;
-                }
-                else if (flag == 0x44)
-                {
-                    type = Type.DarkSouls3;
+                    int flag = br.GetInt32(0x10);
+                    if (flag == 0x24)
+                    {
+                        type = Type.DarkSouls1;
+                    }
+                    else if (flag == 0x44)
+                    {
+                        type = Type.DarkSouls3;
+                    }
                 }
             }
 
             br.Position = 0;
-            if (type == Type.DemonsSoulsDFLT)
-                return DecompressDemonsSoulsDFLT(br);
+            if (type == Type.ACEREDGE)
+                return DecompressDCPEDGE(br);
+            else if (type == Type.DemonsSoulsDFLT)
+                return DecompressDCPDFLT(br);
             else if (type == Type.DemonsSoulsEDGE)
-                return DecompressDemonsSoulsEDGE(br);
+                return DecompressDCXEDGE(br);
             else if (type == Type.DarkSouls1 || type == Type.DarkSouls3)
-                return DecompressDarkSouls(br, type);
+                return DecompressDCXDFLT(br, type);
             else
                 throw new FormatException("Unknown DCX format.");
         }
 
-        private static byte[] DecompressDemonsSoulsDFLT(BinaryReaderEx br)
+        private static byte[] DecompressDCPDFLT(BinaryReaderEx br)
         {
             br.AssertASCII("DCP\0");
             br.AssertASCII("DFLT");
@@ -101,7 +116,7 @@ namespace SoulsFormats
             int uncompressedSize = br.ReadInt32();
             int compressedSize = br.ReadInt32();
 
-            byte[] decompressed = Util.ReadZlib(br, 0xDA, compressedSize);
+            byte[] decompressed = Util.ReadZlib(br, compressedSize);
 
             br.AssertASCII("DCA\0");
             br.AssertInt32(8);
@@ -109,7 +124,68 @@ namespace SoulsFormats
             return decompressed;
         }
 
-        private static byte[] DecompressDemonsSoulsEDGE(BinaryReaderEx br)
+        private static byte[] DecompressDCPEDGE(BinaryReaderEx br)
+        {
+            br.AssertASCII("DCP\0");
+            br.AssertASCII("EDGE");
+            br.AssertInt32(0x20);
+            br.AssertInt32(0x9000000);
+            br.AssertInt32(0x10000);
+            br.AssertInt32(0x0);
+            br.AssertInt32(0x0);
+            br.AssertInt32(0x00100100);
+
+            br.AssertASCII("DCS\0");
+            int uncompressedSize = br.ReadInt32();
+            int compressedSize = br.ReadInt32();
+            br.AssertInt32(0);
+            long dataStart = br.Position;
+            br.Skip(compressedSize);
+
+            br.AssertASCII("DCA\0");
+            int dcaSize = br.ReadInt32();
+            // ???
+            br.AssertASCII("EgdT");
+            br.AssertInt32(0x00010000);
+            br.AssertInt32(0x20);
+            br.AssertInt32(0x10);
+            br.AssertInt32(0x10000);
+            int egdtSize = br.ReadInt32();
+            int chunkCount = br.ReadInt32();
+            br.AssertInt32(0x100000);
+
+            if (egdtSize != 0x20 + chunkCount * 0x10)
+                throw new InvalidDataException("Unexpected EgdT size in EDGE DCX.");
+
+            byte[] decompressed = new byte[uncompressedSize];
+            using (MemoryStream dcmpStream = new MemoryStream(decompressed))
+            {
+                for (int i = 0; i < chunkCount; i++)
+                {
+                    br.AssertInt32(0);
+                    int offset = br.ReadInt32();
+                    int size = br.ReadInt32();
+                    bool compressed = br.AssertInt32(0, 1) == 1;
+
+                    byte[] chunk = br.GetBytes(dataStart + offset, size);
+
+                    if (compressed)
+                    {
+                        using (MemoryStream cmpStream = new MemoryStream(chunk))
+                        using (DeflateStream dfltStream = new DeflateStream(cmpStream, CompressionMode.Decompress))
+                            dfltStream.CopyTo(dcmpStream);
+                    }
+                    else
+                    {
+                        dcmpStream.Write(chunk, 0, chunk.Length);
+                    }
+                }
+            }
+
+            return decompressed;
+        }
+
+        private static byte[] DecompressDCXEDGE(BinaryReaderEx br)
         {
             br.AssertASCII("DCX\0");
             br.AssertInt32(0x10000);
@@ -141,7 +217,7 @@ namespace SoulsFormats
             br.AssertInt32(0x10);
             br.AssertInt32(0x10000);
             // Uncompressed size of last block
-            int trailingUncompressedSize = br.AssertInt32(uncompressedSize % 0x10000);
+            int trailingUncompressedSize = br.AssertInt32(uncompressedSize % 0x10000, 0x10000);
             int egdtSize = br.ReadInt32();
             int chunkCount = br.ReadInt32();
             br.AssertInt32(0x100000);
@@ -180,7 +256,7 @@ namespace SoulsFormats
             return decompressed;
         }
 
-        private static byte[] DecompressDarkSouls(BinaryReaderEx br, Type type)
+        private static byte[] DecompressDCXDFLT(BinaryReaderEx br, Type type)
         {
             br.AssertASCII("DCX\0");
             br.AssertInt32(0x10000);
@@ -215,7 +291,7 @@ namespace SoulsFormats
             br.AssertASCII("DCA\0");
             int compressedHeaderLength = br.ReadInt32();
 
-            return Util.ReadZlib(br, 0xDA, uncompressedSize);
+            return Util.ReadZlib(br, uncompressedSize);
         }
 
         #region Public Compress
@@ -243,21 +319,21 @@ namespace SoulsFormats
         }
         #endregion
 
-        private static void Compress(byte[] data, BinaryWriterEx bw, Type type)
+        internal static void Compress(byte[] data, BinaryWriterEx bw, Type type)
         {
             if (type == Type.DemonsSoulsDFLT)
-                CompressDemonsSoulsDFLT(data, bw);
+                CompressDCPDFLT(data, bw);
             else if (type == Type.DemonsSoulsEDGE)
-                CompressDemonsSoulsEDGE(data, bw);
+                CompressDCXEDGE(data, bw);
             else if (type == Type.DarkSouls1 || type == Type.DarkSouls3)
-                CompressDarkSouls(data, bw, type);
+                CompressDCXDFLT(data, bw, type);
             else if (type == Type.Unknown)
                 throw new ArgumentException("You cannot compress a DCX with an unknown type.");
             else
                 throw new NotImplementedException("Compression for the given type is not implemented.");
         }
 
-        private static void CompressDemonsSoulsDFLT(byte[] data, BinaryWriterEx bw)
+        private static void CompressDCPDFLT(byte[] data, BinaryWriterEx bw)
         {
             bw.WriteASCII("DCP\0");
             bw.WriteASCII("DFLT");
@@ -279,7 +355,7 @@ namespace SoulsFormats
             bw.WriteInt32(8);
         }
 
-        private static void CompressDemonsSoulsEDGE(byte[] data, BinaryWriterEx bw)
+        private static void CompressDCXEDGE(byte[] data, BinaryWriterEx bw)
         {
             int chunkCount = data.Length / 0x10000;
             if (data.Length % 0x10000 > 0)
@@ -365,7 +441,7 @@ namespace SoulsFormats
             bw.FillInt32("CompressedSize", compressedSize);
         }
 
-        private static void CompressDarkSouls(byte[] data, BinaryWriterEx bw, Type type)
+        private static void CompressDCXDFLT(byte[] data, BinaryWriterEx bw, Type type)
         {
             bw.WriteASCII("DCX\0");
             bw.WriteInt32(0x10000);
@@ -413,7 +489,17 @@ namespace SoulsFormats
             Unknown,
 
             /// <summary>
-            /// An odd single-block format used for DeS debug map files.
+            /// The file is not compressed.
+            /// </summary>
+            None,
+
+            /// <summary>
+            /// A multi-block format used in ACE R TPFs.
+            /// </summary>
+            ACEREDGE,
+
+            /// <summary>
+            /// An single-block format used for DeS debug map files.
             /// </summary>
             DemonsSoulsDFLT,
 

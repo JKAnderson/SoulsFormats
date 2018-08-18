@@ -1,7 +1,7 @@
 
 # SoulsFormats
 A .NET library for reading and writing various FromSoftware file formats, targeting .NET Framework 4.5.  
-Dark Souls 1, Dark Souls Remastered, Dark Souls 2, Dark Souls 3, Demon's Souls, Bloodborne, and Ninja Blade are all supported to varying degrees. See below for a breakdown of each format.
+Dark Souls, Demon's Souls and Bloodborne are the main focus, but older From games may be supported to varying degrees. See below for a breakdown of each format.
 
 ## Usage
 Objects for each format can be created with the static method Read, which accepts either a byte array or a file path. Using a path is preferable as it will be read with a stream, reducing memory consumption.
@@ -24,7 +24,25 @@ byte[] bytes = bnd.Write();
 File.WriteAllBytes(@"C:\your\path\here.chrbnd", bytes);
 ```
 
-DCX (compressed files) hold no important metadata so they read/write directly to/from byte arrays instead of creating an object.
+DCX (compressed files) will be decompressed automatically and the compression type will be remembered and reapplied when writing the file.
+```cs
+BND3 bnd = BND3.Read(@"C:\your\path\here.chrbnd.dcx");
+bnd.Write(@"C:\your\path\here.chrbnd.dcx");
+```
+
+The compression type can be changed by either setting the Compression field of the object, or specifying one when calling Write.
+```cs
+BND3 bnd = BND3.Read(@"C:\your\path\here.chrbnd.dcx");
+bnd.Write(@"C:\your\path\here.chrbnd", DCX.Type.None);
+
+// or
+
+BND3 bnd = BND3.Read(@"C:\your\path\here.chrbnd.dcx");
+bnd.Compression = DCX.Type.None;
+bnd.Write(@"C:\your\path\here.chrbnd");
+```
+
+Finally, DCX files can be generically read and written with static methods if necessary. DCX holds no important metadata so they read/write directly to/from byte arrays instead of creating an object.
 ```cs
 byte[] bndBytes = DCX.Decompress(@"C:\your\path\here.chrbnd.dcx");
 BND3 bnd = BND3.Read(bndBytes);
@@ -49,49 +67,41 @@ File.WriteAllBytes(@"C:\your\path\here.chrbnd.dcx", dcxBytes);
 ```
 
 ## Formats
+Game compatibility will always be listed for DS 1/R/2/3, DeS, and BB unless the format is unused in that game. Other From games may or may not be supported.
+
+### BND0
+A general-purpose file container used in PS2-era From games.  
+Extension: `.bnd`  
+* ACE 3: Partial Read and Write.
+
 ### BND3
 A general-purpose file container used before DS2.  
 Extension: `.*bnd`
 * DS1: Full Read and Write
 * DSR: Full Read and Write
-* DS2: N/A
-* DS3: N/A
 * DeS: Partial Read and Write
-* BB: N/A
 * NB: Full Read and Write
 
 ### BND4
 A general-purpose file container used from DS2 onwards.  
 Extension: `.*bnd`
-* DS1: N/A
-* DSR: N/A
 * DS2: Full Read and Write
 * DS3: Full Read and Write
-* DeS: N/A
 * BB: Full Read and Write
-* NB: N/A
 
 ### BXF3
 Essentially a BND3 split into separate header and data files.  
 Extensions: `.*bhd` (header) and `.*bdt` (data)
 * DS1: Full Read and Write
 * DSR: Full Read and Write
-* DS2: N/A
-* DS3: N/A
 * DeS: Untested
-* BB: N/A
-* NB: N/A
 
 ### BXF4
 Essentially a BND4 split into separate header and data files.  
 Extensions: `.*bhd` (header) and `.*bdt` (data)
-* DS1: N/A
-* DSR: N/A
 * DS2: Full Read and Write
 * DS3: Full Read and Write
-* DeS: N/A
 * BB: Full Read and Write
-* NB: N/A
 
 ### DCX
 A wrapper for a single compressed file used in every game after NB.  
@@ -102,17 +112,13 @@ Extension: `.dcx`
 * DS3: Full Read, Write, and Create
 * DeS: Full Read, Write, and Create
 * BB: Full Read, Write, and Create
-* NB: N/A
 
 ### DRB
 An interface element configuration file used before DS2 when Scaleform was adopted. Very poorly supported.  
 Extension: `.drb`
 * DS1: Partial Read, No Write
 * DSR: Partial Read, No Write
-* DS2: N/A
-* DS3: N/A
 * DeS: Untested
-* BB: N/A
 * NB: Untested
 
 ### MTD

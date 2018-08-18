@@ -6,31 +6,8 @@ namespace SoulsFormats
     /// <summary>
     /// A file container used in A.C.E. 3.
     /// </summary>
-    public class BND0
+    public class BND0 : SoulsFile<BND0>
     {
-        #region Public Read
-        /// <summary>
-        /// Reads an array of bytes as a BND0.
-        /// </summary>
-        public static BND0 Read(byte[] bytes)
-        {
-            BinaryReaderEx br = new BinaryReaderEx(false, bytes);
-            return new BND0(br);
-        }
-
-        /// <summary>
-        /// Reads a file as a BND3 using file streams.
-        /// </summary>
-        public static BND0 Read(string path)
-        {
-            using (FileStream stream = System.IO.File.OpenRead(path))
-            {
-                BinaryReaderEx br = new BinaryReaderEx(false, stream);
-                return new BND0(br);
-            }
-        }
-        #endregion
-
         /// <summary>
         /// The files contained in this BND0.
         /// </summary>
@@ -51,8 +28,17 @@ namespace SoulsFormats
         /// </summary>
         public byte Flag2;
 
-        private BND0(BinaryReaderEx br)
+        /// <summary>
+        /// Creates an uninitialized BND0. Should not be used publicly.
+        /// </summary>
+        public BND0() { }
+
+        /// <summary>
+        /// Reads BND0 data from a BinaryReaderEx.
+        /// </summary>
+        protected internal override void Read(BinaryReaderEx br)
         {
+            br.BigEndian = false;
             br.AssertASCII("BND\0");
             // File size in non-lite format
             Lite = br.GetInt32(0xC) == 0;
@@ -88,33 +74,12 @@ namespace SoulsFormats
             }
         }
 
-        #region Public Write
         /// <summary>
-        /// Writes a BND0 file as an array of bytes.
+        /// Writes BND0 data to a BinaryWriterEx.
         /// </summary>
-        public byte[] Write()
+        protected internal override void Write(BinaryWriterEx bw)
         {
-            BinaryWriterEx bw = new BinaryWriterEx(false);
-            Write(bw);
-            return bw.FinishBytes();
-        }
-
-        /// <summary>
-        /// Writes a BND0 file to the specified path using file streams.
-        /// </summary>
-        public void Write(string path)
-        {
-            using (FileStream stream = System.IO.File.Create(path))
-            {
-                BinaryWriterEx bw = new BinaryWriterEx(false, stream);
-                Write(bw);
-                bw.Finish();
-            }
-        }
-        #endregion
-
-        private void Write(BinaryWriterEx bw)
-        {
+            bw.BigEndian = false;
             bw.WriteASCII("BND\0");
 
             if (Lite)

@@ -12,6 +12,17 @@ namespace SoulsFormats
     public static class Util
     {
         /// <summary>
+        /// Returns the extension of the specified file path, removing .dcx if present.
+        /// </summary>
+        public static string GetRealExtension(string path)
+        {
+            string extension = Path.GetExtension(path);
+            if (extension == ".dcx")
+                extension = Path.GetExtension(Path.GetFileNameWithoutExtension(path));
+            return extension;
+        }
+
+        /// <summary>
         /// FromSoft's basic filename hashing algorithm, used in some BND and BXF formats.
         /// </summary>
         public static uint FromPathHash(string text)
@@ -101,10 +112,10 @@ namespace SoulsFormats
         /// <summary>
         /// Reads a Zlib block from a BinaryReaderEx and returns the uncompressed data.
         /// </summary>
-        public static byte[] ReadZlib(BinaryReaderEx br, byte formatByte, int compressedSize)
+        public static byte[] ReadZlib(BinaryReaderEx br, int compressedSize)
         {
             br.AssertByte(0x78);
-            br.AssertByte(formatByte);
+            br.AssertByte(0x01, 0x9C, 0xDA);
             byte[] compressed = br.ReadBytes(compressedSize - 2);
 
             using (var decompressedStream = new MemoryStream())

@@ -1,41 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 
 namespace SoulsFormats
 {
     /// <summary>
     /// A general-purpose file container used in DS1, DSR, DeS, and NB. Extension: .*bnd
     /// </summary>
-    public class BND3
+    public class BND3 : SoulsFile<BND3>
     {
-        #region Public Read
-        /// <summary>
-        /// Reads an array of bytes as a BND3.
-        /// </summary>
-        public static BND3 Read(byte[] bytes)
-        {
-            BinaryReaderEx br = new BinaryReaderEx(false, bytes);
-            return new BND3(br);
-        }
-
-        /// <summary>
-        /// Reads a file as a BND3 using file streams.
-        /// </summary>
-        public static BND3 Read(string path)
-        {
-            using (FileStream stream = System.IO.File.OpenRead(path))
-            {
-                BinaryReaderEx br = new BinaryReaderEx(false, stream);
-                return new BND3(br);
-            }
-        }
-        #endregion
-
         /// <summary>
         /// A timestamp of unknown purpose.
         /// </summary>
-        public DateTime Timestamp;
+        public string Timestamp
+        {
+            get { return timestamp; }
+            set
+            {
+                if (value.Length > 8)
+                    throw new ArgumentException("Timestamp may not be longer than 8 characters.");
+                else
+                    timestamp = value.PadRight(8, '\0');
+            }
+        }
+        private string timestamp;
 
         /// <summary>
         /// Indicates the format of the BND3.
@@ -51,10 +38,19 @@ namespace SoulsFormats
         private bool writeHeaderEnd;
         private int unk2;
 
-        private BND3(BinaryReaderEx br)
+        /// <summary>
+        /// Creates an uninitialized BND3. Should not be used publicly.
+        /// </summary>
+        public BND3() { }
+
+        /// <summary>
+        /// Reads BND3 data from a BinaryReaderEx.
+        /// </summary>
+        protected internal override void Read(BinaryReaderEx br)
         {
+            br.BigEndian = false;
             br.AssertASCII("BND3");
-            Timestamp = Util.ParseBNDTimestamp(br.ReadASCII(8));
+            Timestamp = br.ReadASCII(8);
 
             Format = br.AssertByte(0x0E, 0x2E, 0x40, 0x54, 0x60, 0x64, 0x70, 0x74, 0xE0, 0xF0);
             bigEndian = br.ReadBoolean();
@@ -80,35 +76,14 @@ namespace SoulsFormats
             }
         }
 
-        #region Public Write
         /// <summary>
-        /// Writes a BND3 file as an array of bytes.
+        /// Writes BND3 data to a BinaryWriterEx.
         /// </summary>
-        public byte[] Write()
+        protected internal override void Write(BinaryWriterEx bw)
         {
-            BinaryWriterEx bw = new BinaryWriterEx(false);
-            Write(bw);
-            return bw.FinishBytes();
-        }
-
-        /// <summary>
-        /// Writes a BND3 file to the specified path using file streams.
-        /// </summary>
-        public void Write(string path)
-        {
-            using (FileStream stream = System.IO.File.Create(path))
-            {
-                BinaryWriterEx bw = new BinaryWriterEx(false, stream);
-                Write(bw);
-                bw.Finish();
-            }
-        }
-        #endregion
-
-        private void Write(BinaryWriterEx bw)
-        {
+            bw.BigEndian = false;
             bw.WriteASCII("BND3");
-            bw.WriteASCII(Util.UnparseBNDTimestamp(Timestamp));
+            bw.WriteASCII(Timestamp);
             bw.WriteByte(Format);
             bw.WriteBoolean(bigEndian);
             bw.WriteBoolean(unk1);
@@ -215,7 +190,7 @@ namespace SoulsFormats
                 if ((Flags & 0x80) != 0)
                 {
                     br.StepIn(fileOffset);
-                    Bytes = Util.ReadZlib(br, 0x9C, compressedSize);
+                    Bytes = Util.ReadZlib(br, compressedSize);
                     br.StepOut();
                 }
                 else
@@ -240,6 +215,14 @@ namespace SoulsFormats
 
                 if (format == 0x2E || format == 0x54 || format == 0x64 || format == 0x74)
                     bw.WriteInt32(Bytes.Length);
+            }
+
+            /// <summary>
+            /// Returns a string containing the ID and name of this file.
+            /// </summary>
+            public override string ToString()
+            {
+                return $"{ID} {Name ?? "<null>"}";
             }
         }
     }

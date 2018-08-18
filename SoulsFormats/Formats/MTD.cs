@@ -7,31 +7,8 @@ namespace SoulsFormats
     /// <summary>
     /// A material definition format used in DS1, DSR, DS2, DS3, DeS, BB, and NB.
     /// </summary>
-    public class MTD
+    public class MTD : SoulsFile<MTD>
     {
-        #region Public Read
-        /// <summary>
-        /// Reads an MTD from an array of bytes.
-        /// </summary>
-        public static MTD Read(byte[] bytes)
-        {
-            BinaryReaderEx br = new BinaryReaderEx(false, bytes);
-            return new MTD(br);
-        }
-
-        /// <summary>
-        /// Reads an MTD from the specified path using file streams.
-        /// </summary>
-        public static MTD Read(string path)
-        {
-            using (FileStream stream = File.OpenRead(path))
-            {
-                BinaryReaderEx br = new BinaryReaderEx(false, stream);
-                return new MTD(br);
-            }
-        }
-        #endregion
-
         /// <summary>
         /// Unknown
         /// </summary>
@@ -54,8 +31,17 @@ namespace SoulsFormats
 
         private int unk1, unk2, unk3, unk4, unk5, unk6, unk7, unk8, unk9, unk10, unk11, unk12;
 
-        private MTD(BinaryReaderEx br)
+        /// <summary>
+        /// Creates an uninitialized MTD. Should not be used publicly.
+        /// </summary>
+        public MTD() { }
+
+        /// <summary>
+        /// Reads MTD data from a BinaryReaderEx.
+        /// </summary>
+        protected internal override void Read(BinaryReaderEx br)
         {
+            br.BigEndian = false;
             br.AssertInt32(0);
             int fileSize = br.ReadInt32();
             br.AssertInt32(0);
@@ -107,33 +93,12 @@ namespace SoulsFormats
             br.AssertInt32(0);
         }
 
-        #region Public Write
         /// <summary>
-        /// Writes a TPF file to an array of bytes.
+        /// Writes MTD data to a BinaryWriterEx.
         /// </summary>
-        public byte[] Write()
+        protected internal override void Write(BinaryWriterEx bw)
         {
-            BinaryWriterEx bw = new BinaryWriterEx(false);
-            Write(bw);
-            return bw.FinishBytes();
-        }
-
-        /// <summary>
-        /// Writes a TPF file to the specified path using file streams.
-        /// </summary>
-        public void Write(string path)
-        {
-            using (FileStream stream = File.Create(path))
-            {
-                BinaryWriterEx bw = new BinaryWriterEx(false, stream);
-                Write(bw);
-                bw.Finish();
-            }
-        }
-        #endregion
-
-        private void Write(BinaryWriterEx bw)
-        {
+            bw.BigEndian = false;
             bw.WriteInt32(0);
             bw.ReserveInt32("FileSize");
             bw.WriteInt32(0);

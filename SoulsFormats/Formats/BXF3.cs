@@ -60,11 +60,38 @@ namespace SoulsFormats
             }
         }
         #endregion
+        
+        /// <summary>
+        /// A timestamp of unknown purpose.
+        /// </summary>
+        public string BHDTimestamp
+        {
+            get { return bhdTimestamp; }
+            set
+            {
+                if (value.Length > 8)
+                    throw new ArgumentException("Timestamp may not be longer than 8 characters.");
+                else
+                    bhdTimestamp = value.PadRight(8, '\0');
+            }
+        }
+        private string bhdTimestamp;
 
         /// <summary>
         /// A timestamp of unknown purpose.
         /// </summary>
-        public DateTime BHDTimestamp, BDTTimestamp;
+        public string BDTTimestamp
+        {
+            get { return bdtTimestamp; }
+            set
+            {
+                if (value.Length > 8)
+                    throw new ArgumentException("Timestamp may not be longer than 8 characters.");
+                else
+                    bdtTimestamp = value.PadRight(8, '\0');
+            }
+        }
+        private string bdtTimestamp;
 
         /// <summary>
         /// The files contained within this BXF3.
@@ -80,7 +107,7 @@ namespace SoulsFormats
             flag = bhd.Flag;
 
             bdtReader.AssertASCII("BDF3");
-            BDTTimestamp = Util.ParseBNDTimestamp(bdtReader.ReadASCII(8));
+            BDTTimestamp = bdtReader.ReadASCII(8);
             bdtReader.AssertInt32(0);
 
             Files = new List<File>();
@@ -162,7 +189,7 @@ namespace SoulsFormats
         private void Write(BinaryWriterEx bhdWriter, BinaryWriterEx bdtWriter)
         {
             bhdWriter.WriteASCII("BHF3");
-            bhdWriter.WriteASCII(Util.UnparseBNDTimestamp(BHDTimestamp));
+            bhdWriter.WriteASCII(BHDTimestamp);
             bhdWriter.WriteInt32(flag);
             bhdWriter.WriteInt32(Files.Count);
             bhdWriter.WriteInt32(0);
@@ -170,7 +197,7 @@ namespace SoulsFormats
             bhdWriter.WriteInt32(0);
 
             bdtWriter.WriteASCII("BDF3");
-            bdtWriter.WriteASCII(Util.UnparseBNDTimestamp(BDTTimestamp));
+            bdtWriter.WriteASCII(BDTTimestamp);
             bdtWriter.WriteInt32(0);
 
             for (int i = 0; i < Files.Count; i++)
@@ -197,14 +224,14 @@ namespace SoulsFormats
 
         private class BHD3
         {
-            public DateTime Timestamp;
+            public string Timestamp;
             public List<FileHeader> FileHeaders;
             public int Flag;
 
             public BHD3(BinaryReaderEx br)
             {
                 br.AssertASCII("BHF3");
-                Timestamp = Util.ParseBNDTimestamp(br.ReadASCII(8));
+                Timestamp = br.ReadASCII(8);
                 Flag = br.ReadInt32();
                 if (Flag != 0x54 && Flag != 0x74)
                     throw new NotSupportedException($"Unrecognized BHD flag: 0x{Flag:X}");

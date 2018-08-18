@@ -6,31 +6,8 @@ namespace SoulsFormats
     /// <summary>
     /// A multi-file DDS container used in DS1, DSR, DS2, DS3, DeS, BB, and NB.
     /// </summary>
-    public class TPF
+    public class TPF : SoulsFile<TPF>
     {
-        #region Public Read
-        /// <summary>
-        /// Reads an array of bytes as a TPF.
-        /// </summary>
-        public static TPF Read(byte[] bytes)
-        {
-            BinaryReaderEx br = new BinaryReaderEx(false, bytes);
-            return new TPF(br);
-        }
-
-        /// <summary>
-        /// Reads a file as a TPF using file streams.
-        /// </summary>
-        public static TPF Read(string path)
-        {
-            using (FileStream stream = File.OpenRead(path))
-            {
-                BinaryReaderEx br = new BinaryReaderEx(false, stream);
-                return new TPF(br);
-            }
-        }
-        #endregion
-
         /// <summary>
         /// The textures contained within this TPF.
         /// </summary>
@@ -51,8 +28,17 @@ namespace SoulsFormats
         /// </summary>
         public byte Flag2;
 
-        private TPF(BinaryReaderEx br)
+        /// <summary>
+        /// Creates an uninitialized TPF. Should not be used publicly.
+        /// </summary>
+        public TPF() { }
+
+        /// <summary>
+        /// Reads TPF data from a BinaryReaderEx.
+        /// </summary>
+        protected internal override void Read(BinaryReaderEx br)
         {
+            br.BigEndian = false;
             br.AssertASCII("TPF\0");
             br.BigEndian = br.GetByte(0xC) == 2;
 
@@ -71,33 +57,12 @@ namespace SoulsFormats
             }
         }
 
-        #region Public Write
         /// <summary>
-        /// Writes a TPF file to an array of bytes.
+        /// Writes TPF data to a BinaryWriterEx.
         /// </summary>
-        public byte[] Write()
+        protected internal override void Write(BinaryWriterEx bw)
         {
-            BinaryWriterEx bw = new BinaryWriterEx(false);
-            Write(bw);
-            return bw.FinishBytes();
-        }
-
-        /// <summary>
-        /// Writes a TPF file to the specified path using file streams.
-        /// </summary>
-        public void Write(string path)
-        {
-            using (FileStream stream = File.Create(path))
-            {
-                BinaryWriterEx bw = new BinaryWriterEx(false, stream);
-                Write(bw);
-                bw.Finish();
-            }
-        }
-        #endregion
-
-        private void Write(BinaryWriterEx bw)
-        {
+            bw.BigEndian = false;
             bw.WriteASCII("TPF\0");
             bw.ReserveInt32("DataSize");
             bw.WriteInt32(Textures.Count);
@@ -130,7 +95,12 @@ namespace SoulsFormats
                     bw.Pad(0x10);
 
                 bw.FillInt32($"FileData{i}", (int)bw.Position);
-                bw.WriteBytes(texture.Bytes);
+
+                byte[] bytes = texture.Bytes;
+                if (texture.Flags1 == 2 || texture.Flags2 == 3)
+                    bytes = DCX.Compress(bytes, DCX.Type.ACEREDGE);
+                bw.FillInt32($"FileSize{i}", bytes.Length);
+                bw.WriteBytes(bytes);
             }
             bw.FillInt32("DataSize", (int)bw.Position - dataStart);
         }
@@ -163,6 +133,11 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
+            public byte Flags1;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public int Flags2;
 
             /// <summary>
@@ -183,7 +158,7 @@ namespace SoulsFormats
                 Format = br.ReadByte();
                 Cubemap = br.ReadBoolean();
                 Mipmaps = br.ReadByte();
-                br.AssertByte(0);
+                Flags1 = br.AssertByte(0, 1, 2, 3);
 
                 int nameOffset = 0;
                 if (platform == TPFPlatform.PC)
@@ -197,7 +172,7 @@ namespace SoulsFormats
                     Header = new TexHeader();
                     Header.Width = br.ReadInt16();
                     Header.Height = br.ReadInt16();
-                    br.AssertInt32(0);
+                    Header.Unk1 = br.ReadInt32();
                     Header.Unk2 = br.AssertInt32(0, 0xAAE4);
                     nameOffset = br.ReadInt32();
                     Flags2 = br.AssertInt32(0, 1);
@@ -220,6 +195,9 @@ namespace SoulsFormats
                 }
 
                 Bytes = br.GetBytes(fileOffset, fileSize);
+                if (Flags1 == 2 || Flags1 == 3)
+                    Bytes = DCX.Decompress(Bytes);
+
                 if (encoding == 1)
                     Name = br.GetUTF16(nameOffset);
                 else if (encoding == 0 || encoding == 2)
@@ -229,12 +207,12 @@ namespace SoulsFormats
             internal void Write(BinaryWriterEx bw, int index, TPFPlatform platform)
             {
                 bw.ReserveInt32($"FileData{index}");
-                bw.WriteInt32(Bytes.Length);
+                bw.ReserveInt32($"FileSize{index}");
 
                 bw.WriteByte(Format);
                 bw.WriteBoolean(Cubemap);
                 bw.WriteByte(Mipmaps);
-                bw.WriteByte(0);
+                bw.WriteByte(Flags1);
 
                 if (platform == TPFPlatform.PC)
                 {
@@ -245,7 +223,7 @@ namespace SoulsFormats
                 {
                     bw.WriteInt16(Header.Width);
                     bw.WriteInt16(Header.Height);
-                    bw.WriteInt32(0);
+                    bw.WriteInt32(Header.Unk1);
                     bw.WriteInt32(Header.Unk2);
                     bw.ReserveInt32($"FileName{index}");
                     bw.WriteInt32(Flags2);
@@ -268,6 +246,14 @@ namespace SoulsFormats
             }
 
             /// <summary>
+            /// Returns the name of this texture.
+            /// </summary>
+            public override string ToString()
+            {
+                return Name;
+            }
+
+            /// <summary>
             /// Metadata for headerless textures used in console versions.
             /// </summary>
             public class TexHeader
@@ -286,6 +272,11 @@ namespace SoulsFormats
                 /// Number of textures in the array, either 1 for normal textures or 6 for cubemaps.
                 /// </summary>
                 public byte TextureCount;
+
+                /// <summary>
+                /// Unknown; PS3 only.
+                /// </summary>
+                public int Unk1;
 
                 /// <summary>
                 /// Unknown; 0x0 or 0xAAE4 in DeS, 0xD in DS3.
