@@ -589,7 +589,7 @@ namespace SoulsFormats
         /// </summary>
         public float AssertSingle(params float[] options)
         {
-            return AssertValue(ReadSingle, "Single", "0x{0:X}", options);
+            return AssertValue(ReadSingle, "Single", "{0}", options);
         }
         #endregion
 
@@ -631,7 +631,7 @@ namespace SoulsFormats
         /// </summary>
         public double AssertDouble(params double[] options)
         {
-            return AssertValue(ReadDouble, "Double", "0x{0:X}", options);
+            return AssertValue(ReadDouble, "Double", "{0}", options);
         }
         #endregion
 

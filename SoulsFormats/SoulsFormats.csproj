@@ -83,6 +83,7 @@
     <Compile Include="Formats\BND4.cs" />
     <Compile Include="Formats\DCX.cs" />
     <Compile Include="Formats\DRB.cs" />
+    <Compile Include="Formats\FLVER.cs" />
     <Compile Include="Formats\MTD.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Formats\TPF.cs" />

@@ -98,7 +98,7 @@ namespace SoulsFormats
         /// </summary>
         public List<File> Files;
 
-        private int flag;
+        private byte flag;
 
         private BXF3(BinaryReaderEx bhdReader, BinaryReaderEx bdtReader)
         {
@@ -190,7 +190,12 @@ namespace SoulsFormats
         {
             bhdWriter.WriteASCII("BHF3");
             bhdWriter.WriteASCII(BHDTimestamp);
-            bhdWriter.WriteInt32(flag);
+            bhdWriter.WriteByte(flag);
+            bhdWriter.WriteByte(0);
+            bhdWriter.WriteByte(0);
+            bhdWriter.WriteByte(0);
+            bhdWriter.BigEndian = flag == 0xE0;
+
             bhdWriter.WriteInt32(Files.Count);
             bhdWriter.WriteInt32(0);
             bhdWriter.WriteInt32(0);
@@ -203,12 +208,18 @@ namespace SoulsFormats
             for (int i = 0; i < Files.Count; i++)
             {
                 File file = Files[i];
-                bhdWriter.WriteInt32(0x40);
+                bhdWriter.WriteByte(0x40);
+                bhdWriter.WriteByte(0);
+                bhdWriter.WriteByte(0);
+                bhdWriter.WriteByte(0);
+
                 bhdWriter.WriteInt32(file.Bytes.Length);
                 bhdWriter.WriteInt32((int)bdtWriter.Position);
                 bhdWriter.WriteInt32(i);
                 bhdWriter.ReserveInt32($"FileName{i}");
-                bhdWriter.WriteInt32(file.Bytes.Length);
+
+                if (flag == 0x54 || flag == 0x74)
+                    bhdWriter.WriteInt32(file.Bytes.Length);
 
                 bdtWriter.WriteBytes(file.Bytes);
                 bdtWriter.Pad(0x10);
@@ -226,15 +237,17 @@ namespace SoulsFormats
         {
             public string Timestamp;
             public List<FileHeader> FileHeaders;
-            public int Flag;
+            public byte Flag;
 
             public BHD3(BinaryReaderEx br)
             {
                 br.AssertASCII("BHF3");
                 Timestamp = br.ReadASCII(8);
-                Flag = br.ReadInt32();
-                if (Flag != 0x54 && Flag != 0x74)
-                    throw new NotSupportedException($"Unrecognized BHD flag: 0x{Flag:X}");
+                Flag = br.AssertByte(0x54, 0x74, 0xE0);
+                br.AssertByte(0);
+                br.AssertByte(0);
+                br.AssertByte(0);
+                br.BigEndian = Flag == 0xE0;
 
                 int fileCount = br.ReadInt32();
                 br.AssertInt32(0);
@@ -244,12 +257,18 @@ namespace SoulsFormats
                 FileHeaders = new List<FileHeader>();
                 for (int i = 0; i < fileCount; i++)
                 {
-                    br.AssertInt32(0x40);
+                    br.AssertByte(0x40);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+
                     int fileSize = br.ReadInt32();
                     int fileOffset = br.ReadInt32();
                     br.AssertInt32(i);
                     int fileNameOffset = br.ReadInt32();
-                    br.AssertInt32(fileSize);
+
+                    if (Flag == 0x54 || Flag == 0x74)
+                        br.AssertInt32(fileSize);
 
                     string name = br.GetShiftJIS(fileNameOffset);
                     FileHeader fileHeader = new FileHeader()

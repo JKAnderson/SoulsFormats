@@ -85,11 +85,13 @@ namespace SoulsFormats
             br.AssertInt64(0x40);
             Timestamp = br.ReadASCII(8);
             // File header size
-            long fileHeaderSize = br.AssertInt64(0x1C, 0x24);
+            long fileHeaderSize = br.AssertInt64(0x18, 0x1C, 0x24);
             long dataStart = br.ReadInt64();
 
             Unicode = br.ReadBoolean();
-            if (fileHeaderSize == 0x1C)
+            if (fileHeaderSize == 0x18)
+                Format = br.AssertByte(0x0C);
+            else if (fileHeaderSize == 0x1C)
                 Format = br.AssertByte(0x70);
             else if (fileHeaderSize == 0x24)
                 Format = br.AssertByte(0x2A, 0x2E, 0x54, 0x74);
@@ -149,7 +151,9 @@ namespace SoulsFormats
             bw.WriteInt32(Files.Count);
             bw.WriteInt64(0x40);
             bw.WriteASCII(Timestamp);
-            if (Format == 0x70)
+            if (Format == 0x0C)
+                bw.WriteInt64(0x18);
+            else if (Format == 0x70)
                 bw.WriteInt64(0x1C);
             else
                 bw.WriteInt64(0x24);
@@ -304,7 +308,10 @@ namespace SoulsFormats
                 if (format == 0x2A || format == 0x2E || format == 0x54 || format == 0x74)
                     uncompressedSize = br.ReadInt64();
                 int fileOffset = br.ReadInt32();
-                ID = br.ReadInt32();
+                if (format == 0x0C)
+                    ID = -1;
+                else
+                    ID = br.ReadInt32();
                 int nameOffset = br.ReadInt32();
 
                 if (unicode)
@@ -336,7 +343,8 @@ namespace SoulsFormats
                 if (format == 0x2A || format == 0x2E || format == 0x54 || format == 0x74)
                     bw.WriteInt64(Bytes.LongLength);
                 bw.ReserveInt32($"FileData{index}");
-                bw.WriteInt32(ID);
+                if (format != 0x0C)
+                    bw.WriteInt32(ID);
                 bw.ReserveInt32($"FileName{index}");
             }
 
@@ -345,7 +353,10 @@ namespace SoulsFormats
             /// </summary>
             public override string ToString()
             {
-                return $"{ID} {Name ?? "<null>"}";
+                if (ID == -1)
+                    return $"{Name ?? "<null>"}";
+                else
+                    return $"{ID} {Name ?? "<null>"}";
             }
         }
 
