@@ -10,10 +10,11 @@ namespace SoulsFormats
     {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         public bool BigEndian;
-        public short Version1, Version2;
+        public int Version;
         public int DataOffset, DataSize;
         public float[] BoundingBoxMin, BoundingBoxMax;
         public int Unk1, Unk2, Unk3, Unk4;
+        public bool UnkB;
 
         public List<Dummy> Dummies;
         public List<Material> Materials;
@@ -39,8 +40,7 @@ namespace SoulsFormats
                 throw new FormatException("FLVER endian character must be either L or B.");
             br.BigEndian = BigEndian;
 
-            Version1 = br.AssertInt16(0xC, 0xD, 0x10);
-            Version2 = br.AssertInt16(0x2);
+            Version = br.AssertInt32(0x20010);
 
             DataOffset = br.ReadInt32();
             DataSize = br.ReadInt32();
@@ -55,14 +55,22 @@ namespace SoulsFormats
 
             Unk1 = br.ReadInt32();
             Unk2 = br.ReadInt32();
-            br.AssertInt32(0x110);
-            br.AssertInt32(0);
+            br.AssertByte(0x10);
+            br.AssertBoolean(true);
+            UnkB = br.ReadBoolean();
+            br.AssertByte(0);
+            br.AssertInt16(0);
+            br.AssertInt16(0, -1);
 
             int faceSetCount = br.ReadInt32();
             int vertexStructLayoutCount = br.ReadInt32();
             int materialParameterCount = br.ReadInt32();
 
-            Unk3 = br.AssertInt32(0, 1);
+            bool u3 = br.ReadBoolean();
+            br.AssertByte(0);
+            br.AssertByte(0);
+            br.AssertByte(0);
+
             br.AssertInt32(0);
             br.AssertInt32(0);
             Unk4 = br.AssertInt32(0, 2);
@@ -161,7 +169,7 @@ namespace SoulsFormats
                 ParamCount = br.ReadInt32();
                 ParamIndex = br.ReadInt32();
                 Flags = br.ReadInt32();
-                Unk1 = br.AssertInt32(0, 0x2760);
+                Unk1 = br.ReadInt32();
 
                 br.AssertInt32(0);
                 br.AssertInt32(0);
@@ -272,6 +280,7 @@ namespace SoulsFormats
             public uint Flags;
             public bool CullBackfaces;
             public bool Unk3;
+            public byte Unk4;
             public int VertexSize;
             public ushort[] Vertices;
 
@@ -281,7 +290,7 @@ namespace SoulsFormats
                 bool triangleStrip = br.AssertBoolean(true);
                 CullBackfaces = br.ReadBoolean();
                 Unk3 = br.ReadBoolean();
-                br.AssertByte(0);
+                Unk4 = br.ReadByte();
 
                 int vertexCount = br.ReadInt32();
                 int vertexOffset = br.ReadInt32();
@@ -303,6 +312,7 @@ namespace SoulsFormats
             public int VertexCount;
             public int VertexBufferSize;
             public int VertexBufferOffset;
+            public List<Vertex> Vertices;
 
             internal VertexGroup(BinaryReaderEx br)
             {
@@ -314,9 +324,13 @@ namespace SoulsFormats
                 br.AssertInt32(0);
                 VertexBufferSize = br.ReadInt32();
                 VertexBufferOffset = br.ReadInt32();
+            }
 
-                if (VertexSize == 20)
-                    throw null;
+            public void ReadVertices(BinaryReaderEx br, List<VertexStructLayout> layouts)
+            {
+                VertexStructLayout layout = layouts[VertexStructLayoutIndex];
+                Vertices = new List<Vertex>();
+
             }
         }
 
@@ -363,11 +377,13 @@ namespace SoulsFormats
                 public enum MemberValueType : uint
                 {
                     Vector3 = 0x02,
+                    Unknown2 = 0x10,
                     BoneIndicesStruct = 0x11,
                     PackedVector4 = 0x13,
                     UV = 0x15,
                     UVPair = 0x16,
                     BoneWeightsStruct = 0x1A,
+                    Unknown1 = 0x2F,
                 }
 
                 public enum MemberSemantic : uint
@@ -412,6 +428,11 @@ namespace SoulsFormats
                 Param = br.GetUTF16(paramOffset);
                 Value = br.GetUTF16(valueOffset);
             }
+        }
+
+        public class Vertex
+        {
+            
         }
     }
 }
