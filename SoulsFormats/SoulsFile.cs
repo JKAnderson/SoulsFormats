@@ -110,7 +110,7 @@ namespace SoulsFormats
         /// </summary>
         public void Write(string path)
         {
-            Write(Compression);
+            Write(path, Compression);
         }
 
         /// <summary>

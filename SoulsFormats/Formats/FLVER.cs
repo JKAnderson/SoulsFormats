@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Numerics;
 
 namespace SoulsFormats
 {
@@ -9,56 +11,51 @@ namespace SoulsFormats
     public class FLVER : SoulsFile<FLVER>
     {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-        public bool BigEndian;
-        public int Version;
-        public int DataOffset, DataSize;
-        public float[] BoundingBoxMin, BoundingBoxMax;
-        public int Unk1, Unk2, Unk3, Unk4;
-        public bool UnkB;
-
+        public FLVERHeader Header;
         public List<Dummy> Dummies;
         public List<Material> Materials;
         public List<Bone> Bones;
         public List<Mesh> Meshes;
-        public List<FaceSet> FaceSets;
-        public List<VertexGroup> VertexGroups;
         public List<VertexStructLayout> VertexStructLayouts;
-        public List<MaterialParam> MaterialParams;
 
         public FLVER() { }
 
         protected internal override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
+
+            Header = new FLVERHeader();
             br.AssertASCII("FLVER\0");
             string endian = br.ReadASCII(2);
             if (endian == "L\0")
-                BigEndian = false;
+                Header.BigEndian = false;
             else if (endian == "B\0")
-                BigEndian = true;
+                Header.BigEndian = true;
             else
                 throw new FormatException("FLVER endian character must be either L or B.");
-            br.BigEndian = BigEndian;
+            br.BigEndian = Header.BigEndian;
 
-            Version = br.AssertInt32(0x20010);
+            Header.Version = br.AssertInt32(0x2000C, 0x20010);
 
-            DataOffset = br.ReadInt32();
-            DataSize = br.ReadInt32();
+            int dataOffset = br.ReadInt32();
+            int dataSize = br.ReadInt32();
             int dummyCount = br.ReadInt32();
             int materialCount = br.ReadInt32();
             int boneCount = br.ReadInt32();
             int meshCount = br.ReadInt32();
             int vertexGroupCount = br.ReadInt32();
 
-            BoundingBoxMin = br.ReadSingles(3);
-            BoundingBoxMax = br.ReadSingles(3);
+            Header.BoundingBoxMin = br.ReadVector3();
+            Header.BoundingBoxMax = br.ReadVector3();
 
-            Unk1 = br.ReadInt32();
-            Unk2 = br.ReadInt32();
+            Header.UnkI1 = br.ReadInt32();
+            Header.UnkI2 = br.ReadInt32();
+
             br.AssertByte(0x10);
             br.AssertBoolean(true);
-            UnkB = br.ReadBoolean();
+            Header.UnkB1 = br.ReadBoolean();
             br.AssertByte(0);
+
             br.AssertInt16(0);
             br.AssertInt16(0, -1);
 
@@ -66,14 +63,14 @@ namespace SoulsFormats
             int vertexStructLayoutCount = br.ReadInt32();
             int materialParameterCount = br.ReadInt32();
 
-            bool u3 = br.ReadBoolean();
+            Header.UnkB2 = br.ReadBoolean();
             br.AssertByte(0);
             br.AssertByte(0);
             br.AssertByte(0);
 
             br.AssertInt32(0);
             br.AssertInt32(0);
-            Unk4 = br.AssertInt32(0, 2);
+            Header.UnkI3 = br.AssertInt32(0, 2);
             br.AssertInt32(0);
             br.AssertInt32(0);
             br.AssertInt32(0);
@@ -96,21 +93,53 @@ namespace SoulsFormats
             for (int i = 0; i < meshCount; i++)
                 Meshes.Add(new Mesh(br));
 
-            FaceSets = new List<FaceSet>();
+            var faceSets = new List<FaceSet>();
             for (int i = 0; i < faceSetCount; i++)
-                FaceSets.Add(new FaceSet(br));
+                faceSets.Add(new FaceSet(br, dataOffset));
 
-            VertexGroups = new List<VertexGroup>();
+            var vertexGroups = new List<VertexGroup>();
             for (int i = 0; i < vertexGroupCount; i++)
-                VertexGroups.Add(new VertexGroup(br));
+                vertexGroups.Add(new VertexGroup(br));
 
             VertexStructLayouts = new List<VertexStructLayout>();
             for (int i = 0; i < vertexStructLayoutCount; i++)
                 VertexStructLayouts.Add(new VertexStructLayout(br));
 
-            MaterialParams = new List<MaterialParam>();
+            var materialParams = new List<MaterialParam>();
             for (int i = 0; i < materialParameterCount; i++)
-                MaterialParams.Add(new MaterialParam(br));
+                materialParams.Add(new MaterialParam(br));
+
+            foreach (VertexGroup vertexGroup in vertexGroups)
+                vertexGroup.ReadVertices(br, dataOffset, VertexStructLayouts);
+
+            Dictionary<int, MaterialParam> materialParamDict = Dictionize(materialParams);
+            foreach (Material material in Materials)
+            {
+                material.TakeParams(materialParamDict);
+            }
+            if (materialParamDict.Count != 0)
+                throw new NotSupportedException("Orphaned material params found.");
+
+            Dictionary<int, FaceSet> faceSetDict = Dictionize(faceSets);
+            Dictionary<int, VertexGroup> vertexGroupDict = Dictionize(vertexGroups);
+            foreach (Mesh mesh in Meshes)
+            {
+                mesh.TakeFaceSets(faceSetDict);
+                mesh.TakeVertexGroups(vertexGroupDict);
+            }
+            if (faceSetDict.Count != 0)
+                throw new NotSupportedException("Orphaned face sets found.");
+            if (vertexGroupDict.Count != 0)
+                throw new NotSupportedException("Orphaned vertex groups found.");
+
+        }
+
+        private static Dictionary<int, T> Dictionize<T>(List<T> items)
+        {
+            var dict = new Dictionary<int, T>();
+            for (int i = 0; i < items.Count; i++)
+                dict[i] = items[i];
+            return dict;
         }
 
         protected internal override void Write(BinaryWriterEx bw)
@@ -118,34 +147,45 @@ namespace SoulsFormats
             throw new NotImplementedException();
         }
 
+        public class FLVERHeader
+        {
+            public bool BigEndian;
+            public int Version;
+            public Vector3 BoundingBoxMin;
+            public Vector3 BoundingBoxMax;
+
+            public int UnkI1, UnkI2, UnkI3;
+            public bool UnkB1, UnkB2;
+        }
+
         public class Dummy
         {
-            public float[] Position;
+            public Vector3 Position;
             public byte Unk1, Unk2;
             public short Unk3;
-            public float[] Row2;
+            public Vector3 Row2;
             public short TypeID;
             public short ParentBoneIndex;
-            public float[] Row3;
+            public Vector3 Row3;
             public short UnkParentIndex;
             public bool Flag1;
 
             internal Dummy(BinaryReaderEx br)
             {
-                Position = br.ReadSingles(3);
+                Position = br.ReadVector3();
                 Unk1 = br.ReadByte();
                 Unk2 = br.ReadByte();
                 Unk3 = br.ReadInt16();
 
-                Row2 = br.ReadSingles(3);
+                Row2 = br.ReadVector3();
                 TypeID = br.ReadInt16();
                 ParentBoneIndex = br.ReadInt16();
 
-                Row3 = br.ReadSingles(3);
+                Row3 = br.ReadVector3();
                 UnkParentIndex = br.ReadInt16();
                 Flag1 = br.ReadBoolean();
                 br.AssertBoolean(true);
-                
+
                 br.AssertInt32(0);
                 br.AssertInt32(0);
                 br.AssertInt32(0);
@@ -157,17 +197,18 @@ namespace SoulsFormats
         {
             public string Name;
             public string MTD;
-            public int ParamCount;
-            public int ParamIndex;
             public int Flags;
             public int Unk1;
+            public List<MaterialParam> Params;
+
+            private int paramIndex, paramCount;
 
             internal Material(BinaryReaderEx br)
             {
                 int nameOffset = br.ReadInt32();
                 int mtdOffset = br.ReadInt32();
-                ParamCount = br.ReadInt32();
-                ParamIndex = br.ReadInt32();
+                paramCount = br.ReadInt32();
+                paramIndex = br.ReadInt32();
                 Flags = br.ReadInt32();
                 Unk1 = br.ReadInt32();
 
@@ -176,6 +217,19 @@ namespace SoulsFormats
 
                 Name = br.GetUTF16(nameOffset);
                 MTD = br.GetUTF16(mtdOffset);
+            }
+
+            internal void TakeParams(Dictionary<int, MaterialParam> paramDict)
+            {
+                Params = new List<MaterialParam>();
+                for (int i = paramIndex; i < paramIndex + paramCount; i++)
+                {
+                    if (!paramDict.ContainsKey(i))
+                        throw new NotSupportedException("Material param not found or already taken: " + i);
+
+                    Params.Add(paramDict[i]);
+                    paramDict.Remove(i);
+                }
             }
 
             public override string ToString()
@@ -187,34 +241,34 @@ namespace SoulsFormats
         public class Bone
         {
             public string Name;
-            public float[] Translation;
-            public float[] EulerRadian;
+            public Vector3 Translation;
+            public Vector3 EulerRadian;
             public short ParentIndex;
             public short ChildIndex;
-            public float[] Scale;
+            public Vector3 Scale;
             public short NextSiblingIndex;
             public short PreviousSiblingIndex;
-            public float[] BoundingBoxMin, BoundingBoxMax;
+            public Vector3 BoundingBoxMin, BoundingBoxMax;
             public bool Nub;
 
             internal Bone(BinaryReaderEx br)
             {
-                Translation = br.ReadSingles(3);
+                Translation = br.ReadVector3();
                 int nameOffset = br.ReadInt32();
-                EulerRadian = br.ReadSingles(3);
+                EulerRadian = br.ReadVector3();
                 ParentIndex = br.ReadInt16();
                 ChildIndex = br.ReadInt16();
-                Scale = br.ReadSingles(3);
+                Scale = br.ReadVector3();
                 NextSiblingIndex = br.ReadInt16();
                 PreviousSiblingIndex = br.ReadInt16();
-                BoundingBoxMin = br.ReadSingles(3);
+                BoundingBoxMin = br.ReadVector3();
 
                 Nub = br.ReadBoolean();
                 br.AssertByte(0);
                 br.AssertByte(0);
                 br.AssertByte(0);
 
-                BoundingBoxMax = br.ReadSingles(3);
+                BoundingBoxMax = br.ReadVector3();
 
                 br.AssertInt32(0);
                 br.AssertInt32(0);
@@ -245,8 +299,10 @@ namespace SoulsFormats
             public int MaterialIndex;
             public int DefaultBoneIndex;
             public int[] BoneIndices;
-            public int[] FaceSetIndices;
-            public int[] VertexGroupIndices;
+            public List<FaceSet> FaceSets;
+            public List<VertexGroup> VertexGroups;
+
+            private int[] faceSetIndices, vertexGroupIndices;
 
             internal Mesh(BinaryReaderEx br)
             {
@@ -267,27 +323,56 @@ namespace SoulsFormats
 
                 int faceSetCount = br.ReadInt32();
                 int faceSetOffset = br.ReadInt32();
-                FaceSetIndices = br.GetInt32s(faceSetOffset, faceSetCount);
+                faceSetIndices = br.GetInt32s(faceSetOffset, faceSetCount);
 
                 int vertexGroupCount = br.ReadInt32();
                 int vertexGroupOffset = br.ReadInt32();
-                VertexGroupIndices = br.GetInt32s(vertexGroupOffset, vertexGroupCount);
+                vertexGroupIndices = br.GetInt32s(vertexGroupOffset, vertexGroupCount);
+            }
+
+            internal void TakeFaceSets(Dictionary<int, FaceSet> faceSetDict)
+            {
+                FaceSets = new List<FaceSet>();
+                foreach (int i in faceSetIndices)
+                {
+                    if (!faceSetDict.ContainsKey(i))
+                        throw new NotSupportedException("Face set not found or already taken: " + i);
+
+                    FaceSets.Add(faceSetDict[i]);
+                    faceSetDict.Remove(i);
+                }
+                faceSetIndices = null;
+            }
+
+            internal void TakeVertexGroups(Dictionary<int, VertexGroup> vertexGroupDict)
+            {
+                VertexGroups = new List<VertexGroup>();
+                foreach (int i in vertexGroupIndices)
+                {
+                    if (!vertexGroupDict.ContainsKey(i))
+                        throw new NotSupportedException("Vertex group not found or already taken: " + i);
+
+                    VertexGroups.Add(vertexGroupDict[i]);
+                    vertexGroupDict.Remove(i);
+                }
+                vertexGroupIndices = null;
             }
         }
 
         public class FaceSet
         {
             public uint Flags;
+            public bool TriangleStrip;
             public bool CullBackfaces;
             public bool Unk3;
             public byte Unk4;
             public int VertexSize;
             public ushort[] Vertices;
 
-            internal FaceSet(BinaryReaderEx br)
+            internal FaceSet(BinaryReaderEx br, int dataOffset)
             {
                 Flags = br.ReadUInt32();
-                bool triangleStrip = br.AssertBoolean(true);
+                TriangleStrip = br.ReadBoolean();
                 CullBackfaces = br.ReadBoolean();
                 Unk3 = br.ReadBoolean();
                 Unk4 = br.ReadByte();
@@ -296,7 +381,7 @@ namespace SoulsFormats
                 int vertexOffset = br.ReadInt32();
                 VertexSize = br.ReadInt32();
 
-                Vertices = br.GetUInt16s(vertexOffset, vertexCount);
+                Vertices = br.GetUInt16s(dataOffset + vertexOffset, vertexCount);
 
                 br.AssertInt32(0);
                 br.AssertInt32(0);
@@ -308,48 +393,58 @@ namespace SoulsFormats
         {
             public int Unk1;
             public int VertexStructLayoutIndex;
-            public int VertexSize;
-            public int VertexCount;
-            public int VertexBufferSize;
-            public int VertexBufferOffset;
             public List<Vertex> Vertices;
+
+            private int vertexCount, vertexBufferOffset;
 
             internal VertexGroup(BinaryReaderEx br)
             {
                 Unk1 = br.AssertInt32(0, 1);
                 VertexStructLayoutIndex = br.ReadInt32();
-                VertexSize = br.ReadInt32();
-                VertexCount = br.ReadInt32();
+                int vertexSize = br.ReadInt32();
+                vertexCount = br.ReadInt32();
                 br.AssertInt32(0);
                 br.AssertInt32(0);
-                VertexBufferSize = br.ReadInt32();
-                VertexBufferOffset = br.ReadInt32();
+                int vertexBufferSize = br.ReadInt32();
+                vertexBufferOffset = br.ReadInt32();
             }
 
-            public void ReadVertices(BinaryReaderEx br, List<VertexStructLayout> layouts)
+            public void ReadVertices(BinaryReaderEx br, int dataOffset, List<VertexStructLayout> layouts)
             {
                 VertexStructLayout layout = layouts[VertexStructLayoutIndex];
                 Vertices = new List<Vertex>();
-
+                br.StepIn(dataOffset + vertexBufferOffset);
+                for (int i = 0; i < vertexCount; i++)
+                    Vertices.Add(new Vertex(br, layout));
+                br.StepOut();
             }
         }
 
-        public class VertexStructLayout
+        public class VertexStructLayout : List<VertexStructLayout.Member>
         {
-            public List<Member> Members;
-
-            internal VertexStructLayout(BinaryReaderEx br)
+            internal VertexStructLayout(BinaryReaderEx br) : base()
             {
                 int memberCount = br.ReadInt32();
                 br.AssertInt32(0);
                 br.AssertInt32(0);
                 int memberOffset = br.ReadInt32();
 
-                Members = new List<Member>();
                 br.StepIn(memberOffset);
                 for (int i = 0; i < memberCount; i++)
-                    Members.Add(new Member(br));
+                    Add(new Member(br));
                 br.StepOut();
+
+                // Make sure no semantics repeat except for color
+                var semantics = new List<Member.MemberSemantic>();
+                foreach (Member member in this)
+                {
+                    if (member.Semantic != Member.MemberSemantic.VertexColor)
+                    {
+                        if (semantics.Contains(member.Semantic))
+                            throw new NotImplementedException();
+                        semantics.Add(member.Semantic);
+                    }
+                }
             }
 
             public class Member
@@ -377,13 +472,13 @@ namespace SoulsFormats
                 public enum MemberValueType : uint
                 {
                     Vector3 = 0x02,
-                    Unknown2 = 0x10,
+                    Unknown10 = 0x10,
                     BoneIndicesStruct = 0x11,
                     PackedVector4 = 0x13,
                     UV = 0x15,
                     UVPair = 0x16,
                     BoneWeightsStruct = 0x1A,
-                    Unknown1 = 0x2F,
+                    Unknown2F = 0x2F,
                 }
 
                 public enum MemberSemantic : uint
@@ -428,11 +523,133 @@ namespace SoulsFormats
                 Param = br.GetUTF16(paramOffset);
                 Value = br.GetUTF16(valueOffset);
             }
+
+            public override string ToString()
+            {
+                return $"{Param} = {Value}";
+            }
         }
 
         public class Vertex
         {
-            
+            public Vector3? Position;
+            public byte[] BoneIndices;
+            public float[] BoneWeights;
+            public List<Vector2> UVs;
+            public byte[] Normal;
+            public byte[] BiTangent;
+            public List<Color> Colors;
+
+            internal Vertex(BinaryReaderEx br, VertexStructLayout layout)
+            {
+                Position = null;
+                BoneIndices = null;
+                BoneWeights = null;
+                UVs = new List<Vector2>();
+                Normal = null;
+                BiTangent = null;
+                Colors = new List<Color>();
+
+                foreach (VertexStructLayout.Member member in layout)
+                {
+                    switch (member.ValueType)
+                    {
+                        case VertexStructLayout.Member.MemberValueType.Vector3:
+                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.Position)
+                            {
+                                Position = br.ReadVector3();
+                            }
+                            else
+                                throw new NotImplementedException();
+                            break;
+
+                        case VertexStructLayout.Member.MemberValueType.Unknown10:
+                        case VertexStructLayout.Member.MemberValueType.BoneIndicesStruct:
+                        case VertexStructLayout.Member.MemberValueType.PackedVector4:
+                        case VertexStructLayout.Member.MemberValueType.Unknown2F:
+                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BoneIndices)
+                            {
+                                BoneIndices = br.ReadBytes(4);
+                            }
+                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.Normal)
+                            {
+                                Normal = br.ReadBytes(4);
+                            }
+                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BiTangent)
+                            {
+                                BiTangent = br.ReadBytes(4);
+                            }
+                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.VertexColor)
+                            {
+                                Colors.Add(ReadColor(br));
+                            }
+                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BoneWeights)
+                            {
+                                BoneWeights = new float[] {
+                                    br.ReadByte() / 255f,
+                                    br.ReadByte() / 255f,
+                                    br.ReadByte() / 255f,
+                                    br.ReadByte() / 255f,
+                                };
+                            }
+                            else
+                                throw new NotImplementedException();
+                            break;
+
+                        case VertexStructLayout.Member.MemberValueType.UV:
+                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UV)
+                            {
+                                UVs.Add(ReadUV(br));
+                            }
+                            else
+                                throw new NotImplementedException();
+                            break;
+
+                        case VertexStructLayout.Member.MemberValueType.UVPair:
+                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UV)
+                            {
+                                UVs.Add(ReadUV(br));
+                                UVs.Add(ReadUV(br));
+                            }
+                            else
+                                throw new NotImplementedException();
+                            break;
+
+                        case VertexStructLayout.Member.MemberValueType.BoneWeightsStruct:
+                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BoneWeights)
+                            {
+                                BoneWeights = new float[] {
+                                    br.ReadUInt16() / 65535f,
+                                    br.ReadUInt16() / 65535f,
+                                    br.ReadUInt16() / 65535f,
+                                    br.ReadUInt16() / 65535f,
+                                };
+                            }
+                            else
+                                throw new NotImplementedException();
+                            break;
+
+                        default:
+                            throw new NotImplementedException();
+                    }
+                }
+            }
+
+            private static Vector2 ReadUV(BinaryReaderEx br)
+            {
+                float u = br.ReadInt16() / 2048f;
+                float v = br.ReadInt16() / 2048f;
+                return new Vector2(u, v);
+            }
+
+            private static Color ReadColor(BinaryReaderEx br)
+            {
+                byte r = br.ReadByte();
+                byte g = br.ReadByte();
+                byte b = br.ReadByte();
+                byte a = br.ReadByte();
+                return Color.FromArgb(a, r, g, b);
+            }
         }
     }
 }

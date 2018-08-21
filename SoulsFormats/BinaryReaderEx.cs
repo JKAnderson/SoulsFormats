@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Numerics;
 using System.Text;
 
 namespace SoulsFormats
@@ -13,6 +14,7 @@ namespace SoulsFormats
         private static readonly Encoding ASCII = Encoding.ASCII;
         private static readonly Encoding ShiftJIS = Encoding.GetEncoding("shift-jis");
         private static readonly Encoding UTF16 = Encoding.Unicode;
+        private static readonly Encoding UTF16BE = Encoding.BigEndianUnicode;
 
         private BinaryReader br;
         private Stack<long> steps;
@@ -836,7 +838,11 @@ namespace SoulsFormats
                 bytes.Add(pair[1]);
                 pair = ReadBytes(2);
             }
-            return UTF16.GetString(bytes.ToArray());
+
+            if (BigEndian)
+                return UTF16BE.GetString(bytes.ToArray());
+            else
+                return UTF16.GetString(bytes.ToArray());
         }
 
         /// <summary>
@@ -848,6 +854,19 @@ namespace SoulsFormats
             string result = ReadUTF16();
             StepOut();
             return result;
+        }
+        #endregion
+
+        #region Other
+        /// <summary>
+        /// Reads a vector of three four-byte floating point numbers.
+        /// </summary>
+        public Vector3 ReadVector3()
+        {
+            float x = br.ReadSingle();
+            float y = br.ReadSingle();
+            float z = br.ReadSingle();
+            return new Vector3(x, y, z);
         }
         #endregion
     }

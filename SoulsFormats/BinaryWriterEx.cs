@@ -13,6 +13,7 @@ namespace SoulsFormats
         private static readonly Encoding ASCII = Encoding.ASCII;
         private static readonly Encoding ShiftJIS = Encoding.GetEncoding("shift-jis");
         private static readonly Encoding UTF16 = Encoding.Unicode;
+        private static readonly Encoding UTF16BE = Encoding.BigEndianUnicode;
 
         private BinaryWriter bw;
         private Stack<long> steps;
@@ -572,7 +573,10 @@ namespace SoulsFormats
         /// </summary>
         public void WriteUTF16(string text, bool terminate = false)
         {
-            WriteChars(text, UTF16, terminate);
+            if (BigEndian)
+                WriteChars(text, UTF16BE, terminate);
+            else
+                WriteChars(text, UTF16, terminate);
         }
         #endregion
     }
