@@ -314,6 +314,9 @@ namespace SoulsFormats
                 br.AssertInt32(0);
                 VertexBufferSize = br.ReadInt32();
                 VertexBufferOffset = br.ReadInt32();
+
+                if (VertexSize == 20)
+                    throw null;
             }
         }
 

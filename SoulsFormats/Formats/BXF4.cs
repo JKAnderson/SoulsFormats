@@ -101,6 +101,7 @@ namespace SoulsFormats
         private bool flag1, flag2;
         private bool bigEndian;
         private BHD4 bhd;
+        private long unk1;
 
         private BXF4(BinaryReaderEx bhdReader, BinaryReaderEx bdtReader)
         {
@@ -116,8 +117,8 @@ namespace SoulsFormats
             bdtReader.BigEndian = bigEndian;
 
             bdtReader.AssertInt32(0);
-            // Data start
-            bdtReader.AssertInt64(0x30);
+            // I thought this was data start, but it's 0x40 in ds2 network test gamedata.bdt, so I don't know
+            unk1 = bdtReader.AssertInt64(0x30, 0x40);
             BDTTimestamp = bdtReader.ReadASCII(8);
             bdtReader.AssertInt64(0);
             bdtReader.AssertInt64(0);
@@ -199,7 +200,7 @@ namespace SoulsFormats
             bdtWriter.WriteByte(0);
             bdtWriter.WriteInt32(0x10000);
             bdtWriter.WriteInt32(0);
-            bdtWriter.WriteInt64(0x30);
+            bdtWriter.WriteInt64(unk1);
             bdtWriter.WriteASCII(BDTTimestamp);
             bdtWriter.WriteInt64(0);
             bdtWriter.WriteInt64(0);
@@ -302,7 +303,7 @@ namespace SoulsFormats
 
                 unicode = br.ReadBoolean();
                 if (fileHeaderSize == 0x18)
-                    Format = br.AssertByte(0x30);
+                    Format = br.AssertByte(0x0C, 0x30);
                 else if (fileHeaderSize == 0x24)
                     Format = br.AssertByte(0x2E, 0x74);
                 else if (fileHeaderSize == 0x28)
@@ -353,7 +354,7 @@ namespace SoulsFormats
                 bw.WriteInt32(files.Count);
                 bw.WriteInt64(0x40);
                 bw.WriteASCII(Timestamp);
-                if (Format == 0x30)
+                if (Format == 0x0C || Format == 0x30)
                     bw.WriteInt64(0x18);
                 else if (Format == 0x2E || Format == 0x74)
                     bw.WriteInt64(0x24);
@@ -458,7 +459,7 @@ namespace SoulsFormats
 
                 public FileHeader(BinaryReaderEx br, bool unicode, byte format)
                 {
-                    Flags = br.AssertByte(0x00, 0x03, 0x40, 0xC0);
+                    Flags = br.AssertByte(0x00, 0x02, 0x03, 0x40, 0xC0);
                     br.AssertByte(0);
                     br.AssertByte(0);
                     br.AssertByte(0);

@@ -94,8 +94,8 @@ namespace SoulsFormats
             else if (fileHeaderSize == 0x1C)
                 Format = br.AssertByte(0x70);
             else if (fileHeaderSize == 0x24)
-                Format = br.AssertByte(0x2A, 0x2E, 0x54, 0x74);
-            Extended = br.AssertByte(0, 1, 4);
+                Format = br.AssertByte(0x26, 0x2A, 0x2E, 0x54, 0x74);
+            Extended = br.AssertByte(0, 1, 4, 0x80);
             br.AssertByte(0);
 
             br.AssertInt32(0);
@@ -257,7 +257,7 @@ namespace SoulsFormats
                 byte[] bytes = file.Bytes;
                 int compressedSize = bytes.Length;
 
-                if (file.Flags == 0xC0)
+                if (file.Flags == 0x03 || file.Flags == 0xC0)
                 {
                     compressedSize = Util.WriteZlib(bw, 0x9C, bytes);
                 }
@@ -281,7 +281,7 @@ namespace SoulsFormats
             public string Name;
 
             /// <summary>
-            /// The ID number of the file.
+            /// The ID number of the file, or -1 for formats without IDs.
             /// </summary>
             public int ID;
 
@@ -297,7 +297,7 @@ namespace SoulsFormats
 
             internal File(BinaryReaderEx br, bool unicode, byte format)
             {
-                Flags = br.AssertByte(0x00, 0x02, 0x0A, 0x40, 0xC0);
+                Flags = br.AssertByte(0x00, 0x02, 0x03, 0x0A, 0x40, 0xC0);
                 br.AssertByte(0);
                 br.AssertByte(0);
                 br.AssertByte(0);
@@ -305,7 +305,7 @@ namespace SoulsFormats
                 br.AssertInt32(-1);
                 long compressedSize = br.ReadInt64();
                 long uncompressedSize = 0;
-                if (format == 0x2A || format == 0x2E || format == 0x54 || format == 0x74)
+                if (format == 0x26 || format == 0x2A || format == 0x2E || format == 0x54 || format == 0x74)
                     uncompressedSize = br.ReadInt64();
                 int fileOffset = br.ReadInt32();
                 if (format == 0x0C)
@@ -319,7 +319,7 @@ namespace SoulsFormats
                 else
                     Name = br.GetShiftJIS(nameOffset);
 
-                if (Flags == 0xC0)
+                if (Flags == 0x03 || Flags == 0xC0)
                 {
                     br.StepIn(fileOffset);
                     Bytes = Util.ReadZlib(br, (int)compressedSize);
@@ -340,7 +340,7 @@ namespace SoulsFormats
 
                 bw.WriteInt32(-1);
                 bw.ReserveInt64($"CompressedSize{index}");
-                if (format == 0x2A || format == 0x2E || format == 0x54 || format == 0x74)
+                if (format == 0x26 || format == 0x2A || format == 0x2E || format == 0x54 || format == 0x74)
                     bw.WriteInt64(Bytes.LongLength);
                 bw.ReserveInt32($"FileData{index}");
                 if (format != 0x0C)
