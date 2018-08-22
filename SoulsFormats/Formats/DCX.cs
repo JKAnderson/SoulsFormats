@@ -68,7 +68,6 @@ namespace SoulsFormats
             }
             else if (magic == "DCX\0")
             {
-
                 string format = br.GetASCII(0x28, 4);
                 if (format == "EDGE")
                 {
@@ -321,6 +320,7 @@ namespace SoulsFormats
 
         internal static void Compress(byte[] data, BinaryWriterEx bw, Type type)
         {
+            bw.BigEndian = true;
             if (type == Type.DemonsSoulsDFLT)
                 CompressDCPDFLT(data, bw);
             else if (type == Type.DemonsSoulsEDGE)

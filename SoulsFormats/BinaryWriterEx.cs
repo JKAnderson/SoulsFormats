@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Numerics;
 using System.Text;
 
 namespace SoulsFormats
@@ -577,6 +578,18 @@ namespace SoulsFormats
                 WriteChars(text, UTF16BE, terminate);
             else
                 WriteChars(text, UTF16, terminate);
+        }
+        #endregion
+
+        #region Other
+        /// <summary>
+        /// Writes a vector of three four-byte floating point numbers.
+        /// </summary>
+        public void WriteVector3(Vector3 vector)
+        {
+            WriteSingle(vector.X);
+            WriteSingle(vector.Y);
+            WriteSingle(vector.Z);
         }
         #endregion
     }

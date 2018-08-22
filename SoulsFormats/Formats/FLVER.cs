@@ -35,7 +35,7 @@ namespace SoulsFormats
                 throw new FormatException("FLVER endian character must be either L or B.");
             br.BigEndian = Header.BigEndian;
 
-            Header.Version = br.AssertInt32(0x2000C, 0x20010);
+            Header.Version = br.AssertInt32(0x2000C, 0x2000D, 0x20010);
 
             int dataOffset = br.ReadInt32();
             int dataSize = br.ReadInt32();
@@ -57,7 +57,7 @@ namespace SoulsFormats
             br.AssertByte(0);
 
             br.AssertInt16(0);
-            br.AssertInt16(0, -1);
+            Header.UnkS1 = br.AssertInt16(0, -1);
 
             int faceSetCount = br.ReadInt32();
             int vertexStructLayoutCount = br.ReadInt32();
@@ -144,7 +144,188 @@ namespace SoulsFormats
 
         protected internal override void Write(BinaryWriterEx bw)
         {
-            throw new NotImplementedException();
+            bw.BigEndian = Header.BigEndian;
+            bw.WriteASCII("FLVER\0");
+            if (Header.BigEndian)
+                bw.WriteASCII("B\0");
+            else
+                bw.WriteASCII("L\0");
+            bw.WriteInt32(Header.Version);
+
+            bw.ReserveInt32("DataOffset");
+            bw.ReserveInt32("DataSize");
+            bw.WriteInt32(Dummies.Count);
+            bw.WriteInt32(Materials.Count);
+            bw.WriteInt32(Bones.Count);
+            bw.WriteInt32(Meshes.Count);
+
+            int vertexGroupCount = 0;
+            foreach (Mesh mesh in Meshes)
+                vertexGroupCount += mesh.VertexGroups.Count;
+            bw.WriteInt32(vertexGroupCount);
+
+            bw.WriteVector3(Header.BoundingBoxMin);
+            bw.WriteVector3(Header.BoundingBoxMax);
+
+            bw.WriteInt32(Header.UnkI1);
+            bw.WriteInt32(Header.UnkI2);
+
+            bw.WriteByte(0x10);
+            bw.WriteBoolean(true);
+            bw.WriteBoolean(Header.UnkB1);
+            bw.WriteByte(0);
+
+            bw.WriteInt16(0);
+            bw.WriteInt16(Header.UnkS1);
+
+            int faceSetCount = 0;
+            foreach (Mesh mesh in Meshes)
+                faceSetCount += mesh.FaceSets.Count;
+            bw.WriteInt32(faceSetCount);
+
+            bw.WriteInt32(VertexStructLayouts.Count);
+
+            int materialParamsCount = 0;
+            foreach (Material material in Materials)
+                materialParamsCount += material.Params.Count;
+            bw.WriteInt32(materialParamsCount);
+
+            bw.WriteBoolean(Header.UnkB2);
+            bw.WriteByte(0);
+            bw.WriteByte(0);
+            bw.WriteByte(0);
+
+            bw.WriteInt32(0);
+            bw.WriteInt32(0);
+            bw.WriteInt32(Header.UnkI3);
+            bw.WriteInt32(0);
+            bw.WriteInt32(0);
+            bw.WriteInt32(0);
+            bw.WriteInt32(0);
+            bw.WriteInt32(0);
+
+            foreach (Dummy dummy in Dummies)
+                dummy.Write(bw);
+
+            for (int i = 0; i < Materials.Count; i++)
+                Materials[i].Write(bw, i);
+
+            for (int i = 0; i < Bones.Count; i++)
+                Bones[i].Write(bw, i);
+
+            for (int i = 0; i < Meshes.Count; i++)
+                Meshes[i].Write(bw, i);
+
+            int faceSetIndex = 0;
+            foreach (Mesh mesh in Meshes)
+            {
+                for (int i = 0; i < mesh.FaceSets.Count; i++)
+                    mesh.FaceSets[i].Write(bw, faceSetIndex + i);
+                faceSetIndex += mesh.FaceSets.Count;
+            }
+
+            int vertexGroupIndex = 0;
+            foreach (Mesh mesh in Meshes)
+            {
+                for (int i = 0; i < mesh.VertexGroups.Count; i++)
+                    mesh.VertexGroups[i].Write(bw, vertexGroupIndex + i, VertexStructLayouts);
+                vertexGroupIndex += mesh.VertexGroups.Count;
+            }
+
+            for (int i = 0; i < VertexStructLayouts.Count; i++)
+                VertexStructLayouts[i].Write(bw, i);
+
+            int materialParamIndex = 0;
+            for (int i = 0; i < Materials.Count; i++)
+            {
+                Materials[i].WriteParams(bw, i, materialParamIndex);
+                materialParamIndex += Materials[i].Params.Count;
+            }
+
+            bw.Pad(0x10);
+            for (int i = 0; i < VertexStructLayouts.Count; i++)
+            {
+                VertexStructLayouts[i].WriteMembers(bw, i);
+            }
+
+            bw.Pad(0x10);
+            for (int i = 0; i < Meshes.Count; i++)
+            {
+                Meshes[i].WriteBoneIndices(bw, i);
+            }
+
+            bw.Pad(0x10);
+            faceSetIndex = 0;
+            for (int i = 0; i < Meshes.Count; i++)
+            {
+                bw.FillInt32($"MeshFaceSetIndices{i}", (int)bw.Position);
+                for (int j = 0; j < Meshes[i].FaceSets.Count; j++)
+                    bw.WriteInt32(faceSetIndex + j);
+                faceSetIndex += Meshes[i].FaceSets.Count;
+            }
+
+            bw.Pad(0x10);
+            vertexGroupIndex = 0;
+            for (int i = 0; i < Meshes.Count; i++)
+            {
+                bw.FillInt32($"MeshVertexGroupIndices{i}", (int)bw.Position);
+                for (int j = 0; j < Meshes[i].VertexGroups.Count; j++)
+                    bw.WriteInt32(vertexGroupIndex + j);
+                vertexGroupIndex += Meshes[i].VertexGroups.Count;
+            }
+
+            bw.Pad(0x10);
+            materialParamIndex = 0;
+            for (int i = 0; i < Materials.Count; i++)
+            {
+                Material material = Materials[i];
+                bw.FillInt32($"MaterialName{i}", (int)bw.Position);
+                bw.WriteUTF16(material.Name, true);
+                bw.FillInt32($"MaterialMTD{i}", (int)bw.Position);
+                bw.WriteUTF16(material.MTD, true);
+
+                for (int j = 0; j < material.Params.Count; j++)
+                {
+                    bw.FillInt32($"MaterialParamValue{materialParamIndex + j}", (int)bw.Position);
+                    bw.WriteUTF16(material.Params[j].Value, true);
+                    bw.FillInt32($"MaterialParamParam{materialParamIndex + j}", (int)bw.Position);
+                    bw.WriteUTF16(material.Params[j].Param, true);
+                }
+                materialParamIndex += material.Params.Count;
+            }
+
+            bw.Pad(0x10);
+            for (int i = 0; i < Bones.Count; i++)
+            {
+                bw.FillInt32($"BoneName{i}", (int)bw.Position);
+                bw.WriteUTF16(Bones[i].Name, true);
+            }
+
+            bw.Pad(0x20);
+            int dataStart = (int)bw.Position;
+            bw.FillInt32("DataOffset", dataStart);
+            
+            faceSetIndex = 0;
+            for (int i = 0; i < Meshes.Count; i++)
+            {
+                Mesh mesh = Meshes[i];
+                for (int j = 0; j < mesh.FaceSets.Count; j++)
+                    mesh.FaceSets[j].WriteVertices(bw, faceSetIndex + j, dataStart);
+                faceSetIndex += mesh.FaceSets.Count;
+                bw.Pad(0x20);
+            }
+
+            vertexGroupIndex = 0;
+            for (int i = 0; i < Meshes.Count; i++)
+            {
+                Mesh mesh = Meshes[i];
+                for (int j = 0; j < mesh.VertexGroups.Count; j++)
+                    mesh.VertexGroups[j].WriteVertices(bw, vertexGroupIndex + j, dataStart, VertexStructLayouts);
+                vertexGroupIndex += mesh.VertexGroups.Count;
+                bw.Pad(0x20);
+            }
+
+            bw.FillInt32("DataSize", (int)bw.Position - dataStart);
         }
 
         public class FLVERHeader
@@ -156,6 +337,7 @@ namespace SoulsFormats
 
             public int UnkI1, UnkI2, UnkI3;
             public bool UnkB1, UnkB2;
+            public short UnkS1;
         }
 
         public class Dummy
@@ -190,6 +372,28 @@ namespace SoulsFormats
                 br.AssertInt32(0);
                 br.AssertInt32(0);
                 br.AssertInt32(0);
+            }
+
+            internal void Write(BinaryWriterEx bw)
+            {
+                bw.WriteVector3(Position);
+                bw.WriteByte(Unk1);
+                bw.WriteByte(Unk2);
+                bw.WriteInt16(Unk3);
+
+                bw.WriteVector3(Row2);
+                bw.WriteInt16(TypeID);
+                bw.WriteInt16(ParentBoneIndex);
+
+                bw.WriteVector3(Row3);
+                bw.WriteInt16(UnkParentIndex);
+                bw.WriteBoolean(Flag1);
+                bw.WriteBoolean(true);
+
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
             }
         }
 
@@ -229,6 +433,28 @@ namespace SoulsFormats
 
                     Params.Add(paramDict[i]);
                     paramDict.Remove(i);
+                }
+            }
+
+            internal void Write(BinaryWriterEx bw, int index)
+            {
+                bw.ReserveInt32($"MaterialName{index}");
+                bw.ReserveInt32($"MaterialMTD{index}");
+                bw.WriteInt32(Params.Count);
+                bw.ReserveInt32($"MaterialParamsIndex{index}");
+                bw.WriteInt32(Flags);
+                bw.WriteInt32(Unk1);
+
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
+            }
+
+            internal void WriteParams(BinaryWriterEx bw, int index, int paramIndex)
+            {
+                bw.FillInt32($"MaterialParamsIndex{index}", paramIndex);
+                for (int i = 0; i < Params.Count; i++)
+                {
+                    Params[i].Write(bw, paramIndex + i);
                 }
             }
 
@@ -287,6 +513,40 @@ namespace SoulsFormats
                 Name = br.GetUTF16(nameOffset);
             }
 
+            internal void Write(BinaryWriterEx bw, int index)
+            {
+                bw.WriteVector3(Translation);
+                bw.ReserveInt32($"BoneName{index}");
+                bw.WriteVector3(EulerRadian);
+                bw.WriteInt16(ParentIndex);
+                bw.WriteInt16(ChildIndex);
+                bw.WriteVector3(Scale);
+                bw.WriteInt16(NextSiblingIndex);
+                bw.WriteInt16(PreviousSiblingIndex);
+                bw.WriteVector3(BoundingBoxMin);
+
+                bw.WriteBoolean(Nub);
+                bw.WriteByte(0);
+                bw.WriteByte(0);
+                bw.WriteByte(0);
+
+                bw.WriteVector3(BoundingBoxMax);
+
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
+            }
+
             public override string ToString()
             {
                 return Name;
@@ -298,7 +558,7 @@ namespace SoulsFormats
             public bool Dynamic;
             public int MaterialIndex;
             public int DefaultBoneIndex;
-            public int[] BoneIndices;
+            public List<int> BoneIndices;
             public List<FaceSet> FaceSets;
             public List<VertexGroup> VertexGroups;
 
@@ -319,7 +579,7 @@ namespace SoulsFormats
                 int boneCount = br.ReadInt32();
                 br.AssertInt32(0);
                 int boneOffset = br.ReadInt32();
-                BoneIndices = br.GetInt32s(boneOffset, boneCount);
+                BoneIndices = new List<int>(br.GetInt32s(boneOffset, boneCount));
 
                 int faceSetCount = br.ReadInt32();
                 int faceSetOffset = br.ReadInt32();
@@ -357,6 +617,35 @@ namespace SoulsFormats
                 }
                 vertexGroupIndices = null;
             }
+
+            internal void Write(BinaryWriterEx bw, int index)
+            {
+                bw.WriteBoolean(Dynamic);
+                bw.WriteByte(0);
+                bw.WriteByte(0);
+                bw.WriteByte(0);
+
+                bw.WriteInt32(MaterialIndex);
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
+                bw.WriteInt32(DefaultBoneIndex);
+
+                bw.WriteInt32(BoneIndices.Count);
+                bw.WriteInt32(0);
+                bw.ReserveInt32($"MeshBoneIndices{index}");
+
+                bw.WriteInt32(FaceSets.Count);
+                bw.ReserveInt32($"MeshFaceSetIndices{index}");
+
+                bw.WriteInt32(VertexGroups.Count);
+                bw.ReserveInt32($"MeshVertexGroupIndices{index}");
+            }
+
+            internal void WriteBoneIndices(BinaryWriterEx bw, int index)
+            {
+                bw.FillInt32($"MeshBoneIndices{index}", (int)bw.Position);
+                bw.WriteInt32s(BoneIndices.ToArray());
+            }
         }
 
         public class FaceSet
@@ -364,7 +653,7 @@ namespace SoulsFormats
             public uint Flags;
             public bool TriangleStrip;
             public bool CullBackfaces;
-            public bool Unk3;
+            public byte Unk3;
             public byte Unk4;
             public int VertexSize;
             public ushort[] Vertices;
@@ -374,7 +663,7 @@ namespace SoulsFormats
                 Flags = br.ReadUInt32();
                 TriangleStrip = br.ReadBoolean();
                 CullBackfaces = br.ReadBoolean();
-                Unk3 = br.ReadBoolean();
+                Unk3 = br.ReadByte();
                 Unk4 = br.ReadByte();
 
                 int vertexCount = br.ReadInt32();
@@ -386,6 +675,30 @@ namespace SoulsFormats
                 br.AssertInt32(0);
                 br.AssertInt32(0);
                 br.AssertInt32(0);
+            }
+
+            internal void Write(BinaryWriterEx bw, int index)
+            {
+                bw.WriteUInt32(Flags);
+
+                bw.WriteBoolean(TriangleStrip);
+                bw.WriteBoolean(CullBackfaces);
+                bw.WriteByte(Unk3);
+                bw.WriteByte(Unk4);
+
+                bw.WriteInt32(Vertices.Length);
+                bw.ReserveInt32($"FaceSetVertices{index}");
+                bw.WriteInt32(VertexSize);
+
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
+            }
+
+            internal void WriteVertices(BinaryWriterEx bw, int index, int dataStart)
+            {
+                bw.FillInt32($"FaceSetVertices{index}", (int)bw.Position - dataStart);
+                bw.WriteUInt16s(Vertices);
             }
         }
 
@@ -417,6 +730,58 @@ namespace SoulsFormats
                 for (int i = 0; i < vertexCount; i++)
                     Vertices.Add(new Vertex(br, layout));
                 br.StepOut();
+                vertexCount = -1;
+                vertexBufferOffset = -1;
+            }
+
+            internal void Write(BinaryWriterEx bw, int index, List<VertexStructLayout> layouts)
+            {
+                VertexStructLayout layout = layouts[VertexStructLayoutIndex];
+
+                bw.WriteInt32(Unk1);
+                bw.WriteInt32(VertexStructLayoutIndex);
+
+                int vertexSize = 0;
+                foreach (VertexStructLayout.Member member in layout)
+                {
+                    switch (member.ValueType)
+                    {
+                        case VertexStructLayout.Member.MemberValueType.Vector3:
+                            vertexSize += 12;
+                            break;
+
+                        case VertexStructLayout.Member.MemberValueType.Unknown10:
+                        case VertexStructLayout.Member.MemberValueType.BoneIndicesStruct:
+                        case VertexStructLayout.Member.MemberValueType.PackedVector4:
+                        case VertexStructLayout.Member.MemberValueType.UV:
+                        case VertexStructLayout.Member.MemberValueType.Unknown2F:
+                            vertexSize += 4;
+                            break;
+
+                        case VertexStructLayout.Member.MemberValueType.UVPair:
+                        case VertexStructLayout.Member.MemberValueType.BoneWeightsStruct:
+                            vertexSize += 8;
+                            break;
+
+                        default:
+                            throw new NotImplementedException();
+                    }
+                }
+                bw.WriteInt32(vertexSize);
+
+                bw.WriteInt32(Vertices.Count);
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
+                bw.WriteInt32(vertexSize * Vertices.Count);
+                bw.ReserveInt32($"VertexGroupVertices{index}");
+            }
+
+            public void WriteVertices(BinaryWriterEx bw, int index, int dataStart, List<VertexStructLayout> layouts)
+            {
+                VertexStructLayout layout = layouts[VertexStructLayoutIndex];
+                bw.FillInt32($"VertexGroupVertices{index}", (int)bw.Position - dataStart);
+                foreach (Vertex vertex in Vertices)
+                    vertex.Write(bw, layout);
             }
         }
 
@@ -438,12 +803,31 @@ namespace SoulsFormats
                 var semantics = new List<Member.MemberSemantic>();
                 foreach (Member member in this)
                 {
-                    if (member.Semantic != Member.MemberSemantic.VertexColor)
+                    if (member.Semantic != Member.MemberSemantic.VertexColor
+                        && member.Semantic != Member.MemberSemantic.UV
+                        && member.Semantic != Member.MemberSemantic.BiTangent)
                     {
                         if (semantics.Contains(member.Semantic))
                             throw new NotImplementedException();
                         semantics.Add(member.Semantic);
                     }
+                }
+            }
+
+            internal void Write(BinaryWriterEx bw, int index)
+            {
+                bw.WriteInt32(Count);
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
+                bw.ReserveInt32($"VertexStructLayout{index}");
+            }
+
+            internal void WriteMembers(BinaryWriterEx bw, int index)
+            {
+                bw.FillInt32($"VertexStructLayout{index}", (int)bw.Position);
+                foreach (Member member in this)
+                {
+                    member.Write(bw);
                 }
             }
 
@@ -462,6 +846,15 @@ namespace SoulsFormats
                     ValueType = br.ReadEnum32<MemberValueType>();
                     Semantic = br.ReadEnum32<MemberSemantic>();
                     Index = br.ReadInt32();
+                }
+
+                internal void Write(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(Unk1);
+                    bw.WriteInt32(StructOffset);
+                    bw.WriteUInt32((uint)ValueType);
+                    bw.WriteUInt32((uint)Semantic);
+                    bw.WriteInt32(Index);
                 }
 
                 public override string ToString()
@@ -524,6 +917,23 @@ namespace SoulsFormats
                 Value = br.GetUTF16(valueOffset);
             }
 
+            internal void Write(BinaryWriterEx bw, int index)
+            {
+                bw.ReserveInt32($"MaterialParamValue{index}");
+                bw.ReserveInt32($"MaterialParamParam{index}");
+                bw.WriteSingle(Unk1);
+                bw.WriteSingle(Unk2);
+
+                bw.WriteBoolean(Unk3);
+                bw.WriteBoolean(Unk4);
+                bw.WriteByte(0);
+                bw.WriteByte(0);
+
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
+            }
+
             public override string ToString()
             {
                 return $"{Param} = {Value}";
@@ -537,8 +947,9 @@ namespace SoulsFormats
             public float[] BoneWeights;
             public List<Vector2> UVs;
             public byte[] Normal;
-            public byte[] BiTangent;
+            public List<byte[]> BiTangents;
             public List<Color> Colors;
+            public byte[] UnknownVector4A;
 
             internal Vertex(BinaryReaderEx br, VertexStructLayout layout)
             {
@@ -547,8 +958,9 @@ namespace SoulsFormats
                 BoneWeights = null;
                 UVs = new List<Vector2>();
                 Normal = null;
-                BiTangent = null;
+                BiTangents = new List<byte[]>();
                 Colors = new List<Color>();
+                UnknownVector4A = null;
 
                 foreach (VertexStructLayout.Member member in layout)
                 {
@@ -577,7 +989,11 @@ namespace SoulsFormats
                             }
                             else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BiTangent)
                             {
-                                BiTangent = br.ReadBytes(4);
+                                BiTangents.Add(br.ReadBytes(4));
+                            }
+                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UnknownVector4A)
+                            {
+                                UnknownVector4A = br.ReadBytes(4);
                             }
                             else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.VertexColor)
                             {
@@ -635,11 +1051,106 @@ namespace SoulsFormats
                 }
             }
 
+            public void Write(BinaryWriterEx bw, VertexStructLayout layout)
+            {
+                foreach (VertexStructLayout.Member member in layout)
+                {
+                    switch (member.ValueType)
+                    {
+                        case VertexStructLayout.Member.MemberValueType.Vector3:
+                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.Position)
+                            {
+                                bw.WriteVector3((Vector3)Position);
+                            }
+                            else
+                                throw new NotImplementedException();
+                            break;
+
+                        case VertexStructLayout.Member.MemberValueType.Unknown10:
+                        case VertexStructLayout.Member.MemberValueType.BoneIndicesStruct:
+                        case VertexStructLayout.Member.MemberValueType.PackedVector4:
+                        case VertexStructLayout.Member.MemberValueType.Unknown2F:
+                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BoneIndices)
+                            {
+                                bw.WriteBytes(BoneIndices);
+                            }
+                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.Normal)
+                            {
+                                bw.WriteBytes(Normal);
+                            }
+                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BiTangent)
+                            {
+                                bw.WriteBytes(BiTangents[member.Index]);
+                            }
+                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UnknownVector4A)
+                            {
+                                bw.WriteBytes(UnknownVector4A);
+                            }
+                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.VertexColor)
+                            {
+                                WriteColor(bw, Colors[member.Index]);
+                            }
+                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BoneWeights)
+                            {
+                                bw.WriteByte((byte)(BoneWeights[0] * 255));
+                                bw.WriteByte((byte)(BoneWeights[1] * 255));
+                                bw.WriteByte((byte)(BoneWeights[2] * 255));
+                                bw.WriteByte((byte)(BoneWeights[3] * 255));
+                            }
+                            else
+                                throw new NotImplementedException();
+                            break;
+
+                        case VertexStructLayout.Member.MemberValueType.UV:
+                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UV)
+                            {
+                                // TODO Make this respect multiple UVs
+                                WriteUV(bw, UVs[0]);
+                            }
+                            else
+                                throw new NotImplementedException();
+                            break;
+
+                        case VertexStructLayout.Member.MemberValueType.UVPair:
+                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UV)
+                            {
+                                // TODO Make this respect multiple UVs
+                                WriteUV(bw, UVs[0]);
+                                WriteUV(bw, UVs[1]);
+                            }
+                            else
+                                throw new NotImplementedException();
+                            break;
+
+                        case VertexStructLayout.Member.MemberValueType.BoneWeightsStruct:
+                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BoneWeights)
+                            {
+                                bw.WriteUInt16((ushort)(BoneWeights[0] * 65535));
+                                bw.WriteUInt16((ushort)(BoneWeights[1] * 65535));
+                                bw.WriteUInt16((ushort)(BoneWeights[2] * 65535));
+                                bw.WriteUInt16((ushort)(BoneWeights[3] * 65535));
+                            }
+                            else
+                                throw new NotImplementedException();
+                            break;
+
+                        default:
+                            throw new NotImplementedException();
+                    }
+                }
+            }
+
             private static Vector2 ReadUV(BinaryReaderEx br)
             {
-                float u = br.ReadInt16() / 2048f;
-                float v = br.ReadInt16() / 2048f;
+                float u = br.ReadInt16();
+                float v = br.ReadInt16();
                 return new Vector2(u, v);
+            }
+
+            private static void WriteUV(BinaryWriterEx bw, Vector2 uv)
+            {
+                bw.WriteInt16((short)(uv.X / 2));
+                bw.WriteInt16((short)(uv.Y / 2));
             }
 
             private static Color ReadColor(BinaryReaderEx br)
@@ -649,6 +1160,14 @@ namespace SoulsFormats
                 byte b = br.ReadByte();
                 byte a = br.ReadByte();
                 return Color.FromArgb(a, r, g, b);
+            }
+
+            private static void WriteColor(BinaryWriterEx bw, Color color)
+            {
+                bw.WriteByte(color.R);
+                bw.WriteByte(color.G);
+                bw.WriteByte(color.B);
+                bw.WriteByte(color.A);
             }
         }
     }
