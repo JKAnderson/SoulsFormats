@@ -218,9 +218,9 @@ namespace SoulsFormats
                     bytes = DCX.Compress(bytes, DCX.Type.DarkSouls1);
 
                 if (bhd.Format == 0x3E)
-                    bhdWriter.FillUInt64($"FileOffset{i}", (ulong)bhdWriter.Position);
+                    bhdWriter.FillUInt64($"FileOffset{i}", (ulong)bdtWriter.Position);
                 else
-                    bhdWriter.FillUInt32($"FileOffset{i}", (uint)bhdWriter.Position);
+                    bhdWriter.FillUInt32($"FileOffset{i}", (uint)bdtWriter.Position);
 
                 bhdWriter.FillInt64($"FileSize{i}", bytes.LongLength);
                 bdtWriter.WriteBytes(bytes);
@@ -345,6 +345,7 @@ namespace SoulsFormats
 
             public void Write(BinaryWriterEx bw, List<File> files)
             {
+                bw.BigEndian = bigEndian;
                 bw.WriteASCII("BHF4");
                 bw.WriteBoolean(flag1);
                 bw.WriteBoolean(flag2);

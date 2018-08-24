@@ -6,11 +6,10 @@ using System.Numerics;
 namespace SoulsFormats
 {
     /// <summary>
-    /// A model.
+    /// A model format used throughout the series.
     /// </summary>
     public class FLVER : SoulsFile<FLVER>
     {
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         public FLVERHeader Header;
         public List<Dummy> Dummies;
         public List<Material> Materials;
@@ -18,8 +17,14 @@ namespace SoulsFormats
         public List<Mesh> Meshes;
         public List<VertexStructLayout> VertexStructLayouts;
 
+        /// <summary>
+        /// Creates an uninitialized FLVER. Should not be called publicly; use FLVER.Read instead.
+        /// </summary>
         public FLVER() { }
 
+        /// <summary>
+        /// Reads FLVER data from a BinaryReaderEx.
+        /// </summary>
         protected internal override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
@@ -134,6 +139,9 @@ namespace SoulsFormats
 
         }
 
+        /// <summary>
+        /// Convert a list to a dictionary with indices as keys.
+        /// </summary>
         private static Dictionary<int, T> Dictionize<T>(List<T> items)
         {
             var dict = new Dictionary<int, T>();
@@ -328,18 +336,43 @@ namespace SoulsFormats
             bw.FillInt32("DataSize", (int)bw.Position - dataStart);
         }
 
+        /// <summary>
+        /// General metadata about a FLVER.
+        /// </summary>
         public class FLVERHeader
         {
+            /// <summary>
+            /// If true FLVER will be written big-endian, if false little-endian.
+            /// </summary>
             public bool BigEndian;
+
+            /// <summary>
+            /// Exact meaning unknown. 0x2000C or 0x2000D for DS1, 0x20010 for DS3.
+            /// </summary>
             public int Version;
+
             public Vector3 BoundingBoxMin;
             public Vector3 BoundingBoxMax;
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public int UnkI1, UnkI2, UnkI3;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public bool UnkB1, UnkB2;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public short UnkS1;
         }
 
+        /// <summary>
+        /// "Dummy polygons" used for hit detection, particle effect locations, and much more.
+        /// </summary>
         public class Dummy
         {
             public Vector3 Position;
@@ -655,7 +688,6 @@ namespace SoulsFormats
             public bool CullBackfaces;
             public byte Unk3;
             public byte Unk4;
-            public int VertexSize;
             public ushort[] Vertices;
 
             internal FaceSet(BinaryReaderEx br, int dataOffset)
@@ -668,7 +700,7 @@ namespace SoulsFormats
 
                 int vertexCount = br.ReadInt32();
                 int vertexOffset = br.ReadInt32();
-                VertexSize = br.ReadInt32();
+                int vertexSize = br.ReadInt32();
 
                 Vertices = br.GetUInt16s(dataOffset + vertexOffset, vertexCount);
 
@@ -688,7 +720,7 @@ namespace SoulsFormats
 
                 bw.WriteInt32(Vertices.Length);
                 bw.ReserveInt32($"FaceSetVertices{index}");
-                bw.WriteInt32(VertexSize);
+                bw.WriteInt32(Vertices.Length * 2);
 
                 bw.WriteInt32(0);
                 bw.WriteInt32(0);
@@ -1149,8 +1181,8 @@ namespace SoulsFormats
 
             private static void WriteUV(BinaryWriterEx bw, Vector2 uv)
             {
-                bw.WriteInt16((short)(uv.X / 2));
-                bw.WriteInt16((short)(uv.Y / 2));
+                bw.WriteInt16((short)(uv.X));
+                bw.WriteInt16((short)(uv.Y));
             }
 
             private static Color ReadColor(BinaryReaderEx br)
@@ -1172,4 +1204,3 @@ namespace SoulsFormats
         }
     }
 }
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
