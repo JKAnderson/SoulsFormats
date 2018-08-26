@@ -10,11 +10,34 @@ namespace SoulsFormats
     /// </summary>
     public class FLVER : SoulsFile<FLVER>
     {
+        /// <summary>
+        /// General values for this model.
+        /// </summary>
         public FLVERHeader Header;
+
+        /// <summary>
+        /// Dummy polygons in this model.
+        /// </summary>
         public List<Dummy> Dummies;
+
+        /// <summary>
+        /// Materials in this model, usually one per mesh.
+        /// </summary>
         public List<Material> Materials;
+
+        /// <summary>
+        /// Bones used by this model, often the full skeleton.
+        /// </summary>
         public List<Bone> Bones;
+
+        /// <summary>
+        /// Individual chunks of the model.
+        /// </summary>
         public List<Mesh> Meshes;
+
+        /// <summary>
+        /// Layouts determining how to write vertex information.
+        /// </summary>
         public List<VertexStructLayout> VertexStructLayouts;
 
         /// <summary>
@@ -75,7 +98,7 @@ namespace SoulsFormats
 
             br.AssertInt32(0);
             br.AssertInt32(0);
-            Header.UnkI3 = br.AssertInt32(0, 2);
+            Header.UnkI3 = br.AssertInt32(0, 1, 2);
             br.AssertInt32(0);
             br.AssertInt32(0);
             br.AssertInt32(0);
@@ -150,6 +173,9 @@ namespace SoulsFormats
             return dict;
         }
 
+        /// <summary>
+        /// Writes FLVER data to a BinaryWriterEx.
+        /// </summary>
         protected internal override void Write(BinaryWriterEx bw)
         {
             bw.BigEndian = Header.BigEndian;
@@ -351,7 +377,14 @@ namespace SoulsFormats
             /// </summary>
             public int Version;
 
+            /// <summary>
+            /// Minimum extent of the entire model.
+            /// </summary>
             public Vector3 BoundingBoxMin;
+
+            /// <summary>
+            /// Maximum extent of the entire model.
+            /// </summary>
             public Vector3 BoundingBoxMax;
 
             /// <summary>
@@ -375,14 +408,49 @@ namespace SoulsFormats
         /// </summary>
         public class Dummy
         {
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public Vector3 Position;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte Unk1, Unk2;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public short Unk3;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public Vector3 Row2;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public short TypeID;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public short ParentBoneIndex;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public Vector3 Row3;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public short UnkParentIndex;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public bool Flag1;
 
             internal Dummy(BinaryReaderEx br)
@@ -430,12 +498,34 @@ namespace SoulsFormats
             }
         }
 
+        /// <summary>
+        /// A reference to an MTD file, with params for specific textures used.
+        /// </summary>
         public class Material
         {
+            /// <summary>
+            /// Identifies the mesh that uses this material, may include keywords that determine hideable parts.
+            /// </summary>
             public string Name;
+
+            /// <summary>
+            /// Virtual path to an MTD file.
+            /// </summary>
             public string MTD;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public int Flags;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public int Unk1;
+
+            /// <summary>
+            /// External params of the MTD, usually specifying textures to use.
+            /// </summary>
             public List<MaterialParam> Params;
 
             private int paramIndex, paramCount;
@@ -491,30 +581,80 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Returns the name and MTD path of the material.
+            /// </summary>
             public override string ToString()
             {
                 return $"{Name} | {MTD}";
             }
         }
 
+        /// <summary>
+        /// Bones available for vertices to be weighted to.
+        /// </summary>
         public class Bone
         {
+            /// <summary>
+            /// Corresponds to the name of a bone in the parent skeleton. May also have a dummy name.
+            /// </summary>
             public string Name;
-            public Vector3 Translation;
-            public Vector3 EulerRadian;
+
+            /// <summary>
+            /// Index of the parent in this FLVER's bone collection, or -1 for none.
+            /// </summary>
             public short ParentIndex;
+
+            /// <summary>
+            /// Index of the first child in this FLVER's bone collection, or -1 for none.
+            /// </summary>
             public short ChildIndex;
-            public Vector3 Scale;
+
+            /// <summary>
+            /// Index of the next child of this bone's parent, or -1 for none.
+            /// </summary>
             public short NextSiblingIndex;
+
+            /// <summary>
+            /// Index of the previous child of this bone's parent, or -1 for none.
+            /// </summary>
             public short PreviousSiblingIndex;
-            public Vector3 BoundingBoxMin, BoundingBoxMax;
+
+            /// <summary>
+            /// Translation of this bone.
+            /// </summary>
+            public Vector3 Translation;
+
+            /// <summary>
+            /// Rotation of this bone; euler radians.
+            /// </summary>
+            public Vector3 Rotation;
+
+            /// <summary>
+            /// Scale of this bone.
+            /// </summary>
+            public Vector3 Scale;
+
+            /// <summary>
+            /// Minimum extent of the vertices weighted to this bone.
+            /// </summary>
+            public Vector3 BoundingBoxMin;
+
+            /// <summary>
+            /// Maximum extent of the vertices weighted to this bone.
+            /// </summary>
+            public Vector3 BoundingBoxMax;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public bool Nub;
 
             internal Bone(BinaryReaderEx br)
             {
                 Translation = br.ReadVector3();
                 int nameOffset = br.ReadInt32();
-                EulerRadian = br.ReadVector3();
+                Rotation = br.ReadVector3();
                 ParentIndex = br.ReadInt16();
                 ChildIndex = br.ReadInt16();
                 Scale = br.ReadVector3();
@@ -550,7 +690,7 @@ namespace SoulsFormats
             {
                 bw.WriteVector3(Translation);
                 bw.ReserveInt32($"BoneName{index}");
-                bw.WriteVector3(EulerRadian);
+                bw.WriteVector3(Rotation);
                 bw.WriteInt16(ParentIndex);
                 bw.WriteInt16(ChildIndex);
                 bw.WriteVector3(Scale);
@@ -580,19 +720,48 @@ namespace SoulsFormats
                 bw.WriteInt32(0);
             }
 
+            /// <summary>
+            /// Returns the name of this bone.
+            /// </summary>
             public override string ToString()
             {
                 return Name;
             }
         }
 
+        /// <summary>
+        /// An individual chunk of a model.
+        /// </summary>
         public class Mesh
         {
+            /// <summary>
+            /// Unknown. Seems to always be true.
+            /// </summary>
             public bool Dynamic;
+
+            /// <summary>
+            /// Index of the material used by all triangles in this mesh.
+            /// </summary>
             public int MaterialIndex;
+
+            /// <summary>
+            /// Apparently does nothing. Usually points to a dummy bone named after the model, possibly just for labelling.
+            /// </summary>
             public int DefaultBoneIndex;
+
+            /// <summary>
+            /// Indexes of bones in the bone collection which may be used by vertices in this mesh.
+            /// </summary>
             public List<int> BoneIndices;
+
+            /// <summary>
+            /// Triangles in this mesh.
+            /// </summary>
             public List<FaceSet> FaceSets;
+
+            /// <summary>
+            /// Vertex groups in this mesh.
+            /// </summary>
             public List<VertexGroup> VertexGroups;
 
             private int[] faceSetIndices, vertexGroupIndices;
@@ -681,13 +850,39 @@ namespace SoulsFormats
             }
         }
 
+        /// <summary>
+        /// Determines how vertices in a vertex group are connected to form triangles.
+        /// </summary>
         public class FaceSet
         {
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public uint Flags;
+
+            /// <summary>
+            /// Whether vertices are defined as a triangle strip or individual triangles.
+            /// </summary>
             public bool TriangleStrip;
+
+            /// <summary>
+            /// Whether triangles can be seen through from behind.
+            /// </summary>
             public bool CullBackfaces;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte Unk3;
+            
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte Unk4;
+
+            /// <summary>
+            /// Indexes to vertices in a vertex group.
+            /// </summary>
             public ushort[] Vertices;
 
             internal FaceSet(BinaryReaderEx br, int dataOffset)
@@ -734,10 +929,24 @@ namespace SoulsFormats
             }
         }
 
+        /// <summary>
+        /// A collection of vertices with a layout indicating what information they contain.
+        /// </summary>
         public class VertexGroup
         {
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public int Unk1;
+
+            /// <summary>
+            /// Index to a layout in the FLVER's layout collection.
+            /// </summary>
             public int VertexStructLayoutIndex;
+
+            /// <summary>
+            /// Vertices in this vertex group.
+            /// </summary>
             public List<Vertex> Vertices;
 
             private int vertexCount, vertexBufferOffset;
@@ -754,7 +963,7 @@ namespace SoulsFormats
                 vertexBufferOffset = br.ReadInt32();
             }
 
-            public void ReadVertices(BinaryReaderEx br, int dataOffset, List<VertexStructLayout> layouts)
+            internal void ReadVertices(BinaryReaderEx br, int dataOffset, List<VertexStructLayout> layouts)
             {
                 VertexStructLayout layout = layouts[VertexStructLayoutIndex];
                 Vertices = new List<Vertex>();
@@ -762,6 +971,7 @@ namespace SoulsFormats
                 for (int i = 0; i < vertexCount; i++)
                     Vertices.Add(new Vertex(br, layout));
                 br.StepOut();
+
                 vertexCount = -1;
                 vertexBufferOffset = -1;
             }
@@ -808,7 +1018,7 @@ namespace SoulsFormats
                 bw.ReserveInt32($"VertexGroupVertices{index}");
             }
 
-            public void WriteVertices(BinaryWriterEx bw, int index, int dataStart, List<VertexStructLayout> layouts)
+            internal void WriteVertices(BinaryWriterEx bw, int index, int dataStart, List<VertexStructLayout> layouts)
             {
                 VertexStructLayout layout = layouts[VertexStructLayoutIndex];
                 bw.FillInt32($"VertexGroupVertices{index}", (int)bw.Position - dataStart);
@@ -817,6 +1027,9 @@ namespace SoulsFormats
             }
         }
 
+        /// <summary>
+        /// Determines which properties of a vertex are read and written, and in what order and format.
+        /// </summary>
         public class VertexStructLayout : List<VertexStructLayout.Member>
         {
             internal VertexStructLayout(BinaryReaderEx br) : base()
@@ -831,7 +1044,7 @@ namespace SoulsFormats
                     Add(new Member(br));
                 br.StepOut();
 
-                // Make sure no semantics repeat except for color
+                // Make sure no semantics repeat that aren't known to
                 var semantics = new List<Member.MemberSemantic>();
                 foreach (Member member in this)
                 {
@@ -863,12 +1076,34 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Represents one property of a vertex.
+            /// </summary>
             public class Member
             {
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int Unk1;
+
+                /// <summary>
+                /// Offset of this member from the start of a vertex struct.
+                /// </summary>
                 public int StructOffset;
+
+                /// <summary>
+                /// Format used to store this member.
+                /// </summary>
                 public MemberValueType ValueType;
+
+                /// <summary>
+                /// Vertex property being stored.
+                /// </summary>
                 public MemberSemantic Semantic;
+
+                /// <summary>
+                /// For semantics that may appear more than once such as UVs, which one this member is.
+                /// </summary>
                 public int Index;
 
                 internal Member(BinaryReaderEx br)
@@ -889,44 +1124,141 @@ namespace SoulsFormats
                     bw.WriteInt32(Index);
                 }
 
+                /// <summary>
+                /// Returns the value type and semantic of this member.
+                /// </summary>
                 public override string ToString()
                 {
                     return $"{ValueType}: {Semantic}";
                 }
 
+                /// <summary>
+                /// Format of a vertex property.
+                /// </summary>
                 public enum MemberValueType : uint
                 {
+                    /// <summary>
+                    /// Three four-byte floating point numbers.
+                    /// </summary>
                     Vector3 = 0x02,
+
+                    /// <summary>
+                    /// Unknown.
+                    /// </summary>
                     Unknown10 = 0x10,
+
+                    /// <summary>
+                    /// Four bytes.
+                    /// </summary>
                     BoneIndicesStruct = 0x11,
+
+                    /// <summary>
+                    /// Four bytes.
+                    /// </summary>
                     PackedVector4 = 0x13,
+
+                    /// <summary>
+                    /// Two shorts.
+                    /// </summary>
                     UV = 0x15,
+
+                    /// <summary>
+                    /// Two shorts and two shorts.
+                    /// </summary>
                     UVPair = 0x16,
+
+                    /// <summary>
+                    /// Four shorts.
+                    /// </summary>
                     BoneWeightsStruct = 0x1A,
+
+                    /// <summary>
+                    /// Unknown.
+                    /// </summary>
                     Unknown2F = 0x2F,
                 }
 
+                /// <summary>
+                /// Property of a vertex.
+                /// </summary>
                 public enum MemberSemantic : uint
                 {
+                    /// <summary>
+                    /// Where the vertex is.
+                    /// </summary>
                     Position = 0x00,
+
+                    /// <summary>
+                    /// Weight of the vertex's attachment to bones.
+                    /// </summary>
                     BoneWeights = 0x01,
+
+                    /// <summary>
+                    /// Bones the vertex is weighted to, indexing the parent mesh's bone indices.
+                    /// </summary>
                     BoneIndices = 0x02,
+
+                    /// <summary>
+                    /// Orientation of the vertex.
+                    /// </summary>
                     Normal = 0x03,
+
+                    /// <summary>
+                    /// Texture coordinates of the vertex.
+                    /// </summary>
                     UV = 0x05,
+
+                    /// <summary>
+                    /// Unknown.
+                    /// </summary>
                     BiTangent = 0x06,
+
+                    /// <summary>
+                    /// Unknown.
+                    /// </summary>
                     UnknownVector4A = 0x07,
+
+                    /// <summary>
+                    /// Color of the vertex (if untextured?)
+                    /// </summary>
                     VertexColor = 0x0A,
                 }
             }
         }
 
+        /// <summary>
+        /// An MTD external parameter.
+        /// </summary>
         public class MaterialParam
         {
+            /// <summary>
+            /// The external parameter of the MTD.
+            /// </summary>
             public string Param;
+
+            /// <summary>
+            /// The value of the external parameter.
+            /// </summary>
             public string Value;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public float Unk1;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public float Unk2;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public bool Unk3;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public bool Unk4;
 
             internal MaterialParam(BinaryReaderEx br)
@@ -966,21 +1298,58 @@ namespace SoulsFormats
                 bw.WriteInt32(0);
             }
 
+            /// <summary>
+            /// Returns the param name and value of this param.
+            /// </summary>
             public override string ToString()
             {
                 return $"{Param} = {Value}";
             }
         }
 
+        /// <summary>
+        /// A single point in a vertex group.
+        /// </summary>
         public class Vertex
         {
+            /// <summary>
+            /// Where the vertex is.
+            /// </summary>
             public Vector3? Position;
+
+            /// <summary>
+            /// Bones the vertex is weighted to, indexing the parent mesh's bone indices.
+            /// </summary>
             public byte[] BoneIndices;
+
+            /// <summary>
+            /// Weight of the vertex's attachment to bones.
+            /// </summary>
             public float[] BoneWeights;
+
+            /// <summary>
+            /// Texture coordinates of the vertex.
+            /// </summary>
             public List<Vector2> UVs;
+
+            /// <summary>
+            /// Orientation of the vertex.
+            /// </summary>
             public byte[] Normal;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<byte[]> BiTangents;
+
+            /// <summary>
+            /// Color of the vertex (if untextured?)
+            /// </summary>
             public List<Color> Colors;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte[] UnknownVector4A;
 
             internal Vertex(BinaryReaderEx br, VertexStructLayout layout)
@@ -1083,8 +1452,10 @@ namespace SoulsFormats
                 }
             }
 
-            public void Write(BinaryWriterEx bw, VertexStructLayout layout)
+            internal void Write(BinaryWriterEx bw, VertexStructLayout layout)
             {
+                var uvQueue = new Queue<Vector2>(UVs);
+
                 foreach (VertexStructLayout.Member member in layout)
                 {
                     switch (member.ValueType)
@@ -1136,8 +1507,7 @@ namespace SoulsFormats
                         case VertexStructLayout.Member.MemberValueType.UV:
                             if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UV)
                             {
-                                // TODO Make this respect multiple UVs
-                                WriteUV(bw, UVs[0]);
+                                WriteUV(bw, uvQueue.Dequeue());
                             }
                             else
                                 throw new NotImplementedException();
@@ -1146,9 +1516,8 @@ namespace SoulsFormats
                         case VertexStructLayout.Member.MemberValueType.UVPair:
                             if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UV)
                             {
-                                // TODO Make this respect multiple UVs
-                                WriteUV(bw, UVs[0]);
-                                WriteUV(bw, UVs[1]);
+                                WriteUV(bw, uvQueue.Dequeue());
+                                WriteUV(bw, uvQueue.Dequeue());
                             }
                             else
                                 throw new NotImplementedException();

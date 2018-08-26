@@ -121,6 +121,16 @@ Extension: `.drb`
 * DeS: Untested
 * NB: Untested
 
+### FLVER
+A 3D model file used throughout the series.  
+Extension: `.flv` or `.flver`
+* DS1: Partial Read and Write
+* DSR: Partial Read and Write
+* DS2: Partial Read and Write
+* DS3: Untested
+* DeS: Untested
+* BB: Untested
+
 ### MTD
 A material definition file used throughout the series.  
 Extension: `.mtd`
