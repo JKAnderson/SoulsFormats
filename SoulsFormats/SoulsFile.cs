@@ -32,6 +32,7 @@ namespace SoulsFormats
         /// <summary>
         /// Returns true if the data appears to be a BND4.
         /// </summary>
+        // This should really be a static method, but interfaces do not allow static inheritance; hence the dummy objects below.
         internal abstract bool Is(BinaryReaderEx br);
 
         /// <summary>
