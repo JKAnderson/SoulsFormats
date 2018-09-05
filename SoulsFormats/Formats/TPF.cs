@@ -29,14 +29,23 @@ namespace SoulsFormats
         public byte Flag2;
 
         /// <summary>
-        /// Creates an uninitialized TPF. Should not be used publicly.
+        /// Creates an uninitialized TPF. Should not be used publicly; use TPF.Read instead.
         /// </summary>
         public TPF() { }
 
         /// <summary>
+        /// Returns true if the data appears to be a TPF.
+        /// </summary>
+        internal override bool Is(BinaryReaderEx br)
+        {
+            string magic = br.GetASCII(0, 4);
+            return magic == "TPF\0";
+        }
+
+        /// <summary>
         /// Reads TPF data from a BinaryReaderEx.
         /// </summary>
-        protected internal override void Read(BinaryReaderEx br)
+        internal override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
             br.AssertASCII("TPF\0");
@@ -60,7 +69,7 @@ namespace SoulsFormats
         /// <summary>
         /// Writes TPF data to a BinaryWriterEx.
         /// </summary>
-        protected internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BinaryWriterEx bw)
         {
             bw.BigEndian = false;
             bw.WriteASCII("TPF\0");

@@ -46,9 +46,18 @@ namespace SoulsFormats
         public FLVER() { }
 
         /// <summary>
+        /// Returns true if the data appears to be a FLVER.
+        /// </summary>
+        internal override bool Is(BinaryReaderEx br)
+        {
+            string magic = br.GetASCII(0, 6);
+            return magic == "FLVER\0";
+        }
+
+        /// <summary>
         /// Reads FLVER data from a BinaryReaderEx.
         /// </summary>
-        protected internal override void Read(BinaryReaderEx br)
+        internal override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
 
@@ -176,7 +185,7 @@ namespace SoulsFormats
         /// <summary>
         /// Writes FLVER data to a BinaryWriterEx.
         /// </summary>
-        protected internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BinaryWriterEx bw)
         {
             bw.BigEndian = Header.BigEndian;
             bw.WriteASCII("FLVER\0");
@@ -338,7 +347,7 @@ namespace SoulsFormats
             bw.Pad(0x20);
             int dataStart = (int)bw.Position;
             bw.FillInt32("DataOffset", dataStart);
-            
+
             faceSetIndex = 0;
             for (int i = 0; i < Meshes.Count; i++)
             {
@@ -874,7 +883,7 @@ namespace SoulsFormats
             /// Unknown.
             /// </summary>
             public byte Unk3;
-            
+
             /// <summary>
             /// Unknown.
             /// </summary>
@@ -1254,7 +1263,7 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public bool Unk3;
+            public byte Unk3;
 
             /// <summary>
             /// Unknown.
@@ -1265,10 +1274,10 @@ namespace SoulsFormats
             {
                 int valueOffset = br.ReadInt32();
                 int paramOffset = br.ReadInt32();
-                Unk1 = br.AssertSingle(1, 2);
-                Unk2 = br.AssertSingle(1, 2);
+                Unk1 = br.ReadSingle();
+                Unk2 = br.ReadSingle();
 
-                Unk3 = br.ReadBoolean();
+                Unk3 = br.AssertByte(0, 1, 2);
                 Unk4 = br.ReadBoolean();
                 br.AssertByte(0);
                 br.AssertByte(0);
@@ -1288,7 +1297,7 @@ namespace SoulsFormats
                 bw.WriteSingle(Unk1);
                 bw.WriteSingle(Unk2);
 
-                bw.WriteBoolean(Unk3);
+                bw.WriteByte(Unk3);
                 bw.WriteBoolean(Unk4);
                 bw.WriteByte(0);
                 bw.WriteByte(0);

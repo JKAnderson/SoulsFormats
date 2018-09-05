@@ -13,35 +13,54 @@ namespace SoulsFormats
         public DCX.Type Compression = DCX.Type.None;
 
         /// <summary>
-        /// Returns true if the data appears to be a DCX file.
+        /// Decompresses data and returns a new BinaryReaderEx if necessary.
         /// </summary>
-        private static bool IsDCX(BinaryReaderEx br)
+        private static BinaryReaderEx GetDecompressedBR(BinaryReaderEx br, out DCX.Type compression)
         {
-            br.StepIn(0);
-            string magic = br.ReadASCII(4);
-            br.StepOut();
-            return magic == "DCX\0" || magic == "DCP\0";
+            if (DCX.Is(br))
+            {
+                byte[] bytes = DCX.Decompress(br, out compression);
+                return new BinaryReaderEx(false, bytes);
+            }
+            else
+            {
+                compression = DCX.Type.None;
+                return br;
+            }
+        }
+
+        /// <summary>
+        /// Returns true if the data appears to be a BND4.
+        /// </summary>
+        internal abstract bool Is(BinaryReaderEx br);
+
+        /// <summary>
+        /// Returns true if the bytes appear to be a file of this type.
+        /// </summary>
+        public static bool Is(byte[] bytes)
+        {
+            BinaryReaderEx br = new BinaryReaderEx(false, bytes);
+            var dummy = new TFormat();
+            return dummy.Is(GetDecompressedBR(br, out _));
+        }
+
+        /// <summary>
+        /// Returns true if the file appears to be a file of this type.
+        /// </summary>
+        public static bool Is(string path)
+        {
+            using (FileStream stream = File.OpenRead(path))
+            {
+                BinaryReaderEx br = new BinaryReaderEx(false, stream);
+                var dummy = new TFormat();
+                return dummy.Is(GetDecompressedBR(br, out _));
+            }
         }
 
         /// <summary>
         /// Loads file data from a BinaryReaderEx.
         /// </summary>
-        protected internal abstract void Read(BinaryReaderEx br);
-
-        /// <summary>
-        /// Loads file data from a BinaryReaderEx, first decompressing it if necessary.
-        /// </summary>
-        private static TFormat Read(BinaryReaderEx br, bool isDCX)
-        {
-            TFormat file = new TFormat();
-            if (isDCX)
-            {
-                byte[] bytes = DCX.Decompress(br, out file.Compression);
-                br = new BinaryReaderEx(false, bytes);
-            }
-            file.Read(br);
-            return file;
-        }
+        internal abstract void Read(BinaryReaderEx br);
 
         /// <summary>
         /// Loads a file from a byte array, automatically decompressing it if necessary.
@@ -49,7 +68,10 @@ namespace SoulsFormats
         public static TFormat Read(byte[] bytes)
         {
             BinaryReaderEx br = new BinaryReaderEx(false, bytes);
-            return Read(br, IsDCX(br));
+            TFormat file = new TFormat();
+            br = GetDecompressedBR(br, out file.Compression);
+            file.Read(br);
+            return file;
         }
 
         /// <summary>
@@ -60,14 +82,17 @@ namespace SoulsFormats
             using (FileStream stream = File.OpenRead(path))
             {
                 BinaryReaderEx br = new BinaryReaderEx(false, stream);
-                return Read(br, IsDCX(br));
+                TFormat file = new TFormat();
+                br = GetDecompressedBR(br, out file.Compression);
+                file.Read(br);
+                return file;
             }
         }
 
         /// <summary>
         /// Writes file data to a BinaryWriterEx.
         /// </summary>
-        protected internal abstract void Write(BinaryWriterEx bw);
+        internal abstract void Write(BinaryWriterEx bw);
 
         /// <summary>
         /// Writes file data to a BinaryWriterEx, compressing it afterwards if specified.

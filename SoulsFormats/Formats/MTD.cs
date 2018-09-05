@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 
 namespace SoulsFormats
 {
@@ -10,40 +9,50 @@ namespace SoulsFormats
     public class MTD : SoulsFile<MTD>
     {
         /// <summary>
-        /// Unknown
+        /// Unknown.
         /// </summary>
-        public string SpxPath;
+        public string ShaderPath { get; set; }
 
         /// <summary>
         /// A description of this material's purpose.
         /// </summary>
-        public string Description;
+        public string Description { get; set; }
 
         /// <summary>
         /// Values for this material stored in this MTD.
         /// </summary>
-        public List<InternalEntry> Internal;
+        public List<Param> Params;
 
         /// <summary>
         /// Values for this material stored somewhere else.
         /// </summary>
-        public List<ExternalEntry> External;
+        public List<Texture> Textures;
 
-        private int unk1, unk2, unk3, unk4, unk5, unk6, unk7, unk8, unk9, unk10, unk11, unk12;
+        private int unk1, unk2, unk3, unk4, unk5, unk7, unk8, unk9, unk10, unk11, unk12;
 
         /// <summary>
-        /// Creates an uninitialized MTD. Should not be used publicly.
+        /// Creates an uninitialized MTD. Should not be used publicly; use MTD.Read instead.
         /// </summary>
         public MTD() { }
 
         /// <summary>
+        /// Returns true if the data appears to be an MTD.
+        /// </summary>
+        internal override bool Is(BinaryReaderEx br)
+        {
+            string magic = br.GetASCII(0x2C, 4);
+            return magic == "MTD ";
+        }
+
+        /// <summary>
         /// Reads MTD data from a BinaryReaderEx.
         /// </summary>
-        protected internal override void Read(BinaryReaderEx br)
+        internal override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
             br.AssertInt32(0);
             int fileSize = br.ReadInt32();
+
             br.AssertInt32(0);
             br.AssertInt32(3);
             unk1 = br.ReadInt32();
@@ -61,29 +70,31 @@ namespace SoulsFormats
             int dataSize = br.ReadInt32();
             br.AssertInt32(2);
             br.AssertInt32(4);
+
             unk5 = br.ReadInt32();
-            SpxPath = br.ReadShiftJISLengthPrefixed(0xA3);
+            ShaderPath = br.ReadShiftJISLengthPrefixed(0xA3);
             Description = br.ReadShiftJISLengthPrefixed(0x03);
             br.AssertInt32(1);
             br.AssertInt32(0);
-            unk6 = br.ReadInt32();
+            int paramSize = br.ReadInt32();
             br.AssertInt32(3);
             br.AssertInt32(4);
             unk7 = br.ReadInt32();
             br.AssertInt32(0);
+
             unk8 = br.ReadInt32();
 
-            Internal = new List<InternalEntry>();
-            int internalEntryCount = br.ReadInt32();
-            for (int i = 0; i < internalEntryCount; i++)
-                Internal.Add(new InternalEntry(br));
+            Params = new List<Param>();
+            int paramCount = br.ReadInt32();
+            for (int i = 0; i < paramCount; i++)
+                Params.Add(new Param(br));
 
             unk9 = br.ReadInt32();
 
-            External = new List<ExternalEntry>();
-            int externalEntryCount = br.ReadInt32();
-            for (int i = 0; i < externalEntryCount; i++)
-                External.Add(new ExternalEntry(br));
+            Textures = new List<Texture>();
+            int textureCount = br.ReadInt32();
+            for (int i = 0; i < textureCount; i++)
+                Textures.Add(new Texture(br));
 
             unk10 = br.ReadInt32();
             br.AssertInt32(0);
@@ -96,11 +107,13 @@ namespace SoulsFormats
         /// <summary>
         /// Writes MTD data to a BinaryWriterEx.
         /// </summary>
-        protected internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BinaryWriterEx bw)
         {
             bw.BigEndian = false;
             bw.WriteInt32(0);
             bw.ReserveInt32("FileSize");
+
+            int fileStart = (int)bw.Position;
             bw.WriteInt32(0);
             bw.WriteInt32(3);
             bw.WriteInt32(unk1);
@@ -118,26 +131,30 @@ namespace SoulsFormats
             bw.ReserveInt32("DataSize");
             bw.WriteInt32(2);
             bw.WriteInt32(4);
+
+            int dataStart = (int)bw.Position;
             bw.WriteInt32(unk5);
-            bw.WriteShiftJISLengthPrefixed(SpxPath, 0xA3);
+            bw.WriteShiftJISLengthPrefixed(ShaderPath, 0xA3);
             bw.WriteShiftJISLengthPrefixed(Description, 0x03);
             bw.WriteInt32(1);
             bw.WriteInt32(0);
-            bw.WriteInt32(unk6);
+            bw.ReserveInt32("ParamSize");
             bw.WriteInt32(3);
             bw.WriteInt32(4);
             bw.WriteInt32(unk7);
             bw.WriteInt32(0);
+
+            int paramStart = (int)bw.Position;
             bw.WriteInt32(unk8);
 
-            bw.WriteInt32(Internal.Count);
-            foreach (InternalEntry internalEntry in Internal)
+            bw.WriteInt32(Params.Count);
+            foreach (Param internalEntry in Params)
                 internalEntry.Write(bw);
 
             bw.WriteInt32(unk9);
 
-            bw.WriteInt32(External.Count);
-            foreach (ExternalEntry externalEntry in External)
+            bw.WriteInt32(Textures.Count);
+            foreach (Texture externalEntry in Textures)
                 externalEntry.Write(bw);
 
             bw.WriteInt32(unk10);
@@ -148,64 +165,97 @@ namespace SoulsFormats
             bw.WriteInt32(0);
 
             int position = (int)bw.Position;
-            bw.FillInt32("FileSize", position - 8);
-            bw.FillInt32("DataSize", position - 0x4C);
+            bw.FillInt32("FileSize", position - fileStart);
+            bw.FillInt32("DataSize", position - dataStart);
+            bw.FillInt32("ParamSize", position - paramStart);
         }
 
         /// <summary>
-        /// A material value stored within its MTD.
+        /// A value defining the material's properties.
         /// </summary>
-        public class InternalEntry
+        public class Param
         {
             /// <summary>
-            /// The name of this value.
+            /// The name of the param.
             /// </summary>
             public string Name;
 
             /// <summary>
             /// The type of this value.
             /// </summary>
-            public InternalType Type;
+            public ParamType Type;
 
             /// <summary>
             /// The value itself.
             /// </summary>
             public object Value;
 
-            private int unk2, unk5, unk6, unk7, unk8, unk9;
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public int Unk2;
 
-            internal InternalEntry(BinaryReaderEx br)
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public int Unk5;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public int Unk8;
+
+            internal Param(BinaryReaderEx br)
             {
                 br.AssertInt32(0);
-                unk2 = br.ReadInt32();
+                Unk2 = br.ReadInt32();
                 br.AssertInt32(4);
                 br.AssertInt32(4);
-                unk5 = br.ReadInt32();
+                Unk5 = br.ReadInt32();
                 Name = br.ReadShiftJISLengthPrefixed(0xA3);
                 string type = br.ReadShiftJISLengthPrefixed(0x04);
                 type = char.ToUpper(type[0]) + type.Substring(1);
-                Type = (InternalType)Enum.Parse(typeof(InternalType), type);
+                Type = (ParamType)Enum.Parse(typeof(ParamType), type);
                 br.AssertInt32(1);
                 br.AssertInt32(0);
-                unk6 = br.ReadInt32();
-                unk7 = br.ReadInt32();
-                br.AssertInt32(1);
-                unk8 = br.ReadInt32();
-                unk9 = br.ReadInt32();
 
-                if (Type == InternalType.Int)
+                int valueSize = br.ReadInt32();
+
+                if (Type == ParamType.Bool)
+                    br.AssertByte(0);
+                else if (Type == ParamType.Int || Type == ParamType.Int2)
+                    br.AssertByte(1);
+                else if (Type == ParamType.Float || Type == ParamType.Float2 || Type == ParamType.Float3 || Type == ParamType.Float4)
+                    br.AssertByte(2);
+                br.AssertByte(0x10);
+                br.AssertByte(0);
+                br.AssertByte(0);
+
+                br.AssertInt32(1);
+                Unk8 = br.ReadInt32();
+
+                if (Type == ParamType.Bool || Type == ParamType.Float || Type == ParamType.Int)
+                    br.AssertInt32(1);
+                else if (Type == ParamType.Float2 || Type == ParamType.Int2)
+                    br.AssertInt32(2);
+                else if (Type == ParamType.Float3)
+                    br.AssertInt32(3);
+                else if (Type == ParamType.Float4)
+                    br.AssertInt32(4);
+
+                if (Type == ParamType.Int)
                     Value = br.ReadInt32();
-                else if (Type == InternalType.Int2)
+                else if (Type == ParamType.Int2)
                     Value = br.ReadInt32s(2);
-                else if (Type == InternalType.Bool)
+                else if (Type == ParamType.Bool)
                     Value = br.ReadBoolean();
-                else if (Type == InternalType.Float)
+                else if (Type == ParamType.Float)
                     Value = br.ReadSingle();
-                else if (Type == InternalType.Float2)
+                else if (Type == ParamType.Float2)
                     Value = br.ReadSingles(2);
-                else if (Type == InternalType.Float3)
+                else if (Type == ParamType.Float3)
                     Value = br.ReadSingles(3);
-                else if (Type == InternalType.Float4)
+                else if (Type == ParamType.Float4)
                     Value = br.ReadSingles(4);
 
                 br.AssertByte(4);
@@ -216,45 +266,79 @@ namespace SoulsFormats
             internal void Write(BinaryWriterEx bw)
             {
                 bw.WriteInt32(0);
-                bw.WriteInt32(unk2);
+                bw.WriteInt32(Unk2);
                 bw.WriteInt32(4);
                 bw.WriteInt32(4);
-                bw.WriteInt32(unk5);
+                bw.WriteInt32(Unk5);
                 bw.WriteShiftJISLengthPrefixed(Name, 0xA3);
                 bw.WriteShiftJISLengthPrefixed(Type.ToString().ToLower(), 0x04);
                 bw.WriteInt32(1);
                 bw.WriteInt32(0);
-                bw.WriteInt32(unk6);
-                bw.WriteInt32(unk7);
+
+                bw.ReserveInt32("ValueSize");
+                int valueStart = (int)bw.Position;
+
+                if (Type == ParamType.Bool)
+                    bw.WriteByte(0);
+                else if (Type == ParamType.Int || Type == ParamType.Int2)
+                    bw.WriteByte(1);
+                else if (Type == ParamType.Float || Type == ParamType.Float2 || Type == ParamType.Float3 || Type == ParamType.Float4)
+                    bw.WriteByte(2);
+                bw.WriteByte(0x10);
+                bw.WriteByte(0);
+                bw.WriteByte(0);
+
                 bw.WriteInt32(1);
-                bw.WriteInt32(unk8);
-                bw.WriteInt32(unk9);
+                bw.WriteInt32(Unk8);
 
-                if (Type == InternalType.Int)
+                if (Type == ParamType.Bool || Type == ParamType.Float || Type == ParamType.Int)
+                    bw.WriteInt32(1);
+                else if (Type == ParamType.Float2 || Type == ParamType.Int2)
+                    bw.WriteInt32(2);
+                else if (Type == ParamType.Float3)
+                    bw.WriteInt32(3);
+                else if (Type == ParamType.Float4)
+                    bw.WriteInt32(4);
+
+                if (Type == ParamType.Int)
                     bw.WriteInt32((int)Value);
-                else if (Type == InternalType.Int2)
+                else if (Type == ParamType.Int2)
                     bw.WriteInt32s((int[])Value);
-                else if (Type == InternalType.Bool)
+                else if (Type == ParamType.Bool)
                     bw.WriteBoolean((bool)Value);
-                else if (Type == InternalType.Float)
+                else if (Type == ParamType.Float)
                     bw.WriteSingle((float)Value);
-                else if (Type == InternalType.Float2)
+                else if (Type == ParamType.Float2)
                     bw.WriteSingles((float[])Value);
-                else if (Type == InternalType.Float3)
+                else if (Type == ParamType.Float3)
                     bw.WriteSingles((float[])Value);
-                else if (Type == InternalType.Float4)
+                else if (Type == ParamType.Float4)
                     bw.WriteSingles((float[])Value);
 
+                bw.FillInt32("ValueSize", (int)bw.Position - valueStart);
                 bw.WriteByte(4);
                 bw.Pad(4);
                 bw.WriteInt32(0);
+            }
+
+            /// <summary>
+            /// Returns the name of the param.
+            /// </summary>
+            public override string ToString()
+            {
+                if (Type == ParamType.Float2 || Type == ParamType.Float3 || Type == ParamType.Float4)
+                    return $"{Name} = {{{string.Join(", ", (float[])Value)}}}";
+                else if (Type == ParamType.Int2)
+                    return $"{Name} = {{{string.Join(", ", (int[])Value)}}}";
+                else
+                    return $"{Name} = {Value}";
             }
         }
 
         /// <summary>
         /// Value types of internal MTD values.
         /// </summary>
-        public enum InternalType
+        public enum ParamType
         {
             /// <summary>
             /// A one-byte boolean value.
@@ -286,54 +370,81 @@ namespace SoulsFormats
             /// </summary>
             Int,
 
-            // TODO: verify this
             /// <summary>
-            /// An array of two four-byte integers. Only used in DS3.
+            /// An array of two four-byte integers.
             /// </summary>
             Int2
         }
 
         /// <summary>
-        /// A material value not stored in the MTD itself.
+        /// Texture types used by the material, filled in in each FLVER.
         /// </summary>
-        public class ExternalEntry
+        public class Texture
         {
             /// <summary>
             /// The name of the value.
             /// </summary>
-            public string Name;
+            public string Name { get; set; }
 
             /// <summary>
-            /// Unknown
+            /// Unknown.
             /// </summary>
             public int ShaderDataIndex;
 
-            private int unk2, unk5, unk6, unk7;
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public int Unk2;
 
-            internal ExternalEntry(BinaryReaderEx br)
+            /// <summary>
+            /// Unknown. Appears to be garbage padding.
+            /// </summary>
+            public int Unk5;
+
+            /// <summary>
+            /// Unknown. Some kind of texture type, usually 1 for standard textures, 2 for _2 textures, 3 for lightmaps, 4 for blendmasks, and some other stuff.
+            /// </summary>
+            public int Unk6;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public int Unk7;
+
+            internal Texture(BinaryReaderEx br)
             {
                 br.AssertInt32(0);
-                unk2 = br.ReadInt32();
+                Unk2 = br.ReadInt32();
                 br.AssertInt32(0x2000);
                 br.AssertInt32(3);
-                unk5 = br.ReadInt32();
+                // Always starts with 0xA3, then 3 bytes of what looks like garbage text
+                Unk5 = br.ReadInt32();
                 Name = br.ReadShiftJISLengthPrefixed(0x35);
-                unk6 = br.ReadInt32();
-                unk7 = br.ReadInt32();
+                Unk6 = br.ReadInt32();
+                // Always starts with 0x35
+                Unk7 = br.ReadInt32();
                 ShaderDataIndex = br.ReadInt32();
             }
 
             internal void Write(BinaryWriterEx bw)
             {
                 bw.WriteInt32(0);
-                bw.WriteInt32(unk2);
+                bw.WriteInt32(Unk2);
                 bw.WriteInt32(0x2000);
                 bw.WriteInt32(3);
-                bw.WriteInt32(unk5);
+                bw.WriteInt32(Unk5);
                 bw.WriteShiftJISLengthPrefixed(Name, 0x35);
-                bw.WriteInt32(unk6);
-                bw.WriteInt32(unk7);
+                bw.WriteInt32(Unk6);
+                bw.WriteInt32(Unk7);
                 bw.WriteInt32(ShaderDataIndex);
+            }
+
+            /// <summary>
+            /// Returns the name of the texture.
+            /// </summary>
+            public override string ToString()
+            {
+                return Name;
             }
         }
 

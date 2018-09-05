@@ -9,6 +9,33 @@ namespace SoulsFormats
     /// </summary>
     public static class DCX
     {
+        internal static bool Is(BinaryReaderEx br)
+        {
+            string magic = br.GetASCII(0, 4);
+            return magic == "DCX\0" || magic == "DCP\0";
+        }
+
+        /// <summary>
+        /// Returns true if the bytes appear to be a DCX file.
+        /// </summary>
+        public static bool Is(byte[] bytes)
+        {
+            BinaryReaderEx br = new BinaryReaderEx(true, bytes);
+            return Is(br);
+        }
+
+        /// <summary>
+        /// Returns true if the file appears to be a DCX file.
+        /// </summary>
+        public static bool Is(string path)
+        {
+            using (FileStream stream = File.OpenRead(path))
+            {
+                BinaryReaderEx br = new BinaryReaderEx(true, stream);
+                return Is(br);
+            }
+        }
+
         #region Public Decompress
         /// <summary>
         /// Decompress a DCX file from an array of bytes and return the detected DCX type.

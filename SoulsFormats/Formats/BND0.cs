@@ -29,14 +29,23 @@ namespace SoulsFormats
         public byte Flag2;
 
         /// <summary>
-        /// Creates an uninitialized BND0. Should not be used publicly.
+        /// Creates an uninitialized BND0. Should not be used publicly; use BND0.Read instead.
         /// </summary>
         public BND0() { }
 
         /// <summary>
+        /// Returns true if the data appears to be a BND0.
+        /// </summary>
+        internal override bool Is(BinaryReaderEx br)
+        {
+            string magic = br.GetASCII(0, 4);
+            return magic == "BND\0";
+        }
+
+        /// <summary>
         /// Reads BND0 data from a BinaryReaderEx.
         /// </summary>
-        protected internal override void Read(BinaryReaderEx br)
+        internal override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
             br.AssertASCII("BND\0");
@@ -77,7 +86,7 @@ namespace SoulsFormats
         /// <summary>
         /// Writes BND0 data to a BinaryWriterEx.
         /// </summary>
-        protected internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BinaryWriterEx bw)
         {
             bw.BigEndian = false;
             bw.WriteASCII("BND\0");

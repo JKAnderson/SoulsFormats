@@ -61,14 +61,23 @@ namespace SoulsFormats
         public byte Extended;
 
         /// <summary>
-        /// Creates an uninitialized BND4. Should not be used publicly.
+        /// Creates an uninitialized BND4. Should not be used publicly; use BND4.Read instead.
         /// </summary>
         public BND4() { }
 
         /// <summary>
+        /// Returns true if the data appears to be a BND4.
+        /// </summary>
+        internal override bool Is(BinaryReaderEx br)
+        {
+            string magic = br.GetASCII(0, 4);
+            return magic == "BND4";
+        }
+
+        /// <summary>
         /// Reads BND4 data from a BinaryReaderEx.
         /// </summary>
-        protected internal override void Read(BinaryReaderEx br)
+        internal override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
 
@@ -137,7 +146,7 @@ namespace SoulsFormats
         /// <summary>
         /// Writes BND4 data to a BinaryWriterEx.
         /// </summary>
-        protected internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BinaryWriterEx bw)
         {
             bw.BigEndian = BigEndian;
 

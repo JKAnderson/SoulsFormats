@@ -39,14 +39,23 @@ namespace SoulsFormats
         private int unk2;
 
         /// <summary>
-        /// Creates an uninitialized BND3. Should not be used publicly.
+        /// Creates an uninitialized BND3. Should not be used publicly; use BND3.Read instead.
         /// </summary>
         public BND3() { }
 
         /// <summary>
+        /// Returns true if the data appears to be a BND3.
+        /// </summary>
+        internal override bool Is(BinaryReaderEx br)
+        {
+            string magic = br.GetASCII(0, 4);
+            return magic == "BND3";
+        }
+
+        /// <summary>
         /// Reads BND3 data from a BinaryReaderEx.
         /// </summary>
-        protected internal override void Read(BinaryReaderEx br)
+        internal override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
             br.AssertASCII("BND3");
@@ -67,7 +76,7 @@ namespace SoulsFormats
             // There are 12 DeS BNDs with 0 count and all file header fields blank except the name offset
             // No idea what to do about it. Ex: chr\0300\c0300.anibnd
             //if (fileCount == 0)
-                //throw new NotImplementedException("Zero-count BND3 is not supported.");
+            //throw new NotImplementedException("Zero-count BND3 is not supported.");
 
             Files = new List<File>();
             for (int i = 0; i < fileCount; i++)
@@ -79,7 +88,7 @@ namespace SoulsFormats
         /// <summary>
         /// Writes BND3 data to a BinaryWriterEx.
         /// </summary>
-        protected internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BinaryWriterEx bw)
         {
             bw.BigEndian = false;
             bw.WriteASCII("BND3");
