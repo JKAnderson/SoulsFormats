@@ -1253,12 +1253,12 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public float Unk1;
+            public float ScaleX;
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public float Unk2;
+            public float ScaleY;
 
             /// <summary>
             /// Unknown.
@@ -1274,8 +1274,8 @@ namespace SoulsFormats
             {
                 int valueOffset = br.ReadInt32();
                 int paramOffset = br.ReadInt32();
-                Unk1 = br.ReadSingle();
-                Unk2 = br.ReadSingle();
+                ScaleX = br.ReadSingle();
+                ScaleY = br.ReadSingle();
 
                 Unk3 = br.AssertByte(0, 1, 2);
                 Unk4 = br.ReadBoolean();
@@ -1294,8 +1294,8 @@ namespace SoulsFormats
             {
                 bw.ReserveInt32($"MaterialParamValue{index}");
                 bw.ReserveInt32($"MaterialParamParam{index}");
-                bw.WriteSingle(Unk1);
-                bw.WriteSingle(Unk2);
+                bw.WriteSingle(ScaleX);
+                bw.WriteSingle(ScaleY);
 
                 bw.WriteByte(Unk3);
                 bw.WriteBoolean(Unk4);
