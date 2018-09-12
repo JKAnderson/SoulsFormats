@@ -855,6 +855,43 @@ namespace SoulsFormats
             StepOut();
             return result;
         }
+
+        /// <summary>
+        /// Reads a null-terminated Shift JIS string in a fixed-size field.
+        /// </summary>
+        public string ReadFixStr(int size)
+        {
+            byte[] bytes = ReadBytes(size);
+            int terminator;
+            for (terminator = 0; terminator < size; terminator++)
+            {
+                if (bytes[terminator] == 0)
+                    break;
+            }
+            return ShiftJIS.GetString(bytes, 0, terminator);
+        }
+
+        /// <summary>
+        /// Reads a null-terminated UTF-16 string in a fixed-size field.
+        /// </summary>
+        public string ReadFixStrW(int size)
+        {
+            byte[] bytes = ReadBytes(size);
+            int terminator;
+            for (terminator = 0; terminator < size; terminator += 2)
+            {
+                // If length is odd (which it really shouldn't be), avoid indexing out of the array and align the terminator to the end
+                if (terminator == size - 1)
+                    terminator--;
+                else if (bytes[terminator] == 0 && bytes[terminator + 1] == 0)
+                    break;
+            }
+
+            if (BigEndian)
+                return UTF16BE.GetString(bytes, 0, terminator);
+            else
+                return UTF16.GetString(bytes, 0, terminator);
+        }
         #endregion
 
         #region Other

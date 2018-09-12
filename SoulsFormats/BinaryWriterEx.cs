@@ -579,6 +579,38 @@ namespace SoulsFormats
             else
                 WriteChars(text, UTF16, terminate);
         }
+
+        /// <summary>
+        /// Writes a null-terminated Shift JIS string in a fixed-size field.
+        /// </summary>
+        public void WriteFixStr(string text, int size, byte padding = 0)
+        {
+            byte[] fixstr = new byte[size];
+            for (int i = 0; i < size; i++)
+                fixstr[i] = padding;
+
+            byte[] bytes = ShiftJIS.GetBytes(text + '\0');
+            Array.Copy(bytes, fixstr, Math.Min(size, bytes.Length));
+            bw.Write(fixstr);
+        }
+
+        /// <summary>
+        /// Writes a null-terminated UTF-16 string in a fixed-size field.
+        /// </summary>
+        public void WriteFixStrW(string text, int size, byte padding = 0)
+        {
+            byte[] fixstr = new byte[size];
+            for (int i = 0; i < size; i++)
+                fixstr[i] = padding;
+
+            byte[] bytes;
+            if (BigEndian)
+                bytes = UTF16BE.GetBytes(text + '\0');
+            else
+                bytes = UTF16.GetBytes(text + '\0');
+            Array.Copy(bytes, fixstr, Math.Min(size, bytes.Length));
+            bw.Write(fixstr);
+        }
         #endregion
 
         #region Other
