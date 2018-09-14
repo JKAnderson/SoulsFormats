@@ -230,9 +230,55 @@ namespace SoulsFormats
             /// <summary>
             /// Cells contained in this row. Must be loaded with PARAM64.ReadRows() before use.
             /// </summary>
-            public List<Cell> Cells { get; set; }
+            public List<Cell> Cells { get; private set; }
 
             internal long Offset;
+
+            /// <summary>
+            /// Creates a new row based on the given layout with default values.
+            /// </summary>
+            public Row(long id, string name, Layout layout)
+            {
+                ID = id;
+                Name = name;
+                Cells = new List<Cell>();
+
+                foreach (Layout.Entry entry in layout)
+                {
+                    object value;
+                    string type = entry.Type;
+
+                    if (type == "s8")
+                        value = (sbyte)0;
+                    else if (type == "u8" || type == "x8")
+                        value = (byte)0;
+                    else if (type == "s16")
+                        value = (short)0;
+                    else if (type == "u16" || type == "x16")
+                        value = (ushort)0;
+                    else if (type == "s32")
+                        value = (int)0;
+                    else if (type == "u32" || type == "x32")
+                        value = (uint)0;
+                    else if (type == "f32")
+                        value = (float)0;
+                    else if (type == "b8" || type == "b32")
+                        value = false;
+                    else if (type.StartsWith("fixstr"))
+                        value = "";
+                    else if (type.StartsWith("dummy8"))
+                    {
+                        int count = int.Parse(type.Substring(7, type.Length - 8));
+                        value = new byte[count];
+                    }
+                    else
+                    {
+                        throw new NotImplementedException($"Unsupported param layout type: {type}");
+                    }
+
+                    Cells.Add(new Cell(type, entry.Name, value));
+                }
+            }
 
             internal Row(BinaryReaderEx br, short Unk4)
             {

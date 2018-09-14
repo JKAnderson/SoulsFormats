@@ -86,6 +86,7 @@
     <Compile Include="Formats\DCX.cs" />
     <Compile Include="Formats\DRB.cs" />
     <Compile Include="Formats\FLVER.cs" />
+    <Compile Include="Formats\FMG.cs" />
     <Compile Include="Formats\MTD.cs" />
     <Compile Include="Formats\PARAM64.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
