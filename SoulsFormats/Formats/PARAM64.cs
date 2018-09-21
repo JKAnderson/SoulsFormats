@@ -245,7 +245,7 @@ namespace SoulsFormats
                 Name = name;
                 Cells = new List<Cell>();
 
-                foreach (Layout.Value entry in layout)
+                foreach (Layout.Entry entry in layout)
                 {
                     object value;
 
@@ -285,7 +285,7 @@ namespace SoulsFormats
 
                 for (int i = 0; i < layout.Count; i++)
                 {
-                    Layout.Value entry = layout[i];
+                    Layout.Entry entry = layout[i];
                     string type = entry.Type;
 
                     object value = null;
@@ -361,7 +361,7 @@ namespace SoulsFormats
                 for (int j = 0; j < layout.Count; j++)
                 {
                     Cell cell = Cells[j];
-                    Layout.Value entry = layout[j];
+                    Layout.Entry entry = layout[j];
                     string type = entry.Type;
                     object value = cell.Value;
 

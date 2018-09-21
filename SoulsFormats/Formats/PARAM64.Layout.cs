@@ -1,11 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Xml;
 
 namespace SoulsFormats
@@ -15,7 +10,7 @@ namespace SoulsFormats
         /// <summary>
         /// The layout of cell data within each row in a param.
         /// </summary>
-        public class Layout : List<Layout.Value>
+        public class Layout : List<Layout.Entry>
         {
             /// <summary>
             /// The size of a row, determined automatically from the layout.
@@ -64,6 +59,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Read a PARAM64 layout from an XML file.
+            /// </summary>
             public static Layout ReadXMLFile(string path)
             {
                 XmlDocument xml = new XmlDocument();
@@ -71,6 +69,9 @@ namespace SoulsFormats
                 return new Layout(xml);
             }
 
+            /// <summary>
+            /// Read a PARAM64 layout from an XML string.
+            /// </summary>
             public static Layout ReadXMLText(string text)
             {
                 XmlDocument xml = new XmlDocument();
@@ -78,6 +79,9 @@ namespace SoulsFormats
                 return new Layout(xml);
             }
 
+            /// <summary>
+            /// Read a PARAM64 layout from an XML document.
+            /// </summary>
             public static Layout ReadXMLDoc(XmlDocument xml)
             {
                 return new Layout(xml);
@@ -92,10 +96,13 @@ namespace SoulsFormats
             {
                 foreach (XmlNode node in xml.SelectNodes("layout/entry"))
                 {
-                    Add(new Value(node));
+                    Add(new Entry(node));
                 }
             }
 
+            /// <summary>
+            /// Write the layout to an XML file.
+            /// </summary>
             public void Write(string path)
             {
                 var xws = new XmlWriterSettings()
@@ -105,13 +112,16 @@ namespace SoulsFormats
                 var xw = XmlWriter.Create(path, xws);
                 xw.WriteStartElement("layout");
 
-                foreach (Value entry in this)
+                foreach (Entry entry in this)
                     entry.Write(xw);
 
                 xw.WriteEndElement();
                 xw.Close();
             }
 
+            /// <summary>
+            /// Parse a string according to the given param type.
+            /// </summary>
             public static object ParseParamValue(string type, string value)
             {
                 if (type == "fixstr" || type == "fixstrW")
@@ -142,6 +152,9 @@ namespace SoulsFormats
                     throw new InvalidCastException("Unparsable type: " + type);
             }
 
+            /// <summary>
+            /// Convert a param value of the specified type to a string.
+            /// </summary>
             public static string ParamValueToString(string type, object value)
             {
                 if (type == "x8")
@@ -159,7 +172,7 @@ namespace SoulsFormats
             /// <summary>
             /// The type and name of one cell in a row.
             /// </summary>
-            public class Value
+            public class Entry
             {
                 /// <summary>
                 /// The type of the cell.
@@ -172,6 +185,10 @@ namespace SoulsFormats
                 public string Name { get; set; }
 
                 private int size;
+
+                /// <summary>
+                /// Size in bytes of the entry; may only be set for fixstr, fixstrW, and dummy8.
+                /// </summary>
                 public int Size
                 {
                     get
@@ -200,8 +217,14 @@ namespace SoulsFormats
                     }
                 }
 
+                /// <summary>
+                /// The default value to use when creating a new row.
+                /// </summary>
                 public object Default { get; set; }
 
+                /// <summary>
+                /// Whether the size can be modified.
+                /// </summary>
                 public bool IsVariableSize
                 {
                     get
@@ -210,22 +233,28 @@ namespace SoulsFormats
                     }
                 }
 
-                public Value(string type, string name, object def)
+                /// <summary>
+                /// Create a new entry of a fixed-width type.
+                /// </summary>
+                public Entry(string type, string name, object def)
                 {
                     Type = type;
                     Name = name;
                     Default = def;
                 }
 
-                public Value(string type, string name, int size, object def)
+                /// <summary>
+                /// Create a new entry of a variable-width type. Default is ignored for dummy8.
+                /// </summary>
+                public Entry(string type, string name, int size, object def)
                 {
                     Type = type;
                     Name = name;
                     this.size = size;
-                    Default = def;
+                    Default = Type == "dummy8" ? null : def;
                 }
 
-                internal Value(XmlNode node)
+                internal Entry(XmlNode node)
                 {
                     Name = node.SelectSingleNode("name").InnerText;
                     Type = node.SelectSingleNode("type").InnerText;
