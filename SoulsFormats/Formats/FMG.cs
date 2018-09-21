@@ -153,6 +153,22 @@ namespace SoulsFormats
         }
 
         /// <summary>
+        /// Returns the string with the given ID, or null if not present.
+        /// </summary>
+        public string this[int id]
+        {
+            get
+            {
+                foreach (Entry entry in Entries)
+                {
+                    if (entry.ID == id)
+                        return entry.Text;
+                }
+                return null;
+            }
+        }
+
+        /// <summary>
         /// A string in an FMG identified with an ID number.
         /// </summary>
         public class Entry

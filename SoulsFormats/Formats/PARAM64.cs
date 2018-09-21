@@ -7,7 +7,7 @@ namespace SoulsFormats
     /// <summary>
     /// A param data file for DS3.
     /// </summary>
-    public class PARAM64 : SoulsFile<PARAM64>
+    public partial class PARAM64 : SoulsFile<PARAM64>
     {
         /// <summary>
         /// A name given to this param; no functional significance.
@@ -121,7 +121,7 @@ namespace SoulsFormats
             {
                 Name = br.GetShiftJIS(nameOffset);
             }
-            
+
             long dataStart = br.ReadInt64();
             br.AssertInt32(0);
             br.AssertInt32(0);
@@ -140,6 +140,8 @@ namespace SoulsFormats
         {
             if (layout == null)
                 throw new InvalidOperationException("Params cannot be written without a layout.");
+
+            Rows.Sort((r1, r2) => r1.ID.CompareTo(r2.ID));
 
             bw.BigEndian = false;
 
@@ -230,7 +232,7 @@ namespace SoulsFormats
             /// <summary>
             /// Cells contained in this row. Must be loaded with PARAM64.ReadRows() before use.
             /// </summary>
-            public List<Cell> Cells { get; private set; }
+            public List<Cell> Cells { get; set; }
 
             internal long Offset;
 
@@ -243,40 +245,16 @@ namespace SoulsFormats
                 Name = name;
                 Cells = new List<Cell>();
 
-                foreach (Layout.Entry entry in layout)
+                foreach (Layout.Value entry in layout)
                 {
                     object value;
-                    string type = entry.Type;
 
-                    if (type == "s8")
-                        value = (sbyte)0;
-                    else if (type == "u8" || type == "x8")
-                        value = (byte)0;
-                    else if (type == "s16")
-                        value = (short)0;
-                    else if (type == "u16" || type == "x16")
-                        value = (ushort)0;
-                    else if (type == "s32")
-                        value = (int)0;
-                    else if (type == "u32" || type == "x32")
-                        value = (uint)0;
-                    else if (type == "f32")
-                        value = (float)0;
-                    else if (type == "b8" || type == "b32")
-                        value = false;
-                    else if (type.StartsWith("fixstr"))
-                        value = "";
-                    else if (type.StartsWith("dummy8"))
-                    {
-                        int count = int.Parse(type.Substring(7, type.Length - 8));
-                        value = new byte[count];
-                    }
+                    if (entry.Type.StartsWith("dummy8"))
+                        value = new byte[entry.Size];
                     else
-                    {
-                        throw new NotImplementedException($"Unsupported param layout type: {type}");
-                    }
+                        value = entry.Default;
 
-                    Cells.Add(new Cell(type, entry.Name, value));
+                    Cells.Add(new Cell(entry.Type, entry.Name, value));
                 }
             }
 
@@ -307,8 +285,8 @@ namespace SoulsFormats
 
                 for (int i = 0; i < layout.Count; i++)
                 {
-                    string type = layout[i].Type;
-                    string name = layout[i].Name;
+                    Layout.Value entry = layout[i];
+                    string type = entry.Type;
 
                     object value = null;
 
@@ -326,21 +304,12 @@ namespace SoulsFormats
                         value = br.ReadUInt32();
                     else if (type == "f32")
                         value = br.ReadSingle();
-                    else if (type.StartsWith("dummy8["))
-                    {
-                        int count = int.Parse(type.Substring(7, type.Length - 8));
-                        value = br.ReadBytes(count);
-                    }
-                    else if (type.StartsWith("fixstr["))
-                    {
-                        int count = int.Parse(type.Substring(7, type.Length - 8));
-                        value = br.ReadFixStr(count);
-                    }
-                    else if (type.StartsWith("fixstrW["))
-                    {
-                        int count = int.Parse(type.Substring(8, type.Length - 9));
-                        value = br.ReadFixStrW(count);
-                    }
+                    else if (type == "dummy8")
+                        value = br.ReadBytes(entry.Size);
+                    else if (type == "fixstr")
+                        value = br.ReadFixStr(entry.Size);
+                    else if (type == "fixstrW")
+                        value = br.ReadFixStrW(entry.Size);
                     else if (type == "b8")
                     {
                         byte b = br.ReadByte();
@@ -373,7 +342,7 @@ namespace SoulsFormats
                         throw new NotImplementedException($"Unsupported param layout type: {type}");
 
                     if (value != null)
-                        Cells.Add(new Cell(type, name, value));
+                        Cells.Add(new Cell(type, entry.Name, value));
                 }
 
                 br.StepOut();
@@ -392,7 +361,7 @@ namespace SoulsFormats
                 for (int j = 0; j < layout.Count; j++)
                 {
                     Cell cell = Cells[j];
-                    Layout.Entry entry = layout[j];
+                    Layout.Value entry = layout[j];
                     string type = entry.Type;
                     object value = cell.Value;
 
@@ -413,18 +382,12 @@ namespace SoulsFormats
                         bw.WriteUInt32((uint)value);
                     else if (type == "f32")
                         bw.WriteSingle((float)value);
-                    else if (type.StartsWith("dummy8["))
+                    else if (type == "dummy8")
                         bw.WriteBytes((byte[])value);
-                    else if (type.StartsWith("fixstr["))
-                    {
-                        int count = int.Parse(type.Substring(7, type.Length - 8));
-                        bw.WriteFixStr((string)value, count);
-                    }
-                    else if (type.StartsWith("fixstrW["))
-                    {
-                        int count = int.Parse(type.Substring(8, type.Length - 9));
-                        bw.WriteFixStrW((string)value, count);
-                    }
+                    else if (type == "fixstr")
+                        bw.WriteFixStr((string)value, entry.Size);
+                    else if (type == "fixstrW")
+                        bw.WriteFixStrW((string)value, entry.Size);
                     else if (type == "b8")
                     {
                         byte b = 0;
@@ -516,103 +479,6 @@ namespace SoulsFormats
                 Type = type;
                 Name = name;
                 Value = value;
-            }
-        }
-
-        /// <summary>
-        /// The layout of cell data within each row in a param.
-        /// </summary>
-        public class Layout : List<Layout.Entry>
-        {
-            /// <summary>
-            /// The size of the row, determined automatically from the layout.
-            /// </summary>
-            public int Size { get; private set; }
-
-            /// <summary>
-            /// Creates a new layout based on a simple text format.
-            /// </summary>
-            public Layout(string layout) : base()
-            {
-                foreach (string line in Regex.Split(layout, "[\r\n]+"))
-                {
-                    if (line.Trim().Length > 0)
-                    {
-                        Match match = Regex.Match(line.Trim(), @"^(\S+)\s*(.*)$");
-                        string type = match.Groups[1].Value;
-                        string name = match.Groups[2].Value;
-                        Add(new Entry(type, name));
-                    }
-                }
-
-                Size = 0;
-
-                for (int i = 0; i < Count; i++)
-                {
-                    string type = this[i].Type;
-
-                    if (type == "s8" || type == "u8" || type == "x8")
-                        Size += 1;
-                    else if (type == "s16" || type == "u16" || type == "x16")
-                        Size += 2;
-                    else if (type == "s32" || type == "u32" || type == "x32" || type == "f32")
-                        Size += 4;
-                    else if (type.StartsWith("fixstr") || type.StartsWith("dummy8"))
-                    {
-                        Match match = Regex.Match(type, @"^.+\[(\d+)\]");
-                        Size += int.Parse(match.Groups[1].Value);
-                    }
-                    else if (type.StartsWith("b8"))
-                    {
-                        Size += 1;
-
-                        int j;
-                        for (j = 0; j < 8; j++)
-                        {
-                            if (i + j >= Count || this[i + j].Type != "b8")
-                                break;
-                        }
-                        i += j - 1;
-                    }
-                    else if (type.StartsWith("b32"))
-                    {
-                        Size += 4;
-
-                        int j;
-                        for (j = 0; j < 32; j++)
-                        {
-                            if (i + j >= Count || this[i + j].Type != "b32")
-                                break;
-                        }
-                        i += j - 1;
-                    }
-                    else
-                    {
-                        throw new NotImplementedException($"Unsupported param layout type: {type}");
-                    }
-                }
-            }
-
-            /// <summary>
-            /// The type and name of one cell in a row.
-            /// </summary>
-            public class Entry
-            {
-                /// <summary>
-                /// The type of the cell.
-                /// </summary>
-                public string Type;
-
-                /// <summary>
-                /// The name of the cell.
-                /// </summary>
-                public string Name;
-
-                internal Entry(string type, string name)
-                {
-                    Type = type;
-                    Name = name;
-                }
             }
         }
     }
