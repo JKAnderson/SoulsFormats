@@ -896,6 +896,16 @@ namespace SoulsFormats
 
         #region Other
         /// <summary>
+        /// Reads a vector of two four-byte floating point numbers.
+        /// </summary>
+        public Vector2 ReadVector2()
+        {
+            float x = br.ReadSingle();
+            float y = br.ReadSingle();
+            return new Vector2(x, y);
+        }
+
+        /// <summary>
         /// Reads a vector of three four-byte floating point numbers.
         /// </summary>
         public Vector3 ReadVector3()
@@ -904,6 +914,18 @@ namespace SoulsFormats
             float y = br.ReadSingle();
             float z = br.ReadSingle();
             return new Vector3(x, y, z);
+        }
+
+        /// <summary>
+        /// Reads a vector of four four-byte floating point numbers.
+        /// </summary>
+        public Vector4 ReadVector4()
+        {
+            float x = br.ReadSingle();
+            float y = br.ReadSingle();
+            float z = br.ReadSingle();
+            float w = br.ReadSingle();
+            return new Vector4(x, y, z, w);
         }
         #endregion
     }

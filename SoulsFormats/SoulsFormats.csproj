@@ -88,6 +88,7 @@
     <Compile Include="Formats\FLVER.cs" />
     <Compile Include="Formats\FLVER3.cs" />
     <Compile Include="Formats\FMG.cs" />
+    <Compile Include="Formats\GPARAM.cs" />
     <Compile Include="Formats\MTD.cs" />
     <Compile Include="Formats\PARAM64.cs" />
     <Compile Include="Formats\PARAM64.Layout.cs" />

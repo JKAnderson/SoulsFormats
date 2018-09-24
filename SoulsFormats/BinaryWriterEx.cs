@@ -615,6 +615,15 @@ namespace SoulsFormats
 
         #region Other
         /// <summary>
+        /// Writes a vector of two four-byte floating point numbers.
+        /// </summary>
+        public void WriteVector2(Vector2 vector)
+        {
+            WriteSingle(vector.X);
+            WriteSingle(vector.Y);
+        }
+
+        /// <summary>
         /// Writes a vector of three four-byte floating point numbers.
         /// </summary>
         public void WriteVector3(Vector3 vector)
@@ -622,6 +631,17 @@ namespace SoulsFormats
             WriteSingle(vector.X);
             WriteSingle(vector.Y);
             WriteSingle(vector.Z);
+        }
+
+        /// <summary>
+        /// Writes a vector of four four-byte floating point numbers.
+        /// </summary>
+        public void WriteVector4(Vector4 vector)
+        {
+            WriteSingle(vector.X);
+            WriteSingle(vector.Y);
+            WriteSingle(vector.Z);
+            WriteSingle(vector.W);
         }
         #endregion
     }
