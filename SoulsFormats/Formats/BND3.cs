@@ -34,9 +34,21 @@ namespace SoulsFormats
         /// </summary>
         public List<File> Files;
 
-        private bool bigEndian, unk1;
-        private bool writeHeaderEnd;
-        private int unk2;
+        /// <summary>
+        /// Write bytes in big-endian order for PS3.
+        /// </summary>
+        public bool BigEndian;
+
+        /// <summary>
+        /// Unknown.
+        /// </summary>
+        public bool Unk1;
+
+        /// <summary>
+        /// Write the 
+        /// </summary>
+        public bool WriteHeaderEnd;
+        public int Unk2;
 
         /// <summary>
         /// Creates an uninitialized BND3. Should not be used publicly; use BND3.Read instead.
@@ -62,15 +74,15 @@ namespace SoulsFormats
             Timestamp = br.ReadASCII(8);
 
             Format = br.AssertByte(0x0E, 0x2E, 0x40, 0x54, 0x60, 0x64, 0x70, 0x74, 0xE0, 0xF0);
-            bigEndian = br.ReadBoolean();
-            unk1 = br.ReadBoolean();
+            BigEndian = br.ReadBoolean();
+            Unk1 = br.ReadBoolean();
             br.AssertByte(0);
 
-            br.BigEndian = bigEndian || Format == 0xE0 || Format == 0xF0;
+            br.BigEndian = BigEndian || Format == 0xE0 || Format == 0xF0;
             int fileCount = br.ReadInt32();
             int headerEnd = br.ReadInt32();
-            writeHeaderEnd = headerEnd != 0;
-            unk2 = br.ReadInt32();
+            WriteHeaderEnd = headerEnd != 0;
+            Unk2 = br.ReadInt32();
             br.AssertInt32(0);
 
             // There are 12 DeS BNDs with 0 count and all file header fields blank except the name offset
@@ -94,14 +106,14 @@ namespace SoulsFormats
             bw.WriteASCII("BND3");
             bw.WriteASCII(Timestamp);
             bw.WriteByte(Format);
-            bw.WriteBoolean(bigEndian);
-            bw.WriteBoolean(unk1);
+            bw.WriteBoolean(BigEndian);
+            bw.WriteBoolean(Unk1);
             bw.WriteByte(0);
 
-            bw.BigEndian = bigEndian || Format == 0xE0 || Format == 0xF0;
+            bw.BigEndian = BigEndian || Format == 0xE0 || Format == 0xF0;
             bw.WriteInt32(Files.Count);
             bw.ReserveInt32("HeaderEnd");
-            bw.WriteInt32(unk2);
+            bw.WriteInt32(Unk2);
             bw.WriteInt32(0);
 
             for (int i = 0; i < Files.Count; i++)
@@ -119,7 +131,7 @@ namespace SoulsFormats
                 }
             }
 
-            bw.FillInt32($"HeaderEnd", writeHeaderEnd ? (int)bw.Position : 0);
+            bw.FillInt32($"HeaderEnd", WriteHeaderEnd ? (int)bw.Position : 0);
 
             for (int i = 0; i < Files.Count; i++)
             {
