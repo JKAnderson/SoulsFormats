@@ -9,6 +9,50 @@ namespace SoulsFormats
     /// </summary>
     public class BXF3
     {
+        #region Public Is
+        /// <summary>
+        /// Returns true if the bytes appear to be a BXF3 header file.
+        /// </summary>
+        public static bool IsBHD(byte[] bytes)
+        {
+            BinaryReaderEx br = new BinaryReaderEx(false, bytes);
+            return IsBHD(Util.GetDecompressedBR(br, out _));
+        }
+
+        /// <summary>
+        /// Returns true if the file appears to be a BXF3 header file.
+        /// </summary>
+        public static bool IsBHD(string path)
+        {
+            using (FileStream fs = System.IO.File.OpenRead(path))
+            {
+                BinaryReaderEx br = new BinaryReaderEx(false, fs);
+                return IsBHD(Util.GetDecompressedBR(br, out _));
+            }
+        }
+
+        /// <summary>
+        /// Returns true if the file appears to be a BXF3 data file.
+        /// </summary>
+        public static bool IsBDT(byte[] bytes)
+        {
+            BinaryReaderEx br = new BinaryReaderEx(false, bytes);
+            return IsBDT(Util.GetDecompressedBR(br, out _));
+        }
+
+        /// <summary>
+        /// Returns true if the file appears to be a BXF3 data file.
+        /// </summary>
+        public static bool IsBDT(string path)
+        {
+            using (FileStream fs = System.IO.File.OpenRead(path))
+            {
+                BinaryReaderEx br = new BinaryReaderEx(false, fs);
+                return IsBDT(Util.GetDecompressedBR(br, out _));
+            }
+        }
+        #endregion
+
         #region Public Read
         /// <summary>
         /// Reads two arrays of bytes as the BHD and BDT.
@@ -60,71 +104,6 @@ namespace SoulsFormats
             }
         }
         #endregion
-        
-        /// <summary>
-        /// A timestamp of unknown purpose.
-        /// </summary>
-        public string BHDTimestamp
-        {
-            get { return bhdTimestamp; }
-            set
-            {
-                if (value.Length > 8)
-                    throw new ArgumentException("Timestamp may not be longer than 8 characters.");
-                else
-                    bhdTimestamp = value.PadRight(8, '\0');
-            }
-        }
-        private string bhdTimestamp;
-
-        /// <summary>
-        /// A timestamp of unknown purpose.
-        /// </summary>
-        public string BDTTimestamp
-        {
-            get { return bdtTimestamp; }
-            set
-            {
-                if (value.Length > 8)
-                    throw new ArgumentException("Timestamp may not be longer than 8 characters.");
-                else
-                    bdtTimestamp = value.PadRight(8, '\0');
-            }
-        }
-        private string bdtTimestamp;
-
-        /// <summary>
-        /// The files contained within this BXF3.
-        /// </summary>
-        public List<File> Files;
-
-        private byte flag;
-
-        private BXF3(BinaryReaderEx bhdReader, BinaryReaderEx bdtReader)
-        {
-            BHD3 bhd = new BHD3(bhdReader);
-            BHDTimestamp = bhd.Timestamp;
-            flag = bhd.Flag;
-
-            bdtReader.AssertASCII("BDF3");
-            BDTTimestamp = bdtReader.ReadASCII(8);
-            bdtReader.AssertInt32(0);
-
-            Files = new List<File>();
-            for (int i = 0; i < bhd.FileHeaders.Count; i++)
-            {
-                BHD3.FileHeader fileHeader = bhd.FileHeaders[i];
-                string name = fileHeader.Name;
-                byte[] data = bdtReader.GetBytes(fileHeader.Offset, fileHeader.Size);
-
-                File file = new File
-                {
-                    Name = name,
-                    Bytes = data
-                };
-                Files.Add(file);
-            }
-        }
 
         #region Public Write
         /// <summary>
@@ -186,15 +165,98 @@ namespace SoulsFormats
         }
         #endregion
 
+        /// <summary>
+        /// The files contained within this BXF3.
+        /// </summary>
+        public List<File> Files;
+
+        private string bhdTimestamp;
+        /// <summary>
+        /// A timestamp of unknown purpose.
+        /// </summary>
+        public string BHDTimestamp
+        {
+            get { return bhdTimestamp; }
+            set
+            {
+                if (value.Length > 8)
+                    throw new ArgumentException("Timestamp may not be longer than 8 characters.");
+                bhdTimestamp = value;
+            }
+        }
+
+        private string bdtTimestamp;
+        /// <summary>
+        /// A timestamp of unknown purpose.
+        /// </summary>
+        public string BDTTimestamp
+        {
+            get { return bdtTimestamp; }
+            set
+            {
+                if (value.Length > 8)
+                    throw new ArgumentException("Timestamp may not be longer than 8 characters.");
+                bdtTimestamp = value;
+            }
+        }
+
+        /// <summary>
+        /// Indicates the format of this BXF3.
+        /// </summary>
+        public byte Format;
+
+        /// <summary>
+        /// Creates an empty BXF3 formatted for DS1.
+        /// </summary>
+        public BXF3()
+        {
+            Files = new List<File>();
+            BHDTimestamp = Util.UnparseBNDTimestamp(DateTime.Now);
+            BDTTimestamp = Util.UnparseBNDTimestamp(DateTime.Now);
+            Format = 0x74;
+        }
+
+        private static bool IsBHD(BinaryReaderEx br)
+        {
+            string magic = br.GetASCII(0, 4);
+            return magic == "BHF3";
+        }
+
+        private static bool IsBDT(BinaryReaderEx br)
+        {
+            string magic = br.GetASCII(0, 4);
+            return magic == "BDF3";
+        }
+
+        private BXF3(BinaryReaderEx bhdReader, BinaryReaderEx bdtReader)
+        {
+            BHD3 bhd = new BHD3(bhdReader);
+            BHDTimestamp = bhd.Timestamp;
+            Format = bhd.Format;
+
+            bdtReader.AssertASCII("BDF3");
+            BDTTimestamp = bdtReader.ReadASCII(8).TrimEnd('\0');
+            bdtReader.AssertInt32(0);
+
+            Files = new List<File>();
+            for (int i = 0; i < bhd.FileHeaders.Count; i++)
+            {
+                BHD3.FileHeader fileHeader = bhd.FileHeaders[i];
+                byte[] data = bdtReader.GetBytes(fileHeader.Offset, fileHeader.Size);
+
+                Files.Add(new File(fileHeader.ID, fileHeader.Name, data));
+            }
+        }
+
         private void Write(BinaryWriterEx bhdWriter, BinaryWriterEx bdtWriter)
         {
             bhdWriter.WriteASCII("BHF3");
-            bhdWriter.WriteASCII(BHDTimestamp);
-            bhdWriter.WriteByte(flag);
+            bhdWriter.WriteASCII(BHDTimestamp.PadRight(8, '\0'));
+            bhdWriter.WriteByte(Format);
             bhdWriter.WriteByte(0);
             bhdWriter.WriteByte(0);
             bhdWriter.WriteByte(0);
-            bhdWriter.BigEndian = flag == 0xE0;
+            bhdWriter.BigEndian = Format == 0xE0;
 
             bhdWriter.WriteInt32(Files.Count);
             bhdWriter.WriteInt32(0);
@@ -202,7 +264,7 @@ namespace SoulsFormats
             bhdWriter.WriteInt32(0);
 
             bdtWriter.WriteASCII("BDF3");
-            bdtWriter.WriteASCII(BDTTimestamp);
+            bdtWriter.WriteASCII(BDTTimestamp.PadRight(8, '\0'));
             bdtWriter.WriteInt32(0);
 
             for (int i = 0; i < Files.Count; i++)
@@ -218,7 +280,7 @@ namespace SoulsFormats
                 bhdWriter.WriteInt32(i);
                 bhdWriter.ReserveInt32($"FileName{i}");
 
-                if (flag == 0x54 || flag == 0x74)
+                if (Format == 0x54 || Format == 0x74)
                     bhdWriter.WriteInt32(file.Bytes.Length);
 
                 bdtWriter.WriteBytes(file.Bytes);
@@ -237,17 +299,17 @@ namespace SoulsFormats
         {
             public string Timestamp;
             public List<FileHeader> FileHeaders;
-            public byte Flag;
+            public byte Format;
 
             public BHD3(BinaryReaderEx br)
             {
                 br.AssertASCII("BHF3");
-                Timestamp = br.ReadASCII(8);
-                Flag = br.AssertByte(0x54, 0x74, 0xE0);
+                Timestamp = br.ReadASCII(8).TrimEnd('\0');
+                Format = br.AssertByte(0x54, 0x74, 0xE0);
                 br.AssertByte(0);
                 br.AssertByte(0);
                 br.AssertByte(0);
-                br.BigEndian = Flag == 0xE0;
+                br.BigEndian = Format == 0xE0;
 
                 int fileCount = br.ReadInt32();
                 br.AssertInt32(0);
@@ -257,35 +319,35 @@ namespace SoulsFormats
                 FileHeaders = new List<FileHeader>();
                 for (int i = 0; i < fileCount; i++)
                 {
-                    br.AssertByte(0x40);
-                    br.AssertByte(0);
-                    br.AssertByte(0);
-                    br.AssertByte(0);
-
-                    int fileSize = br.ReadInt32();
-                    int fileOffset = br.ReadInt32();
-                    br.AssertInt32(i);
-                    int fileNameOffset = br.ReadInt32();
-
-                    if (Flag == 0x54 || Flag == 0x74)
-                        br.AssertInt32(fileSize);
-
-                    string name = br.GetShiftJIS(fileNameOffset);
-                    FileHeader fileHeader = new FileHeader()
-                    {
-                        Name = name,
-                        Offset = fileOffset,
-                        Size = fileSize,
-                    };
-                    FileHeaders.Add(fileHeader);
+                    FileHeaders.Add(new FileHeader(br, Format));
                 }
             }
 
             public class FileHeader
             {
+                public int ID;
                 public string Name;
                 public int Offset;
                 public int Size;
+
+                public FileHeader(BinaryReaderEx br, byte format)
+                {
+                    br.AssertByte(0x40);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+
+                    Size = br.ReadInt32();
+                    Offset = br.ReadInt32();
+                    ID = br.ReadInt32();
+                    int fileNameOffset = br.ReadInt32();
+
+                    // Change this if BND internal compression ever shows up in a BXF.
+                    if (format == 0x54 || format == 0x74)
+                        br.ReadInt32();
+
+                    Name = br.GetShiftJIS(fileNameOffset);
+                }
             }
         }
 
@@ -295,6 +357,11 @@ namespace SoulsFormats
         public class File
         {
             /// <summary>
+            /// The ID of this file, typically just its index in the file collection.
+            /// </summary>
+            public int ID;
+
+            /// <summary>
             /// The name of the file, typically a virtual path.
             /// </summary>
             public string Name;
@@ -303,6 +370,16 @@ namespace SoulsFormats
             /// The raw data of the file.
             /// </summary>
             public byte[] Bytes;
+
+            /// <summary>
+            /// Create a new File with the specified information.
+            /// </summary>
+            public File(int id, string name, byte[] bytes)
+            {
+                ID = id;
+                Name = name;
+                Bytes = bytes;
+            }
         }
     }
 }

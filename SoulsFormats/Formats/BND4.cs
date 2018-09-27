@@ -9,6 +9,11 @@ namespace SoulsFormats
     public class BND4 : SoulsFile<BND4>
     {
         /// <summary>
+        /// The files contained within this BND4.
+        /// </summary>
+        public List<File> Files;
+
+        /// <summary>
         /// A timestamp of unknown purpose.
         /// </summary>
         public string Timestamp
@@ -18,16 +23,10 @@ namespace SoulsFormats
             {
                 if (value.Length > 8)
                     throw new ArgumentException("Timestamp may not be longer than 8 characters.");
-                else
-                    timestamp = value.PadRight(8, '\0');
+                timestamp = value;
             }
         }
         private string timestamp;
-
-        /// <summary>
-        /// The files contained within this BND4.
-        /// </summary>
-        public List<File> Files;
 
         /// <summary>
         /// Indicates the format of this BND4.
@@ -60,9 +59,19 @@ namespace SoulsFormats
         public byte Extended;
 
         /// <summary>
-        /// Creates an uninitialized BND4. Should not be used publicly; use BND4.Read instead.
+        /// Creates an empty BND4 formatted for DS3.
         /// </summary>
-        public BND4() { }
+        public BND4()
+        {
+            Files = new List<File>();
+            Timestamp = Util.UnparseBNDTimestamp(DateTime.Now);
+            Format = 0x74;
+            BigEndian = false;
+            Flag1 = false;
+            Flag2 = false;
+            Unicode = true;
+            Extended = 4;
+        }
 
         /// <summary>
         /// Returns true if the data appears to be a BND4.
@@ -91,7 +100,7 @@ namespace SoulsFormats
             int fileCount = br.ReadInt32();
             // Header size
             br.AssertInt64(0x40);
-            Timestamp = br.ReadASCII(8);
+            Timestamp = br.ReadASCII(8).TrimEnd('\0');
             // File header size
             long fileHeaderSize = br.AssertInt64(0x18, 0x1C, 0x24);
             long dataStart = br.ReadInt64();
@@ -158,7 +167,7 @@ namespace SoulsFormats
             bw.WriteInt32(0x10000);
             bw.WriteInt32(Files.Count);
             bw.WriteInt64(0x40);
-            bw.WriteASCII(Timestamp);
+            bw.WriteASCII(Timestamp.PadRight(8, '\0'));
             if (Format == 0x0C)
                 bw.WriteInt64(0x18);
             else if (Format == 0x70)
@@ -302,6 +311,17 @@ namespace SoulsFormats
             /// The raw data of the file.
             /// </summary>
             public byte[] Bytes;
+
+            /// <summary>
+            /// Creates a new File with the specified information.
+            /// </summary>
+            public File(int id, string name, byte flags, byte[] bytes)
+            {
+                ID = id;
+                Name = name;
+                Flags = flags;
+                Bytes = bytes;
+            }
 
             internal File(BinaryReaderEx br, bool unicode, byte format)
             {

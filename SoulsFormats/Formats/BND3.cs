@@ -9,6 +9,11 @@ namespace SoulsFormats
     public class BND3 : SoulsFile<BND3>
     {
         /// <summary>
+        /// The files contained within this BND3.
+        /// </summary>
+        public List<File> Files;
+
+        /// <summary>
         /// A timestamp of unknown purpose.
         /// </summary>
         public string Timestamp
@@ -18,8 +23,7 @@ namespace SoulsFormats
             {
                 if (value.Length > 8)
                     throw new ArgumentException("Timestamp may not be longer than 8 characters.");
-                else
-                    timestamp = value.PadRight(8, '\0');
+                timestamp = value;
             }
         }
         private string timestamp;
@@ -30,30 +34,32 @@ namespace SoulsFormats
         public byte Format;
 
         /// <summary>
-        /// The files contained within this BND3.
-        /// </summary>
-        public List<File> Files;
-
-        /// <summary>
         /// Write bytes in big-endian order for PS3.
         /// </summary>
         public bool BigEndian;
 
         /// <summary>
-        /// Unknown.
+        /// Unknown; usually false.
         /// </summary>
         public bool Unk1;
 
         /// <summary>
-        /// Write the 
+        /// Unknown; usually 0.
         /// </summary>
-        public bool WriteHeaderEnd;
         public int Unk2;
 
         /// <summary>
-        /// Creates an uninitialized BND3. Should not be used publicly; use BND3.Read instead.
+        /// Creates an empty BND3 formatted for DS1.
         /// </summary>
-        public BND3() { }
+        public BND3()
+        {
+            Files = new List<File>();
+            Timestamp = Util.UnparseBNDTimestamp(DateTime.Now);
+            Format = 0x74;
+            BigEndian = false;
+            Unk1 = false;
+            Unk2 = 0;
+        }
 
         /// <summary>
         /// Returns true if the data appears to be a BND3.
@@ -71,7 +77,7 @@ namespace SoulsFormats
         {
             br.BigEndian = false;
             br.AssertASCII("BND3");
-            Timestamp = br.ReadASCII(8);
+            Timestamp = br.ReadASCII(8).TrimEnd('\0');
 
             Format = br.AssertByte(0x0E, 0x2E, 0x40, 0x54, 0x60, 0x64, 0x70, 0x74, 0xE0, 0xF0);
             BigEndian = br.ReadBoolean();
@@ -80,15 +86,10 @@ namespace SoulsFormats
 
             br.BigEndian = BigEndian || Format == 0xE0 || Format == 0xF0;
             int fileCount = br.ReadInt32();
-            int headerEnd = br.ReadInt32();
-            WriteHeaderEnd = headerEnd != 0;
+            // File headers end; sometimes 0, but it's redundant anyways
+            br.ReadInt32();
             Unk2 = br.ReadInt32();
             br.AssertInt32(0);
-
-            // There are 12 DeS BNDs with 0 count and all file header fields blank except the name offset
-            // No idea what to do about it. Ex: chr\0300\c0300.anibnd
-            //if (fileCount == 0)
-            //throw new NotImplementedException("Zero-count BND3 is not supported.");
 
             Files = new List<File>();
             for (int i = 0; i < fileCount; i++)
@@ -104,7 +105,7 @@ namespace SoulsFormats
         {
             bw.BigEndian = false;
             bw.WriteASCII("BND3");
-            bw.WriteASCII(Timestamp);
+            bw.WriteASCII(Timestamp.PadRight(8, '\0'));
             bw.WriteByte(Format);
             bw.WriteBoolean(BigEndian);
             bw.WriteBoolean(Unk1);
@@ -117,44 +118,18 @@ namespace SoulsFormats
             bw.WriteInt32(0);
 
             for (int i = 0; i < Files.Count; i++)
-            {
-                Files[i].Write(bw, i, Format);
-            }
+                Files[i].WriteHeader(bw, i, Format);
 
             if (Format != 0x40)
             {
                 for (int i = 0; i < Files.Count; i++)
-                {
-                    File file = Files[i];
-                    bw.FillInt32($"FileName{i}", (int)bw.Position);
-                    bw.WriteShiftJIS(file.Name, true);
-                }
+                    Files[i].WriteName(bw, i);
             }
 
-            bw.FillInt32($"HeaderEnd", WriteHeaderEnd ? (int)bw.Position : 0);
+            bw.FillInt32($"HeaderEnd", (int)bw.Position);
 
             for (int i = 0; i < Files.Count; i++)
-            {
-                File file = Files[i];
-                if (file.Bytes.Length > 0)
-                    bw.Pad(0x10);
-
-                bw.FillInt32($"FileData{i}", (int)bw.Position);
-
-                byte[] bytes = file.Bytes;
-                int compressedSize = bytes.Length;
-
-                if ((file.Flags & 0x80) != 0)
-                {
-                    compressedSize = Util.WriteZlib(bw, 0x9C, bytes);
-                }
-                else
-                {
-                    bw.WriteBytes(bytes);
-                }
-
-                bw.FillInt32($"CompressedSize{i}", bytes.Length);
-            }
+                Files[i].WriteData(bw, i, Format);
         }
 
         /// <summary>
@@ -182,6 +157,17 @@ namespace SoulsFormats
             /// </summary>
             public byte[] Bytes;
 
+            /// <summary>
+            /// Creates a new File with the given information.
+            /// </summary>
+            public File(int id, string name, byte flags, byte[] bytes)
+            {
+                ID = id;
+                Name = name;
+                Flags = flags;
+                Bytes = bytes;
+            }
+
             internal File(BinaryReaderEx br, byte format)
             {
                 Flags = br.AssertByte(0x02, 0x40, 0xC0);
@@ -208,7 +194,7 @@ namespace SoulsFormats
                     uncompressedSize = br.ReadInt32();
 
                 // Compressed
-                if ((Flags & 0x80) != 0)
+                if (Flags == 0xC0)
                 {
                     br.StepIn(fileOffset);
                     Bytes = Util.ReadZlib(br, compressedSize);
@@ -220,7 +206,7 @@ namespace SoulsFormats
                 }
             }
 
-            internal void Write(BinaryWriterEx bw, int index, byte format)
+            internal void WriteHeader(BinaryWriterEx bw, int index, byte format)
             {
                 bw.WriteByte(Flags);
                 bw.WriteByte(0);
@@ -236,6 +222,34 @@ namespace SoulsFormats
 
                 if (format == 0x2E || format == 0x54 || format == 0x64 || format == 0x74)
                     bw.WriteInt32(Bytes.Length);
+            }
+
+            internal void WriteName(BinaryWriterEx bw, int index)
+            {
+                bw.FillInt32($"FileName{index}", (int)bw.Position);
+                bw.WriteShiftJIS(Name, true);
+            }
+
+            internal void WriteData(BinaryWriterEx bw, int index, byte format)
+            {
+                if (Bytes.Length > 0)
+                    bw.Pad(0x10);
+
+                bw.FillInt32($"FileData{index}", (int)bw.Position);
+
+                byte[] bytes = Bytes;
+                int compressedSize = bytes.Length;
+
+                if (Flags == 0xC0)
+                {
+                    compressedSize = Util.WriteZlib(bw, 0x9C, bytes);
+                }
+                else
+                {
+                    bw.WriteBytes(bytes);
+                }
+
+                bw.FillInt32($"CompressedSize{index}", bytes.Length);
             }
 
             /// <summary>

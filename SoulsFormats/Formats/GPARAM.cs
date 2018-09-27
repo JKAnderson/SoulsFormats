@@ -31,7 +31,7 @@ namespace SoulsFormats
 
         internal override bool Is(BinaryReaderEx br)
         {
-            string magic = br.ReadASCII(8);
+            string magic = br.GetASCII(0, 8);
             return magic == "f\0i\0l\0t\0";
         }
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -20,6 +21,61 @@ namespace SoulsFormats
             if (extension == ".dcx")
                 extension = Path.GetExtension(Path.GetFileNameWithoutExtension(path));
             return extension;
+        }
+
+        /// <summary>
+        /// Decompresses data and returns a new BinaryReaderEx if necessary.
+        /// </summary>
+        public static BinaryReaderEx GetDecompressedBR(BinaryReaderEx br, out DCX.Type compression)
+        {
+            if (DCX.Is(br))
+            {
+                byte[] bytes = DCX.Decompress(br, out compression);
+                return new BinaryReaderEx(false, bytes);
+            }
+            else
+            {
+                compression = DCX.Type.None;
+                return br;
+            }
+        }
+
+        private static List<string> pathRoots = new List<string>
+        {
+            // Demon's Souls (duh)
+            @"N:\DemonsSoul\data\",
+            @"N:\DemonsSoul\",
+            // Dark Souls 1
+            @"N:\FRPG\data\",
+            @"N:\FRPG\",
+            // Dark Souls 2
+            @"N:\FRPG2\data",
+            @"N:\FRPG2\",
+            // Dark Souls 3
+            @"N:\FDP\data\",
+            @"N:\FDP\",
+            // Bloodborne
+            @"N:\SPRJ\data\",
+            @"N:\SPRJ\",
+            // Just because I don't like leading backslash
+            @"\",
+        };
+
+        /// <summary>
+        /// Removes common network path roots if present.
+        /// </summary>
+        public static string UnrootBNDPath(string path)
+        {
+            foreach (string root in pathRoots)
+            {
+                if (path.StartsWith(root))
+                    return path.Substring(root.Length);
+            }
+
+            if (path.Contains(":"))
+                return path.Substring(path.IndexOf(":") + 2);
+            else
+                return path;
         }
 
         /// <summary>
