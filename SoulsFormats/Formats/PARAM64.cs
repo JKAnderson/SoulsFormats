@@ -215,6 +215,22 @@ namespace SoulsFormats
         }
 
         /// <summary>
+        /// Returns the first row with the given ID, or null if not found.
+        /// </summary>
+        public Row this[int id]
+        {
+            get
+            {
+                foreach (Row row in Rows)
+                {
+                    if (row.ID == id)
+                        return row;
+                }
+                return null;
+            }
+        }
+
+        /// <summary>
         /// One row in a param file.
         /// </summary>
         public class Row
