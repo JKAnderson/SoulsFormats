@@ -25,6 +25,11 @@ namespace SoulsFormats
         public byte[] UnkBlock1, UnkBlock2, UnkBlock3, UnkBlock4, UnkBlock5, CommentOffsetsBlock, CommentBlock;
 
         /// <summary>
+        /// Read only.
+        /// </summary>
+        public List<string> Comments;
+
+        /// <summary>
         /// Creates an uninitialized GPARAM. Should not be used publicly; use GPARAM.Read instead.
         /// </summary>
         public GPARAM() { }
@@ -76,6 +81,22 @@ namespace SoulsFormats
             UnkBlock5 = br.GetBytes(offsets.Unk5, offsets.CommentOffsets - offsets.Unk5);
             CommentOffsetsBlock = br.GetBytes(offsets.CommentOffsets, offsets.Comments - offsets.CommentOffsets);
             CommentBlock = br.GetBytes(offsets.Comments, (int)br.Stream.Length - offsets.Comments);
+
+            br.Position = offsets.Unk5;
+            Comments = new List<string>();
+            if (offsets.CommentOffsets < br.Stream.Length)
+            {
+                while (br.Position < offsets.Comments)
+                {
+                    int commentOffset = br.ReadInt32();
+                    if (offsets.Comments + commentOffset < br.Stream.Length)
+                    {
+                        string comment = br.GetUTF16(offsets.Comments + commentOffset);
+                        if (comment != "")
+                            Comments.Add(comment);
+                    }
+                }
+            }
         }
 
         internal override void Write(BinaryWriterEx bw)

@@ -340,7 +340,7 @@ namespace SoulsFormats
                 br.StepIn(offsets.ParamHeaders + paramHeaderOffset);
 
                 int valuesOffset = br.ReadInt32();
-                UnkOffset1 = br.ReadInt32();
+                UnkOffset1 = br.AssertInt32(valuesOffset);
 
                 Type = br.ReadEnum8<ParamType>();
                 byte valueCount = br.ReadByte();

@@ -5,7 +5,7 @@ namespace SoulsFormats
     /// <summary>
     /// A multi-file DDS container used in DS1, DSR, DS2, DS3, DeS, BB, and NB.
     /// </summary>
-    public class TPF : SoulsFile<TPF>
+    public partial class TPF : SoulsFile<TPF>
     {
         /// <summary>
         /// The textures contained within this TPF.
@@ -28,9 +28,15 @@ namespace SoulsFormats
         public byte Flag2;
 
         /// <summary>
-        /// Creates an uninitialized TPF. Should not be used publicly; use TPF.Read instead.
+        /// Creates an empty TPF configured for DS3.
         /// </summary>
-        public TPF() { }
+        public TPF()
+        {
+            Textures = new List<Texture>();
+            Platform = TPFPlatform.PC;
+            Encoding = 1;
+            Flag2 = 3;
+        }
 
         /// <summary>
         /// Returns true if the data appears to be a TPF.
@@ -158,6 +164,24 @@ namespace SoulsFormats
             /// </summary>
             public TexHeader Header;
 
+            /// <summary>
+            /// Create a new PC Texture with the specified information; Cubemap and Mipmaps are determined based on bytes.
+            /// </summary>
+            public Texture(string name, byte format, byte flags1, int flags2, byte[] bytes)
+            {
+                Name = name;
+                Format = format;
+                Flags1 = flags1;
+                Flags2 = flags2;
+                Bytes = bytes;
+                Header = null;
+
+                DDS dds = new DDS(bytes);
+                // DDSCAPS2_CUBEMAP
+                Cubemap = (dds.dwCaps2 & 0x200) != 0;
+                Mipmaps = (byte)dds.dwMipMapCount;
+            }
+
             internal Texture(BinaryReaderEx br, TPFPlatform platform, byte encoding)
             {
                 int fileOffset = br.ReadInt32();
@@ -214,6 +238,14 @@ namespace SoulsFormats
 
             internal void Write(BinaryWriterEx bw, int index, TPFPlatform platform)
             {
+                if (platform == TPFPlatform.PC)
+                {
+                    DDS dds = new DDS(Bytes);
+                    // DDSCAPS2_CUBEMAP
+                    Cubemap = (dds.dwCaps2 & 0x200) != 0;
+                    Mipmaps = (byte)dds.dwMipMapCount;
+                }
+
                 bw.ReserveInt32($"FileData{index}");
                 bw.ReserveInt32($"FileSize{index}");
 

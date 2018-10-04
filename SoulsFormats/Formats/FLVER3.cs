@@ -565,7 +565,42 @@ namespace SoulsFormats
 
                 Name = br.GetUTF16(nameOffset);
                 MTD = br.GetUTF16(mtdOffset);
-                UnkBytes = unkOffset == 0 ? null : br.GetBytes(unkOffset, 0xF0);
+
+                if (unkOffset == 0)
+                {
+                    UnkBytes = null;
+                }
+                else
+                {
+                    br.StepIn(unkOffset);
+
+                    br.AssertASCII("GXMD");
+                    br.Skip(4);
+                    br.Skip(br.ReadInt32() - 0xC);
+
+                    br.AssertASCII("GX00");
+                    br.Skip(4);
+                    br.Skip(br.ReadInt32() - 0xC);
+
+                    br.AssertASCII("GX04");
+                    br.Skip(4);
+                    br.Skip(br.ReadInt32() - 0xC);
+
+                    br.AssertASCII("GX80");
+                    br.Skip(4);
+                    br.Skip(br.ReadInt32() - 0xC);
+
+                    br.AssertASCII("GX81");
+                    br.Skip(4);
+                    br.Skip(br.ReadInt32() - 0xC);
+
+                    br.AssertInt32(0x7FFFFFFF);
+                    br.Skip(4);
+                    br.Skip(br.ReadInt32() - 0xC);
+
+                    UnkBytes = br.GetBytes(unkOffset, (int)br.Position - unkOffset);
+                    br.StepOut();
+                }
             }
 
             internal void TakeParams(Dictionary<int, MaterialParam> paramDict)
