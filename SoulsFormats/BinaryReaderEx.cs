@@ -638,18 +638,32 @@ namespace SoulsFormats
         #endregion
 
         #region Enum
+        private TEnum ReadEnum<TEnum, TValue>(Func<TValue> readValue, string valueFormat)
+        {
+            TValue value = readValue();
+            if (!Enum.IsDefined(typeof(TEnum), value))
+            {
+                string strValue = string.Format(valueFormat, value);
+                throw new InvalidDataException(string.Format(
+                    "Read Byte not present in enum: {0}", strValue));
+            }
+            return (TEnum)(object)value;
+        }
+
         /// <summary>
         /// Reads a one-byte value as the specified enum, throwing an exception if not present.
         /// </summary>
         public TEnum ReadEnum8<TEnum>() where TEnum : Enum
         {
-            byte b = ReadByte();
-            if (!Enum.IsDefined(typeof(TEnum), b))
-            {
-                throw new InvalidDataException(string.Format(
-                    "Read Byte not present in enum: 0x{0:X}", b));
-            }
-            return (TEnum)(object)b;
+            return ReadEnum<TEnum, byte>(ReadByte, "0x{0:X}");
+        }
+
+        public TEnum GetEnum8<TEnum>(long position) where TEnum : Enum
+        {
+            StepIn(position);
+            TEnum result = ReadEnum8<TEnum>();
+            StepOut();
+            return result;
         }
 
         /// <summary>
@@ -657,13 +671,15 @@ namespace SoulsFormats
         /// </summary>
         public TEnum ReadEnum16<TEnum>() where TEnum : Enum
         {
-            ushort s = ReadUInt16();
-            if (!Enum.IsDefined(typeof(TEnum), s))
-            {
-                throw new InvalidDataException(string.Format(
-                    "Read UInt16 not present in enum: 0x{0:X}", s));
-            }
-            return (TEnum)(object)s;
+            return ReadEnum<TEnum, ushort>(ReadUInt16, "0x{0:X}");
+        }
+
+        public TEnum GetEnum16<TEnum>(long position) where TEnum : Enum
+        {
+            StepIn(position);
+            TEnum result = ReadEnum16<TEnum>();
+            StepOut();
+            return result;
         }
 
         /// <summary>
@@ -671,13 +687,15 @@ namespace SoulsFormats
         /// </summary>
         public TEnum ReadEnum32<TEnum>() where TEnum : Enum
         {
-            uint i = ReadUInt32();
-            if (!Enum.IsDefined(typeof(TEnum), i))
-            {
-                throw new InvalidDataException(string.Format(
-                    "Read UInt32 not present in enum: 0x{0:X}", i));
-            }
-            return (TEnum)(object)i;
+            return ReadEnum<TEnum, uint>(ReadUInt32, "0x{0:X}");
+        }
+
+        public TEnum GetEnum32<TEnum>(long position) where TEnum : Enum
+        {
+            StepIn(position);
+            TEnum result = ReadEnum32<TEnum>();
+            StepOut();
+            return result;
         }
 
         /// <summary>
@@ -685,13 +703,15 @@ namespace SoulsFormats
         /// </summary>
         public TEnum ReadEnum64<TEnum>() where TEnum : Enum
         {
-            ulong l = ReadUInt64();
-            if (!Enum.IsDefined(typeof(TEnum), l))
-            {
-                throw new InvalidDataException(string.Format(
-                    "Read UInt64 not present in enum: 0x{0:X}", l));
-            }
-            return (TEnum)(object)l;
+            return ReadEnum<TEnum, ulong>(ReadUInt64, "0x{0:X}");
+        }
+
+        public TEnum GetEnum64<TEnum>(long position) where TEnum : Enum
+        {
+            StepIn(position);
+            TEnum result = ReadEnum64<TEnum>();
+            StepOut();
+            return result;
         }
         #endregion
 

@@ -204,6 +204,14 @@ namespace SoulsFormats
             return (adlerB << 16) | adlerA;
         }
 
+        public static List<T> ConcatAll<T>(params IEnumerable<T>[] lists)
+        {
+            IEnumerable<T> all = new List<T>();
+            foreach (IEnumerable<T> list in lists)
+                all = all.Concat(list);
+            return all.ToList();
+        }
+
         private static byte[] ds3RegulationKey = Encoding.ASCII.GetBytes("ds3#jn/8_7(rsY9pg55GFN7VFL#+3n/)");
 
         /// <summary>
