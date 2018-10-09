@@ -10,9 +10,6 @@ namespace SoulsFormats
         {
             public override string Type => "PARTS_PARAM_ST";
 
-            public override List<Part> Entries => Util.ConcatAll<Part>(
-                MapPieces, Objects, Enemies, Players, Collisions, DummyObjects, DummyEnemies, ConnectCollisions);
-
             public List<Part.MapPiece> MapPieces;
 
             public List<Part.Object> Objects;
@@ -39,6 +36,12 @@ namespace SoulsFormats
                 DummyObjects = new List<Part.DummyObject>();
                 DummyEnemies = new List<Part.DummyEnemy>();
                 ConnectCollisions = new List<Part.ConnectCollision>();
+            }
+
+            internal override List<Part> GetEntries()
+            {
+                return Util.ConcatAll<Part>(
+                    MapPieces, Objects, Enemies, Players, Collisions, DummyObjects, DummyEnemies, ConnectCollisions);
             }
 
             internal override Part ReadEntry(BinaryReaderEx br)
@@ -92,42 +95,25 @@ namespace SoulsFormats
                 }
             }
 
-            internal override void WriteOffsets(BinaryWriterEx bw)
+            internal override void WriteEntries(BinaryWriterEx bw, List<Part> entries)
             {
-                List<Part> All = Entries;
-                bw.FillInt32("OffsetCount", All.Count + 1);
-
-                for (int i = 0; i < All.Count; i++)
-                {
-                    bw.ReserveInt64($"Offset{i}");
-                }
-            }
-
-            internal override void WriteData(BinaryWriterEx bw)
-            {
-                List<Part> All = Entries;
-
-                for (int i = 0; i < All.Count; i++)
+                for (int i = 0; i < entries.Count; i++)
                 {
                     bw.FillInt64($"Offset{i}", bw.Position);
-                    All[i].Write(bw);
+                    entries[i].Write(bw);
                 }
             }
 
-            internal void GetNames(List<Model> models, List<Part> parts)
+            internal void GetNames(MSB64 msb, Entries entries)
             {
-                foreach (Part part in Entries)
-                {
-                    part.GetNames(models, parts);
-                }
+                foreach (Part part in entries.Parts)
+                    part.GetNames(msb, entries);
             }
 
-            internal void GetIndices(List<Model> models, List<Part> parts)
+            internal void GetIndices(MSB64 msb, Entries entries)
             {
-                foreach (Part part in Entries)
-                {
-                    part.GetIndices(models, parts);
-                }
+                foreach (Part part in entries.Parts)
+                    part.GetIndices(msb, entries);
             }
         }
 
@@ -154,7 +140,8 @@ namespace SoulsFormats
             public override string Name { get; set; }
             public string Placeholder;
             public int ID;
-            public int ModelIndex;
+            private int modelIndex;
+            public string ModelName;
             public Vector3 Position;
             public Vector3 Rotation;
             public Vector3 Scale;
@@ -164,8 +151,8 @@ namespace SoulsFormats
                 UnkF10, UnkF11, UnkF12, UnkF13, UnkF14, UnkF15, UnkF16, UnkF17, UnkF18;
 
             public int EventEntityID;
-            public byte LightID, FogID, ScatterID, Unk7;
-            public int UnkC, Unk10, Unk14, Unk18, Unk1C, Unk20, Unk24, Unk28, Unk30, Unk34, Unk38;
+            public byte LightID, FogID, ScatterID, Unk07;
+            public int UnkB0C, UnkB10, UnkB14, UnkB18, UnkB1C, UnkB20, UnkB24, UnkB28, UnkB30, UnkB34, UnkB38;
             public long UnkOffset1Delta, UnkOffset2Delta;
 
             public Part(Part clone)
@@ -173,7 +160,7 @@ namespace SoulsFormats
                 Name = clone.Name;
                 Placeholder = clone.Placeholder;
                 ID = clone.ID;
-                ModelIndex = clone.ModelIndex;
+                ModelName = clone.ModelName;
                 Position = new Vector3(clone.Position.X, clone.Position.Y, clone.Position.Z);
                 Rotation = new Vector3(clone.Rotation.X, clone.Rotation.Y, clone.Rotation.Z);
                 Scale = new Vector3(clone.Scale.X, clone.Scale.Y, clone.Scale.Z);
@@ -207,18 +194,18 @@ namespace SoulsFormats
                 LightID = clone.LightID;
                 FogID = clone.FogID;
                 ScatterID = clone.ScatterID;
-                Unk7 = clone.Unk7;
-                UnkC = clone.UnkC;
-                Unk10 = clone.Unk10;
-                Unk14 = clone.Unk14;
-                Unk18 = clone.Unk18;
-                Unk1C = clone.Unk1C;
-                Unk20 = clone.Unk20;
-                Unk24 = clone.Unk24;
-                Unk28 = clone.Unk28;
-                Unk30 = clone.Unk30;
-                Unk34 = clone.Unk34;
-                Unk38 = clone.Unk38;
+                Unk07 = clone.Unk07;
+                UnkB0C = clone.UnkB0C;
+                UnkB10 = clone.UnkB10;
+                UnkB14 = clone.UnkB14;
+                UnkB18 = clone.UnkB18;
+                UnkB1C = clone.UnkB1C;
+                UnkB20 = clone.UnkB20;
+                UnkB24 = clone.UnkB24;
+                UnkB28 = clone.UnkB28;
+                UnkB30 = clone.UnkB30;
+                UnkB34 = clone.UnkB34;
+                UnkB38 = clone.UnkB38;
                 UnkOffset1Delta = clone.UnkOffset1Delta;
                 UnkOffset2Delta = clone.UnkOffset2Delta;
             }
@@ -230,7 +217,7 @@ namespace SoulsFormats
                 long nameOffset = br.ReadInt64();
                 br.AssertUInt32((uint)Type);
                 ID = br.ReadInt32();
-                ModelIndex = br.ReadInt32();
+                modelIndex = br.ReadInt32();
                 br.AssertInt32(0);
                 long placeholderOffset = br.ReadInt64();
                 Position = br.ReadVector3();
@@ -287,21 +274,21 @@ namespace SoulsFormats
                 LightID = br.ReadByte();
                 FogID = br.ReadByte();
                 ScatterID = br.ReadByte();
-                Unk7 = br.ReadByte();
+                Unk07 = br.ReadByte();
 
                 br.AssertInt32(0);
-                UnkC = br.ReadInt32();
-                Unk10 = br.ReadInt32();
-                Unk14 = br.ReadInt32();
-                Unk18 = br.ReadInt32();
-                Unk1C = br.ReadInt32();
-                Unk20 = br.ReadInt32();
-                Unk24 = br.ReadInt32();
-                Unk28 = br.ReadInt32();
+                UnkB0C = br.ReadInt32();
+                UnkB10 = br.ReadInt32();
+                UnkB14 = br.ReadInt32();
+                UnkB18 = br.ReadInt32();
+                UnkB1C = br.ReadInt32();
+                UnkB20 = br.ReadInt32();
+                UnkB24 = br.ReadInt32();
+                UnkB28 = br.ReadInt32();
                 br.AssertInt32(-1);
-                Unk30 = br.ReadInt32();
-                Unk34 = br.ReadInt32();
-                Unk38 = br.ReadInt32();
+                UnkB30 = br.ReadInt32();
+                UnkB34 = br.ReadInt32();
+                UnkB38 = br.ReadInt32();
                 br.AssertInt32(0);
                 br.StepOut();
 
@@ -319,7 +306,7 @@ namespace SoulsFormats
                 bw.ReserveInt64("NameOffset");
                 bw.WriteUInt32((uint)Type);
                 bw.WriteInt32(ID);
-                bw.WriteInt32(ModelIndex);
+                bw.WriteInt32(modelIndex);
                 bw.WriteInt32(0);
                 bw.ReserveInt64("PlaceholderOffset");
                 bw.WriteVector3(Position);
@@ -377,21 +364,21 @@ namespace SoulsFormats
                 bw.WriteByte(LightID);
                 bw.WriteByte(FogID);
                 bw.WriteByte(ScatterID);
-                bw.WriteByte(Unk7);
+                bw.WriteByte(Unk07);
 
                 bw.WriteInt32(0);
-                bw.WriteInt32(UnkC);
-                bw.WriteInt32(Unk10);
-                bw.WriteInt32(Unk14);
-                bw.WriteInt32(Unk18);
-                bw.WriteInt32(Unk1C);
-                bw.WriteInt32(Unk20);
-                bw.WriteInt32(Unk24);
-                bw.WriteInt32(Unk28);
+                bw.WriteInt32(UnkB0C);
+                bw.WriteInt32(UnkB10);
+                bw.WriteInt32(UnkB14);
+                bw.WriteInt32(UnkB18);
+                bw.WriteInt32(UnkB1C);
+                bw.WriteInt32(UnkB20);
+                bw.WriteInt32(UnkB24);
+                bw.WriteInt32(UnkB28);
                 bw.WriteInt32(-1);
-                bw.WriteInt32(Unk30);
-                bw.WriteInt32(Unk34);
-                bw.WriteInt32(Unk38);
+                bw.WriteInt32(UnkB30);
+                bw.WriteInt32(UnkB34);
+                bw.WriteInt32(UnkB38);
                 bw.WriteInt32(0);
 
                 bw.FillInt64("TypeDataOffset", bw.Position - start);
@@ -410,14 +397,14 @@ namespace SoulsFormats
 
             internal abstract void WriteSpecific(BinaryWriterEx bw);
 
-            internal virtual void GetNames(List<Model> models, List<Part> parts)
+            internal virtual void GetNames(MSB64 msb, Entries entries)
             {
-
+                ModelName = GetName(entries.Models, modelIndex);
             }
 
-            internal virtual void GetIndices(List<Model> models, List<Part> parts)
+            internal virtual void GetIndices(MSB64 msb, Entries entries)
             {
-
+                modelIndex = GetIndex(entries.Models, ModelName);
             }
 
             public override string ToString()
@@ -538,16 +525,16 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                 }
 
-                internal override void GetNames(List<Model> models, List<Part> parts)
+                internal override void GetNames(MSB64 msb, Entries entries)
                 {
-                    base.GetNames(models, parts);
-                    CollisionName = GetName(parts, collisionPartIndex);
+                    base.GetNames(msb, entries);
+                    CollisionName = GetName(entries.Parts, collisionPartIndex);
                 }
 
-                internal override void GetIndices(List<Model> models, List<Part> parts)
+                internal override void GetIndices(MSB64 msb, Entries entries)
                 {
-                    base.GetIndices(models, parts);
-                    collisionPartIndex = GetIndex(parts, CollisionName);
+                    base.GetIndices(msb, entries);
+                    collisionPartIndex = GetIndex(entries.Parts, CollisionName);
                 }
             }
 
@@ -706,16 +693,16 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                 }
 
-                internal override void GetNames(List<Model> models, List<Part> parts)
+                internal override void GetNames(MSB64 msb, Entries entries)
                 {
-                    base.GetNames(models, parts);
-                    CollisionName = GetName(parts, collisionPartIndex);
+                    base.GetNames(msb, entries);
+                    CollisionName = GetName(entries.Parts, collisionPartIndex);
                 }
 
-                internal override void GetIndices(List<Model> models, List<Part> parts)
+                internal override void GetIndices(MSB64 msb, Entries entries)
                 {
-                    base.GetIndices(models, parts);
-                    collisionPartIndex = GetIndex(parts, CollisionName);
+                    base.GetIndices(msb, entries);
+                    collisionPartIndex = GetIndex(entries.Parts, CollisionName);
                 }
             }
 
@@ -746,45 +733,50 @@ namespace SoulsFormats
             {
                 internal override PartsType Type => PartsType.Collision;
 
-                public int UnkT01, UnkT02, UnkT03, UnkT04, UnkT05, UnkT06, UnkT07, UnkT08,
-                    UnkT09, UnkT10, UnkT11, UnkT12, UnkT13, UnkT14;
+                public int DisableBonfireEntityID, PlayRegionID;
 
-                public float UnkT15;
+                public int UnkT00, UnkT04, UnkT2C, UnkT30, UnkT34,
+                    UnkT3C, UnkT50, UnkT54, UnkT58, UnkT5C, UnkT74;
+
+                public short UnkT24, UnkT26;
+
+                public float UnkT78;
 
                 internal Collision(BinaryReaderEx br) : base(br) { }
 
                 internal override void Read(BinaryReaderEx br)
                 {
-                    UnkT01 = br.ReadInt32();
-                    UnkT02 = br.ReadInt32();
-                    br.AssertInt32(0);
-                    br.AssertInt32(0);
-                    br.AssertInt32(0);
-                    br.AssertInt32(0);
-                    br.AssertInt32(-1);
-                    br.AssertInt32(-1);
-                    br.AssertInt32(-1);
-                    UnkT03 = br.ReadInt32();
+                    UnkT00 = br.ReadInt32();
                     UnkT04 = br.ReadInt32();
-                    UnkT05 = br.ReadInt32(); // Multiplayer ID?
-                    UnkT06 = br.ReadInt32();
-                    UnkT07 = br.ReadInt32();
-                    UnkT08 = br.ReadInt32();
-                    UnkT09 = br.ReadInt32();
+                    br.AssertInt32(0); // Navmesh Group (4)
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(-1); // Vagrant Entity ID (3)
+                    br.AssertInt32(-1);
+                    br.AssertInt32(-1);
+                    UnkT24 = br.ReadInt16();
+                    UnkT26 = br.AssertInt16(0, 1);
+                    DisableBonfireEntityID = br.ReadInt32();
+                    UnkT2C = br.ReadInt32();
+                    UnkT30 = br.ReadInt32();
+                    UnkT34 = br.ReadInt32();
+                    PlayRegionID = br.ReadInt32();
+                    UnkT3C = br.ReadInt32();
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
-                    UnkT10 = br.ReadInt32();
-                    UnkT11 = br.ReadInt32();
-                    UnkT12 = br.ReadInt32();
-                    UnkT13 = br.ReadInt32();
+                    UnkT50 = br.ReadInt32();
+                    UnkT54 = br.ReadInt32();
+                    UnkT58 = br.ReadInt32();
+                    UnkT5C = br.ReadInt32();
 
                     for (int i = 0; i < 19; i++)
                         br.AssertInt32(0);
 
-                    UnkT14 = br.ReadInt32();
-                    UnkT15 = br.ReadSingle();
+                    UnkT74 = br.ReadInt32();
+                    UnkT78 = br.ReadSingle();
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -792,36 +784,37 @@ namespace SoulsFormats
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(UnkT01);
-                    bw.WriteInt32(UnkT02);
-                    bw.WriteInt32(0);
-                    bw.WriteInt32(0);
-                    bw.WriteInt32(0);
-                    bw.WriteInt32(0);
-                    bw.WriteInt32(-1);
-                    bw.WriteInt32(-1);
-                    bw.WriteInt32(-1);
-                    bw.WriteInt32(UnkT03);
+                    bw.WriteInt32(UnkT00);
                     bw.WriteInt32(UnkT04);
-                    bw.WriteInt32(UnkT05);
-                    bw.WriteInt32(UnkT06);
-                    bw.WriteInt32(UnkT07);
-                    bw.WriteInt32(UnkT08);
-                    bw.WriteInt32(UnkT09);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
-                    bw.WriteInt32(UnkT10);
-                    bw.WriteInt32(UnkT11);
-                    bw.WriteInt32(UnkT12);
-                    bw.WriteInt32(UnkT13);
+                    bw.WriteInt32(-1);
+                    bw.WriteInt32(-1);
+                    bw.WriteInt32(-1);
+                    bw.WriteInt16(UnkT24);
+                    bw.WriteInt16(UnkT26);
+                    bw.WriteInt32(DisableBonfireEntityID);
+                    bw.WriteInt32(UnkT2C);
+                    bw.WriteInt32(UnkT30);
+                    bw.WriteInt32(UnkT34);
+                    bw.WriteInt32(PlayRegionID);
+                    bw.WriteInt32(UnkT3C);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(UnkT50);
+                    bw.WriteInt32(UnkT54);
+                    bw.WriteInt32(UnkT58);
+                    bw.WriteInt32(UnkT5C);
 
                     for (int i = 0; i < 19; i++)
                         bw.WriteInt32(0);
 
-                    bw.WriteInt32(UnkT14);
-                    bw.WriteSingle(UnkT15);
+                    bw.WriteInt32(UnkT74);
+                    bw.WriteSingle(UnkT78);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
@@ -842,28 +835,59 @@ namespace SoulsFormats
                 internal DummyEnemy(BinaryReaderEx br) : base(br) { }
             }
 
+            /// <summary>
+            /// Determines which collision parts load other maps.
+            /// </summary>
             public class ConnectCollision : Part
             {
                 internal override PartsType Type => PartsType.ConnectCollision;
 
-                public int Unk1, Unk2;
+                private int collisionIndex;
+
+                /// <summary>
+                /// The name of the associated collision part.
+                /// </summary>
+                public string CollisionName;
+
+                /// <summary>
+                /// A map ID in format mXX_XX_XX_XX.
+                /// </summary>
+                public byte MapID1, MapID2, MapID3, MapID4;
 
                 internal ConnectCollision(BinaryReaderEx br) : base(br) { }
 
                 internal override void Read(BinaryReaderEx br)
                 {
-                    Unk1 = br.ReadInt32();
-                    Unk2 = br.ReadInt32();
+                    collisionIndex = br.ReadInt32();
+                    MapID1 = br.ReadByte();
+                    MapID2 = br.ReadByte();
+                    MapID3 = br.ReadByte();
+                    MapID4 = br.ReadByte();
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk1);
-                    bw.WriteInt32(Unk2);
+                    bw.WriteInt32(collisionIndex);
+                    bw.WriteByte(MapID1);
+                    bw.WriteByte(MapID2);
+                    bw.WriteByte(MapID3);
+                    bw.WriteByte(MapID4);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
+                }
+
+                internal override void GetNames(MSB64 msb, Entries entries)
+                {
+                    base.GetNames(msb, entries);
+                    CollisionName = GetName(msb.Parts.Collisions, collisionIndex);
+                }
+
+                internal override void GetIndices(MSB64 msb, Entries entries)
+                {
+                    base.GetIndices(msb, entries);
+                    collisionIndex = GetIndex(msb.Parts.Collisions, CollisionName);
                 }
             }
         }

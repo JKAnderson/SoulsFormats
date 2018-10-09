@@ -8,13 +8,16 @@ namespace SoulsFormats
         {
             public override string Type => "MAPSTUDIO_BONE_NAME_STRING";
 
-            public override List<string> Entries => Names;
-
             public List<string> Names;
 
             internal BoneNameSection(BinaryReaderEx br, int unk1) : base(br, unk1)
             {
                 Names = new List<string>();
+            }
+
+            internal override List<string> GetEntries()
+            {
+                return Names;
             }
 
             internal override string ReadEntry(BinaryReaderEx br)
@@ -24,19 +27,12 @@ namespace SoulsFormats
                 return name;
             }
 
-            internal override void WriteOffsets(BinaryWriterEx bw)
+            internal override void WriteEntries(BinaryWriterEx bw, List<string> entries)
             {
-                bw.FillInt32("OffsetCount", Names.Count + 1);
-                for (int i = 0; i < Names.Count; i++)
-                    bw.ReserveInt64($"Offset{i}");
-            }
-
-            internal override void WriteData(BinaryWriterEx bw)
-            {
-                for (int i = 0; i < Names.Count; i++)
+                for (int i = 0; i < entries.Count; i++)
                 {
                     bw.FillInt64($"Offset{i}", bw.Position);
-                    bw.WriteUTF16(Names[i], true);
+                    bw.WriteUTF16(entries[i], true);
                 }
             }
         }

@@ -30,6 +30,17 @@ namespace SoulsFormats
             return magic == "MSB ";
         }
 
+        internal struct Entries
+        {
+            public List<Model> Models;
+            public List<Event> Events;
+            //public List<Region> Regions;
+            public List<Route> Routes;
+            public List<Layer> Layers;
+            public List<Part> Parts;
+            public List<string> BoneNames;
+        }
+
         internal override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
@@ -45,8 +56,7 @@ namespace SoulsFormats
             br.AssertByte(1);
             br.AssertByte(0xFF);
 
-            var modelEntries = new List<Model>();
-            var partsEntries = new List<Part>();
+            Entries entries = default;
 
             long nextSectionOffset = br.Position;
             while (nextSectionOffset != 0)
@@ -62,31 +72,33 @@ namespace SoulsFormats
                 {
                     case "MODEL_PARAM_ST":
                         Models = new ModelSection(br, unk1);
-                        modelEntries = Models.Read(br, offsets);
+                        entries.Models = Models.Read(br, offsets);
                         break;
 
                     case "EVENT_PARAM_ST":
                         Events = new EventSection(br, unk1);
-                        Events.Read(br, offsets);
+                        entries.Events = Events.Read(br, offsets);
                         break;
 
                     case "POINT_PARAM_ST":
                         Points = new DummySection(br, unk1, type, offsets);
+                        //Points = new PointSection(br, unk1);
+                        //entries.Regions = Points.Read(br, offsets);
                         break;
 
                     case "ROUTE_PARAM_ST":
                         Routes = new RouteSection(br, unk1);
-                        Routes.Read(br, offsets);
+                        entries.Routes = Routes.Read(br, offsets);
                         break;
 
                     case "LAYER_PARAM_ST":
                         Layers = new LayerSection(br, unk1);
-                        Layers.Read(br, offsets);
+                        entries.Layers = Layers.Read(br, offsets);
                         break;
 
                     case "PARTS_PARAM_ST":
                         Parts = new PartsSection(br, unk1);
-                        partsEntries = Parts.Read(br, offsets);
+                        entries.Parts = Parts.Read(br, offsets);
                         break;
 
                     case "MAPSTUDIO_PARTS_POSE_ST":
@@ -95,7 +107,7 @@ namespace SoulsFormats
 
                     case "MAPSTUDIO_BONE_NAME_STRING":
                         BoneNames = new BoneNameSection(br, unk1);
-                        BoneNames.Read(br, offsets);
+                        entries.BoneNames = BoneNames.Read(br, offsets);
                         break;
 
                     default:
@@ -105,19 +117,25 @@ namespace SoulsFormats
                 nextSectionOffset = br.ReadInt64();
             }
 
-            Events.GetNames(modelEntries, partsEntries);
-            Parts.GetNames(modelEntries, partsEntries);
+            Events.GetNames(this, entries);
+            Parts.GetNames(this, entries);
         }
 
         internal override void Write(BinaryWriterEx bw)
         {
             bw.BigEndian = false;
 
-            var modelEntries = Models.Entries;
-            var partsEntries = Parts.Entries;
+            Entries entries;
+            entries.Models = Models.GetEntries();
+            entries.Events = Events.GetEntries();
+            //entries.Regions = Points.GetEntries();
+            entries.Routes = Routes.GetEntries();
+            entries.Layers = Layers.GetEntries();
+            entries.Parts = Parts.GetEntries();
+            entries.BoneNames = BoneNames.GetEntries();
 
-            Events.GetIndices(modelEntries, partsEntries);
-            Parts.GetIndices(modelEntries, partsEntries);
+            Events.GetIndices(this, entries);
+            Parts.GetIndices(this, entries);
 
             bw.WriteASCII("MSB ");
             bw.WriteInt32(1);
@@ -128,27 +146,28 @@ namespace SoulsFormats
             bw.WriteByte(1);
             bw.WriteByte(0xFF);
 
-            Models.Write(bw);
+            Models.Write(bw, entries.Models);
             bw.Pad(8);
             bw.FillInt64("NextOffset", bw.Position);
 
-            Events.Write(bw);
+            Events.Write(bw, entries.Events);
             bw.Pad(8);
             bw.FillInt64("NextOffset", bw.Position);
 
+            //Points.Write(bw, entries.Regions);
             Points.Write(bw);
             bw.Pad(8);
             bw.FillInt64("NextOffset", bw.Position);
 
-            Routes.Write(bw);
+            Routes.Write(bw, entries.Routes);
             bw.Pad(8);
             bw.FillInt64("NextOffset", bw.Position);
 
-            Layers.Write(bw);
+            Layers.Write(bw, entries.Layers);
             bw.Pad(8);
             bw.FillInt64("NextOffset", bw.Position);
 
-            Parts.Write(bw);
+            Parts.Write(bw, entries.Parts);
             bw.Pad(8);
             bw.FillInt64("NextOffset", bw.Position);
 
@@ -156,7 +175,7 @@ namespace SoulsFormats
             bw.Pad(8);
             bw.FillInt64("NextOffset", bw.Position);
 
-            BoneNames.Write(bw);
+            BoneNames.Write(bw, entries.BoneNames);
             bw.FillInt64("NextOffset", 0);
         }
 
@@ -186,13 +205,13 @@ namespace SoulsFormats
             public int Unk1;
 
             public abstract string Type { get; }
-
-            public abstract List<T> Entries { get; }
-
+            
             internal Section(BinaryReaderEx br, int unk1)
             {
                 Unk1 = unk1;
             }
+
+            internal abstract List<T> GetEntries();
 
             internal List<T> Read(BinaryReaderEx br, int offsets)
             {
@@ -209,23 +228,24 @@ namespace SoulsFormats
 
             internal abstract T ReadEntry(BinaryReaderEx br);
 
-            internal void Write(BinaryWriterEx bw)
+            internal void Write(BinaryWriterEx bw, List<T> entries)
             {
                 bw.WriteInt32(Unk1);
-                bw.ReserveInt32("OffsetCount");
+                bw.WriteInt32(entries.Count + 1);
                 bw.ReserveInt64("TypeOffset");
-                WriteOffsets(bw);
+                for (int i = 0; i < entries.Count; i++)
+                {
+                    bw.ReserveInt64($"Offset{i}");
+                }
                 bw.ReserveInt64("NextOffset");
 
                 bw.FillInt64("TypeOffset", bw.Position);
                 bw.WriteUTF16(Type, true);
                 bw.Pad(8);
-                WriteData(bw);
+                WriteEntries(bw, entries);
             }
 
-            internal abstract void WriteOffsets(BinaryWriterEx bw);
-
-            internal abstract void WriteData(BinaryWriterEx bw);
+            internal abstract void WriteEntries(BinaryWriterEx bw, List<T> entries);
 
             public override string ToString()
             {

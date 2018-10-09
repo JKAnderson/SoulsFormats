@@ -8,13 +8,16 @@ namespace SoulsFormats
         {
             public override string Type => "LAYER_PARAM_ST";
 
-            public override List<Layer> Entries => Layers;
-
             public List<Layer> Layers;
 
             internal LayerSection(BinaryReaderEx br, int unk1) : base(br, unk1)
             {
                 Layers = new List<Layer>();
+            }
+
+            internal override List<Layer> GetEntries()
+            {
+                return Layers;
             }
 
             internal override Layer ReadEntry(BinaryReaderEx br)
@@ -24,21 +27,12 @@ namespace SoulsFormats
                 return layer;
             }
 
-            internal override void WriteOffsets(BinaryWriterEx bw)
+            internal override void WriteEntries(BinaryWriterEx bw, List<Layer> entries)
             {
-                bw.FillInt32("OffsetCount", Layers.Count + 1);
-                for (int i = 0; i < Layers.Count; i++)
-                {
-                    bw.ReserveInt64($"Offset{i}");
-                }
-            }
-
-            internal override void WriteData(BinaryWriterEx bw)
-            {
-                for (int i = 0; i < Layers.Count; i++)
+                for (int i = 0; i < entries.Count; i++)
                 {
                     bw.FillInt64($"Offset{i}", bw.Position);
-                    Layers[i].Write(bw);
+                    entries[i].Write(bw);
                 }
             }
         }

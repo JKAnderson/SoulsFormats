@@ -8,13 +8,16 @@ namespace SoulsFormats
         {
             public override string Type => "ROUTE_PARAM_ST";
 
-            public override List<Route> Entries => Routes;
-
             public List<Route> Routes;
 
             internal RouteSection(BinaryReaderEx br, int unk1) : base(br, unk1)
             {
                 Routes = new List<Route>();
+            }
+
+            internal override List<Route> GetEntries()
+            {
+                return Routes;
             }
 
             internal override Route ReadEntry(BinaryReaderEx br)
@@ -24,21 +27,12 @@ namespace SoulsFormats
                 return route;
             }
 
-            internal override void WriteOffsets(BinaryWriterEx bw)
+            internal override void WriteEntries(BinaryWriterEx bw, List<Route> entries)
             {
-                bw.FillInt32("OffsetCount", Routes.Count + 1);
-                for (int i = 0; i < Routes.Count; i++)
-                {
-                    bw.ReserveInt64($"Offset{i}");
-                }
-            }
-
-            internal override void WriteData(BinaryWriterEx bw)
-            {
-                for (int i = 0; i < Routes.Count; i++)
+                for (int i = 0; i < entries.Count; i++)
                 {
                     bw.FillInt64($"Offset{i}", bw.Position);
-                    Routes[i].Write(bw);
+                    entries[i].Write(bw);
                 }
             }
         }

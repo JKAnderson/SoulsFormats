@@ -9,9 +9,6 @@ namespace SoulsFormats
         {
             public override string Type => "MODEL_PARAM_ST";
 
-            public override List<Model> Entries => Util.ConcatAll<Model>(
-                MapPieces, Objects, Enemies, Players, Collisions, Others);
-
             public List<Model.MapPiece> MapPieces;
             public List<Model.Object> Objects;
             public List<Model.Enemy> Enemies;
@@ -27,6 +24,12 @@ namespace SoulsFormats
                 Players = new List<Model.Player>();
                 Collisions = new List<Model.Collision>();
                 Others = new List<Model.Other>();
+            }
+
+            internal override List<Model> GetEntries()
+            {
+                return Util.ConcatAll<Model>(
+                    MapPieces, Objects, Enemies, Players, Collisions, Others);
             }
 
             internal override Model ReadEntry(BinaryReaderEx br)
@@ -70,25 +73,12 @@ namespace SoulsFormats
                 }
             }
 
-            internal override void WriteOffsets(BinaryWriterEx bw)
+            internal override void WriteEntries(BinaryWriterEx bw, List<Model> entries)
             {
-                List<Model> All = Entries;
-                bw.FillInt32("OffsetCount", All.Count + 1);
-
-                for (int i = 0; i < All.Count; i++)
-                {
-                    bw.ReserveInt64($"Offset{i}");
-                }
-            }
-
-            internal override void WriteData(BinaryWriterEx bw)
-            {
-                List<Model> All = Entries;
-
-                for (int i = 0; i < All.Count; i++)
+                for (int i = 0; i < entries.Count; i++)
                 {
                     bw.FillInt64($"Offset{i}", bw.Position);
-                    All[i].Write(bw);
+                    entries[i].Write(bw);
                 }
             }
         }
@@ -107,10 +97,10 @@ namespace SoulsFormats
             Other = 0xFFFFFFFF
         }
 
-        public abstract class Model
+        public abstract class Model : Entry
         {
             internal abstract ModelType Type { get; }
-            public string Name;
+            public override string Name { get; set; }
             public string Placeholder;
             public int ID;
             public int InstanceCount;
@@ -202,7 +192,6 @@ namespace SoulsFormats
                 {
                     long unkOffset = br.ReadInt64();
                     br.Position = start + unkOffset;
-
                     Unk1 = br.ReadInt32();
                     br.AssertInt32(0);
                     br.AssertInt32(0);

@@ -10,9 +10,6 @@ namespace SoulsFormats
         {
             public override string Type => "EVENT_PARAM_ST";
 
-            public override List<Event> Entries => Util.ConcatAll<Event>(
-                Treasures, Generators, ObjActs, MapOffsets, Invasions, WalkRoutes, GroupTours, Others);
-
             public List<Event.Treasure> Treasures;
 
             public List<Event.Generators> Generators;
@@ -39,6 +36,12 @@ namespace SoulsFormats
                 WalkRoutes = new List<Event.WalkRoute>();
                 GroupTours = new List<Event.GroupTour>();
                 Others = new List<Event.Other>();
+            }
+
+            internal override List<Event> GetEntries()
+            {
+                return Util.ConcatAll<Event>(
+                    Treasures, Generators, ObjActs, MapOffsets, Invasions, WalkRoutes, GroupTours, Others);
             }
 
             internal override Event ReadEntry(BinaryReaderEx br)
@@ -92,42 +95,25 @@ namespace SoulsFormats
                 }
             }
 
-            internal override void WriteOffsets(BinaryWriterEx bw)
+            internal override void WriteEntries(BinaryWriterEx bw, List<Event> entries)
             {
-                List<Event> All = Entries;
-                bw.FillInt32("OffsetCount", All.Count + 1);
-
-                for (int i = 0; i < All.Count; i++)
-                {
-                    bw.ReserveInt64($"Offset{i}");
-                }
-            }
-
-            internal override void WriteData(BinaryWriterEx bw)
-            {
-                List<Event> All = Entries;
-
-                for (int i = 0; i < All.Count; i++)
+                for (int i = 0; i < entries.Count; i++)
                 {
                     bw.FillInt64($"Offset{i}", bw.Position);
-                    All[i].Write(bw);
+                    entries[i].Write(bw);
                 }
             }
 
-            internal void GetNames(List<Model> models, List<Part> parts)
+            internal void GetNames(MSB64 msb, Entries entries)
             {
-                foreach (Event ev in Entries)
-                {
-                    ev.GetNames(models, parts);
-                }
+                foreach (Event ev in entries.Events)
+                    ev.GetNames(msb, entries);
             }
 
-            internal void GetIndices(List<Model> models, List<Part> parts)
+            internal void GetIndices(MSB64 msb, Entries entries)
             {
-                foreach (Event ev in Entries)
-                {
-                    ev.GetIndices(models, parts);
-                }
+                foreach (Event ev in entries.Events)
+                    ev.GetIndices(msb, entries);
             }
         }
 
@@ -220,14 +206,14 @@ namespace SoulsFormats
 
             internal abstract void WriteSpecific(BinaryWriterEx bw);
 
-            internal virtual void GetNames(List<Model> models, List<Part> parts)
+            internal virtual void GetNames(MSB64 msb, Entries entries)
             {
-                PartName = GetName(parts, partIndex);
+                PartName = GetName(entries.Parts, partIndex);
             }
 
-            internal virtual void GetIndices(List<Model> models, List<Part> parts)
+            internal virtual void GetIndices(MSB64 msb, Entries entries)
             {
-                partIndex = GetIndex(parts, PartName);
+                partIndex = GetIndex(entries.Parts, PartName);
             }
 
             public override string ToString()
@@ -293,16 +279,16 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                 }
 
-                internal override void GetNames(List<Model> models, List<Part> parts)
+                internal override void GetNames(MSB64 msb, Entries entries)
                 {
-                    base.GetNames(models, parts);
-                    PartName2 = GetName(parts, partIndex2);
+                    base.GetNames(msb, entries);
+                    PartName2 = GetName(entries.Parts, partIndex2);
                 }
 
-                internal override void GetIndices(List<Model> models, List<Part> parts)
+                internal override void GetIndices(MSB64 msb, Entries entries)
                 {
-                    base.GetIndices(models, parts);
-                    partIndex2 = GetIndex(parts, PartName2);
+                    base.GetIndices(msb, entries);
+                    partIndex2 = GetIndex(entries.Parts, PartName2);
                 }
             }
 
@@ -310,18 +296,147 @@ namespace SoulsFormats
             {
                 internal override EventType Type => EventType.Generators;
 
-                public byte[] Unk;
+                public int UnkT00, UnkT04, UnkT08, UnkT0C, UnkT10, UnkT14, UnkT18;
+                public int UnkT30, UnkT34, UnkT38, UnkT3C, UnkT40, UnkT44, UnkT48, UnkT4C;
+                public int UnkT60, UnkT64, UnkT68, UnkT6C, UnkT70, UnkT74, UnkT78, UnkT7C, UnkT80, UnkT84, UnkT88, UnkT8C;
+                public int UnkT9C, UnkTA0;
 
                 public Generators(BinaryReaderEx br) : base(br) { }
 
                 internal override void Read(BinaryReaderEx br)
                 {
-                    Unk = br.ReadBytes(0x100);
+                    UnkT00 = br.ReadInt32();
+                    UnkT04 = br.ReadInt32();
+                    UnkT08 = br.ReadInt32();
+                    UnkT0C = br.ReadInt32();
+                    UnkT10 = br.ReadInt32();
+                    UnkT14 = br.ReadInt32();
+                    UnkT18 = br.ReadInt32();
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    UnkT30 = br.ReadInt32();
+                    UnkT34 = br.ReadInt32();
+                    UnkT38 = br.ReadInt32();
+                    UnkT3C = br.ReadInt32();
+                    UnkT40 = br.ReadInt32();
+                    UnkT44 = br.ReadInt32();
+                    UnkT48 = br.ReadInt32();
+                    UnkT4C = br.ReadInt32();
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    UnkT60 = br.ReadInt32();
+                    UnkT64 = br.ReadInt32();
+                    UnkT68 = br.ReadInt32();
+                    UnkT6C = br.ReadInt32();
+                    UnkT70 = br.ReadInt32();
+                    UnkT74 = br.ReadInt32();
+                    UnkT78 = br.ReadInt32();
+                    UnkT7C = br.ReadInt32();
+                    UnkT80 = br.ReadInt32();
+                    UnkT84 = br.ReadInt32();
+                    UnkT88 = br.ReadInt32();
+                    UnkT8C = br.ReadInt32();
+                    br.AssertInt32(-1);
+                    br.AssertInt32(-1);
+                    br.AssertInt32(-1);
+                    UnkT9C = br.ReadInt32();
+                    UnkTA0 = br.ReadInt32();
+                    br.AssertInt32(-1);
+                    br.AssertInt32(-1);
+                    br.AssertInt32(-1);
+                    br.AssertInt32(-1);
+                    br.AssertInt32(-1);
+                    br.AssertInt32(-1);
+                    br.AssertInt32(-1);
+                    br.AssertInt32(-1);
+                    br.AssertInt32(-1);
+                    br.AssertInt32(-1);
+                    br.AssertInt32(-1);
+                    br.AssertInt32(-1);
+                    br.AssertInt32(-1);
+                    br.AssertInt32(-1);
+                    br.AssertInt32(-1);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteBytes(Unk);
+                    bw.WriteInt32(UnkT00);
+                    bw.WriteInt32(UnkT04);
+                    bw.WriteInt32(UnkT08);
+                    bw.WriteInt32(UnkT0C);
+                    bw.WriteInt32(UnkT10);
+                    bw.WriteInt32(UnkT14);
+                    bw.WriteInt32(UnkT18);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(UnkT30);
+                    bw.WriteInt32(UnkT34);
+                    bw.WriteInt32(UnkT38);
+                    bw.WriteInt32(UnkT3C);
+                    bw.WriteInt32(UnkT40);
+                    bw.WriteInt32(UnkT44);
+                    bw.WriteInt32(UnkT48);
+                    bw.WriteInt32(UnkT4C);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(UnkT60);
+                    bw.WriteInt32(UnkT64);
+                    bw.WriteInt32(UnkT68);
+                    bw.WriteInt32(UnkT6C);
+                    bw.WriteInt32(UnkT70);
+                    bw.WriteInt32(UnkT74);
+                    bw.WriteInt32(UnkT78);
+                    bw.WriteInt32(UnkT7C);
+                    bw.WriteInt32(UnkT80);
+                    bw.WriteInt32(UnkT84);
+                    bw.WriteInt32(UnkT88);
+                    bw.WriteInt32(UnkT8C);
+                    bw.WriteInt32(-1);
+                    bw.WriteInt32(-1);
+                    bw.WriteInt32(-1);
+                    bw.WriteInt32(UnkT9C);
+                    bw.WriteInt32(UnkTA0);
+                    bw.WriteInt32(-1);
+                    bw.WriteInt32(-1);
+                    bw.WriteInt32(-1);
+                    bw.WriteInt32(-1);
+                    bw.WriteInt32(-1);
+                    bw.WriteInt32(-1);
+                    bw.WriteInt32(-1);
+                    bw.WriteInt32(-1);
+                    bw.WriteInt32(-1);
+                    bw.WriteInt32(-1);
+                    bw.WriteInt32(-1);
+                    bw.WriteInt32(-1);
+                    bw.WriteInt32(-1);
+                    bw.WriteInt32(-1);
+                    bw.WriteInt32(-1);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
                 }
             }
 
@@ -362,16 +477,16 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                 }
 
-                internal override void GetNames(List<Model> models, List<Part> parts)
+                internal override void GetNames(MSB64 msb, Entries entries)
                 {
-                    base.GetNames(models, parts);
-                    PartName2 = GetName(parts, partIndex2);
+                    base.GetNames(msb, entries);
+                    PartName2 = GetName(entries.Parts, partIndex2);
                 }
 
-                internal override void GetIndices(List<Model> models, List<Part> parts)
+                internal override void GetIndices(MSB64 msb, Entries entries)
                 {
-                    base.GetIndices(models, parts);
-                    partIndex2 = GetIndex(parts, PartName2);
+                    base.GetIndices(msb, entries);
+                    partIndex2 = GetIndex(entries.Parts, PartName2);
                 }
             }
 
@@ -475,22 +590,32 @@ namespace SoulsFormats
                 }
             }
 
+            // This type only appears once in one unused MSB so it's hard to draw too many conclusions from it.
             public class Other : Event
             {
                 internal override EventType Type => EventType.Other;
 
-                public byte[] Unk;
+                public int SoundTypeMaybe;
+                public int SoundIDMaybe;
 
                 public Other(BinaryReaderEx br) : base(br) { }
 
                 internal override void Read(BinaryReaderEx br)
                 {
-                    Unk = br.ReadBytes(0x48);
+                    SoundTypeMaybe = br.ReadInt32();
+                    SoundIDMaybe = br.ReadInt32();
+
+                    for (int i = 0; i < 16; i++)
+                        br.AssertInt32(-1);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteBytes(Unk);
+                    bw.WriteInt32(SoundTypeMaybe);
+                    bw.WriteInt32(SoundIDMaybe);
+
+                    for (int i = 0; i < 16; i++)
+                        bw.WriteInt32(-1);
                 }
             }
         }
