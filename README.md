@@ -1,6 +1,6 @@
 
 # SoulsFormats
-A .NET library for reading and writing various FromSoftware file formats, targeting .NET Framework 4.5.  
+A .NET library for reading and writing various FromSoftware file formats, targeting .NET Framework 4.6.2.  
 Dark Souls, Demon's Souls and Bloodborne are the main focus, but older From games may be supported to varying degrees. See below for a breakdown of each format.
 
 ## Usage
@@ -121,36 +121,77 @@ Extension: `.drb`
 * DeS: Untested
 * NB: Untested
 
+### ENFL
+Unknown. Believed to determine which assets load based on where you are in a map.
+Extension: `.entryfilelist`
+* DS3: Full Read and Write
+* BB: Untested
+
+### FILTPARAM
+A graphics configuration format used in DS2.
+Extension: `.filtparam`
+* DS2: Partial Read and Write
+
 ### FLVER
 A 3D model file used throughout the series.  
 Extension: `.flv` or `.flver`
 * DS1: Partial Read and Write
 * DSR: Partial Read and Write
 * DS2: Partial Read and Write
-* DS3: Untested
 * DeS: Untested
+
+### FLVER3
+A 3D model file used in DS3 (and maybe BB).
+Extension: `.flver`
+* DS3: Partial Read and Write
 * BB: Untested
+
+### FMG
+A text bundle format used throughout the series.
+Extension: `.fmg`
+* DS1: No support
+* DS2: Untested
+* DS3: Full Read and Write
+* DeS: No support
+* BB: Untested
+
+### GPARAM
+A graphics configuration format used in DS3 and BB.
+* DS3: Partial Read and Write
+* BB: Untested
+
+### MSB64
+A map definition format used in SotFS, DS3, and BB.
+Extension : `.msb`
+Scholar: No support
+DS3: Partial Read and Write
+BB: No support
 
 ### MTD
 A material definition file used throughout the series.  
 Extension: `.mtd`
 * DS1: Full Read and Write
 * DSR: Full Read and Write
-* DS2: Untested
-* DS3: Untested
+* DS2: Full Read and Write
+* DS3: Full Read and Write
 * DeS: Untested
 * BB: Untested
 * NB: Untested
 
+### PARAM64
+A general configuration file used in DS3.
+Extension: `.param`
+* DS3: Full Read and Write
+
 ### TPF
 A container for multiple DDS textures used throughout the series.  
 Extension: `.tpf`
-* DS1: Untested
+* DS1: Full Read and Write
 * DSR: Full Read and Write
-* DS2: Untested
-* DS3: Untested
-* DeS: No support
-* BB: Untested
+* DS2: Full Read and Write
+* DS3: Full Read and Write
+* DeS: Full Read and Write
+* BB: Full Read and Write
 * NB: Full Read and Write
 
 ## Special Thanks
@@ -158,7 +199,9 @@ To everyone below, for either creating tools that I learned from, or helping dec
 * Atvaark
 * B3LYP
 * HotPocketRemix
+* Lance
 * Meowmaritus
 * Nyxojaele
+* Pav
 * SeanP
 * Wulf2k

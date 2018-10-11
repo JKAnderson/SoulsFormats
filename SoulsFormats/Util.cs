@@ -231,6 +231,7 @@ namespace SoulsFormats
         {
             byte[] bytes = bnd.Write();
             bytes = EncryptByteArray(ds3RegulationKey, bytes);
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
             File.WriteAllBytes(path, bytes);
         }
 
