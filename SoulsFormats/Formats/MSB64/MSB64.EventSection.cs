@@ -147,7 +147,8 @@ namespace SoulsFormats
             public int ID;
             private int partIndex;
             public string PartName;
-            public int PointIndex;
+            private int pointIndex;
+            public string PointName;
             public int EventEntityID;
 
             internal Event(BinaryReaderEx br)
@@ -166,7 +167,7 @@ namespace SoulsFormats
 
                 br.StepIn(start + baseDataOffset);
                 partIndex = br.ReadInt32();
-                PointIndex = br.ReadInt32();
+                pointIndex = br.ReadInt32();
                 EventEntityID = br.ReadInt32();
                 br.AssertInt32(0);
                 br.StepOut();
@@ -196,7 +197,7 @@ namespace SoulsFormats
 
                 bw.FillInt64("BaseDataOffset", bw.Position - start);
                 bw.WriteInt32(partIndex);
-                bw.WriteInt32(PointIndex);
+                bw.WriteInt32(pointIndex);
                 bw.WriteInt32(EventEntityID);
                 bw.WriteInt32(0);
 
@@ -209,11 +210,13 @@ namespace SoulsFormats
             internal virtual void GetNames(MSB64 msb, Entries entries)
             {
                 PartName = GetName(entries.Parts, partIndex);
+                PointName = GetName(entries.Regions, pointIndex);
             }
 
             internal virtual void GetIndices(MSB64 msb, Entries entries)
             {
                 partIndex = GetIndex(entries.Parts, PartName);
+                pointIndex = GetIndex(entries.Regions, PointName);
             }
 
             public override string ToString()

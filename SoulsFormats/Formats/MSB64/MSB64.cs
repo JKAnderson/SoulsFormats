@@ -12,7 +12,7 @@ namespace SoulsFormats
 
         public EventSection Events;
 
-        public DummySection Points;
+        public PointSection Regions;
 
         public RouteSection Routes;
 
@@ -34,7 +34,7 @@ namespace SoulsFormats
         {
             public List<Model> Models;
             public List<Event> Events;
-            //public List<Region> Regions;
+            public List<Region> Regions;
             public List<Route> Routes;
             public List<Layer> Layers;
             public List<Part> Parts;
@@ -81,9 +81,8 @@ namespace SoulsFormats
                         break;
 
                     case "POINT_PARAM_ST":
-                        Points = new DummySection(br, unk1, type, offsets);
-                        //Points = new PointSection(br, unk1);
-                        //entries.Regions = Points.Read(br, offsets);
+                        Regions = new PointSection(br, unk1);
+                        entries.Regions = Regions.Read(br, offsets);
                         break;
 
                     case "ROUTE_PARAM_ST":
@@ -128,7 +127,7 @@ namespace SoulsFormats
             Entries entries;
             entries.Models = Models.GetEntries();
             entries.Events = Events.GetEntries();
-            //entries.Regions = Points.GetEntries();
+            entries.Regions = Regions.GetEntries();
             entries.Routes = Routes.GetEntries();
             entries.Layers = Layers.GetEntries();
             entries.Parts = Parts.GetEntries();
@@ -154,8 +153,7 @@ namespace SoulsFormats
             bw.Pad(8);
             bw.FillInt64("NextOffset", bw.Position);
 
-            //Points.Write(bw, entries.Regions);
-            Points.Write(bw);
+            Regions.Write(bw, entries.Regions);
             bw.Pad(8);
             bw.FillInt64("NextOffset", bw.Position);
 
