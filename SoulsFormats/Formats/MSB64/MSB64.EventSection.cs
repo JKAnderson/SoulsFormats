@@ -224,6 +224,9 @@ namespace SoulsFormats
                 return $"{Type} {ID} : {Name}";
             }
 
+            /// <summary>
+            /// A pickuppable item.
+            /// </summary>
             public class Treasure : Event
             {
                 internal override EventType Type => EventType.Treasures;
@@ -231,9 +234,23 @@ namespace SoulsFormats
                 private int partIndex2;
                 public string PartName2;
                 public int ItemLot1, ItemLot2;
-                public int Unk3C, Unk40;
 
-                public Treasure(BinaryReaderEx br) : base(br) { }
+                /// <summary>
+                /// Animation to play when taking this treasure.
+                /// </summary>
+                public int PickupAnimID;
+
+                /// <summary>
+                /// Used for treasures inside chests, exact significance unknown.
+                /// </summary>
+                public bool IsChest;
+
+                /// <summary>
+                /// Used only for Yoel's ashes treasure.
+                /// </summary>
+                public bool IsYoelUnknown;
+
+                internal Treasure(BinaryReaderEx br) : base(br) { }
 
                 internal override void Read(BinaryReaderEx br)
                 {
@@ -252,8 +269,13 @@ namespace SoulsFormats
                     br.AssertInt32(-1);
                     br.AssertInt32(-1);
                     br.AssertInt32(-1);
-                    Unk3C = br.ReadInt32();
-                    Unk40 = br.ReadInt32();
+                    PickupAnimID = br.ReadInt32();
+
+                    IsChest = br.ReadBoolean();
+                    IsYoelUnknown = br.ReadBoolean();
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -276,8 +298,12 @@ namespace SoulsFormats
                     bw.WriteInt32(-1);
                     bw.WriteInt32(-1);
                     bw.WriteInt32(-1);
-                    bw.WriteInt32(Unk3C);
-                    bw.WriteInt32(Unk40);
+
+                    bw.WriteBoolean(IsChest);
+                    bw.WriteBoolean(IsYoelUnknown);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                 }
@@ -299,71 +325,44 @@ namespace SoulsFormats
             {
                 internal override EventType Type => EventType.Generators;
 
-                public int UnkT00, UnkT04, UnkT08, UnkT0C, UnkT10, UnkT14, UnkT18;
-                public int UnkT30, UnkT34, UnkT38, UnkT3C, UnkT40, UnkT44, UnkT48, UnkT4C;
-                public int UnkT60, UnkT64, UnkT68, UnkT6C, UnkT70, UnkT74, UnkT78, UnkT7C, UnkT80, UnkT84, UnkT88, UnkT8C;
-                public int UnkT9C, UnkTA0;
+                public short MaxNum;
+                public short LimitNum;
+                public short MinGenNum;
+                public short MaxGenNum;
+                public float MinInterval;
+                public float MaxInterval;
+                private int[] spawnPointIndices;
+                public string[] SpawnPointNames { get; private set; }
+                private int[] spawnPartIndices;
+                public string[] SpawnPartNames { get; private set; }
 
-                public Generators(BinaryReaderEx br) : base(br) { }
+                public int UnkT10;
+                public float UnkT14, UnkT18;
+
+                internal Generators(BinaryReaderEx br) : base(br) { }
 
                 internal override void Read(BinaryReaderEx br)
                 {
-                    UnkT00 = br.ReadInt32();
-                    UnkT04 = br.ReadInt32();
-                    UnkT08 = br.ReadInt32();
-                    UnkT0C = br.ReadInt32();
+                    MaxNum = br.ReadInt16();
+                    LimitNum = br.ReadInt16();
+                    MinGenNum = br.ReadInt16();
+                    MaxGenNum = br.ReadInt16();
+                    MinInterval = br.ReadSingle();
+                    MaxInterval = br.ReadSingle();
                     UnkT10 = br.ReadInt32();
-                    UnkT14 = br.ReadInt32();
-                    UnkT18 = br.ReadInt32();
+                    UnkT14 = br.ReadSingle();
+                    UnkT18 = br.ReadSingle();
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
-                    UnkT30 = br.ReadInt32();
-                    UnkT34 = br.ReadInt32();
-                    UnkT38 = br.ReadInt32();
-                    UnkT3C = br.ReadInt32();
-                    UnkT40 = br.ReadInt32();
-                    UnkT44 = br.ReadInt32();
-                    UnkT48 = br.ReadInt32();
-                    UnkT4C = br.ReadInt32();
+                    spawnPointIndices = br.ReadInt32s(8);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
-                    UnkT60 = br.ReadInt32();
-                    UnkT64 = br.ReadInt32();
-                    UnkT68 = br.ReadInt32();
-                    UnkT6C = br.ReadInt32();
-                    UnkT70 = br.ReadInt32();
-                    UnkT74 = br.ReadInt32();
-                    UnkT78 = br.ReadInt32();
-                    UnkT7C = br.ReadInt32();
-                    UnkT80 = br.ReadInt32();
-                    UnkT84 = br.ReadInt32();
-                    UnkT88 = br.ReadInt32();
-                    UnkT8C = br.ReadInt32();
-                    br.AssertInt32(-1);
-                    br.AssertInt32(-1);
-                    br.AssertInt32(-1);
-                    UnkT9C = br.ReadInt32();
-                    UnkTA0 = br.ReadInt32();
-                    br.AssertInt32(-1);
-                    br.AssertInt32(-1);
-                    br.AssertInt32(-1);
-                    br.AssertInt32(-1);
-                    br.AssertInt32(-1);
-                    br.AssertInt32(-1);
-                    br.AssertInt32(-1);
-                    br.AssertInt32(-1);
-                    br.AssertInt32(-1);
-                    br.AssertInt32(-1);
-                    br.AssertInt32(-1);
-                    br.AssertInt32(-1);
-                    br.AssertInt32(-1);
-                    br.AssertInt32(-1);
-                    br.AssertInt32(-1);
+                    spawnPartIndices = br.ReadInt32s(32);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -376,62 +375,26 @@ namespace SoulsFormats
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(UnkT00);
-                    bw.WriteInt32(UnkT04);
-                    bw.WriteInt32(UnkT08);
-                    bw.WriteInt32(UnkT0C);
+                    bw.WriteInt16(MaxNum);
+                    bw.WriteInt16(LimitNum);
+                    bw.WriteInt16(MinGenNum);
+                    bw.WriteInt16(MaxGenNum);
+                    bw.WriteSingle(MinInterval);
+                    bw.WriteSingle(MaxInterval);
                     bw.WriteInt32(UnkT10);
-                    bw.WriteInt32(UnkT14);
-                    bw.WriteInt32(UnkT18);
+                    bw.WriteSingle(UnkT14);
+                    bw.WriteSingle(UnkT18);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
-                    bw.WriteInt32(UnkT30);
-                    bw.WriteInt32(UnkT34);
-                    bw.WriteInt32(UnkT38);
-                    bw.WriteInt32(UnkT3C);
-                    bw.WriteInt32(UnkT40);
-                    bw.WriteInt32(UnkT44);
-                    bw.WriteInt32(UnkT48);
-                    bw.WriteInt32(UnkT4C);
+                    bw.WriteInt32s(spawnPointIndices);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
-                    bw.WriteInt32(UnkT60);
-                    bw.WriteInt32(UnkT64);
-                    bw.WriteInt32(UnkT68);
-                    bw.WriteInt32(UnkT6C);
-                    bw.WriteInt32(UnkT70);
-                    bw.WriteInt32(UnkT74);
-                    bw.WriteInt32(UnkT78);
-                    bw.WriteInt32(UnkT7C);
-                    bw.WriteInt32(UnkT80);
-                    bw.WriteInt32(UnkT84);
-                    bw.WriteInt32(UnkT88);
-                    bw.WriteInt32(UnkT8C);
-                    bw.WriteInt32(-1);
-                    bw.WriteInt32(-1);
-                    bw.WriteInt32(-1);
-                    bw.WriteInt32(UnkT9C);
-                    bw.WriteInt32(UnkTA0);
-                    bw.WriteInt32(-1);
-                    bw.WriteInt32(-1);
-                    bw.WriteInt32(-1);
-                    bw.WriteInt32(-1);
-                    bw.WriteInt32(-1);
-                    bw.WriteInt32(-1);
-                    bw.WriteInt32(-1);
-                    bw.WriteInt32(-1);
-                    bw.WriteInt32(-1);
-                    bw.WriteInt32(-1);
-                    bw.WriteInt32(-1);
-                    bw.WriteInt32(-1);
-                    bw.WriteInt32(-1);
-                    bw.WriteInt32(-1);
-                    bw.WriteInt32(-1);
+                    bw.WriteInt32s(spawnPartIndices);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
@@ -440,6 +403,30 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
+                }
+
+                internal override void GetNames(MSB64 msb, Entries entries)
+                {
+                    base.GetNames(msb, entries);
+                    SpawnPointNames = new string[spawnPointIndices.Length];
+                    for (int i = 0; i < spawnPointIndices.Length; i++)
+                        SpawnPointNames[i] = GetName(entries.Regions, spawnPointIndices[i]);
+
+                    SpawnPartNames = new string[spawnPartIndices.Length];
+                    for (int i = 0; i < spawnPartIndices.Length; i++)
+                        SpawnPartNames[i] = GetName(entries.Parts, spawnPartIndices[i]);
+                }
+
+                internal override void GetIndices(MSB64 msb, Entries entries)
+                {
+                    base.GetIndices(msb, entries);
+                    spawnPointIndices = new int[SpawnPointNames.Length];
+                    for (int i = 0; i < SpawnPointNames.Length; i++)
+                        spawnPointIndices[i] = GetIndex(entries.Regions, SpawnPointNames[i]);
+
+                    spawnPartIndices = new int[SpawnPartNames.Length];
+                    for (int i = 0; i < SpawnPartNames.Length; i++)
+                        spawnPartIndices[i] = GetIndex(entries.Parts, SpawnPartNames[i]);
                 }
             }
 
@@ -451,17 +438,17 @@ namespace SoulsFormats
                 private int partIndex2;
                 public string PartName2;
                 public int ParameterID;
-                public int Unk1;
+                public int UnkT10;
                 public int EventFlagID;
 
-                public ObjAct(BinaryReaderEx br) : base(br) { }
+                internal ObjAct(BinaryReaderEx br) : base(br) { }
 
                 internal override void Read(BinaryReaderEx br)
                 {
                     ObjActEntityID = br.ReadInt32();
                     partIndex2 = br.ReadInt32();
                     ParameterID = br.ReadInt32();
-                    Unk1 = br.ReadInt32();
+                    UnkT10 = br.ReadInt32();
                     EventFlagID = br.ReadInt32();
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -473,7 +460,7 @@ namespace SoulsFormats
                     bw.WriteInt32(ObjActEntityID);
                     bw.WriteInt32(partIndex2);
                     bw.WriteInt32(ParameterID);
-                    bw.WriteInt32(Unk1);
+                    bw.WriteInt32(UnkT10);
                     bw.WriteInt32(EventFlagID);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
@@ -501,7 +488,7 @@ namespace SoulsFormats
 
                 public float Degree;
 
-                public MapOffset(BinaryReaderEx br) : base(br) { }
+                internal MapOffset(BinaryReaderEx br) : base(br) { }
 
                 internal override void Read(BinaryReaderEx br)
                 {
@@ -526,9 +513,9 @@ namespace SoulsFormats
                 public int SoundIDMaybe;
                 public int MapEventIDMaybe;
                 public int FlagsMaybe;
-                public int Unk4;
+                public int UnkT18;
 
-                public Invasion(BinaryReaderEx br) : base(br) { }
+                internal Invasion(BinaryReaderEx br) : base(br) { }
 
                 internal override void Read(BinaryReaderEx br)
                 {
@@ -538,7 +525,7 @@ namespace SoulsFormats
                     SoundIDMaybe = br.ReadInt32();
                     MapEventIDMaybe = br.ReadInt32();
                     FlagsMaybe = br.ReadInt32();
-                    Unk4 = br.ReadInt32();
+                    UnkT18 = br.ReadInt32();
                     br.AssertInt32(0);
                 }
 
@@ -550,27 +537,63 @@ namespace SoulsFormats
                     bw.WriteInt32(SoundIDMaybe);
                     bw.WriteInt32(MapEventIDMaybe);
                     bw.WriteInt32(FlagsMaybe);
-                    bw.WriteInt32(Unk4);
+                    bw.WriteInt32(UnkT18);
                     bw.WriteInt32(0);
                 }
             }
 
+            /// <summary>
+            /// A simple list of points defining a path for enemies to take.
+            /// </summary>
             public class WalkRoute : Event
             {
                 internal override EventType Type => EventType.WalkRoute;
 
-                public byte[] Unk;
+                /// <summary>
+                /// Unknown; probably some kind of route type.
+                /// </summary>
+                public int UnkT00;
 
-                public WalkRoute(BinaryReaderEx br) : base(br) { }
+                private short[] walkPointIndices;
+                /// <summary>
+                /// List of points in the route.
+                /// </summary>
+                public string[] WalkPointNames { get; private set; }
+
+                internal WalkRoute(BinaryReaderEx br) : base(br) { }
 
                 internal override void Read(BinaryReaderEx br)
                 {
-                    Unk = br.ReadBytes(0x50);
+                    UnkT00 = br.AssertInt32(0, 1, 2, 5);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    walkPointIndices = br.ReadInt16s(32);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteBytes(Unk);
+                    bw.WriteInt32(UnkT00);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt16s(walkPointIndices);
+                }
+
+                internal override void GetNames(MSB64 msb, Entries entries)
+                {
+                    base.GetNames(msb, entries);
+                    WalkPointNames = new string[walkPointIndices.Length];
+                    for (int i = 0; i < walkPointIndices.Length; i++)
+                        WalkPointNames[i] = GetName(entries.Regions, walkPointIndices[i]);
+                }
+
+                internal override void GetIndices(MSB64 msb, Entries entries)
+                {
+                    base.GetIndices(msb, entries);
+                    walkPointIndices = new short[WalkPointNames.Length];
+                    for (int i = 0; i < WalkPointNames.Length; i++)
+                        walkPointIndices[i] = (short)GetIndex(entries.Regions, WalkPointNames[i]);
                 }
             }
 
@@ -578,18 +601,44 @@ namespace SoulsFormats
             {
                 internal override EventType Type => EventType.GroupTour;
 
-                public byte[] Unk;
+                public int UnkT00, UnkT04;
+                private int[] groupPartsIndices;
+                public string[] GroupPartsNames { get; private set; }
 
-                public GroupTour(BinaryReaderEx br) : base(br) { }
+                internal GroupTour(BinaryReaderEx br) : base(br) { }
 
                 internal override void Read(BinaryReaderEx br)
                 {
-                    Unk = br.ReadBytes(0x90);
+                    UnkT00 = br.ReadInt32();
+                    UnkT04 = br.ReadInt32();
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    groupPartsIndices = br.ReadInt32s(32);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteBytes(Unk);
+                    bw.WriteInt32(UnkT00);
+                    bw.WriteInt32(UnkT04);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32s(groupPartsIndices);
+                }
+
+                internal override void GetNames(MSB64 msb, Entries entries)
+                {
+                    base.GetNames(msb, entries);
+                    GroupPartsNames = new string[groupPartsIndices.Length];
+                    for (int i = 0; i < groupPartsIndices.Length; i++)
+                        GroupPartsNames[i] = GetName(entries.Parts, groupPartsIndices[i]);
+                }
+
+                internal override void GetIndices(MSB64 msb, Entries entries)
+                {
+                    base.GetIndices(msb, entries);
+                    groupPartsIndices = new int[GroupPartsNames.Length];
+                    for (int i = 0; i < GroupPartsNames.Length; i++)
+                        groupPartsIndices[i] = GetIndex(entries.Parts, GroupPartsNames[i]);
                 }
             }
 
@@ -601,7 +650,7 @@ namespace SoulsFormats
                 public int SoundTypeMaybe;
                 public int SoundIDMaybe;
 
-                public Other(BinaryReaderEx br) : base(br) { }
+                internal Other(BinaryReaderEx br) : base(br) { }
 
                 internal override void Read(BinaryReaderEx br)
                 {
