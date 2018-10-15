@@ -8,6 +8,9 @@ namespace SoulsFormats
     {
         public class PartsSection : Section<Part>
         {
+            /// <summary>
+            /// The MSB type string for this section.
+            /// </summary>
             public override string Type => "PARTS_PARAM_ST";
 
             public List<Part.MapPiece> MapPieces;

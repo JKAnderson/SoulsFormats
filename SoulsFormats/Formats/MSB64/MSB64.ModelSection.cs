@@ -5,15 +5,44 @@ namespace SoulsFormats
 {
     public partial class MSB64
     {
+        /// <summary>
+        /// A section containing all the models available to parts in this map.
+        /// </summary>
         public class ModelSection : Section<Model>
         {
+            /// <summary>
+            /// The MSB type string for this section.
+            /// </summary>
             public override string Type => "MODEL_PARAM_ST";
 
+            /// <summary>
+            /// Map piece models in this section.
+            /// </summary>
             public List<Model.MapPiece> MapPieces;
+
+            /// <summary>
+            /// Object models in this section.
+            /// </summary>
             public List<Model.Object> Objects;
+            
+            /// <summary>
+            /// Enemy models in this section.
+            /// </summary>
             public List<Model.Enemy> Enemies;
+
+            /// <summary>
+            /// Player models in this section.
+            /// </summary>
             public List<Model.Player> Players;
+
+            /// <summary>
+            /// Collision models in this section.
+            /// </summary>
             public List<Model.Collision> Collisions;
+
+            /// <summary>
+            /// Other models in this section.
+            /// </summary>
             public List<Model.Other> Others;
 
             internal ModelSection(BinaryReaderEx br, int unk1) : base(br, unk1)
@@ -82,8 +111,8 @@ namespace SoulsFormats
                 }
             }
         }
-
-        public enum ModelType : uint
+        
+        internal enum ModelType : uint
         {
             MapPiece = 0,
             Object = 1,
@@ -97,12 +126,31 @@ namespace SoulsFormats
             Other = 0xFFFFFFFF
         }
 
+        /// <summary>
+        /// A model available for use by parts in this map.
+        /// </summary>
         public abstract class Model : Entry
         {
             internal abstract ModelType Type { get; }
+
+            /// <summary>
+            /// The name of this model.
+            /// </summary>
             public override string Name { get; set; }
+
+            /// <summary>
+            /// The placeholder used for this model in MapStudio.
+            /// </summary>
             public string Placeholder;
+
+            /// <summary>
+            /// The ID of this model.
+            /// </summary>
             public int ID;
+
+            /// <summary>
+            /// The number of instances of this model in the map.
+            /// </summary>
             public int InstanceCount;
 
             internal Model(BinaryReaderEx br)
@@ -147,15 +195,24 @@ namespace SoulsFormats
 
             internal abstract void WriteSpecific(BinaryWriterEx bw, long start);
 
+            /// <summary>
+            /// Returns the model type, ID and name of this model.
+            /// </summary>
             public override string ToString()
             {
                 return $"{Type} {ID} : {Name}";
             }
 
+            /// <summary>
+            /// A fixed part of the level geometry.
+            /// </summary>
             public class MapPiece : Model
             {
                 internal override ModelType Type => ModelType.MapPiece;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int Unk1;
 
                 internal MapPiece(BinaryReaderEx br) : base(br) { }
@@ -180,10 +237,16 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// A dynamic or interactible entity.
+            /// </summary>
             public class Object : Model
             {
                 internal override ModelType Type => ModelType.Object;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int Unk1;
 
                 internal Object(BinaryReaderEx br) : base(br) { }
@@ -208,6 +271,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Any character in the map that is not the player.
+            /// </summary>
             public class Enemy : Model
             {
                 internal override ModelType Type => ModelType.Enemy;
@@ -225,6 +291,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// The player character.
+            /// </summary>
             public class Player : Model
             {
                 internal override ModelType Type => ModelType.Player;
@@ -242,6 +311,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// The invisible physical surface of the map.
+            /// </summary>
             public class Collision : Model
             {
                 internal override ModelType Type => ModelType.Collision;
@@ -259,6 +331,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class Other : Model
             {
                 internal override ModelType Type => ModelType.Other;

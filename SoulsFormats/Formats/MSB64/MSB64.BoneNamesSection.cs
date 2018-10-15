@@ -4,10 +4,19 @@ namespace SoulsFormats
 {
     public partial class MSB64
     {
+        /// <summary>
+        /// A section containing bone name strings. Purpose unknown.
+        /// </summary>
         public class BoneNameSection : Section<string>
         {
+            /// <summary>
+            /// The MSB type string for this section.
+            /// </summary>
             public override string Type => "MAPSTUDIO_BONE_NAME_STRING";
 
+            /// <summary>
+            /// The bone names in this section.
+            /// </summary>
             public List<string> Names;
 
             internal BoneNameSection(BinaryReaderEx br, int unk1) : base(br, unk1)

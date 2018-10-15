@@ -6,18 +6,39 @@ namespace SoulsFormats
 {
     public partial class MSB64
     {
+        /// <summary>
+        /// A section containing points and region shapes for various purposes.
+        /// </summary>
         public class PointSection : Section<Region>
         {
+            /// <summary>
+            /// The MSB type string for this section.
+            /// </summary>
             public override string Type => "POINT_PARAM_ST";
 
+            /// <summary>
+            /// The points in this section.
+            /// </summary>
             public List<Region.Point> Points;
 
+            /// <summary>
+            /// The circles in this section.
+            /// </summary>
             public List<Region.Circle> Circles;
 
+            /// <summary>
+            /// The spheres in this section.
+            /// </summary>
             public List<Region.Sphere> Spheres;
 
+            /// <summary>
+            /// The cylinders in this section.
+            /// </summary>
             public List<Region.Cylinder> Cylinders;
 
+            /// <summary>
+            /// The boxes in this section.
+            /// </summary>
             public List<Region.Box> Boxes;
 
             internal PointSection(BinaryReaderEx br, int unk1) : base(br, unk1)
@@ -88,7 +109,7 @@ namespace SoulsFormats
             }
         }
 
-        public enum RegionType : uint
+        internal enum RegionType : uint
         {
             Point = 0,
             Circle = 1,
@@ -100,16 +121,27 @@ namespace SoulsFormats
 
         public abstract class Region : Entry
         {
-            public abstract RegionType Type { get; }
+            internal abstract RegionType Type { get; }
 
             public override string Name { get; set; }
+
             public int ID;
+
             public int BonusType;
+
             public int Unk2, Unk3, Unk4;
+
+            /// <summary>
+            /// Looks like flags; might not be.
+            /// </summary>
             public uint UnkFlags;
+
             public Vector3 Position;
+
             public Vector3 Rotation;
+
             public int EventEntityID1, EventEntityID2;
+
             public int[] BonusData;
 
             internal Region(BinaryReaderEx br)
@@ -242,12 +274,12 @@ namespace SoulsFormats
 
             public override string ToString()
             {
-                return $"{BonusType} {Type} {ID} : {Name}";
+                return $"{BonusType} {ID} {Type} : {Name}";
             }
 
             public class Point : Region
             {
-                public override RegionType Type => RegionType.Point;
+                internal override RegionType Type => RegionType.Point;
 
                 internal Point(BinaryReaderEx br) : base(br) { }
 
@@ -261,8 +293,11 @@ namespace SoulsFormats
 
             public class Circle : Region
             {
-                public override RegionType Type => RegionType.Circle;
+                internal override RegionType Type => RegionType.Circle;
 
+                /// <summary>
+                /// The radius of the circle.
+                /// </summary>
                 public float Radius;
 
                 internal Circle(BinaryReaderEx br) : base(br) { }
@@ -281,8 +316,11 @@ namespace SoulsFormats
 
             public class Sphere : Region
             {
-                public override RegionType Type => RegionType.Sphere;
+                internal override RegionType Type => RegionType.Sphere;
 
+                /// <summary>
+                /// The radius of the sphere.
+                /// </summary>
                 public float Radius;
 
                 internal Sphere(BinaryReaderEx br) : base(br) { }
@@ -301,9 +339,16 @@ namespace SoulsFormats
 
             public class Cylinder : Region
             {
-                public override RegionType Type => RegionType.Cylinder;
+                internal override RegionType Type => RegionType.Cylinder;
 
+                /// <summary>
+                /// The radius of the cylinder.
+                /// </summary>
                 public float Radius;
+
+                /// <summary>
+                /// The height of the cylinder.
+                /// </summary>
                 public float Height;
 
                 internal Cylinder(BinaryReaderEx br) : base(br) { }
@@ -324,10 +369,21 @@ namespace SoulsFormats
 
             public class Box : Region
             {
-                public override RegionType Type => RegionType.Box;
+                internal override RegionType Type => RegionType.Box;
 
+                /// <summary>
+                /// The length of the box.
+                /// </summary>
                 public float Length;
+
+                /// <summary>
+                /// The width of the box.
+                /// </summary>
                 public float Width;
+
+                /// <summary>
+                /// The height of the box.
+                /// </summary>
                 public float Height;
 
                 internal Box(BinaryReaderEx br) : base(br) { }

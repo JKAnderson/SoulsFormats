@@ -4,10 +4,19 @@ namespace SoulsFormats
 {
     public partial class MSB64
     {
+        /// <summary>
+        /// A section containing routes. Purpose unknown.
+        /// </summary>
         public class RouteSection : Section<Route>
         {
+            /// <summary>
+            /// The MSB type string for this section.
+            /// </summary>
             public override string Type => "ROUTE_PARAM_ST";
 
+            /// <summary>
+            /// The routes in this section.
+            /// </summary>
             public List<Route> Routes;
 
             internal RouteSection(BinaryReaderEx br, int unk1) : base(br, unk1)
@@ -37,9 +46,19 @@ namespace SoulsFormats
             }
         }
 
+        /// <summary>
+        /// Unknown.
+        /// </summary>
         public class Route
         {
+            /// <summary>
+            /// The name of this route.
+            /// </summary>
             public string Name;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public int Unk1, Unk2, Unk3, Unk4;
 
             internal Route(BinaryReaderEx br)
@@ -76,6 +95,9 @@ namespace SoulsFormats
                 bw.Pad(8);
             }
 
+            /// <summary>
+            /// Returns the name and four values of this route.
+            /// </summary>
             public override string ToString()
             {
                 return $"{Name} ({Unk1}, {Unk2}, {Unk3}, {Unk4})";

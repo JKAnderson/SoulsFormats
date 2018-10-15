@@ -4,10 +4,19 @@ namespace SoulsFormats
 {
     public partial class MSB64
     {
+        /// <summary>
+        /// A section containing layers, which probably don't actually do anything.
+        /// </summary>
         public class LayerSection : Section<Layer>
         {
+            /// <summary>
+            /// The MSB type string for this section.
+            /// </summary>
             public override string Type => "LAYER_PARAM_ST";
 
+            /// <summary>
+            /// The layers in this section.
+            /// </summary>
             public List<Layer> Layers;
 
             internal LayerSection(BinaryReaderEx br, int unk1) : base(br, unk1)
@@ -37,9 +46,19 @@ namespace SoulsFormats
             }
         }
 
+        /// <summary>
+        /// Unknown; seems to have been related to ceremonies but probably unused in release.
+        /// </summary>
         public class Layer
         {
+            /// <summary>
+            /// The name of this layer.
+            /// </summary>
             public string Name;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public int Unk1, Unk2, Unk3;
 
             internal Layer(BinaryReaderEx br)
@@ -68,6 +87,9 @@ namespace SoulsFormats
                 bw.Pad(8);
             }
 
+            /// <summary>
+            /// Returns the name and three values of this layer.
+            /// </summary>
             public override string ToString()
             {
                 return $"{Name} ({Unk1}, {Unk2}, {Unk3})";
