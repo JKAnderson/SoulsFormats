@@ -55,7 +55,7 @@ namespace SoulsFormats
                 Others = new List<Model.Other>();
             }
 
-            internal override List<Model> GetEntries()
+            public override List<Model> GetEntries()
             {
                 return Util.ConcatAll<Model>(
                     MapPieces, Objects, Enemies, Players, Collisions, Others);
@@ -153,6 +153,14 @@ namespace SoulsFormats
             /// </summary>
             public int InstanceCount;
 
+            public Model(Model clone)
+            {
+                Name = clone.Name;
+                Placeholder = clone.Placeholder;
+                ID = clone.ID;
+                InstanceCount = clone.InstanceCount;
+            }
+
             internal Model(BinaryReaderEx br)
             {
                 long start = br.Position;
@@ -248,6 +256,11 @@ namespace SoulsFormats
                 /// Unknown.
                 /// </summary>
                 public int Unk1;
+
+                public Object(Object clone) : base(clone)
+                {
+                    Unk1 = clone.Unk1;
+                }
 
                 internal Object(BinaryReaderEx br) : base(br) { }
 

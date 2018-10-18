@@ -209,7 +209,7 @@ namespace SoulsFormats
                 Unk1 = unk1;
             }
 
-            internal abstract List<T> GetEntries();
+            public abstract List<T> GetEntries();
 
             internal List<T> Read(BinaryReaderEx br, int offsets)
             {

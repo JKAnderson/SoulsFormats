@@ -24,7 +24,7 @@ namespace SoulsFormats
                 Layers = new List<Layer>();
             }
 
-            internal override List<Layer> GetEntries()
+            public override List<Layer> GetEntries()
             {
                 return Layers;
             }

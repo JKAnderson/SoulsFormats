@@ -24,7 +24,7 @@ namespace SoulsFormats
                 Names = new List<string>();
             }
 
-            internal override List<string> GetEntries()
+            public override List<string> GetEntries()
             {
                 return Names;
             }

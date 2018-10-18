@@ -41,7 +41,7 @@ namespace SoulsFormats
                 Others = new List<Event.Other>();
             }
 
-            internal override List<Event> GetEntries()
+            public override List<Event> GetEntries()
             {
                 return Util.ConcatAll<Event>(
                     Treasures, Generators, ObjActs, MapOffsets, Invasions, WalkRoutes, GroupTours, Others);
@@ -120,7 +120,7 @@ namespace SoulsFormats
             }
         }
 
-        public enum EventType : uint
+        internal enum EventType : uint
         {
             Lights = 0x0,
             Sounds = 0x1,
@@ -153,6 +153,16 @@ namespace SoulsFormats
             private int pointIndex;
             public string PointName;
             public int EventEntityID;
+
+            public Event(Event clone)
+            {
+                Name = clone.Name;
+                EventIndex = clone.EventIndex;
+                ID = clone.ID;
+                PartName = clone.PartName;
+                PointName = clone.PointName;
+                EventEntityID = clone.EventEntityID;
+            }
 
             internal Event(BinaryReaderEx br)
             {
@@ -252,6 +262,16 @@ namespace SoulsFormats
                 /// Used only for Yoel's ashes treasure.
                 /// </summary>
                 public bool IsYoelUnknown;
+
+                public Treasure(Treasure clone) : base(clone)
+                {
+                    PartName2 = clone.PartName2;
+                    ItemLot1 = clone.ItemLot1;
+                    ItemLot2 = clone.ItemLot2;
+                    PickupAnimID = clone.PickupAnimID;
+                    IsChest = clone.IsChest;
+                    IsYoelUnknown = clone.IsYoelUnknown;
+                }
 
                 internal Treasure(BinaryReaderEx br) : base(br) { }
 

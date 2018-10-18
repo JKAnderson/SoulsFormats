@@ -24,7 +24,7 @@ namespace SoulsFormats
                 Routes = new List<Route>();
             }
 
-            internal override List<Route> GetEntries()
+            public override List<Route> GetEntries()
             {
                 return Routes;
             }

@@ -50,7 +50,7 @@ namespace SoulsFormats
                 Boxes = new List<Region.Box>();
             }
 
-            internal override List<Region> GetEntries()
+            public override List<Region> GetEntries()
             {
                 List<Region> regions = Util.ConcatAll<Region>(Points, Circles, Spheres, Cylinders, Boxes);
                 regions.Sort((r1, r2) =>

@@ -41,7 +41,7 @@ namespace SoulsFormats
                 ConnectCollisions = new List<Part.ConnectCollision>();
             }
 
-            internal override List<Part> GetEntries()
+            public override List<Part> GetEntries()
             {
                 return Util.ConcatAll<Part>(
                     MapPieces, Objects, Enemies, Players, Collisions, DummyObjects, DummyEnemies, ConnectCollisions);
@@ -120,7 +120,7 @@ namespace SoulsFormats
             }
         }
 
-        public enum PartsType : uint
+        internal enum PartsType : uint
         {
             MapPiece = 0x0,
             Object = 0x1,
@@ -141,21 +141,40 @@ namespace SoulsFormats
             internal abstract PartsType Type { get; }
 
             public override string Name { get; set; }
+
             public string Placeholder;
+
             public int ID;
+
             private int modelIndex;
             public string ModelName;
+
             public Vector3 Position;
+
             public Vector3 Rotation;
+
             public Vector3 Scale;
+
             public uint DrawGroup1, DrawGroup2, DrawGroup3, DrawGroup4;
+
             public uint DispGroup1, DispGroup2, DispGroup3, DispGroup4;
+
             public int UnkF01, UnkF02, UnkF03, UnkF04, UnkF05, UnkF06, UnkF07, UnkF08, UnkF09,
                 UnkF10, UnkF11, UnkF12, UnkF13, UnkF14, UnkF15, UnkF16, UnkF17, UnkF18;
 
             public int EventEntityID;
-            public byte LightID, FogID, ScatterID, Unk07;
-            public int UnkB0C, UnkB10, UnkB14, UnkB18, UnkB1C, UnkB20, UnkB24, UnkB28, UnkB30, UnkB34, UnkB38;
+
+            public sbyte LightID, FogID, ScatterID, LensFlareID;
+
+            public sbyte LanternID, LodParamID, UnkB0E;
+
+            public bool IsShadowDest;
+            public bool IsShadowOnly, DrawByReflectCam, DrawOnlyReflectCam, UseDepthBiasFloat;
+            public bool DisablePointLightEffect;
+            public byte UnkB15, UnkB16, UnkB17;
+
+            public int UnkB18, UnkB1C, UnkB20, UnkB24, UnkB28, UnkB30, UnkB34, UnkB38;
+
             public long UnkOffset1Delta, UnkOffset2Delta;
 
             public Part(Part clone)
@@ -197,10 +216,19 @@ namespace SoulsFormats
                 LightID = clone.LightID;
                 FogID = clone.FogID;
                 ScatterID = clone.ScatterID;
-                Unk07 = clone.Unk07;
-                UnkB0C = clone.UnkB0C;
-                UnkB10 = clone.UnkB10;
-                UnkB14 = clone.UnkB14;
+                LensFlareID = clone.LensFlareID;
+                LanternID = clone.LanternID;
+                LodParamID = clone.LodParamID;
+                UnkB0E = clone.UnkB0E;
+                IsShadowDest = clone.IsShadowDest;
+                IsShadowOnly = clone.IsShadowOnly;
+                DrawByReflectCam = clone.DrawByReflectCam;
+                DrawOnlyReflectCam = clone.DrawOnlyReflectCam;
+                UseDepthBiasFloat = clone.UseDepthBiasFloat;
+                DisablePointLightEffect = clone.DisablePointLightEffect;
+                UnkB15 = clone.UnkB15;
+                UnkB16 = clone.UnkB16;
+                UnkB17 = clone.UnkB17;
                 UnkB18 = clone.UnkB18;
                 UnkB1C = clone.UnkB1C;
                 UnkB20 = clone.UnkB20;
@@ -274,15 +302,28 @@ namespace SoulsFormats
                 br.StepIn(start + baseDataOffset);
                 EventEntityID = br.ReadInt32();
 
-                LightID = br.ReadByte();
-                FogID = br.ReadByte();
-                ScatterID = br.ReadByte();
-                Unk07 = br.ReadByte();
+                LightID = br.ReadSByte();
+                FogID = br.ReadSByte();
+                ScatterID = br.ReadSByte();
+                LensFlareID = br.ReadSByte();
 
                 br.AssertInt32(0);
-                UnkB0C = br.ReadInt32();
-                UnkB10 = br.ReadInt32();
-                UnkB14 = br.ReadInt32();
+
+                LanternID = br.ReadSByte();
+                LodParamID = br.ReadSByte();
+                UnkB0E = br.ReadSByte();
+                IsShadowDest = br.ReadBoolean();
+
+                IsShadowOnly = br.ReadBoolean();
+                DrawByReflectCam = br.ReadBoolean();
+                DrawOnlyReflectCam = br.ReadBoolean();
+                UseDepthBiasFloat = br.ReadBoolean();
+
+                DisablePointLightEffect = br.ReadBoolean();
+                UnkB15 = br.ReadByte();
+                UnkB16 = br.ReadByte();
+                UnkB17 = br.ReadByte();
+
                 UnkB18 = br.ReadInt32();
                 UnkB1C = br.ReadInt32();
                 UnkB20 = br.ReadInt32();
@@ -364,15 +405,28 @@ namespace SoulsFormats
                 bw.FillInt64("BaseDataOffset", bw.Position - start);
                 bw.WriteInt32(EventEntityID);
 
-                bw.WriteByte(LightID);
-                bw.WriteByte(FogID);
-                bw.WriteByte(ScatterID);
-                bw.WriteByte(Unk07);
+                bw.WriteSByte(LightID);
+                bw.WriteSByte(FogID);
+                bw.WriteSByte(ScatterID);
+                bw.WriteSByte(LensFlareID);
 
                 bw.WriteInt32(0);
-                bw.WriteInt32(UnkB0C);
-                bw.WriteInt32(UnkB10);
-                bw.WriteInt32(UnkB14);
+
+                bw.WriteSByte(LanternID);
+                bw.WriteSByte(LodParamID);
+                bw.WriteSByte(UnkB0E);
+                bw.WriteBoolean(IsShadowDest);
+
+                bw.WriteBoolean(IsShadowOnly);
+                bw.WriteBoolean(DrawByReflectCam);
+                bw.WriteBoolean(DrawOnlyReflectCam);
+                bw.WriteBoolean(UseDepthBiasFloat);
+
+                bw.WriteBoolean(DisablePointLightEffect);
+                bw.WriteByte(UnkB15);
+                bw.WriteByte(UnkB16);
+                bw.WriteByte(UnkB17);
+
                 bw.WriteInt32(UnkB18);
                 bw.WriteInt32(UnkB1C);
                 bw.WriteInt32(UnkB20);
@@ -547,8 +601,11 @@ namespace SoulsFormats
 
                 private int collisionPartIndex;
                 public string CollisionName;
+
                 public int ThinkParamID, NPCParamID, TalkID, UnkT04, CharaInitID, UnkT07, UnkT08, UnkT09;
+
                 public float UnkT10;
+
                 public int UnkT11, UnkT12, UnkT13, UnkT14, UnkT15, UnkT16, UnkT17, UnkT18, UnkT19;
 
                 public Enemy(Enemy clone) : base(clone)
@@ -734,23 +791,42 @@ namespace SoulsFormats
 
             public class Collision : Part
             {
+                public enum SoundSpace : byte
+                {
+                    Field = 0,
+                    RoomSmall = 1,
+                    RoomMedium = 2,
+                    RoomLarge = 3,
+                    RoomExtraLarge = 4,
+                    Unk5 = 5,
+                    Unk6 = 6,
+                    Unk7 = 7,
+                    Unk8 = 8,
+                }
+
                 internal override PartsType Type => PartsType.Collision;
 
-                public int DisableBonfireEntityID, PlayRegionID;
+                public byte HitFilterID;
+                public SoundSpace SoundSpaceType;
+                public short EnvLightMapSpotIndex;
+                public float ReflectPlaneHeight;
+                public short MapNameID;
+                public bool DisableStart;
+                public int DisableBonfireEntityID;
+                public int PlayRegionID;
+                public short LockCamID1, LockCamID2;
 
-                public int UnkT00, UnkT04, UnkT2C, UnkT30, UnkT34,
-                    UnkT3C, UnkT50, UnkT54, UnkT58, UnkT5C, UnkT74;
-
-                public short UnkT24, UnkT26;
-
+                public int UnkT2C, UnkT30, UnkT34, UnkT50, UnkT54, UnkT58, UnkT5C, UnkT74;
                 public float UnkT78;
 
                 internal Collision(BinaryReaderEx br) : base(br) { }
 
                 internal override void Read(BinaryReaderEx br)
                 {
-                    UnkT00 = br.ReadInt32();
-                    UnkT04 = br.ReadInt32();
+                    HitFilterID = br.ReadByte();
+                    SoundSpaceType = br.ReadEnum8<SoundSpace>();
+                    EnvLightMapSpotIndex = br.ReadInt16();
+                    ReflectPlaneHeight = br.ReadSingle();
                     br.AssertInt32(0); // Navmesh Group (4)
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -758,14 +834,15 @@ namespace SoulsFormats
                     br.AssertInt32(-1); // Vagrant Entity ID (3)
                     br.AssertInt32(-1);
                     br.AssertInt32(-1);
-                    UnkT24 = br.ReadInt16();
-                    UnkT26 = br.AssertInt16(0, 1);
+                    MapNameID = br.ReadInt16();
+                    DisableStart = br.AssertInt16(0, 1) == 1;
                     DisableBonfireEntityID = br.ReadInt32();
                     UnkT2C = br.ReadInt32();
                     UnkT30 = br.ReadInt32();
                     UnkT34 = br.ReadInt32();
                     PlayRegionID = br.ReadInt32();
-                    UnkT3C = br.ReadInt32();
+                    LockCamID1 = br.ReadInt16();
+                    LockCamID2 = br.ReadInt16();
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -787,8 +864,10 @@ namespace SoulsFormats
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(UnkT00);
-                    bw.WriteInt32(UnkT04);
+                    bw.WriteByte(HitFilterID);
+                    bw.WriteByte((byte)SoundSpaceType);
+                    bw.WriteInt16(EnvLightMapSpotIndex);
+                    bw.WriteSingle(ReflectPlaneHeight);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
@@ -796,14 +875,15 @@ namespace SoulsFormats
                     bw.WriteInt32(-1);
                     bw.WriteInt32(-1);
                     bw.WriteInt32(-1);
-                    bw.WriteInt16(UnkT24);
-                    bw.WriteInt16(UnkT26);
+                    bw.WriteInt16(MapNameID);
+                    bw.WriteInt16((short)(DisableStart ? 1 : 0));
                     bw.WriteInt32(DisableBonfireEntityID);
                     bw.WriteInt32(UnkT2C);
                     bw.WriteInt32(UnkT30);
                     bw.WriteInt32(UnkT34);
                     bw.WriteInt32(PlayRegionID);
-                    bw.WriteInt32(UnkT3C);
+                    bw.WriteInt16(LockCamID1);
+                    bw.WriteInt16(LockCamID2);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
@@ -856,6 +936,15 @@ namespace SoulsFormats
                 /// A map ID in format mXX_XX_XX_XX.
                 /// </summary>
                 public byte MapID1, MapID2, MapID3, MapID4;
+
+                public ConnectCollision(ConnectCollision clone) : base(clone)
+                {
+                    CollisionName = clone.CollisionName;
+                    MapID1 = clone.MapID1;
+                    MapID2 = clone.MapID2;
+                    MapID3 = clone.MapID3;
+                    MapID4 = clone.MapID4;
+                }
 
                 internal ConnectCollision(BinaryReaderEx br) : base(br) { }
 
