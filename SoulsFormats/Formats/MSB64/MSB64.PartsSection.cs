@@ -793,15 +793,15 @@ namespace SoulsFormats
             {
                 public enum SoundSpace : byte
                 {
-                    Field = 0,
-                    RoomSmall = 1,
-                    RoomMedium = 2,
-                    RoomLarge = 3,
-                    RoomExtraLarge = 4,
-                    Unk5 = 5,
-                    Unk6 = 6,
-                    Unk7 = 7,
-                    Unk8 = 8,
+                    NoReverb = 0,
+                    SmallReverbA = 1,
+                    SmallReverbB = 2,
+                    MiddleReverbA = 3,
+                    MiddleReverbB = 4,
+                    LargeReverbA = 5,
+                    LargeReverbB = 6,
+                    ExtraLargeReverbA = 7,
+                    ExtraLargeReverbB = 8,
                 }
 
                 internal override PartsType Type => PartsType.Collision;
@@ -816,7 +816,13 @@ namespace SoulsFormats
                 public int PlayRegionID;
                 public short LockCamID1, LockCamID2;
 
-                public int UnkT2C, UnkT30, UnkT34, UnkT50, UnkT54, UnkT58, UnkT5C, UnkT74;
+                private int UnkHitIndex;
+                /// <summary>
+                /// Unknown. Always refers to another collision part.
+                /// </summary>
+                public string UnkHitName;
+
+                public int UnkT2C, UnkT34, UnkT50, UnkT54, UnkT58, UnkT5C, UnkT74;
                 public float UnkT78;
 
                 internal Collision(BinaryReaderEx br) : base(br) { }
@@ -838,7 +844,7 @@ namespace SoulsFormats
                     DisableStart = br.AssertInt16(0, 1) == 1;
                     DisableBonfireEntityID = br.ReadInt32();
                     UnkT2C = br.ReadInt32();
-                    UnkT30 = br.ReadInt32();
+                    UnkHitIndex = br.ReadInt32();
                     UnkT34 = br.ReadInt32();
                     PlayRegionID = br.ReadInt32();
                     LockCamID1 = br.ReadInt16();
@@ -879,7 +885,7 @@ namespace SoulsFormats
                     bw.WriteInt16((short)(DisableStart ? 1 : 0));
                     bw.WriteInt32(DisableBonfireEntityID);
                     bw.WriteInt32(UnkT2C);
-                    bw.WriteInt32(UnkT30);
+                    bw.WriteInt32(UnkHitIndex);
                     bw.WriteInt32(UnkT34);
                     bw.WriteInt32(PlayRegionID);
                     bw.WriteInt16(LockCamID1);
@@ -901,6 +907,18 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
+                }
+
+                internal override void GetNames(MSB64 msb, Entries entries)
+                {
+                    base.GetNames(msb, entries);
+                    UnkHitName = GetName(entries.Parts, UnkHitIndex);
+                }
+
+                internal override void GetIndices(MSB64 msb, Entries entries)
+                {
+                    base.GetIndices(msb, entries);
+                    UnkHitIndex = GetIndex(entries.Parts, UnkHitName);
                 }
             }
 

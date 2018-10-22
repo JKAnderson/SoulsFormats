@@ -53,17 +53,17 @@ namespace SoulsFormats
 
                 switch (type)
                 {
-                    case EventType.Treasures:
+                    case EventType.Treasure:
                         var treasure = new Event.Treasure(br);
                         Treasures.Add(treasure);
                         return treasure;
 
-                    case EventType.Generators:
+                    case EventType.Generator:
                         var generator = new Event.Generators(br);
                         Generators.Add(generator);
                         return generator;
 
-                    case EventType.ObjActs:
+                    case EventType.ObjAct:
                         var objAct = new Event.ObjAct(br);
                         ObjActs.Add(objAct);
                         return objAct;
@@ -73,7 +73,7 @@ namespace SoulsFormats
                         MapOffsets.Add(mapOffset);
                         return mapOffset;
 
-                    case EventType.BlackEyeOrbInvasions:
+                    case EventType.PseudoMultiplayer:
                         var invasion = new Event.Invasion(br);
                         Invasions.Add(invasion);
                         return invasion;
@@ -122,19 +122,19 @@ namespace SoulsFormats
 
         internal enum EventType : uint
         {
-            Lights = 0x0,
-            Sounds = 0x1,
+            Light = 0x0,
+            Sound = 0x1,
             SFX = 0x2,
             WindSFX = 0x3,
-            Treasures = 0x4,
-            Generators = 0x5,
-            BloodMsg = 0x6,
-            ObjActs = 0x7,
-            SpawnPoints = 0x8,
+            Treasure = 0x4,
+            Generator = 0x5,
+            Message = 0x6,
+            ObjAct = 0x7,
+            SpawnPoint = 0x8,
             MapOffset = 0x9,
             Navimesh = 0xA,
             Environment = 0xB,
-            BlackEyeOrbInvasions = 0xC,
+            PseudoMultiplayer = 0xC,
             // Mystery = 0xD,
             WalkRoute = 0xE,
             GroupTour = 0xF,
@@ -242,7 +242,7 @@ namespace SoulsFormats
             /// </summary>
             public class Treasure : Event
             {
-                internal override EventType Type => EventType.Treasures;
+                internal override EventType Type => EventType.Treasure;
 
                 private int partIndex2;
                 public string PartName2;
@@ -259,9 +259,9 @@ namespace SoulsFormats
                 public bool IsChest;
 
                 /// <summary>
-                /// Used only for Yoel's ashes treasure.
+                /// Used only for Yoel's ashes treasure; in DS1, used for corpses in barrels.
                 /// </summary>
-                public bool IsYoelUnknown;
+                public bool StartDisabled;
 
                 public Treasure(Treasure clone) : base(clone)
                 {
@@ -270,7 +270,7 @@ namespace SoulsFormats
                     ItemLot2 = clone.ItemLot2;
                     PickupAnimID = clone.PickupAnimID;
                     IsChest = clone.IsChest;
-                    IsYoelUnknown = clone.IsYoelUnknown;
+                    StartDisabled = clone.StartDisabled;
                 }
 
                 internal Treasure(BinaryReaderEx br) : base(br) { }
@@ -295,7 +295,7 @@ namespace SoulsFormats
                     PickupAnimID = br.ReadInt32();
 
                     IsChest = br.ReadBoolean();
-                    IsYoelUnknown = br.ReadBoolean();
+                    StartDisabled = br.ReadBoolean();
                     br.AssertByte(0);
                     br.AssertByte(0);
 
@@ -323,7 +323,7 @@ namespace SoulsFormats
                     bw.WriteInt32(-1);
 
                     bw.WriteBoolean(IsChest);
-                    bw.WriteBoolean(IsYoelUnknown);
+                    bw.WriteBoolean(StartDisabled);
                     bw.WriteByte(0);
                     bw.WriteByte(0);
 
@@ -346,7 +346,7 @@ namespace SoulsFormats
 
             public class Generators : Event
             {
-                internal override EventType Type => EventType.Generators;
+                internal override EventType Type => EventType.Generator;
 
                 public short MaxNum;
                 public short LimitNum;
@@ -455,7 +455,7 @@ namespace SoulsFormats
 
             public class ObjAct : Event
             {
-                internal override EventType Type => EventType.ObjActs;
+                internal override EventType Type => EventType.ObjAct;
 
                 public int ObjActEntityID;
                 private int partIndex2;
@@ -528,7 +528,7 @@ namespace SoulsFormats
 
             public class Invasion : Event
             {
-                internal override EventType Type => EventType.BlackEyeOrbInvasions;
+                internal override EventType Type => EventType.PseudoMultiplayer;
 
                 public int HostEventEntityID;
                 public int InvasionEventEntityID;

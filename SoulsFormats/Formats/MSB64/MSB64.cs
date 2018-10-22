@@ -118,6 +118,7 @@ namespace SoulsFormats
 
             Events.GetNames(this, entries);
             Parts.GetNames(this, entries);
+            Regions.GetNames(this, entries);
         }
 
         internal override void Write(BinaryWriterEx bw)
@@ -135,6 +136,7 @@ namespace SoulsFormats
 
             Events.GetIndices(this, entries);
             Parts.GetIndices(this, entries);
+            Regions.GetIndices(this, entries);
 
             bw.WriteASCII("MSB ");
             bw.WriteInt32(1);

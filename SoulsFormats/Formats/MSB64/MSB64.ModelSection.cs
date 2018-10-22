@@ -24,7 +24,7 @@ namespace SoulsFormats
             /// Object models in this section.
             /// </summary>
             public List<Model.Object> Objects;
-            
+
             /// <summary>
             /// Enemy models in this section.
             /// </summary>
@@ -111,7 +111,7 @@ namespace SoulsFormats
                 }
             }
         }
-        
+
         internal enum ModelType : uint
         {
             MapPiece = 0,
@@ -290,6 +290,8 @@ namespace SoulsFormats
             public class Enemy : Model
             {
                 internal override ModelType Type => ModelType.Enemy;
+
+                public Enemy(Enemy clone) : base(clone) { }
 
                 internal Enemy(BinaryReaderEx br) : base(br) { }
 
