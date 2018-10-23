@@ -16,23 +16,94 @@ namespace SoulsFormats
             /// </summary>
             public override string Type => "POINT_PARAM_ST";
 
+            /// <summary>
+            /// General regions in the MSB.
+            /// </summary>
             public List<Region.General> General;
+
+            /// <summary>
+            /// Unk00 regions in the MSB.
+            /// </summary>
             public List<Region.Unk00> Unk00s;
+
+            /// <summary>
+            /// InvasionPoints in the MSB.
+            /// </summary>
             public List<Region.InvasionPoint> InvasionPoints;
+
+            /// <summary>
+            /// EnvironmentMapPoints in the MSB.
+            /// </summary>
             public List<Region.EnvironmentMapPoint> EnvironmentMapPoints;
+
+            /// <summary>
+            /// Sound regions in the MSB.
+            /// </summary>
             public List<Region.Sound> Sounds;
+
+            /// <summary>
+            /// SFX regions in the MSB.
+            /// </summary>
             public List<Region.SFX> SFX;
+
+            /// <summary>
+            /// WindSFX regions in the MSB.
+            /// </summary>
             public List<Region.WindSFX> WindSFX;
+
+            /// <summary>
+            /// SpawnPoints in the MSB.
+            /// </summary>
             public List<Region.SpawnPoint> SpawnPoints;
+
+            /// <summary>
+            /// Messages in the MSB.
+            /// </summary>
             public List<Region.Message> Messages;
+
+            /// <summary>
+            /// WalkRoute points in the MSB.
+            /// </summary>
             public List<Region.WalkRoute> WalkRoutes;
+
+            /// <summary>
+            /// Unk12 regions in the MSB.
+            /// </summary>
             public List<Region.Unk12> Unk12s;
+
+            /// <summary>
+            /// WarpPoints in the MSB.
+            /// </summary>
             public List<Region.WarpPoint> WarpPoints;
+
+            /// <summary>
+            /// ActivationAreas in the MSB.
+            /// </summary>
             public List<Region.ActivationArea> ActivationAreas;
+
+            /// <summary>
+            /// Event regions in the MSB.
+            /// </summary>
             public List<Region.Event> Events;
+
+            /// <summary>
+            /// EnvironmentMapEffectBoxes in the MSB.
+            /// </summary>
             public List<Region.EnvironmentMapEffectBox> EnvironmentMapEffectBoxes;
+
+            /// <summary>
+            /// WindAreas in the MSB.
+            /// </summary>
             public List<Region.WindArea> WindAreas;
+
+            /// <summary>
+            /// MufflingBoxes in the MSB.
+            /// </summary>
             public List<Region.MufflingBox> MufflingBoxes;
+
+            /// <summary>
+            /// MufflingPortals in the MSB.
+            /// </summary>
             public List<Region.MufflingPortal> MufflingPortals;
 
             internal PointSection(BinaryReaderEx br, int unk1) : base(br, unk1)
@@ -57,6 +128,9 @@ namespace SoulsFormats
                 MufflingPortals = new List<Region.MufflingPortal>();
             }
 
+            /// <summary>
+            /// Returns every region in the order they will be written.
+            /// </summary>
             public override List<Region> GetEntries()
             {
                 return Util.ConcatAll<Region>(
@@ -209,18 +283,36 @@ namespace SoulsFormats
             MufflingPortal = 21,
         }
 
+        /// <summary>
+        /// A point or volumetric area used for a variety of purposes.
+        /// </summary>
         public abstract class Region : Entry
         {
             internal abstract RegionType Type { get; }
 
+            /// <summary>
+            /// The name of this region.
+            /// </summary>
             public override string Name { get; set; }
 
+            /// <summary>
+            /// Whether this region has additional type data. The only region type where this actually varies is Sound.
+            /// </summary>
             public bool HasTypeData;
 
+            /// <summary>
+            /// The ID of this region.
+            /// </summary>
             public int ID;
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public int Unk2, Unk3, Unk4;
 
+            /// <summary>
+            /// The shape of this region.
+            /// </summary>
             public Shape Shape;
 
             /// <summary>
@@ -244,8 +336,14 @@ namespace SoulsFormats
             /// </summary>
             public string ActivationPartName;
 
+            /// <summary>
+            /// An ID used to identify this region in event scripts.
+            /// </summary>
             public int EventEntityID;
 
+            /// <summary>
+            /// Creates a new Region with values copied from another.
+            /// </summary>
             public Region(Region clone)
             {
                 Name = clone.Name;
@@ -299,7 +397,7 @@ namespace SoulsFormats
                 switch (shapeType)
                 {
                     case ShapeType.Point:
-                        Shape = new Shape.Point(br);
+                        Shape = new Shape.Point();
                         break;
 
                     case ShapeType.Circle:
@@ -401,42 +499,66 @@ namespace SoulsFormats
                 ActivationPartIndex = GetIndex(entries.Parts, ActivationPartName);
             }
 
+            /// <summary>
+            /// Returns the region type, ID, shape type, and name of this region.
+            /// </summary>
             public override string ToString()
             {
                 return $"{Type} {ID} {Shape.Type} : {Name}";
             }
 
+            /// <summary>
+            /// A region type with no type data.
+            /// </summary>
             public abstract class SimpleRegion : Region
             {
+                /// <summary>
+                /// Creates a new SimpleRegion with values copied from another.
+                /// </summary>
                 public SimpleRegion(SimpleRegion clone) : base(clone) { }
 
                 internal SimpleRegion(BinaryReaderEx br) : base(br) { }
 
                 internal override void ReadSpecific(BinaryReaderEx br)
                 {
-                    throw new NotImplementedException();
+                    throw new InvalidOperationException("SimpleRegions should never have type data.");
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw, long start)
                 {
-                    throw new NotImplementedException();
+                    throw new InvalidOperationException("SimpleRegions should never have type data.");
                 }
             }
 
+            /// <summary>
+            /// Regions for random things.
+            /// </summary>
             public class General : SimpleRegion
             {
                 internal override RegionType Type => RegionType.General;
+                /// <summary>
+                /// Creates a new General region with values copied from another.
+                /// </summary>
                 public General(General clone) : base(clone) { }
                 internal General(BinaryReaderEx br) : base(br) { }
             }
 
+            /// <summary>
+            /// Unknown; only used 3 times in Catacombs.
+            /// </summary>
             public class Unk00 : SimpleRegion
             {
                 internal override RegionType Type => RegionType.Unk00;
+                /// <summary>
+                /// Creates a new Unk00 with values copied from another.
+                /// </summary>
                 public Unk00(General clone) : base(clone) { }
                 internal Unk00(BinaryReaderEx br) : base(br) { }
             }
 
+            /// <summary>
+            /// A point where other players invade your world.
+            /// </summary>
             public class InvasionPoint : Region
             {
                 internal override RegionType Type => RegionType.InvasionPoint;
@@ -445,6 +567,14 @@ namespace SoulsFormats
                 /// Not sure what this does.
                 /// </summary>
                 public int Priority;
+
+                /// <summary>
+                /// Creates a new InvasionPoint with values copied from another.
+                /// </summary>
+                public InvasionPoint(InvasionPoint clone) : base(clone)
+                {
+                    Priority = clone.Priority;
+                }
 
                 internal InvasionPoint(BinaryReaderEx br) : base(br) { }
 
@@ -460,6 +590,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class EnvironmentMapPoint : Region
             {
                 internal override RegionType Type => RegionType.EnvironmentMapPoint;
@@ -468,6 +601,14 @@ namespace SoulsFormats
                 /// Unknown. Only ever 1 bit set, so probably flags.
                 /// </summary>
                 public int UnkFlags;
+
+                /// <summary>
+                /// Creates a new EnvironmentMapPoint with values copied from another.
+                /// </summary>
+                public EnvironmentMapPoint(EnvironmentMapPoint clone) : base(clone)
+                {
+                    UnkFlags = clone.UnkFlags;
+                }
 
                 internal EnvironmentMapPoint(BinaryReaderEx br) : base(br) { }
 
@@ -483,26 +624,62 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// A region that plays a sound while you're in it.
+            /// </summary>
             public class Sound : Region
             {
+                /// <summary>
+                /// Types of sound that may be in a Sound region.
+                /// </summary>
                 public enum SndType : uint
                 {
+                    /// <summary>
+                    /// Ambient sounds like wind, creaking, etc.
+                    /// </summary>
                     Environment = 0,
+
+                    /// <summary>
+                    /// Boss fight music.
+                    /// </summary>
                     BGM = 6,
+
+                    /// <summary>
+                    /// Character voices.
+                    /// </summary>
                     Voice = 7,
                 }
 
                 internal override RegionType Type => RegionType.Sound;
 
-                internal Sound(BinaryReaderEx br) : base(br) { }
-
+                /// <summary>
+                /// Type of sound in this region; determines mixing behavior like muffling.
+                /// </summary>
                 public SndType SoundType;
 
+                /// <summary>
+                /// ID of the sound to play in this region, or 0 for child regions.
+                /// </summary>
                 public int SoundID;
 
                 private int[] ChildRegionIndices;
 
+                /// <summary>
+                /// Names of other Sound regions which extend this one.
+                /// </summary>
                 public string[] ChildRegionNames { get; private set; }
+
+                /// <summary>
+                /// Creates a new Sound region with values copied from another.
+                /// </summary>
+                public Sound(Sound clone) : base(clone)
+                {
+                    SoundType = clone.SoundType;
+                    SoundID = clone.SoundID;
+                    ChildRegionNames = (string[])clone.ChildRegionNames.Clone();
+                }
+
+                internal Sound(BinaryReaderEx br) : base(br) { }
 
                 internal override void ReadSpecific(BinaryReaderEx br)
                 {
@@ -536,13 +713,31 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// A region that plays a special effect.
+            /// </summary>
             public class SFX : Region
             {
                 internal override RegionType Type => RegionType.SFX;
 
+                /// <summary>
+                /// The ID of the .fxr file to play in this region.
+                /// </summary>
                 public int FFXID;
 
+                /// <summary>
+                /// If true, the effect is off by default until enabled by event scripts.
+                /// </summary>
                 public bool StartDisabled;
+
+                /// <summary>
+                /// Creates a new SFX with values copied from another.
+                /// </summary>
+                public SFX(SFX clone) : base(clone)
+                {
+                    FFXID = clone.FFXID;
+                    StartDisabled = clone.StartDisabled;
+                }
 
                 internal SFX(BinaryReaderEx br) : base(br) { }
 
@@ -569,15 +764,33 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown exactly what this does.
+            /// </summary>
             public class WindSFX : Region
             {
                 internal override RegionType Type => RegionType.WindSFX;
 
+                /// <summary>
+                /// ID of an .fxr file.
+                /// </summary>
                 public int FFXID;
 
                 private int WindAreaIndex;
 
+                /// <summary>
+                /// Name of a corresponding WindArea region.
+                /// </summary>
                 public string WindAreaName;
+
+                /// <summary>
+                /// Creates a new WindSFX with values copied from another.
+                /// </summary>
+                public WindSFX(WindSFX clone) : base(clone)
+                {
+                    FFXID = clone.FFXID;
+                    WindAreaName = clone.WindAreaName;
+                }
 
                 internal WindSFX(BinaryReaderEx br) : base(br) { }
 
@@ -617,11 +830,25 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// A region where players enter the map.
+            /// </summary>
             public class SpawnPoint : Region
             {
                 internal override RegionType Type => RegionType.SpawnPoint;
 
+                /// <summary>
+                /// Unknown; seems kind of like a region index, but also kind of doesn't.
+                /// </summary>
                 public int UnkT00;
+
+                /// <summary>
+                /// Creates a new SpawnPoint with values copied from another.
+                /// </summary>
+                public SpawnPoint(SpawnPoint clone) : base(clone)
+                {
+                    UnkT00 = clone.UnkT00;
+                }
 
                 internal SpawnPoint(BinaryReaderEx br) : base(br) { }
 
@@ -643,6 +870,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// An orange developer message.
+            /// </summary>
             public class Message : Region
             {
                 internal override RegionType Type => RegionType.Message;
@@ -662,6 +892,9 @@ namespace SoulsFormats
                 /// </summary>
                 public bool Hidden;
 
+                /// <summary>
+                /// Creates a new Message with values copied from another.
+                /// </summary>
                 public Message(Message clone) : base(clone)
                 {
                     MessageID = clone.MessageID;
@@ -687,41 +920,74 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// A point in a WalkRoute.
+            /// </summary>
             public class WalkRoute : SimpleRegion
             {
                 internal override RegionType Type => RegionType.WalkRoute;
+                /// <summary>
+                /// Creates a new WalkRoute with values copied from another.
+                /// </summary>
                 public WalkRoute(General clone) : base(clone) { }
                 internal WalkRoute(BinaryReaderEx br) : base(br) { }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class Unk12 : SimpleRegion
             {
                 internal override RegionType Type => RegionType.Unk12;
+                /// <summary>
+                /// Creates a new Unk12 with values copied from another.
+                /// </summary>
                 public Unk12(General clone) : base(clone) { }
                 internal Unk12(BinaryReaderEx br) : base(br) { }
             }
 
+            /// <summary>
+            /// Unknown; seems to be used for moving enemies around.
+            /// </summary>
             public class WarpPoint : SimpleRegion
             {
                 internal override RegionType Type => RegionType.WarpPoint;
+                /// <summary>
+                /// Creates a new WarpPoint with values copied from another.
+                /// </summary>
                 public WarpPoint(General clone) : base(clone) { }
                 internal WarpPoint(BinaryReaderEx br) : base(br) { }
             }
 
+            /// <summary>
+            /// Triggers an enemy when entered.
+            /// </summary>
             public class ActivationArea : SimpleRegion
             {
                 internal override RegionType Type => RegionType.ActivationArea;
+                /// <summary>
+                /// Creates a new ActivationArea with values copied from another.
+                /// </summary>
                 public ActivationArea(General clone) : base(clone) { }
                 internal ActivationArea(BinaryReaderEx br) : base(br) { }
             }
 
+            /// <summary>
+            /// Any kind of region for use with event scripts.
+            /// </summary>
             public class Event : SimpleRegion
             {
                 internal override RegionType Type => RegionType.Event;
+                /// <summary>
+                /// Creates a new Event with values copied from another.
+                /// </summary>
                 public Event(General clone) : base(clone) { }
                 internal Event(BinaryReaderEx br) : base(br) { }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class EnvironmentMapEffectBox : Region
             {
                 internal override RegionType Type => RegionType.EnvironmentMapEffectBox;
@@ -740,6 +1006,17 @@ namespace SoulsFormats
                 /// Unknown.
                 /// </summary>
                 public short UnkT08, UnkT0A;
+
+                /// <summary>
+                /// Creates a new EnvironmentMapEffectBox with values copied from another.
+                /// </summary>
+                public EnvironmentMapEffectBox(EnvironmentMapEffectBox clone) : base(clone)
+                {
+                    UnkT00 = clone.UnkT00;
+                    UnkT04 = clone.UnkT04;
+                    UnkT08 = clone.UnkT08;
+                    UnkT0A = clone.UnkT0A;
+                }
 
                 internal EnvironmentMapEffectBox(BinaryReaderEx br) : base(br) { }
 
@@ -777,18 +1054,38 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown; each WindSFX has a reference to a WindArea.
+            /// </summary>
             public class WindArea : SimpleRegion
             {
                 internal override RegionType Type => RegionType.WindArea;
+                /// <summary>
+                /// Creates a new WindArea with values copied from another.
+                /// </summary>
                 public WindArea(General clone) : base(clone) { }
                 internal WindArea(BinaryReaderEx br) : base(br) { }
             }
 
+            /// <summary>
+            /// Muffles environmental sound while inside it.
+            /// </summary>
             public class MufflingBox : Region
             {
                 internal override RegionType Type => RegionType.MufflingBox;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00;
+
+                /// <summary>
+                /// Creates a new MufflingBox with values copied from another.
+                /// </summary>
+                public MufflingBox(MufflingBox clone) : base(clone)
+                {
+                    UnkT00 = clone.UnkT00;
+                }
 
                 internal MufflingBox(BinaryReaderEx br) : base(br) { }
 
@@ -804,41 +1101,86 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// A region leading into a MufflingBox.
+            /// </summary>
             public class MufflingPortal : SimpleRegion
             {
                 internal override RegionType Type => RegionType.MufflingPortal;
+                /// <summary>
+                /// Creates a new MufflingPortal with values copied from another.
+                /// </summary>
                 public MufflingPortal(General clone) : base(clone) { }
                 internal MufflingPortal(BinaryReaderEx br) : base(br) { }
             }
         }
 
+        /// <summary>
+        /// Different shapes that regions can take.
+        /// </summary>
         public enum ShapeType : uint
         {
+            /// <summary>
+            /// A single point.
+            /// </summary>
             Point = 0,
+
+            /// <summary>
+            /// A flat circle with a radius.
+            /// </summary>
             Circle = 1,
+
+            /// <summary>
+            /// A sphere with a radius.
+            /// </summary>
             Sphere = 2,
+
+            /// <summary>
+            /// A cylinder with a radius and height.
+            /// </summary>
             Cylinder = 3,
+
+            /// <summary>
+            /// A flat square that is never used and I haven't bothered implementing.
+            /// </summary>
             Square = 4,
+
+            /// <summary>
+            /// A rectangular prism with width, depth, and height.
+            /// </summary>
             Box = 5,
         }
 
+        /// <summary>
+        /// A shape taken by a region.
+        /// </summary>
         public abstract class Shape
         {
+            /// <summary>
+            /// The type of this shape.
+            /// </summary>
             public abstract ShapeType Type { get; }
 
-            public abstract Shape Clone();
+            internal abstract Shape Clone();
 
             internal abstract void Write(BinaryWriterEx bw, long start);
 
+            /// <summary>
+            /// A single point.
+            /// </summary>
             public class Point : Shape
             {
+                /// <summary>
+                /// The type of this shape.
+                /// </summary>
                 public override ShapeType Type => ShapeType.Point;
 
+                /// <summary>
+                /// Creates a new Point.
+                /// </summary>
                 public Point() { }
 
-                internal Point(BinaryReaderEx br) { }
-
-                public override Shape Clone()
+                internal override Shape Clone()
                 {
                     return new Point();
                 }
@@ -849,8 +1191,14 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// A flat circle.
+            /// </summary>
             public class Circle : Shape
             {
+                /// <summary>
+                /// The type of this shape.
+                /// </summary>
                 public override ShapeType Type => ShapeType.Circle;
 
                 /// <summary>
@@ -858,16 +1206,25 @@ namespace SoulsFormats
                 /// </summary>
                 public float Radius;
 
+                /// <summary>
+                /// Creates a new Circle with radius 1.
+                /// </summary>
                 public Circle() : this(1) { }
 
+                /// <summary>
+                /// Creates a new Circle with the given radius.
+                /// </summary>
                 public Circle(float radius)
                 {
                     Radius = radius;
                 }
 
+                /// <summary>
+                /// Creates a new Circle with the radius of another.
+                /// </summary>
                 public Circle(Circle clone) : this(clone.Radius) { }
 
-                public override Shape Clone()
+                internal override Shape Clone()
                 {
                     return new Circle(this);
                 }
@@ -884,8 +1241,14 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// A volumetric sphere.
+            /// </summary>
             public class Sphere : Shape
             {
+                /// <summary>
+                /// The type of this shape.
+                /// </summary>
                 public override ShapeType Type => ShapeType.Sphere;
 
                 /// <summary>
@@ -893,16 +1256,25 @@ namespace SoulsFormats
                 /// </summary>
                 public float Radius;
 
+                /// <summary>
+                /// Creates a new Sphere with radius 1.
+                /// </summary>
                 public Sphere() : this(1) { }
 
+                /// <summary>
+                /// Creates a new Sphere with the given radius.
+                /// </summary>
                 public Sphere(float radius)
                 {
                     Radius = radius;
                 }
 
+                /// <summary>
+                /// Creates a new Sphere with the radius of another.
+                /// </summary>
                 public Sphere(Sphere clone) : this(clone.Radius) { }
 
-                public override Shape Clone()
+                internal override Shape Clone()
                 {
                     return new Sphere(this);
                 }
@@ -919,8 +1291,14 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// A volumetric cylinder.
+            /// </summary>
             public class Cylinder : Shape
             {
+                /// <summary>
+                /// The type of this shape.
+                /// </summary>
                 public override ShapeType Type => ShapeType.Cylinder;
 
                 /// <summary>
@@ -933,17 +1311,26 @@ namespace SoulsFormats
                 /// </summary>
                 public float Height;
 
+                /// <summary>
+                /// Creates a new Cylinder with radius and height 1.
+                /// </summary>
                 public Cylinder() : this(1, 1) { }
 
+                /// <summary>
+                /// Creates a new Cylinder with the given dimensions.
+                /// </summary>
                 public Cylinder(float radius, float height)
                 {
                     Radius = radius;
                     Height = height;
                 }
 
+                /// <summary>
+                /// Creates a new Cylinder with the dimensions of another.
+                /// </summary>
                 public Cylinder(Cylinder clone) : this(clone.Radius, clone.Height) { }
 
-                public override Shape Clone()
+                internal override Shape Clone()
                 {
                     return new Cylinder(this);
                 }
@@ -962,53 +1349,68 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// A rectangular prism.
+            /// </summary>
             public class Box : Shape
             {
-                public override ShapeType Type => ShapeType.Box;
-
                 /// <summary>
-                /// The length of the box.
+                /// The type of this shape.
                 /// </summary>
-                public float Length;
-
+                public override ShapeType Type => ShapeType.Box;
+                
                 /// <summary>
                 /// The width of the box.
                 /// </summary>
                 public float Width;
 
                 /// <summary>
+                /// The depth of the box.
+                /// </summary>
+                public float Depth;
+
+                /// <summary>
                 /// The height of the box.
                 /// </summary>
                 public float Height;
 
+                /// <summary>
+                /// Creates a new Box with width, depth, and height 1.
+                /// </summary>
                 public Box() : this(1, 1, 1) { }
 
-                public Box(float length, float width, float height)
+                /// <summary>
+                /// Creates a new Box with the given dimensions.
+                /// </summary>
+                public Box(float width, float depth, float height)
                 {
-                    Length = length;
                     Width = width;
+                    Depth = depth;
                     Height = height;
                 }
 
-                public Box(Box clone) : this(clone.Length, clone.Width, clone.Height) { }
+                /// <summary>
+                /// Creates a new Box with the dimensions of another.
+                /// </summary>
+                public Box(Box clone) : this(clone.Width, clone.Depth, clone.Height) { }
 
-                public override Shape Clone()
+                internal override Shape Clone()
                 {
                     return new Box(this);
                 }
 
                 internal Box(BinaryReaderEx br)
                 {
-                    Length = br.ReadSingle();
                     Width = br.ReadSingle();
+                    Depth = br.ReadSingle();
                     Height = br.ReadSingle();
                 }
 
                 internal override void Write(BinaryWriterEx bw, long start)
                 {
                     bw.FillInt64("ShapeDataOffset", bw.Position - start);
-                    bw.WriteSingle(Length);
                     bw.WriteSingle(Width);
+                    bw.WriteSingle(Depth);
                     bw.WriteSingle(Height);
                 }
             }
