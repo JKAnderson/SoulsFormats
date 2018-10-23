@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SoulsFormats
 {
@@ -115,6 +116,11 @@ namespace SoulsFormats
 
                 nextSectionOffset = br.ReadInt64();
             }
+            
+            DisambiguateNames(entries.Events);
+            DisambiguateNames(entries.Models);
+            DisambiguateNames(entries.Parts);
+            DisambiguateNames(entries.Regions);
 
             Events.GetNames(this, entries);
             Parts.GetNames(this, entries);
@@ -178,6 +184,31 @@ namespace SoulsFormats
             BoneNames.Write(bw, entries.BoneNames);
             bw.FillInt64("NextOffset", 0);
         }
+        
+        private static void DisambiguateNames<T>(List<T> entries) where T : Entry
+        {
+            bool ambiguous;
+            do
+            {
+                ambiguous = false;
+                var nameCounts = new Dictionary<string, int>();
+                foreach (Entry entry in entries)
+                {
+                    string name = entry.Name;
+                    if (!nameCounts.ContainsKey(name))
+                    {
+                        nameCounts[name] = 1;
+                    }
+                    else
+                    {
+                        ambiguous = true;
+                        nameCounts[name]++;
+                        entry.Name = $"{name} ({nameCounts[name]})";
+                    }
+                }
+            }
+            while (ambiguous);
+        }
 
         private static string GetName<T>(List<T> list, int index) where T : Entry
         {
@@ -205,7 +236,7 @@ namespace SoulsFormats
             public int Unk1;
 
             public abstract string Type { get; }
-            
+
             internal Section(BinaryReaderEx br, int unk1)
             {
                 Unk1 = unk1;

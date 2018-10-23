@@ -141,11 +141,12 @@ namespace SoulsFormats
             Other = 0xFFFFFFFF,
         }
 
-        public abstract class Event
+        public abstract class Event : Entry
         {
             internal abstract EventType Type { get; }
 
-            public string Name;
+            public override string Name { get; set; }
+
             public int EventIndex;
             public int ID;
             private int partIndex;
