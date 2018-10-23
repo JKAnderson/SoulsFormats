@@ -116,7 +116,7 @@ namespace SoulsFormats
 
                 nextSectionOffset = br.ReadInt64();
             }
-            
+
             DisambiguateNames(entries.Events);
             DisambiguateNames(entries.Models);
             DisambiguateNames(entries.Parts);
@@ -184,7 +184,7 @@ namespace SoulsFormats
             BoneNames.Write(bw, entries.BoneNames);
             bw.FillInt64("NextOffset", 0);
         }
-        
+
         private static void DisambiguateNames<T>(List<T> entries) where T : Entry
         {
             bool ambiguous;
@@ -235,7 +235,7 @@ namespace SoulsFormats
         {
             public int Unk1;
 
-            public abstract string Type { get; }
+            internal abstract string Type { get; }
 
             internal Section(BinaryReaderEx br, int unk1)
             {

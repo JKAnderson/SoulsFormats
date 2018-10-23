@@ -7,14 +7,11 @@ namespace SoulsFormats
     public partial class MSB64
     {
         /// <summary>
-        /// A section containing points and region shapes for various purposes.
+        /// A section containing points and volumes for various purposes.
         /// </summary>
         public class PointSection : Section<Region>
         {
-            /// <summary>
-            /// The MSB type string for this section.
-            /// </summary>
-            public override string Type => "POINT_PARAM_ST";
+            internal override string Type => "POINT_PARAM_ST";
 
             /// <summary>
             /// General regions in the MSB.
@@ -1358,7 +1355,7 @@ namespace SoulsFormats
                 /// The type of this shape.
                 /// </summary>
                 public override ShapeType Type => ShapeType.Box;
-                
+
                 /// <summary>
                 /// The width of the box.
                 /// </summary>

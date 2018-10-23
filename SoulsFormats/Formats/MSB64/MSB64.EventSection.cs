@@ -8,10 +8,7 @@ namespace SoulsFormats
     {
         public class EventSection : Section<Event>
         {
-            /// <summary>
-            /// The MSB type string for this section.
-            /// </summary>
-            public override string Type => "EVENT_PARAM_ST";
+            internal override string Type => "EVENT_PARAM_ST";
 
             public List<Event.Treasure> Treasures;
 

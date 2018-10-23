@@ -96,7 +96,6 @@
     <Compile Include="Formats\MSB64\MSB64.PointSection.cs" />
     <Compile Include="Formats\MSB64\MSB64.RouteSection.cs" />
     <Compile Include="Formats\MSB64\MSB64.LayerSection.cs" />
-    <Compile Include="Formats\MSB64\MSB64.PartsPoseSection.cs" />
     <Compile Include="Formats\MSB64\MSB64.PartsSection.cs" />
     <Compile Include="Formats\MSB64\MSB64.EventSection.cs" />
     <Compile Include="Formats\MSB64\MSB64.ModelSection.cs" />

@@ -10,10 +10,7 @@ namespace SoulsFormats
         /// </summary>
         public class ModelSection : Section<Model>
         {
-            /// <summary>
-            /// The MSB type string for this section.
-            /// </summary>
-            public override string Type => "MODEL_PARAM_ST";
+            internal override string Type => "MODEL_PARAM_ST";
 
             /// <summary>
             /// Map piece models in this section.
@@ -55,6 +52,9 @@ namespace SoulsFormats
                 Others = new List<Model.Other>();
             }
 
+            /// <summary>
+            /// Returns every model in the order they will be written.
+            /// </summary>
             public override List<Model> GetEntries()
             {
                 return Util.ConcatAll<Model>(
@@ -153,6 +153,9 @@ namespace SoulsFormats
             /// </summary>
             public int InstanceCount;
 
+            /// <summary>
+            /// Creates a new Model with values copied from another.
+            /// </summary>
             public Model(Model clone)
             {
                 Name = clone.Name;
@@ -223,6 +226,11 @@ namespace SoulsFormats
                 /// </summary>
                 public int Unk1;
 
+                /// <summary>
+                /// Creates a new MapPiece with values copied from another.
+                /// </summary>
+                public MapPiece(MapPiece clone) : base(clone) { }
+
                 internal MapPiece(BinaryReaderEx br) : base(br) { }
 
                 internal override void ReadSpecific(BinaryReaderEx br, long start)
@@ -257,6 +265,9 @@ namespace SoulsFormats
                 /// </summary>
                 public int Unk1;
 
+                /// <summary>
+                /// Creates a new Object with values copied from another.
+                /// </summary>
                 public Object(Object clone) : base(clone)
                 {
                     Unk1 = clone.Unk1;
@@ -291,6 +302,9 @@ namespace SoulsFormats
             {
                 internal override ModelType Type => ModelType.Enemy;
 
+                /// <summary>
+                /// Creates a new Enemy with values copied from another.
+                /// </summary>
                 public Enemy(Enemy clone) : base(clone) { }
 
                 internal Enemy(BinaryReaderEx br) : base(br) { }
@@ -313,6 +327,11 @@ namespace SoulsFormats
             {
                 internal override ModelType Type => ModelType.Player;
 
+                /// <summary>
+                /// Creates a new Player with values copied from another.
+                /// </summary>
+                public Player(Player clone) : base(clone) { }
+
                 internal Player(BinaryReaderEx br) : base(br) { }
 
                 internal override void ReadSpecific(BinaryReaderEx br, long start)
@@ -333,6 +352,11 @@ namespace SoulsFormats
             {
                 internal override ModelType Type => ModelType.Collision;
 
+                /// <summary>
+                /// Creates a new Collision with values copied from another.
+                /// </summary>
+                public Collision(Collision clone) : base(clone) { }
+
                 internal Collision(BinaryReaderEx br) : base(br) { }
 
                 internal override void ReadSpecific(BinaryReaderEx br, long start)
@@ -352,6 +376,11 @@ namespace SoulsFormats
             public class Other : Model
             {
                 internal override ModelType Type => ModelType.Other;
+
+                /// <summary>
+                /// Creates a new Other with values copied from another.
+                /// </summary>
+                public Other(Other clone) : base(clone) { }
 
                 internal Other(BinaryReaderEx br) : base(br) { }
 

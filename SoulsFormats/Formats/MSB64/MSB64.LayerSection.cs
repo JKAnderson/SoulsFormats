@@ -9,10 +9,7 @@ namespace SoulsFormats
         /// </summary>
         public class LayerSection : Section<Layer>
         {
-            /// <summary>
-            /// The MSB type string for this section.
-            /// </summary>
-            public override string Type => "LAYER_PARAM_ST";
+            internal override string Type => "LAYER_PARAM_ST";
 
             /// <summary>
             /// The layers in this section.
@@ -24,6 +21,9 @@ namespace SoulsFormats
                 Layers = new List<Layer>();
             }
 
+            /// <summary>
+            /// Returns every layer in the order they will be written.
+            /// </summary>
             public override List<Layer> GetEntries()
             {
                 return Layers;

@@ -9,10 +9,7 @@ namespace SoulsFormats
         /// </summary>
         public class BoneNameSection : Section<string>
         {
-            /// <summary>
-            /// The MSB type string for this section.
-            /// </summary>
-            public override string Type => "MAPSTUDIO_BONE_NAME_STRING";
+            internal override string Type => "MAPSTUDIO_BONE_NAME_STRING";
 
             /// <summary>
             /// The bone names in this section.
@@ -24,6 +21,9 @@ namespace SoulsFormats
                 Names = new List<string>();
             }
 
+            /// <summary>
+            /// Returns every bone name in the order they will be written.
+            /// </summary>
             public override List<string> GetEntries()
             {
                 return Names;

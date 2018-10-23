@@ -9,10 +9,7 @@ namespace SoulsFormats
         /// </summary>
         public class RouteSection : Section<Route>
         {
-            /// <summary>
-            /// The MSB type string for this section.
-            /// </summary>
-            public override string Type => "ROUTE_PARAM_ST";
+            internal override string Type => "ROUTE_PARAM_ST";
 
             /// <summary>
             /// The routes in this section.
@@ -24,6 +21,9 @@ namespace SoulsFormats
                 Routes = new List<Route>();
             }
 
+            /// <summary>
+            /// Returns every route in the order they will be written.
+            /// </summary>
             public override List<Route> GetEntries()
             {
                 return Routes;
