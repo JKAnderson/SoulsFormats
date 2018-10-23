@@ -93,6 +93,7 @@
     <Compile Include="Formats\GPARAM.cs" />
     <Compile Include="Formats\MSB64\MSB64.cs" />
     <Compile Include="Formats\MSB64\MSB64.BoneNamesSection.cs" />
+    <Compile Include="Formats\MSB64\MSB64.PartsPoseSection.cs" />
     <Compile Include="Formats\MSB64\MSB64.PointSection.cs" />
     <Compile Include="Formats\MSB64\MSB64.RouteSection.cs" />
     <Compile Include="Formats\MSB64\MSB64.LayerSection.cs" />

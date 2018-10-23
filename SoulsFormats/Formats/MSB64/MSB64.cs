@@ -9,20 +9,44 @@ namespace SoulsFormats
     /// </summary>
     public partial class MSB64 : SoulsFile<MSB64>
     {
+        /// <summary>
+        /// Models in this MSB.
+        /// </summary>
         public ModelSection Models;
 
+        /// <summary>
+        /// Events in this MSB.
+        /// </summary>
         public EventSection Events;
 
+        /// <summary>
+        /// Regions in this MSB.
+        /// </summary>
         public PointSection Regions;
 
+        /// <summary>
+        /// Routes in this MSB.
+        /// </summary>
         public RouteSection Routes;
 
+        /// <summary>
+        /// Layers in this MSB.
+        /// </summary>
         public LayerSection Layers;
 
+        /// <summary>
+        /// Parts in this MSB.
+        /// </summary>
         public PartsSection Parts;
 
-        public DummySection PartsPoses;
+        /// <summary>
+        /// PartsPose data in this MSB.
+        /// </summary>
+        public PartsPoseSection PartsPoses;
 
+        /// <summary>
+        /// Bone names in this MSB.
+        /// </summary>
         public BoneNameSection BoneNames;
 
         internal override bool Is(BinaryReaderEx br)
@@ -102,7 +126,7 @@ namespace SoulsFormats
                         break;
 
                     case "MAPSTUDIO_PARTS_POSE_ST":
-                        PartsPoses = new DummySection(br, unk1, type, offsets);
+                        PartsPoses = new PartsPoseSection(br, unk1, offsets);
                         break;
 
                     case "MAPSTUDIO_BONE_NAME_STRING":
@@ -231,8 +255,14 @@ namespace SoulsFormats
             }
         }
 
+        /// <summary>
+        /// A generic MSB section containing a list of entries.
+        /// </summary>
         public abstract class Section<T>
         {
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public int Unk1;
 
             internal abstract string Type { get; }
@@ -242,6 +272,9 @@ namespace SoulsFormats
                 Unk1 = unk1;
             }
 
+            /// <summary>
+            /// Returns every entry in this section in the order they will be written.
+            /// </summary>
             public abstract List<T> GetEntries();
 
             internal List<T> Read(BinaryReaderEx br, int offsets)
@@ -278,85 +311,24 @@ namespace SoulsFormats
 
             internal abstract void WriteEntries(BinaryWriterEx bw, List<T> entries);
 
+            /// <summary>
+            /// Returns the type string, unknown value and number of entries in this section.
+            /// </summary>
             public override string ToString()
             {
-                return Type;
+                return $"{Type}:{Unk1}[{GetEntries().Count}]";
             }
         }
 
+        /// <summary>
+        /// A generic entry in an MSB section.
+        /// </summary>
         public abstract class Entry
         {
+            /// <summary>
+            /// The name of this entry.
+            /// </summary>
             public abstract string Name { get; set; }
-        }
-
-        public class DummySection
-        {
-            public int Unk1;
-            public string Type;
-            public List<Dummy> Entries;
-
-            internal DummySection(BinaryReaderEx br, int unk1, string type, int offsets)
-            {
-                Unk1 = unk1;
-                Type = type;
-
-                Entries = new List<Dummy>();
-                for (int i = 0; i < offsets; i++)
-                {
-                    long offset = br.ReadInt64();
-                    long next = br.GetInt64(br.Position);
-                    Entries.Add(new Dummy(br.GetBytes(offset, (int)(next - offset)), type));
-                }
-            }
-
-            internal void Write(BinaryWriterEx bw)
-            {
-                bw.WriteInt32(Unk1);
-                bw.WriteInt32(Entries.Count + 1);
-                bw.ReserveInt64("TypeOffset");
-
-                for (int i = 0; i < Entries.Count; i++)
-                    bw.ReserveInt64($"Offset{i}");
-
-                bw.ReserveInt64("NextOffset");
-
-                bw.FillInt64("TypeOffset", bw.Position);
-                bw.WriteUTF16(Type, true);
-                bw.Pad(8);
-
-                for (int i = 0; i < Entries.Count; i++)
-                {
-                    bw.FillInt64($"Offset{i}", bw.Position);
-                    bw.WriteBytes(Entries[i].Bytes);
-                }
-            }
-
-            public class Dummy
-            {
-                public string Name;
-                public byte[] Bytes;
-
-                internal Dummy(byte[] bytes, string type)
-                {
-                    Bytes = bytes;
-
-                    if (type != "MAPSTUDIO_PARTS_POSE_ST")
-                    {
-                        BinaryReaderEx br = new BinaryReaderEx(false, bytes);
-                        long nameOffset = br.ReadInt64();
-                        Name = br.GetUTF16(nameOffset);
-                    }
-                    else
-                    {
-                        Name = null;
-                    }
-                }
-
-                public override string ToString()
-                {
-                    return $"{Name}";
-                }
-            }
         }
     }
 }
