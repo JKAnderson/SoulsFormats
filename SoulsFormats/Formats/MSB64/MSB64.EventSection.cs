@@ -254,7 +254,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Used for treasures inside chests, exact significance unknown.
                 /// </summary>
-                public bool IsChest;
+                public bool InChest;
 
                 /// <summary>
                 /// Used only for Yoel's ashes treasure; in DS1, used for corpses in barrels.
@@ -267,7 +267,7 @@ namespace SoulsFormats
                     ItemLot1 = clone.ItemLot1;
                     ItemLot2 = clone.ItemLot2;
                     PickupAnimID = clone.PickupAnimID;
-                    IsChest = clone.IsChest;
+                    InChest = clone.InChest;
                     StartDisabled = clone.StartDisabled;
                 }
 
@@ -292,7 +292,7 @@ namespace SoulsFormats
                     br.AssertInt32(-1);
                     PickupAnimID = br.ReadInt32();
 
-                    IsChest = br.ReadBoolean();
+                    InChest = br.ReadBoolean();
                     StartDisabled = br.ReadBoolean();
                     br.AssertByte(0);
                     br.AssertByte(0);
@@ -319,12 +319,14 @@ namespace SoulsFormats
                     bw.WriteInt32(-1);
                     bw.WriteInt32(-1);
                     bw.WriteInt32(-1);
+                    bw.WriteInt32(PickupAnimID);
 
-                    bw.WriteBoolean(IsChest);
+                    bw.WriteBoolean(InChest);
                     bw.WriteBoolean(StartDisabled);
                     bw.WriteByte(0);
                     bw.WriteByte(0);
 
+                    bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                 }
