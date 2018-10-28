@@ -77,6 +77,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Formats\BND0.cs" />
+    <Compile Include="Formats\BTL.cs" />
     <Compile Include="Formats\BXF3.cs" />
     <Compile Include="Formats\BXF4.cs" />
     <Compile Include="BinaryReaderEx.cs" />

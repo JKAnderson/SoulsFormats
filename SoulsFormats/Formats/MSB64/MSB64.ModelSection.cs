@@ -221,15 +221,20 @@ namespace SoulsFormats
             {
                 internal override ModelType Type => ModelType.MapPiece;
 
-                /// <summary>
-                /// Unknown.
-                /// </summary>
-                public int Unk1;
+                public byte UnkT00, UnkT01;
+
+                public bool UnkT02, UnkT03;
 
                 /// <summary>
                 /// Creates a new MapPiece with values copied from another.
                 /// </summary>
-                public MapPiece(MapPiece clone) : base(clone) { }
+                public MapPiece(MapPiece clone) : base(clone)
+                {
+                    UnkT00 = clone.UnkT00;
+                    UnkT01 = clone.UnkT01;
+                    UnkT02 = clone.UnkT02;
+                    UnkT03 = clone.UnkT03;
+                }
 
                 internal MapPiece(BinaryReaderEx br) : base(br) { }
 
@@ -237,7 +242,12 @@ namespace SoulsFormats
                 {
                     long unkOffset = br.ReadInt64();
                     br.Position = start + unkOffset;
-                    Unk1 = br.ReadInt32();
+
+                    UnkT00 = br.ReadByte();
+                    UnkT01 = br.ReadByte();
+                    UnkT02 = br.ReadBoolean();
+                    UnkT03 = br.ReadBoolean();
+
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -246,7 +256,12 @@ namespace SoulsFormats
                 internal override void WriteSpecific(BinaryWriterEx bw, long start)
                 {
                     bw.FillInt64("UnkOffset", bw.Position - start);
-                    bw.WriteInt32(Unk1);
+
+                    bw.WriteByte(UnkT00);
+                    bw.WriteByte(UnkT01);
+                    bw.WriteBoolean(UnkT02);
+                    bw.WriteBoolean(UnkT03);
+
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
@@ -260,17 +275,19 @@ namespace SoulsFormats
             {
                 internal override ModelType Type => ModelType.Object;
 
-                /// <summary>
-                /// Unknown.
-                /// </summary>
-                public int Unk1;
+                public byte UnkT00, UnkT01;
+
+                public bool UnkT02, UnkT03;
 
                 /// <summary>
                 /// Creates a new Object with values copied from another.
                 /// </summary>
                 public Object(Object clone) : base(clone)
                 {
-                    Unk1 = clone.Unk1;
+                    UnkT00 = clone.UnkT00;
+                    UnkT01 = clone.UnkT01;
+                    UnkT02 = clone.UnkT02;
+                    UnkT03 = clone.UnkT03;
                 }
 
                 internal Object(BinaryReaderEx br) : base(br) { }
@@ -279,7 +296,12 @@ namespace SoulsFormats
                 {
                     long unkOffset = br.ReadInt64();
                     br.Position = start + unkOffset;
-                    Unk1 = br.ReadInt32();
+
+                    UnkT00 = br.ReadByte();
+                    UnkT01 = br.ReadByte();
+                    UnkT02 = br.ReadBoolean();
+                    UnkT03 = br.ReadBoolean();
+
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -288,7 +310,12 @@ namespace SoulsFormats
                 internal override void WriteSpecific(BinaryWriterEx bw, long start)
                 {
                     bw.FillInt64("UnkOffset", bw.Position - start);
-                    bw.WriteInt32(Unk1);
+
+                    bw.WriteByte(UnkT00);
+                    bw.WriteByte(UnkT01);
+                    bw.WriteBoolean(UnkT02);
+                    bw.WriteBoolean(UnkT03);
+
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);

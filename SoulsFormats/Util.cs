@@ -204,6 +204,9 @@ namespace SoulsFormats
             return (adlerB << 16) | adlerA;
         }
 
+        /// <summary>
+        /// Concatenates multiple collections into one list.
+        /// </summary>
         public static List<T> ConcatAll<T>(params IEnumerable<T>[] lists)
         {
             IEnumerable<T> all = new List<T>();

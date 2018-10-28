@@ -658,6 +658,10 @@ namespace SoulsFormats
             return ReadEnum<TEnum, byte>(ReadByte, "0x{0:X}");
         }
 
+
+        /// <summary>
+        /// Reads a one-byte enum from the specified position without advancing the stream.
+        /// </summary>
         public TEnum GetEnum8<TEnum>(long position) where TEnum : Enum
         {
             StepIn(position);
@@ -674,6 +678,9 @@ namespace SoulsFormats
             return ReadEnum<TEnum, ushort>(ReadUInt16, "0x{0:X}");
         }
 
+        /// <summary>
+        /// Reads a two-byte enum from the specified position without advancing the stream.
+        /// </summary>
         public TEnum GetEnum16<TEnum>(long position) where TEnum : Enum
         {
             StepIn(position);
@@ -690,6 +697,9 @@ namespace SoulsFormats
             return ReadEnum<TEnum, uint>(ReadUInt32, "0x{0:X}");
         }
 
+        /// <summary>
+        /// Reads a four-byte enum from the specified position without advancing the stream.
+        /// </summary>
         public TEnum GetEnum32<TEnum>(long position) where TEnum : Enum
         {
             StepIn(position);
@@ -706,6 +716,9 @@ namespace SoulsFormats
             return ReadEnum<TEnum, ulong>(ReadUInt64, "0x{0:X}");
         }
 
+        /// <summary>
+        /// Reads an eight-byte enum from the specified position without advancing the stream.
+        /// </summary>
         public TEnum GetEnum64<TEnum>(long position) where TEnum : Enum
         {
             StepIn(position);
