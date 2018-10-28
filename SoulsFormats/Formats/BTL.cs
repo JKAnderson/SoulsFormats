@@ -104,11 +104,15 @@ namespace SoulsFormats
 
             public float Radius;
 
+            public float ConeAngle;
+
+            public float Width;
+
             public bool Unk1C, Unk27;
 
             public int Unk00, Unk04, Unk08, Unk18, Unk0C, Unk50, Unk5C, Unk64, UnkA0;
 
-            public float ConeAngle, Unk30, Unk34, Unk54, Unk68, Unk6C, Unk70, Unk74, Unk78, Unk7C, Unk98, Unk9C, UnkA4, Width, UnkC4;
+            public float Unk30, Unk34, Unk54, Unk68, Unk6C, Unk70, Unk74, Unk78, Unk7C, Unk98, Unk9C, UnkA4, UnkC4;
 
             internal Entry(BinaryReaderEx br, long nameStart)
             {
