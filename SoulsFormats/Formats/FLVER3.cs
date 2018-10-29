@@ -574,29 +574,14 @@ namespace SoulsFormats
                 {
                     br.StepIn(unkOffset);
 
-                    br.AssertASCII("GXMD");
-                    br.Skip(4);
-                    br.Skip(br.ReadInt32() - 0xC);
-
-                    br.AssertASCII("GX00");
-                    br.Skip(4);
-                    br.Skip(br.ReadInt32() - 0xC);
-
-                    br.AssertASCII("GX04");
-                    br.Skip(4);
-                    br.Skip(br.ReadInt32() - 0xC);
-
-                    br.AssertASCII("GX80");
-                    br.Skip(4);
-                    br.Skip(br.ReadInt32() - 0xC);
-
-                    br.AssertASCII("GX81");
-                    br.Skip(4);
-                    br.Skip(br.ReadInt32() - 0xC);
-
-                    br.AssertInt32(0x7FFFFFFF);
-                    br.Skip(4);
-                    br.Skip(br.ReadInt32() - 0xC);
+                    // Other than the terminating section, should be GX** in ASCII
+                    int section;
+                    do
+                    {
+                        section = br.ReadInt32();
+                        br.AssertInt32(0x64);
+                        br.Skip(br.ReadInt32() - 0xC);
+                    } while (section != 0x7FFFFFFF);
 
                     UnkBytes = br.GetBytes(unkOffset, (int)br.Position - unkOffset);
                     br.StepOut();
