@@ -4,9 +4,9 @@ using System.Collections.Generic;
 namespace SoulsFormats
 {
     /// <summary>
-    /// A map layout format used in DS2, DS3, and BB.
+    /// A map layout format used in DS3.
     /// </summary>
-    public partial class MSB64 : SoulsFile<MSB64>
+    public partial class MSB3 : SoulsFile<MSB3>
     {
         /// <summary>
         /// Models in this MSB.

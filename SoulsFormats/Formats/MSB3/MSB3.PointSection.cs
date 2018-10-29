@@ -4,7 +4,7 @@ using System.Numerics;
 
 namespace SoulsFormats
 {
-    public partial class MSB64
+    public partial class MSB3
     {
         /// <summary>
         /// A section containing points and volumes for various purposes.
@@ -245,13 +245,13 @@ namespace SoulsFormats
                 }
             }
 
-            internal void GetNames(MSB64 msb, Entries entries)
+            internal void GetNames(MSB3 msb, Entries entries)
             {
                 foreach (Region region in entries.Regions)
                     region.GetNames(msb, entries);
             }
 
-            internal void GetIndices(MSB64 msb, Entries entries)
+            internal void GetIndices(MSB3 msb, Entries entries)
             {
                 foreach (Region region in entries.Regions)
                     region.GetIndices(msb, entries);
@@ -486,12 +486,12 @@ namespace SoulsFormats
 
             internal abstract void WriteSpecific(BinaryWriterEx bw, long start);
 
-            internal virtual void GetNames(MSB64 msb, Entries entries)
+            internal virtual void GetNames(MSB3 msb, Entries entries)
             {
                 ActivationPartName = GetName(entries.Parts, ActivationPartIndex);
             }
 
-            internal virtual void GetIndices(MSB64 msb, Entries entries)
+            internal virtual void GetIndices(MSB3 msb, Entries entries)
             {
                 ActivationPartIndex = GetIndex(entries.Parts, ActivationPartName);
             }
@@ -693,7 +693,7 @@ namespace SoulsFormats
                     bw.WriteInt32s(ChildRegionIndices);
                 }
 
-                internal override void GetNames(MSB64 msb, Entries entries)
+                internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
                     ChildRegionNames = new string[ChildRegionIndices.Length];
@@ -701,7 +701,7 @@ namespace SoulsFormats
                         ChildRegionNames[i] = GetName(entries.Regions, ChildRegionIndices[i]);
                 }
 
-                internal override void GetIndices(MSB64 msb, Entries entries)
+                internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
                     ChildRegionIndices = new int[ChildRegionNames.Length];
@@ -814,13 +814,13 @@ namespace SoulsFormats
                     bw.WriteSingle(-1);
                 }
 
-                internal override void GetNames(MSB64 msb, Entries entries)
+                internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
                     WindAreaName = GetName(entries.Regions, WindAreaIndex);
                 }
 
-                internal override void GetIndices(MSB64 msb, Entries entries)
+                internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
                     WindAreaIndex = GetIndex(entries.Regions, WindAreaName);

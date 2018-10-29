@@ -4,7 +4,7 @@ using System.Numerics;
 
 namespace SoulsFormats
 {
-    public partial class MSB64
+    public partial class MSB3
     {
         public class EventSection : Section<Event>
         {
@@ -104,13 +104,13 @@ namespace SoulsFormats
                 }
             }
 
-            internal void GetNames(MSB64 msb, Entries entries)
+            internal void GetNames(MSB3 msb, Entries entries)
             {
                 foreach (Event ev in entries.Events)
                     ev.GetNames(msb, entries);
             }
 
-            internal void GetIndices(MSB64 msb, Entries entries)
+            internal void GetIndices(MSB3 msb, Entries entries)
             {
                 foreach (Event ev in entries.Events)
                     ev.GetIndices(msb, entries);
@@ -218,13 +218,13 @@ namespace SoulsFormats
 
             internal abstract void WriteSpecific(BinaryWriterEx bw);
 
-            internal virtual void GetNames(MSB64 msb, Entries entries)
+            internal virtual void GetNames(MSB3 msb, Entries entries)
             {
                 PartName = GetName(entries.Parts, partIndex);
                 PointName = GetName(entries.Regions, pointIndex);
             }
 
-            internal virtual void GetIndices(MSB64 msb, Entries entries)
+            internal virtual void GetIndices(MSB3 msb, Entries entries)
             {
                 partIndex = GetIndex(entries.Parts, PartName);
                 pointIndex = GetIndex(entries.Regions, PointName);
@@ -331,13 +331,13 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                 }
 
-                internal override void GetNames(MSB64 msb, Entries entries)
+                internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
                     PartName2 = GetName(entries.Parts, partIndex2);
                 }
 
-                internal override void GetIndices(MSB64 msb, Entries entries)
+                internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
                     partIndex2 = GetIndex(entries.Parts, PartName2);
@@ -428,7 +428,7 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                 }
 
-                internal override void GetNames(MSB64 msb, Entries entries)
+                internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
                     SpawnPointNames = new string[spawnPointIndices.Length];
@@ -440,7 +440,7 @@ namespace SoulsFormats
                         SpawnPartNames[i] = GetName(entries.Parts, spawnPartIndices[i]);
                 }
 
-                internal override void GetIndices(MSB64 msb, Entries entries)
+                internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
                     spawnPointIndices = new int[SpawnPointNames.Length];
@@ -490,13 +490,13 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                 }
 
-                internal override void GetNames(MSB64 msb, Entries entries)
+                internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
                     PartName2 = GetName(entries.Parts, partIndex2);
                 }
 
-                internal override void GetIndices(MSB64 msb, Entries entries)
+                internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
                     partIndex2 = GetIndex(entries.Parts, PartName2);
@@ -603,7 +603,7 @@ namespace SoulsFormats
                     bw.WriteInt16s(walkPointIndices);
                 }
 
-                internal override void GetNames(MSB64 msb, Entries entries)
+                internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
                     WalkPointNames = new string[walkPointIndices.Length];
@@ -611,7 +611,7 @@ namespace SoulsFormats
                         WalkPointNames[i] = GetName(entries.Regions, walkPointIndices[i]);
                 }
 
-                internal override void GetIndices(MSB64 msb, Entries entries)
+                internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
                     walkPointIndices = new short[WalkPointNames.Length];
@@ -648,7 +648,7 @@ namespace SoulsFormats
                     bw.WriteInt32s(groupPartsIndices);
                 }
 
-                internal override void GetNames(MSB64 msb, Entries entries)
+                internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
                     GroupPartsNames = new string[groupPartsIndices.Length];
@@ -656,7 +656,7 @@ namespace SoulsFormats
                         GroupPartsNames[i] = GetName(entries.Parts, groupPartsIndices[i]);
                 }
 
-                internal override void GetIndices(MSB64 msb, Entries entries)
+                internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
                     groupPartsIndices = new int[GroupPartsNames.Length];

@@ -4,7 +4,7 @@ using System.Numerics;
 
 namespace SoulsFormats
 {
-    public partial class MSB64
+    public partial class MSB3
     {
         public class PartsSection : Section<Part>
         {
@@ -104,13 +104,13 @@ namespace SoulsFormats
                 }
             }
 
-            internal void GetNames(MSB64 msb, Entries entries)
+            internal void GetNames(MSB3 msb, Entries entries)
             {
                 foreach (Part part in entries.Parts)
                     part.GetNames(msb, entries);
             }
 
-            internal void GetIndices(MSB64 msb, Entries entries)
+            internal void GetIndices(MSB3 msb, Entries entries)
             {
                 foreach (Part part in entries.Parts)
                     part.GetIndices(msb, entries);
@@ -451,12 +451,12 @@ namespace SoulsFormats
 
             internal abstract void WriteSpecific(BinaryWriterEx bw);
 
-            internal virtual void GetNames(MSB64 msb, Entries entries)
+            internal virtual void GetNames(MSB3 msb, Entries entries)
             {
                 ModelName = GetName(entries.Models, modelIndex);
             }
 
-            internal virtual void GetIndices(MSB64 msb, Entries entries)
+            internal virtual void GetIndices(MSB3 msb, Entries entries)
             {
                 modelIndex = GetIndex(entries.Models, ModelName);
             }
@@ -579,13 +579,13 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                 }
 
-                internal override void GetNames(MSB64 msb, Entries entries)
+                internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
                     CollisionName = GetName(entries.Parts, collisionPartIndex);
                 }
 
-                internal override void GetIndices(MSB64 msb, Entries entries)
+                internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
                     collisionPartIndex = GetIndex(entries.Parts, CollisionName);
@@ -750,13 +750,13 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                 }
 
-                internal override void GetNames(MSB64 msb, Entries entries)
+                internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
                     CollisionName = GetName(entries.Parts, collisionPartIndex);
                 }
 
-                internal override void GetIndices(MSB64 msb, Entries entries)
+                internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
                     collisionPartIndex = GetIndex(entries.Parts, CollisionName);
@@ -906,13 +906,13 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                 }
 
-                internal override void GetNames(MSB64 msb, Entries entries)
+                internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
                     UnkHitName = GetName(entries.Parts, UnkHitIndex);
                 }
 
-                internal override void GetIndices(MSB64 msb, Entries entries)
+                internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
                     UnkHitIndex = GetIndex(entries.Parts, UnkHitName);
@@ -985,13 +985,13 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                 }
 
-                internal override void GetNames(MSB64 msb, Entries entries)
+                internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
                     CollisionName = GetName(msb.Parts.Collisions, collisionIndex);
                 }
 
-                internal override void GetIndices(MSB64 msb, Entries entries)
+                internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
                     collisionIndex = GetIndex(msb.Parts.Collisions, CollisionName);

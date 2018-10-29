@@ -2,7 +2,7 @@
 
 namespace SoulsFormats
 {
-    public partial class MSB64
+    public partial class MSB3
     {
         /// <summary>
         /// Unknown.

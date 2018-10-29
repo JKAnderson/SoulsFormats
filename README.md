@@ -89,6 +89,18 @@ Extension: `.*bnd`
 * DS3: Full Read and Write
 * BB: Full Read and Write
 
+### BTAB
+Something to do with map part lighting/shadowing.
+Extension: `*.btab`
+* DS3: Full Read and Write
+* BB: Full Read and Write
+
+### BTL
+Point light sources in maps.
+Extension: `*.btl`
+* DS3: Full Read and Write
+* BB: Partial Read and Write
+
 ### BXF3
 Essentially a BND3 split into separate header and data files.  
 Extensions: `.*bhd` (header) and `.*bdt` (data)
@@ -160,12 +172,10 @@ A graphics configuration format used in DS3 and BB.
 * DS3: Partial Read and Write
 * BB: Untested
 
-### MSB64
-A map definition format used in SotFS, DS3, and BB.
+### MSB3
+A map definition format used in DS3.
 Extension : `.msb`
-Scholar: No support
-DS3: Partial Read and Write
-BB: No support
+DS3: Full Read and Write
 
 ### MTD
 A material definition file used throughout the series.  
@@ -199,6 +209,7 @@ To everyone below, for either creating tools that I learned from, or helping dec
 * Atvaark
 * B3LYP
 * HotPocketRemix
+* Ian
 * Lance
 * Meowmaritus
 * Nyxojaele

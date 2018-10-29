@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace SoulsFormats
 {
-    public partial class MSB64
+    public partial class MSB3
     {
         /// <summary>
         /// A section containing all the models available to parts in this map.

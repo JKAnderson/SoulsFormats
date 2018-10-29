@@ -2,41 +2,41 @@
 
 namespace SoulsFormats
 {
-    public partial class MSB64
+    public partial class MSB3
     {
         /// <summary>
-        /// A section containing layers, which probably don't actually do anything.
+        /// A section containing routes. Purpose unknown.
         /// </summary>
-        public class LayerSection : Section<Layer>
+        public class RouteSection : Section<Route>
         {
-            internal override string Type => "LAYER_PARAM_ST";
+            internal override string Type => "ROUTE_PARAM_ST";
 
             /// <summary>
-            /// The layers in this section.
+            /// The routes in this section.
             /// </summary>
-            public List<Layer> Layers;
+            public List<Route> Routes;
 
-            internal LayerSection(BinaryReaderEx br, int unk1) : base(br, unk1)
+            internal RouteSection(BinaryReaderEx br, int unk1) : base(br, unk1)
             {
-                Layers = new List<Layer>();
+                Routes = new List<Route>();
             }
 
             /// <summary>
-            /// Returns every layer in the order they will be written.
+            /// Returns every route in the order they will be written.
             /// </summary>
-            public override List<Layer> GetEntries()
+            public override List<Route> GetEntries()
             {
-                return Layers;
+                return Routes;
             }
 
-            internal override Layer ReadEntry(BinaryReaderEx br)
+            internal override Route ReadEntry(BinaryReaderEx br)
             {
-                var layer = new Layer(br);
-                Layers.Add(layer);
-                return layer;
+                var route = new Route(br);
+                Routes.Add(route);
+                return route;
             }
 
-            internal override void WriteEntries(BinaryWriterEx bw, List<Layer> entries)
+            internal override void WriteEntries(BinaryWriterEx bw, List<Route> entries)
             {
                 for (int i = 0; i < entries.Count; i++)
                 {
@@ -47,21 +47,21 @@ namespace SoulsFormats
         }
 
         /// <summary>
-        /// Unknown; seems to have been related to ceremonies but probably unused in release.
+        /// Unknown.
         /// </summary>
-        public class Layer
+        public class Route
         {
             /// <summary>
-            /// The name of this layer.
+            /// The name of this route.
             /// </summary>
             public string Name;
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk1, Unk2, Unk3;
+            public int Unk1, Unk2, Unk3, Unk4;
 
-            internal Layer(BinaryReaderEx br)
+            internal Route(BinaryReaderEx br)
             {
                 long start = br.Position;
 
@@ -69,6 +69,10 @@ namespace SoulsFormats
                 Unk1 = br.ReadInt32();
                 Unk2 = br.ReadInt32();
                 Unk3 = br.ReadInt32();
+                Unk4 = br.ReadInt32();
+
+                for (int i = 0; i < 26; i++)
+                    br.AssertInt32(0);
 
                 Name = br.GetUTF16(start + nameOffset);
             }
@@ -81,6 +85,10 @@ namespace SoulsFormats
                 bw.WriteInt32(Unk1);
                 bw.WriteInt32(Unk2);
                 bw.WriteInt32(Unk3);
+                bw.WriteInt32(Unk4);
+
+                for (int i = 0; i < 26; i++)
+                    bw.WriteInt32(0);
 
                 bw.FillInt64("NameOffset", bw.Position - start);
                 bw.WriteUTF16(Name, true);
@@ -88,11 +96,11 @@ namespace SoulsFormats
             }
 
             /// <summary>
-            /// Returns the name and three values of this layer.
+            /// Returns the name and four values of this route.
             /// </summary>
             public override string ToString()
             {
-                return $"{Name} ({Unk1}, {Unk2}, {Unk3})";
+                return $"{Name} ({Unk1}, {Unk2}, {Unk3}, {Unk4})";
             }
         }
     }
