@@ -170,7 +170,7 @@ namespace SoulsFormats
 
             internal File(BinaryReaderEx br, byte format)
             {
-                Flags = br.AssertByte(0x02, 0x40, 0xC0);
+                Flags = br.AssertByte(0x00, 0x02, 0x40, 0xC0);
                 br.AssertByte(0);
                 br.AssertByte(0);
                 br.AssertByte(0);

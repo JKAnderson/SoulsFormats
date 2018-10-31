@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Numerics;
 
 namespace SoulsFormats
@@ -864,10 +865,19 @@ namespace SoulsFormats
         /// </summary>
         public class FaceSet
         {
+            [Flags]
+            public enum FSFlags : uint
+            {
+                None = 0,
+                LodLevel1 = 0x01000000,
+                LodLevel2 = 0x02000000,
+                Unk80000000 = 0x80000000,
+            }
+
             /// <summary>
             /// Unknown.
             /// </summary>
-            public uint Flags;
+            public FSFlags Flags;
 
             /// <summary>
             /// Whether vertices are defined as a triangle strip or individual triangles.
@@ -896,7 +906,7 @@ namespace SoulsFormats
 
             internal FaceSet(BinaryReaderEx br, int dataOffset)
             {
-                Flags = br.ReadUInt32();
+                Flags = (FSFlags)br.ReadUInt32();
                 TriangleStrip = br.ReadBoolean();
                 CullBackfaces = br.ReadBoolean();
                 Unk3 = br.ReadByte();
@@ -915,7 +925,7 @@ namespace SoulsFormats
 
             internal void Write(BinaryWriterEx bw, int index)
             {
-                bw.WriteUInt32(Flags);
+                bw.WriteUInt32((uint)Flags);
 
                 bw.WriteBoolean(TriangleStrip);
                 bw.WriteBoolean(CullBackfaces);
@@ -962,7 +972,7 @@ namespace SoulsFormats
 
             internal VertexGroup(BinaryReaderEx br)
             {
-                Unk1 = br.AssertInt32(0, 1);
+                Unk1 = br.ReadInt32();
                 VertexStructLayoutIndex = br.ReadInt32();
                 int vertexSize = br.ReadInt32();
                 vertexCount = br.ReadInt32();
@@ -977,8 +987,17 @@ namespace SoulsFormats
                 VertexStructLayout layout = layouts[VertexStructLayoutIndex];
                 Vertices = new List<Vertex>();
                 br.StepIn(dataOffset + vertexBufferOffset);
-                for (int i = 0; i < vertexCount; i++)
-                    Vertices.Add(new Vertex(br, layout));
+                try
+                {
+                    for (int i = 0; i < vertexCount; i++)
+                        Vertices.Add(new Vertex(br, layout));
+                }
+                catch (EndOfStreamException ex)
+                {
+                    throw new InvalidDataException(
+                        "Some FLVERs in DSR have vertex struct layouts that don't match the actual data. "
+                        + "This is probably one of them.", ex);
+                }
                 br.StepOut();
 
                 vertexCount = -1;
@@ -1552,15 +1571,15 @@ namespace SoulsFormats
 
             private static Vector2 ReadUV(BinaryReaderEx br)
             {
-                float u = br.ReadInt16();
-                float v = br.ReadInt16();
+                float u = br.ReadInt16() / 1024f;
+                float v = br.ReadInt16() / 1024f;
                 return new Vector2(u, v);
             }
 
             private static void WriteUV(BinaryWriterEx bw, Vector2 uv)
             {
-                bw.WriteInt16((short)(uv.X));
-                bw.WriteInt16((short)(uv.Y));
+                bw.WriteInt16((short)(uv.X * 1024));
+                bw.WriteInt16((short)(uv.Y * 1024));
             }
 
             private static Color ReadColor(BinaryReaderEx br)

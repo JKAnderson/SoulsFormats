@@ -72,7 +72,7 @@ namespace SoulsFormats
                 throw new FormatException("FLVER3 endian character must be either L or B.");
             br.BigEndian = Header.BigEndian;
 
-            Header.Version = br.AssertInt32(0x2000C, 0x2000D, 0x20010, 0x20014);
+            Header.Version = br.AssertInt32(0x2000C, 0x2000D, 0x20010, 0x20013, 0x20014);
 
             int dataOffset = br.ReadInt32();
             int dataSize = br.ReadInt32();
@@ -579,7 +579,7 @@ namespace SoulsFormats
                     do
                     {
                         section = br.ReadInt32();
-                        br.AssertInt32(0x64);
+                        br.ReadInt32();
                         br.Skip(br.ReadInt32() - 0xC);
                     } while (section != 0x7FFFFFFF);
 
@@ -819,6 +819,8 @@ namespace SoulsFormats
             /// </summary>
             public List<VertexGroup> VertexGroups;
 
+            public int Unk1;
+
             private float[] unkFloats;
 
             private int[] faceSetIndices, vertexGroupIndices;
@@ -835,7 +837,7 @@ namespace SoulsFormats
                 DefaultBoneIndex = br.ReadInt32();
 
                 int boneCount = br.ReadInt32();
-                br.AssertInt32(0);
+                Unk1 = br.AssertInt32(0, 1, 0xA);
                 int unkOffset = br.ReadInt32();
                 unkFloats = br.GetSingles(unkOffset, 6);
                 int boneOffset = br.ReadInt32();
@@ -890,7 +892,7 @@ namespace SoulsFormats
                 bw.WriteInt32(DefaultBoneIndex);
 
                 bw.WriteInt32(BoneIndices.Count);
-                bw.WriteInt32(0);
+                bw.WriteInt32(Unk1);
                 bw.ReserveInt32($"MeshUnk{index}");
                 bw.ReserveInt32($"MeshBoneIndices{index}");
 
@@ -919,10 +921,19 @@ namespace SoulsFormats
         /// </summary>
         public class FaceSet
         {
+            [Flags]
+            public enum FSFlags : uint
+            {
+                None = 0,
+                LodLevel1 = 0x01000000,
+                LodLevel2 = 0x02000000,
+                Unk80000000 = 0x80000000,
+            }
+
             /// <summary>
             /// Unknown.
             /// </summary>
-            public uint Flags;
+            public FSFlags Flags;
 
             /// <summary>
             /// Whether vertices are defined as a triangle strip or individual triangles.
@@ -944,6 +955,8 @@ namespace SoulsFormats
             /// </summary>
             public byte Unk4;
 
+            public int Unk5;
+
             /// <summary>
             /// Indexes to vertices in a vertex group.
             /// </summary>
@@ -951,7 +964,7 @@ namespace SoulsFormats
 
             internal FaceSet(BinaryReaderEx br, int dataOffset)
             {
-                Flags = br.ReadUInt32();
+                Flags = (FSFlags)br.ReadUInt32();
                 TriangleStrip = br.ReadBoolean();
                 CullBackfaces = br.ReadBoolean();
                 Unk3 = br.ReadByte();
@@ -964,13 +977,13 @@ namespace SoulsFormats
                 Vertices = br.GetUInt16s(dataOffset + vertexOffset, vertexCount);
 
                 br.AssertInt32(0);
-                br.AssertInt32(0x10);
+                Unk5 = br.AssertInt32(0x10, 0x20);
                 br.AssertInt32(0);
             }
 
             internal void Write(BinaryWriterEx bw, int index)
             {
-                bw.WriteUInt32(Flags);
+                bw.WriteUInt32((uint)Flags);
 
                 bw.WriteBoolean(TriangleStrip);
                 bw.WriteBoolean(CullBackfaces);
@@ -982,7 +995,7 @@ namespace SoulsFormats
                 bw.WriteInt32(Vertices.Length * 2);
 
                 bw.WriteInt32(0);
-                bw.WriteInt32(0x10);
+                bw.WriteInt32(Unk5);
                 bw.WriteInt32(0);
             }
 
@@ -1056,12 +1069,12 @@ namespace SoulsFormats
                             vertexSize += 12;
                             break;
 
-                        case VertexStructLayout.Member.MemberValueType.Unknown10:
+                        case VertexStructLayout.Member.MemberValueType.Unk10:
                         case VertexStructLayout.Member.MemberValueType.BoneIndicesStruct:
                         case VertexStructLayout.Member.MemberValueType.Unk12:
                         case VertexStructLayout.Member.MemberValueType.PackedVector4:
                         case VertexStructLayout.Member.MemberValueType.UV:
-                        case VertexStructLayout.Member.MemberValueType.Unknown2F:
+                        case VertexStructLayout.Member.MemberValueType.Unk2F:
                             vertexSize += 4;
                             break;
 
@@ -1203,6 +1216,11 @@ namespace SoulsFormats
                 public enum MemberValueType : uint
                 {
                     /// <summary>
+                    /// Unknown.
+                    /// </summary>
+                    Unk01 = 0x01,
+
+                    /// <summary>
                     /// Three four-byte floating point numbers.
                     /// </summary>
                     Vector3 = 0x02,
@@ -1210,7 +1228,12 @@ namespace SoulsFormats
                     /// <summary>
                     /// Unknown.
                     /// </summary>
-                    Unknown10 = 0x10,
+                    Unk03 = 0x03,
+
+                    /// <summary>
+                    /// Unknown.
+                    /// </summary>
+                    Unk10 = 0x10,
 
                     /// <summary>
                     /// Four bytes.
@@ -1237,6 +1260,8 @@ namespace SoulsFormats
                     /// </summary>
                     UVPair = 0x16,
 
+                    Unk18 = 0x18,
+
                     /// <summary>
                     /// Four shorts.
                     /// </summary>
@@ -1245,7 +1270,12 @@ namespace SoulsFormats
                     /// <summary>
                     /// Unknown.
                     /// </summary>
-                    Unknown2F = 0x2F,
+                    Unk2E = 0x2E,
+
+                    /// <summary>
+                    /// Unknown.
+                    /// </summary>
+                    Unk2F = 0x2F,
                 }
 
                 /// <summary>
@@ -1385,12 +1415,12 @@ namespace SoulsFormats
             /// <summary>
             /// Where the vertex is.
             /// </summary>
-            public Vector3? Position;
+            public Vector3 Position;
 
             /// <summary>
             /// Bones the vertex is weighted to, indexing the parent mesh's bone indices.
             /// </summary>
-            public byte[] BoneIndices;
+            public ushort[] BoneIndices;
 
             /// <summary>
             /// Weight of the vertex's attachment to bones.
@@ -1400,12 +1430,12 @@ namespace SoulsFormats
             /// <summary>
             /// Texture coordinates of the vertex.
             /// </summary>
-            public List<Vector2> UVs;
+            public List<Vector3> UVs;
 
             /// <summary>
             /// Orientation of the vertex.
             /// </summary>
-            public byte[] Normal;
+            public Vector4 Normal;
 
             /// <summary>
             /// Unknown.
@@ -1424,11 +1454,11 @@ namespace SoulsFormats
 
             internal Vertex(BinaryReaderEx br, VertexStructLayout layout)
             {
-                Position = null;
+                Position = Vector3.Zero;
                 BoneIndices = null;
                 BoneWeights = null;
-                UVs = new List<Vector2>();
-                Normal = null;
+                UVs = new List<Vector3>();
+                Normal = Vector4.Zero;
                 BiTangents = new List<byte[]>();
                 Colors = new List<Color>();
                 UnknownVector4A = null;
@@ -1437,26 +1467,63 @@ namespace SoulsFormats
                 {
                     switch (member.ValueType)
                     {
-                        case VertexStructLayout.Member.MemberValueType.Vector3:
-                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.Position)
+                        case VertexStructLayout.Member.MemberValueType.Unk01:
+                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UV)
                             {
-                                Position = br.ReadVector3();
+                                UVs.Add(new Vector3(br.ReadVector2(), 0));
                             }
                             else
                                 throw new NotImplementedException();
                             break;
 
-                        case VertexStructLayout.Member.MemberValueType.Unknown10:
+                        case VertexStructLayout.Member.MemberValueType.Vector3:
+                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.Position)
+                            {
+                                Position = br.ReadVector3();
+                            }
+                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UV)
+                            {
+                                UVs.Add(br.ReadVector3());
+                            }
+                            else
+                                throw new NotImplementedException();
+                            break;
+
+                        case VertexStructLayout.Member.MemberValueType.Unk03:
+                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.Normal)
+                            {
+                                Normal = br.ReadVector4();
+                            }
+                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.VertexColor)
+                            {
+                                Vector4 color = br.ReadVector4();
+                                Colors.Add(Color.FromArgb((byte)color.X, (byte)color.Y, (byte)color.Z, (byte)color.W));
+                            }
+                            else
+                                throw new NotImplementedException();
+                            break;
+
+                        case VertexStructLayout.Member.MemberValueType.Unk10:
                         case VertexStructLayout.Member.MemberValueType.BoneIndicesStruct:
                         case VertexStructLayout.Member.MemberValueType.PackedVector4:
-                        case VertexStructLayout.Member.MemberValueType.Unknown2F:
+                        case VertexStructLayout.Member.MemberValueType.Unk2F:
                             if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BoneIndices)
                             {
-                                BoneIndices = br.ReadBytes(4);
+                                BoneIndices = new ushort[] {
+                                    br.ReadByte(),
+                                    br.ReadByte(),
+                                    br.ReadByte(),
+                                    br.ReadByte()
+                                };
                             }
                             else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.Normal)
                             {
-                                Normal = br.ReadBytes(4);
+                                Normal = new Vector4(
+                                    br.ReadByte(),
+                                    br.ReadByte(),
+                                    br.ReadByte(),
+                                    br.ReadByte()
+                                );
                             }
                             else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BiTangent)
                             {
@@ -1476,7 +1543,7 @@ namespace SoulsFormats
                                     br.ReadByte() / 255f,
                                     br.ReadByte() / 255f,
                                     br.ReadByte() / 255f,
-                                    br.ReadByte() / 255f,
+                                    br.ReadByte() / 255f
                                 };
                             }
                             else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UV)
@@ -1506,6 +1573,15 @@ namespace SoulsFormats
                                 throw new NotImplementedException();
                             break;
 
+                        case VertexStructLayout.Member.MemberValueType.Unk18:
+                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BoneIndices)
+                            {
+                                BoneIndices = br.ReadUInt16s(4);
+                            }
+                            else
+                                throw new NotImplementedException();
+                            break;
+
                         case VertexStructLayout.Member.MemberValueType.BoneWeightsStruct:
                             if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BoneWeights)
                             {
@@ -1513,7 +1589,7 @@ namespace SoulsFormats
                                     br.ReadUInt16() / 65535f,
                                     br.ReadUInt16() / 65535f,
                                     br.ReadUInt16() / 65535f,
-                                    br.ReadUInt16() / 65535f,
+                                    br.ReadUInt16() / 65535f
                                 };
                             }
                             else
@@ -1529,6 +1605,20 @@ namespace SoulsFormats
                                 throw new NotImplementedException();
                             break;
 
+                        case VertexStructLayout.Member.MemberValueType.Unk2E:
+                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.Normal)
+                            {
+                                Normal = new Vector4(
+                                    br.ReadByte(),
+                                    br.ReadByte(),
+                                    br.ReadByte(),
+                                    br.ReadByte()
+                                );
+                            }
+                            else
+                                throw new NotImplementedException();
+                            break;
+
                         default:
                             throw new NotImplementedException();
                     }
@@ -1537,32 +1627,69 @@ namespace SoulsFormats
 
             internal void Write(BinaryWriterEx bw, VertexStructLayout layout)
             {
-                var uvQueue = new Queue<Vector2>(UVs);
+                var uvQueue = new Queue<Vector3>(UVs);
 
                 foreach (VertexStructLayout.Member member in layout)
                 {
                     switch (member.ValueType)
                     {
-                        case VertexStructLayout.Member.MemberValueType.Vector3:
-                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.Position)
+                        case VertexStructLayout.Member.MemberValueType.Unk01:
+                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UV)
                             {
-                                bw.WriteVector3((Vector3)Position);
+                                Vector3 uv = uvQueue.Dequeue();
+                                bw.WriteSingle(uv.X);
+                                bw.WriteSingle(uv.Y);
                             }
                             else
                                 throw new NotImplementedException();
                             break;
 
-                        case VertexStructLayout.Member.MemberValueType.Unknown10:
+                        case VertexStructLayout.Member.MemberValueType.Vector3:
+                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.Position)
+                            {
+                                bw.WriteVector3(Position);
+                            }
+                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UV)
+                            {
+                                bw.WriteVector3(uvQueue.Dequeue());
+                            }
+                            else
+                                throw new NotImplementedException();
+                            break;
+
+                        case VertexStructLayout.Member.MemberValueType.Unk03:
+                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.Normal)
+                            {
+                                bw.WriteVector4(Normal);
+                            }
+                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.VertexColor)
+                            {
+                                bw.WriteSingle(Colors[member.Index].A);
+                                bw.WriteSingle(Colors[member.Index].R);
+                                bw.WriteSingle(Colors[member.Index].G);
+                                bw.WriteSingle(Colors[member.Index].B);
+                            }
+                            else
+                                throw new NotImplementedException();
+                            break;
+
+                        case VertexStructLayout.Member.MemberValueType.Unk10:
                         case VertexStructLayout.Member.MemberValueType.BoneIndicesStruct:
                         case VertexStructLayout.Member.MemberValueType.PackedVector4:
-                        case VertexStructLayout.Member.MemberValueType.Unknown2F:
+                        case VertexStructLayout.Member.MemberValueType.Unk2F:
                             if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BoneIndices)
                             {
-                                bw.WriteBytes(BoneIndices);
+                                bw.WriteByte((byte)BoneIndices[0]);
+                                bw.WriteByte((byte)BoneIndices[1]);
+                                bw.WriteByte((byte)BoneIndices[2]);
+                                bw.WriteByte((byte)BoneIndices[3]);
                             }
                             else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.Normal)
                             {
-                                bw.WriteBytes(Normal);
+                                bw.WriteByte((byte)Normal.X);
+                                bw.WriteByte((byte)Normal.Y);
+                                bw.WriteByte((byte)Normal.Z);
+                                bw.WriteByte((byte)Normal.W);
                             }
                             else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BiTangent)
                             {
@@ -1610,6 +1737,15 @@ namespace SoulsFormats
                                 throw new NotImplementedException();
                             break;
 
+                        case VertexStructLayout.Member.MemberValueType.Unk18:
+                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BoneIndices)
+                            {
+                                bw.WriteUInt16s(BoneIndices);
+                            }
+                            else
+                                throw new NotImplementedException();
+                            break;
+
                         case VertexStructLayout.Member.MemberValueType.BoneWeightsStruct:
                             if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BoneWeights)
                             {
@@ -1631,23 +1767,35 @@ namespace SoulsFormats
                                 throw new NotImplementedException();
                             break;
 
+                        case VertexStructLayout.Member.MemberValueType.Unk2E:
+                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.Normal)
+                            {
+                                bw.WriteByte((byte)Normal.X);
+                                bw.WriteByte((byte)Normal.Y);
+                                bw.WriteByte((byte)Normal.Z);
+                                bw.WriteByte((byte)Normal.W);
+                            }
+                            else
+                                throw new NotImplementedException();
+                            break;
+
                         default:
                             throw new NotImplementedException();
                     }
                 }
             }
 
-            private static Vector2 ReadUV(BinaryReaderEx br)
+            private static Vector3 ReadUV(BinaryReaderEx br)
             {
-                float u = br.ReadInt16();
-                float v = br.ReadInt16();
-                return new Vector2(u, v);
+                float u = br.ReadInt16() / 1024f;
+                float v = br.ReadInt16() / 1024f;
+                return new Vector3(u, v, 0);
             }
 
-            private static void WriteUV(BinaryWriterEx bw, Vector2 uv)
+            private static void WriteUV(BinaryWriterEx bw, Vector3 uv)
             {
-                bw.WriteInt16((short)(uv.X));
-                bw.WriteInt16((short)(uv.Y));
+                bw.WriteInt16((short)(uv.X * 1024f));
+                bw.WriteInt16((short)(uv.Y * 1024f));
             }
 
             private static Color ReadColor(BinaryReaderEx br)
