@@ -147,16 +147,12 @@ Extension: `.filtparam`
 ### FLVER
 A 3D model file used throughout the series.  
 Extension: `.flv` or `.flver`
-* DS1: Partial Read and Write
-* DSR: Partial Read and Write
-* DS2: Partial Read and Write
-* DeS: Untested
-
-### FLVER3
-A 3D model file used in DS3 (and maybe BB).
-Extension: `.flver`
-* DS3: Partial Read and Write
-* BB: Untested
+* DS1: Full Read and Write
+* DSR: Full Read and Write
+* DS2: Full Read and Write
+* DS3: Full Read and Write
+* DeS: No support
+* BB: Full Read and Write
 
 ### FMG
 A text bundle format used throughout the series.

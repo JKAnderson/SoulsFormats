@@ -89,7 +89,6 @@
     <Compile Include="Formats\DRB.cs" />
     <Compile Include="Formats\ENFL.cs" />
     <Compile Include="Formats\FLVER.cs" />
-    <Compile Include="Formats\FLVER3.cs" />
     <Compile Include="Formats\FMG.cs" />
     <Compile Include="Formats\FILTPARAM.cs" />
     <Compile Include="Formats\GPARAM.cs" />
