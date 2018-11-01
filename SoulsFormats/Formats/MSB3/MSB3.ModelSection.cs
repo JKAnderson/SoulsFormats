@@ -221,8 +221,14 @@ namespace SoulsFormats
             {
                 internal override ModelType Type => ModelType.MapPiece;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public byte UnkT00, UnkT01;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public bool UnkT02, UnkT03;
 
                 /// <summary>
@@ -275,8 +281,14 @@ namespace SoulsFormats
             {
                 internal override ModelType Type => ModelType.Object;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public byte UnkT00, UnkT01;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public bool UnkT02, UnkT03;
 
                 /// <summary>

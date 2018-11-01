@@ -8,6 +8,9 @@ namespace SoulsFormats
     /// </summary>
     public class BTAB : SoulsFile<BTAB>
     {
+        /// <summary>
+        /// Entries in this BTAB.
+        /// </summary>
         public List<Entry> Entries;
 
         internal override bool Is(BinaryReaderEx br)
@@ -78,7 +81,7 @@ namespace SoulsFormats
 
                 int nameOffset2 = (int)(bw.Position - nameStart);
                 nameOffsets.Add(nameOffset2);
-                bw.WriteUTF16(entry.MaterialName, true);
+                bw.WriteUTF16(entry.FLVERMaterialName, true);
                 if (nameOffset2 % 0x10 != 0)
                 {
                     for (int i = 0; i < 0x10 - (nameOffset2 % 0x10); i++)
@@ -91,6 +94,9 @@ namespace SoulsFormats
                 Entries[i].Write(bw, nameOffsets[i * 2], nameOffsets[i * 2 + 1]);
         }
 
+        /// <summary>
+        /// A BTAB entry.
+        /// </summary>
         public class Entry
         {
             /// <summary>
@@ -99,29 +105,30 @@ namespace SoulsFormats
             public string MSBPartName;
 
             /// <summary>
-            /// Material name?
+            /// The name of a material in the FLVER; not the name of the MTD file itself.
             /// </summary>
-            public string MaterialName;
+            public string FLVERMaterialName;
 
-
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public int Unk1C;
 
             // These floats are used to control the lighting/material parameters in some way.
             // Seem to be between 0.0-1.0 and sum up to 1.0 in some cases
-            public float Unk20;
-            public float Unk24;
-            public float Unk28;
-            public float Unk2C;
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public float Unk20, Unk24, Unk28, Unk2C;
 
             internal Entry(BinaryReaderEx br, long nameStart)
             {
-
                 int nameOffset = br.ReadInt32();
                 MSBPartName = br.GetUTF16(nameStart + nameOffset);
                 br.AssertInt32(0);
 
                 int nameOffset2 = br.ReadInt32();
-                MaterialName = br.GetUTF16(nameStart + nameOffset2);
+                FLVERMaterialName = br.GetUTF16(nameStart + nameOffset2);
                 br.AssertInt32(0);
 
                 Unk1C = br.ReadInt32();
@@ -146,9 +153,12 @@ namespace SoulsFormats
                 bw.WriteInt32(0);
             }
 
+            /// <summary>
+            /// Returns the MSB part name and FLVER material name of the entry.
+            /// </summary>
             public override string ToString()
             {
-                return $"{MSBPartName} : {MaterialName}";
+                return $"{MSBPartName} : {FLVERMaterialName}";
             }
         }
     }

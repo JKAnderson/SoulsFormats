@@ -6,24 +6,51 @@ namespace SoulsFormats
 {
     public partial class MSB3
     {
+        /// <summary>
+        /// Events controlling various interactive or dynamic features in the map.
+        /// </summary>
         public class EventSection : Section<Event>
         {
             internal override string Type => "EVENT_PARAM_ST";
 
+            /// <summary>
+            /// Treasures in the MSB.
+            /// </summary>
             public List<Event.Treasure> Treasures;
 
+            /// <summary>
+            /// Generators in the MSB.
+            /// </summary>
             public List<Event.Generators> Generators;
 
+            /// <summary>
+            /// Object actions in the MSB.
+            /// </summary>
             public List<Event.ObjAct> ObjActs;
 
+            /// <summary>
+            /// Map offsets in the MSB.
+            /// </summary>
             public List<Event.MapOffset> MapOffsets;
 
+            /// <summary>
+            /// Invasions in the MSB.
+            /// </summary>
             public List<Event.Invasion> Invasions;
 
+            /// <summary>
+            /// Walk routes in the MSB.
+            /// </summary>
             public List<Event.WalkRoute> WalkRoutes;
 
+            /// <summary>
+            /// Group tours in the MSB.
+            /// </summary>
             public List<Event.GroupTour> GroupTours;
 
+            /// <summary>
+            /// Other events in the MSB.
+            /// </summary>
             public List<Event.Other> Others;
 
             internal EventSection(BinaryReaderEx br, int unk1) : base(br, unk1)
@@ -38,6 +65,9 @@ namespace SoulsFormats
                 Others = new List<Event.Other>();
             }
 
+            /// <summary>
+            /// Returns every Event in the order they'll be written.
+            /// </summary>
             public override List<Event> GetEntries()
             {
                 return Util.ConcatAll<Event>(
@@ -138,20 +168,48 @@ namespace SoulsFormats
             Other = 0xFFFFFFFF,
         }
 
+        /// <summary>
+        /// An interactive or dynamic feature of the map.
+        /// </summary>
         public abstract class Event : Entry
         {
             internal abstract EventType Type { get; }
 
+            /// <summary>
+            /// The name of this event.
+            /// </summary>
             public override string Name { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public int EventIndex;
+
+            /// <summary>
+            /// The ID of this event.
+            /// </summary>
             public int ID;
+
             private int partIndex;
+            /// <summary>
+            /// The name of a part the event is attached to.
+            /// </summary>
             public string PartName;
+
             private int pointIndex;
+            /// <summary>
+            /// The name of a region the event is attached to.
+            /// </summary>
             public string PointName;
+
+            /// <summary>
+            /// Used to identify the event in event scripts.
+            /// </summary>
             public int EventEntityID;
 
+            /// <summary>
+            /// Creates a new Event with values copied from another.
+            /// </summary>
             public Event(Event clone)
             {
                 Name = clone.Name;
@@ -230,6 +288,9 @@ namespace SoulsFormats
                 pointIndex = GetIndex(entries.Regions, PointName);
             }
 
+            /// <summary>
+            /// Returns the type, ID, and name of this event.
+            /// </summary>
             public override string ToString()
             {
                 return $"{Type} {ID} : {Name}";
@@ -243,7 +304,14 @@ namespace SoulsFormats
                 internal override EventType Type => EventType.Treasure;
 
                 private int partIndex2;
+                /// <summary>
+                /// The part the treasure is attached to.
+                /// </summary>
                 public string PartName2;
+
+                /// <summary>
+                /// IDs in the item lot param given by this treasure.
+                /// </summary>
                 public int ItemLot1, ItemLot2;
 
                 /// <summary>
@@ -261,6 +329,9 @@ namespace SoulsFormats
                 /// </summary>
                 public bool StartDisabled;
 
+                /// <summary>
+                /// Creates a new Treasure with values copied from another.
+                /// </summary>
                 public Treasure(Treasure clone) : base(clone)
                 {
                     PartName2 = clone.PartName2;
@@ -344,22 +415,63 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// A continuous enemy spawner.
+            /// </summary>
             public class Generators : Event
             {
                 internal override EventType Type => EventType.Generator;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short MaxNum;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short LimitNum;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short MinGenNum;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short MaxGenNum;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float MinInterval;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float MaxInterval;
+
                 private int[] spawnPointIndices;
+                /// <summary>
+                /// Regions that enemies can be spawned at.
+                /// </summary>
                 public string[] SpawnPointNames { get; private set; }
+
                 private int[] spawnPartIndices;
+                /// <summary>
+                /// Enemies spawned by this generator.
+                /// </summary>
                 public string[] SpawnPartNames { get; private set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT10;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT14, UnkT18;
 
                 internal Generators(BinaryReaderEx br) : base(br) { }
@@ -453,15 +565,37 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Controls usable objects like levers.
+            /// </summary>
             public class ObjAct : Event
             {
                 internal override EventType Type => EventType.ObjAct;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int ObjActEntityID;
+
                 private int partIndex2;
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public string PartName2;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int ParameterID;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT10;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int EventFlagID;
 
                 internal ObjAct(BinaryReaderEx br) : base(br) { }
@@ -503,12 +637,21 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Moves all of the map pieces when cutscenes are played.
+            /// </summary>
             public class MapOffset : Event
             {
                 internal override EventType Type => EventType.MapOffset;
 
+                /// <summary>
+                /// Position of the map offset.
+                /// </summary>
                 public Vector3 Position;
 
+                /// <summary>
+                /// Rotation of the map offset.
+                /// </summary>
                 public float Degree;
 
                 internal MapOffset(BinaryReaderEx br) : base(br) { }
@@ -526,16 +669,46 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// A fake multiplayer interaction where the player goes to an NPC's world.
+            /// </summary>
             public class Invasion : Event
             {
                 internal override EventType Type => EventType.PseudoMultiplayer;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int HostEventEntityID;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int InvasionEventEntityID;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int InvasionRegionIndex;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int SoundIDMaybe;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int MapEventIDMaybe;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int FlagsMaybe;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT18;
 
                 internal Invasion(BinaryReaderEx br) : base(br) { }
@@ -620,12 +793,22 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class GroupTour : Event
             {
                 internal override EventType Type => EventType.GroupTour;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00, UnkT04;
+
                 private int[] groupPartsIndices;
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public string[] GroupPartsNames { get; private set; }
 
                 internal GroupTour(BinaryReaderEx br) : base(br) { }
@@ -664,13 +847,22 @@ namespace SoulsFormats
                         groupPartsIndices[i] = GetIndex(entries.Parts, GroupPartsNames[i]);
                 }
             }
-
-            // This type only appears once in one unused MSB so it's hard to draw too many conclusions from it.
+            
+            /// <summary>
+            /// Unknown. Only appears once in one unused MSB so it's hard to draw too many conclusions from it.
+            /// </summary>
             public class Other : Event
             {
                 internal override EventType Type => EventType.Other;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int SoundTypeMaybe;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int SoundIDMaybe;
 
                 internal Other(BinaryReaderEx br) : base(br) { }

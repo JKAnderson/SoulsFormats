@@ -1,18 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SoulsFormats
 {
+    /// <summary>
+    /// Point light sources in a map, used in DS3 and BB.
+    /// </summary>
     public class BTL : SoulsFile<BTL>
     {
+        /// <summary>
+        /// Unknown.
+        /// </summary>
         public int Unk04;
         
-        public List<Entry> Entries;
+        /// <summary>
+        /// Light sources in this BTL.
+        /// </summary>
+        public List<Light> Lights;
 
         internal override bool Is(BinaryReaderEx br)
         {
@@ -42,9 +48,9 @@ namespace SoulsFormats
 
             long nameStart = br.Position;
             br.Position = nameStart + nameSize;
-            Entries = new List<Entry>();
+            Lights = new List<Light>();
             for (int i = 0; i < entryCount; i++)
-                Entries.Add(new Entry(br, nameStart));
+                Lights.Add(new Light(br, nameStart));
         }
 
         internal override void Write(BinaryWriterEx bw)
@@ -53,7 +59,7 @@ namespace SoulsFormats
 
             bw.WriteInt32(2);
             bw.WriteInt32(Unk04);
-            bw.WriteInt32(Entries.Count);
+            bw.WriteInt32(Lights.Count);
             bw.ReserveInt32("NameSize");
             bw.WriteInt32(0);
             bw.WriteInt32(0xC8);
@@ -69,7 +75,7 @@ namespace SoulsFormats
 
             long nameStart = bw.Position;
             var nameOffsets = new List<int>();
-            foreach (Entry entry in Entries)
+            foreach (Light entry in Lights)
             {
                 int nameOffset = (int)(bw.Position - nameStart);
                 nameOffsets.Add(nameOffset);
@@ -82,39 +88,81 @@ namespace SoulsFormats
             }
 
             bw.FillInt32("NameSize", (int)(bw.Position - nameStart));
-            for (int i = 0; i < Entries.Count; i++)
-                Entries[i].Write(bw, nameOffsets[i]);
+            for (int i = 0; i < Lights.Count; i++)
+                Lights[i].Write(bw, nameOffsets[i]);
         }
 
-        public class Entry
+        /// <summary>
+        /// An omnidirectional and/or spot light source.
+        /// </summary>
+        public class Light
         {
+            /// <summary>
+            /// Name of this light.
+            /// </summary>
             public string Name;
             
+            /// <summary>
+            /// Center of the light.
+            /// </summary>
             public Vector3 Position;
 
+            /// <summary>
+            /// Rotation of a spot light.
+            /// </summary>
             public Vector3 Rotation;
 
+            /// <summary>
+            /// Color of the light on diffuse surfaces.
+            /// </summary>
             public Color DiffuseColor;
 
+            /// <summary>
+            /// Intensity of diffuse lighting.
+            /// </summary>
             public float DiffuseBrightness;
 
+            /// <summary>
+            /// Color of the light on reflective surfaces.
+            /// </summary>
             public Color SpecularColor;
 
+            /// <summary>
+            /// Intensity of specular lighting.
+            /// </summary>
             public float SpecularBrightness;
 
+            /// <summary>
+            /// Distance the light shines.
+            /// </summary>
             public float Radius;
 
+            /// <summary>
+            /// Tightness of the spot light beam.
+            /// </summary>
             public float ConeAngle;
 
+            /// <summary>
+            /// Stretches the spot light beam.
+            /// </summary>
             public float Width;
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public bool Unk1C, Unk27;
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public int Unk00, Unk04, Unk08, Unk18, Unk0C, Unk50, Unk5C, Unk64, UnkA0;
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public float Unk30, Unk34, Unk54, Unk68, Unk6C, Unk70, Unk74, Unk78, Unk7C, Unk98, Unk9C, UnkA4, UnkC4;
 
-            internal Entry(BinaryReaderEx br, long nameStart)
+            internal Light(BinaryReaderEx br, long nameStart)
             {
                 Unk00 = br.ReadInt32();
                 Unk04 = br.ReadInt32();
@@ -237,6 +285,9 @@ namespace SoulsFormats
                 bw.WriteSingle(UnkC4);
             }
 
+            /// <summary>
+            /// Returns the name of the light.
+            /// </summary>
             public override string ToString()
             {
                 return Name;

@@ -6,24 +6,51 @@ namespace SoulsFormats
 {
     public partial class MSB3
     {
+        /// <summary>
+        /// Instances of various "things" in this MSB.
+        /// </summary>
         public class PartsSection : Section<Part>
         {
             internal override string Type => "PARTS_PARAM_ST";
 
+            /// <summary>
+            /// Map pieces in the MSB.
+            /// </summary>
             public List<Part.MapPiece> MapPieces;
 
+            /// <summary>
+            /// Objects in the MSB.
+            /// </summary>
             public List<Part.Object> Objects;
 
+            /// <summary>
+            /// Enemies in the MSB.
+            /// </summary>
             public List<Part.Enemy> Enemies;
 
+            /// <summary>
+            /// Players in the MSB.
+            /// </summary>
             public List<Part.Player> Players;
 
+            /// <summary>
+            /// Collisions in the MSB.
+            /// </summary>
             public List<Part.Collision> Collisions;
 
+            /// <summary>
+            /// Dummy objects in the MSB.
+            /// </summary>
             public List<Part.DummyObject> DummyObjects;
 
+            /// <summary>
+            /// Dummy enemies in the MSB.
+            /// </summary>
             public List<Part.DummyEnemy> DummyEnemies;
 
+            /// <summary>
+            /// Connect collisions in the MSB.
+            /// </summary>
             public List<Part.ConnectCollision> ConnectCollisions;
 
             internal PartsSection(BinaryReaderEx br, int unk1) : base(br, unk1)
@@ -38,6 +65,9 @@ namespace SoulsFormats
                 ConnectCollisions = new List<Part.ConnectCollision>();
             }
 
+            /// <summary>
+            /// Returns every part in the order they'll be written.
+            /// </summary>
             public override List<Part> GetEntries()
             {
                 return Util.ConcatAll<Part>(
@@ -133,47 +163,110 @@ namespace SoulsFormats
             ConnectCollision = 0xB,
         }
 
+        /// <summary>
+        /// Any instance of some "thing" in a map.
+        /// </summary>
         public abstract class Part : Entry
         {
             internal abstract PartsType Type { get; }
 
+            /// <summary>
+            /// The name of this part.
+            /// </summary>
             public override string Name { get; set; }
 
+            /// <summary>
+            /// The placeholder model for this part.
+            /// </summary>
             public string Placeholder;
 
+            /// <summary>
+            /// The ID of this part, which should be unique but does not appear to be used otherwise.
+            /// </summary>
             public int ID;
 
             private int modelIndex;
+            /// <summary>
+            /// The name of this part's model.
+            /// </summary>
             public string ModelName;
 
+            /// <summary>
+            /// The center of the part.
+            /// </summary>
             public Vector3 Position;
 
+            /// <summary>
+            /// The rotation of the part.
+            /// </summary>
             public Vector3 Rotation;
 
+            /// <summary>
+            /// The scale of the part, which only really works right for map pieces.
+            /// </summary>
             public Vector3 Scale;
 
+            /// <summary>
+            /// Controls when the part is drawn.
+            /// </summary>
             public uint DrawGroup1, DrawGroup2, DrawGroup3, DrawGroup4;
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public uint DispGroup1, DispGroup2, DispGroup3, DispGroup4;
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public int UnkF01, UnkF02, UnkF03, UnkF04, UnkF05, UnkF06, UnkF07, UnkF08, UnkF09,
                 UnkF10, UnkF11, UnkF12, UnkF13, UnkF14, UnkF15, UnkF16, UnkF17, UnkF18;
 
+            /// <summary>
+            /// Used to identify the part in event scripts.
+            /// </summary>
             public int EventEntityID;
 
+            /// <summary>
+            /// Controls which values in the gparam are applied to this part.
+            /// </summary>
             public sbyte LightID, FogID, ScatterID, LensFlareID;
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public sbyte LanternID, LodParamID, UnkB0E;
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public bool IsShadowDest;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public bool IsShadowOnly, DrawByReflectCam, DrawOnlyReflectCam, UseDepthBiasFloat;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public bool DisablePointLightEffect;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte UnkB15, UnkB16, UnkB17;
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public int UnkB18, UnkB1C, UnkB20, UnkB24, UnkB28, UnkB30, UnkB34, UnkB38;
 
-            public long UnkOffset1Delta, UnkOffset2Delta;
+            private long UnkOffset1Delta, UnkOffset2Delta;
 
+            /// <summary>
+            /// Creates a new Part with values copied from another.
+            /// </summary>
             public Part(Part clone)
             {
                 Name = clone.Name;
@@ -461,15 +554,24 @@ namespace SoulsFormats
                 modelIndex = GetIndex(entries.Models, ModelName);
             }
 
+            /// <summary>
+            /// Returns the type, ID, and name of this part.
+            /// </summary>
             public override string ToString()
             {
                 return $"{Type} {ID} : {Name}";
             }
 
+            /// <summary>
+            /// A static model making up the map.
+            /// </summary>
             public class MapPiece : Part
             {
                 internal override PartsType Type => PartsType.MapPiece;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT01, UnkT02, UnkT03, UnkT04;
 
                 internal MapPiece(BinaryReaderEx br) : base(br) { }
@@ -503,17 +605,32 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Any dynamic object such as elevators, crates, ladders, etc.
+            /// </summary>
             public class Object : Part
             {
                 internal override PartsType Type => PartsType.Object;
 
                 private int collisionPartIndex;
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public string CollisionName;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT04, UnkT06, UnkT07, UnkT08, UnkT09, UnkT10;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short UnkT02a, UnkT02b, UnkT03a, UnkT03b, UnkT05a, UnkT05b;
 
+                /// <summary>
+                /// Creates a new Object with values copied from another.
+                /// </summary>
                 public Object(Object clone) : base(clone)
                 {
                     CollisionName = clone.CollisionName;
@@ -592,19 +709,57 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Any non-player character, not necessarily hostile.
+            /// </summary>
             public class Enemy : Part
             {
                 internal override PartsType Type => PartsType.Enemy;
 
                 private int collisionPartIndex;
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public string CollisionName;
 
-                public int ThinkParamID, NPCParamID, TalkID, UnkT04, CharaInitID, UnkT07, UnkT08, UnkT09;
+                /// <summary>
+                /// Controls enemy AI.
+                /// </summary>
+                public int ThinkParamID;
 
+                /// <summary>
+                /// Controls enemy stats.
+                /// </summary>
+                public int NPCParamID;
+
+                /// <summary>
+                /// Controls enemy speech.
+                /// </summary>
+                public int TalkID;
+
+                /// <summary>
+                /// Controls enemy equipment.
+                /// </summary>
+                public int CharaInitID;
+
+                /// <summary>
+                /// Unknown, probably more paramIDs.
+                /// </summary>
+                public int UnkT04, UnkT07, UnkT08, UnkT09;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT10;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT11, UnkT12, UnkT13, UnkT14, UnkT15, UnkT16, UnkT17, UnkT18, UnkT19;
 
+                /// <summary>
+                /// Creates a new Enemy with values copied from another.
+                /// </summary>
                 public Enemy(Enemy clone) : base(clone)
                 {
                     ThinkParamID = clone.ThinkParamID;
@@ -763,6 +918,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown exactly what this is for.
+            /// </summary>
             public class Player : Part
             {
                 internal override PartsType Type => PartsType.Player;
@@ -786,10 +944,17 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// An invisible collision mesh, also used for death planes.
+            /// </summary>
             public class Collision : Part
             {
+                /// <summary>
+                /// Amount of reverb to apply to sounds.
+                /// </summary>
                 public enum SoundSpace : byte
                 {
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
                     NoReverb = 0,
                     SmallReverbA = 1,
                     SmallReverbB = 2,
@@ -799,18 +964,54 @@ namespace SoulsFormats
                     LargeReverbB = 6,
                     ExtraLargeReverbA = 7,
                     ExtraLargeReverbB = 8,
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
                 }
 
                 internal override PartsType Type => PartsType.Collision;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public byte HitFilterID;
+
+                /// <summary>
+                /// Modifies sounds while the player is touching this collision.
+                /// </summary>
                 public SoundSpace SoundSpaceType;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short EnvLightMapSpotIndex;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float ReflectPlaneHeight;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short MapNameID;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public bool DisableStart;
+
+                /// <summary>
+                /// Disables a bonfire with this entity ID when an enemy is touching this collision.
+                /// </summary>
                 public int DisableBonfireEntityID;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int PlayRegionID;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short LockCamID1, LockCamID2;
 
                 private int UnkHitIndex;
@@ -819,7 +1020,14 @@ namespace SoulsFormats
                 /// </summary>
                 public string UnkHitName;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT2C, UnkT34, UnkT50, UnkT54, UnkT58, UnkT5C, UnkT74;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT78;
 
                 internal Collision(BinaryReaderEx br) : base(br) { }
@@ -919,6 +1127,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// An object that is either unused, or used for a cutscene.
+            /// </summary>
             public class DummyObject : Object
             {
                 internal override PartsType Type => PartsType.DummyObject;
@@ -926,6 +1137,9 @@ namespace SoulsFormats
                 internal DummyObject(BinaryReaderEx br) : base(br) { }
             }
 
+            /// <summary>
+            /// An enemy that is either unused, or used for a cutscene.
+            /// </summary>
             public class DummyEnemy : Enemy
             {
                 internal override PartsType Type => PartsType.DummyEnemy;
@@ -952,6 +1166,9 @@ namespace SoulsFormats
                 /// </summary>
                 public byte MapID1, MapID2, MapID3, MapID4;
 
+                /// <summary>
+                /// Creates a new ConnectCollision with values copied from another.
+                /// </summary>
                 public ConnectCollision(ConnectCollision clone) : base(clone)
                 {
                     CollisionName = clone.CollisionName;

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 
 namespace SoulsFormats
@@ -75,7 +76,9 @@ namespace SoulsFormats
 
             // DS1: 2000C, 2000D
             // DS2: 20009, 20010
+            // SFS: 20010
             // DS3: 20013, 20014
+            // BB:  20013, 20014
             Header.Version = br.AssertInt32(0x20009, 0x2000C, 0x2000D, 0x20010, 0x20013, 0x20014);
 
             int dataOffset = br.ReadInt32();
@@ -89,29 +92,29 @@ namespace SoulsFormats
             Header.BoundingBoxMin = br.ReadVector3();
             Header.BoundingBoxMax = br.ReadVector3();
 
-            Header.UnkI1 = br.ReadInt32();
-            Header.UnkI2 = br.ReadInt32();
+            Header.Unk40 = br.ReadInt32();
+            Header.Unk44 = br.ReadInt32();
 
-            Header.UnkB0 = br.AssertByte(0x00, 0x10);
+            Header.Unk48 = br.AssertByte(0x00, 0x10);
             br.AssertBoolean(true);
-            Header.UnkB1 = br.ReadBoolean();
+            Header.Unk4A = br.ReadBoolean();
             br.AssertByte(0);
 
             br.AssertInt16(0);
-            Header.UnkS1 = br.AssertInt16(0, -1);
+            Header.Unk4E = br.AssertInt16(0, -1);
 
             int faceSetCount = br.ReadInt32();
             int vertexStructLayoutCount = br.ReadInt32();
             int materialParameterCount = br.ReadInt32();
 
-            Header.UnkB2 = br.ReadBoolean();
+            Header.Unk5C = br.ReadBoolean();
             br.AssertByte(0);
             br.AssertByte(0);
             br.AssertByte(0);
 
             br.AssertInt32(0);
             br.AssertInt32(0);
-            Header.UnkI3 = br.AssertInt32(0, 1, 2, 3, 4);
+            Header.Unk68 = br.AssertInt32(0, 1, 2, 3, 4);
             br.AssertInt32(0);
             br.AssertInt32(0);
             br.AssertInt32(0);
@@ -214,16 +217,16 @@ namespace SoulsFormats
             bw.WriteVector3(Header.BoundingBoxMin);
             bw.WriteVector3(Header.BoundingBoxMax);
 
-            bw.WriteInt32(Header.UnkI1);
-            bw.WriteInt32(Header.UnkI2);
+            bw.WriteInt32(Header.Unk40);
+            bw.WriteInt32(Header.Unk44);
 
-            bw.WriteByte(Header.UnkB0);
+            bw.WriteByte(Header.Unk48);
             bw.WriteBoolean(true);
-            bw.WriteBoolean(Header.UnkB1);
+            bw.WriteBoolean(Header.Unk4A);
             bw.WriteByte(0);
 
             bw.WriteInt16(0);
-            bw.WriteInt16(Header.UnkS1);
+            bw.WriteInt16(Header.Unk4E);
 
             int faceSetCount = 0;
             foreach (Mesh mesh in Meshes)
@@ -237,14 +240,14 @@ namespace SoulsFormats
                 materialParamsCount += material.Params.Count;
             bw.WriteInt32(materialParamsCount);
 
-            bw.WriteBoolean(Header.UnkB2);
+            bw.WriteBoolean(Header.Unk5C);
             bw.WriteByte(0);
             bw.WriteByte(0);
             bw.WriteByte(0);
 
             bw.WriteInt32(0);
             bw.WriteInt32(0);
-            bw.WriteInt32(Header.UnkI3);
+            bw.WriteInt32(Header.Unk68);
             bw.WriteInt32(0);
             bw.WriteInt32(0);
             bw.WriteInt32(0);
@@ -300,7 +303,7 @@ namespace SoulsFormats
                 bw.Pad(0x10);
                 for (int i = 0; i < Meshes.Count; i++)
                 {
-                    Meshes[i].WriteUnk(bw, i);
+                    Meshes[i].WriteUnkFloats(bw, i);
                 }
             }
 
@@ -333,7 +336,7 @@ namespace SoulsFormats
             bw.Pad(0x10);
             for (int i = 0; i < Materials.Count; i++)
             {
-                Materials[i].WriteUnk(bw, i);
+                Materials[i].WriteUnkGX(bw, i);
             }
 
             bw.Pad(0x10);
@@ -418,19 +421,37 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int UnkI1, UnkI2, UnkI3;
-
-            public byte UnkB0;
+            public int Unk40;
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public bool UnkB1, UnkB2;
+            public int Unk44;
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public short UnkS1;
+            public byte Unk48;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public bool Unk4A;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public short Unk4E;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public bool Unk5C;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public int Unk68;
         }
 
         /// <summary>
@@ -446,12 +467,12 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public byte Unk1, Unk2;
+            public byte Unk0C, Unk0D;
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public short Unk3;
+            public short Unk0E;
 
             /// <summary>
             /// Unknown.
@@ -486,15 +507,18 @@ namespace SoulsFormats
             internal Dummy(BinaryReaderEx br)
             {
                 Position = br.ReadVector3();
-                Unk1 = br.ReadByte();
-                Unk2 = br.ReadByte();
-                Unk3 = br.ReadInt16();
+
+                Unk0C = br.ReadByte();
+                Unk0D = br.ReadByte();
+                Unk0E = br.ReadInt16();
 
                 Row2 = br.ReadVector3();
+
                 TypeID = br.ReadInt16();
                 ParentBoneIndex = br.ReadInt16();
 
                 Row3 = br.ReadVector3();
+
                 UnkParentIndex = br.ReadInt16();
                 Flag1 = br.ReadBoolean();
                 Flag2 = br.ReadBoolean();
@@ -508,15 +532,18 @@ namespace SoulsFormats
             internal void Write(BinaryWriterEx bw)
             {
                 bw.WriteVector3(Position);
-                bw.WriteByte(Unk1);
-                bw.WriteByte(Unk2);
-                bw.WriteInt16(Unk3);
+
+                bw.WriteByte(Unk0C);
+                bw.WriteByte(Unk0D);
+                bw.WriteInt16(Unk0E);
 
                 bw.WriteVector3(Row2);
+
                 bw.WriteInt16(TypeID);
                 bw.WriteInt16(ParentBoneIndex);
 
                 bw.WriteVector3(Row3);
+
                 bw.WriteInt16(UnkParentIndex);
                 bw.WriteBoolean(Flag1);
                 bw.WriteBoolean(Flag2);
@@ -556,7 +583,7 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public byte[] UnkBytes;
+            public byte[] GXBytes;
 
             private int paramIndex, paramCount;
 
@@ -567,7 +594,7 @@ namespace SoulsFormats
                 paramCount = br.ReadInt32();
                 paramIndex = br.ReadInt32();
                 Flags = br.ReadInt32();
-                int unkOffset = br.ReadInt32();
+                int gxOffset = br.ReadInt32();
 
                 br.AssertInt32(0);
                 br.AssertInt32(0);
@@ -575,13 +602,13 @@ namespace SoulsFormats
                 Name = br.GetUTF16(nameOffset);
                 MTD = br.GetUTF16(mtdOffset);
 
-                if (unkOffset == 0)
+                if (gxOffset == 0)
                 {
-                    UnkBytes = null;
+                    GXBytes = null;
                 }
                 else
                 {
-                    br.StepIn(unkOffset);
+                    br.StepIn(gxOffset);
 
                     // Other than the terminating section, should be GX** in ASCII
                     int section;
@@ -592,7 +619,7 @@ namespace SoulsFormats
                         br.Skip(br.ReadInt32() - 0xC);
                     } while (section != 0x7FFFFFFF);
 
-                    UnkBytes = br.GetBytes(unkOffset, (int)br.Position - unkOffset);
+                    GXBytes = br.GetBytes(gxOffset, (int)br.Position - gxOffset);
                     br.StepOut();
                 }
             }
@@ -632,16 +659,16 @@ namespace SoulsFormats
                 }
             }
 
-            internal void WriteUnk(BinaryWriterEx bw, int index)
+            internal void WriteUnkGX(BinaryWriterEx bw, int index)
             {
-                if (UnkBytes == null)
+                if (GXBytes == null)
                 {
                     bw.FillInt32($"MaterialUnk{index}", 0);
                 }
                 else
                 {
                     bw.FillInt32($"MaterialUnk{index}", (int)bw.Position);
-                    bw.WriteBytes(UnkBytes);
+                    bw.WriteBytes(GXBytes);
                 }
             }
 
@@ -828,6 +855,9 @@ namespace SoulsFormats
             /// </summary>
             public List<VertexGroup> VertexGroups;
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public int Unk1;
 
             private float[] unkFloats;
@@ -920,7 +950,7 @@ namespace SoulsFormats
                 bw.ReserveInt32($"MeshVertexGroupIndices{index}");
             }
 
-            internal void WriteUnk(BinaryWriterEx bw, int index)
+            internal void WriteUnkFloats(BinaryWriterEx bw, int index)
             {
                 bw.FillInt32($"MeshUnk{index}", (int)bw.Position);
                 bw.WriteSingles(unkFloats);
@@ -938,17 +968,35 @@ namespace SoulsFormats
         /// </summary>
         public class FaceSet
         {
+            /// <summary>
+            /// Flags on a faceset, mostly just used to determine lod level.
+            /// </summary>
             [Flags]
             public enum FSFlags : uint
             {
+                /// <summary>
+                /// Just your average everyday face set.
+                /// </summary>
                 None = 0,
+
+                /// <summary>
+                /// Low detail mesh.
+                /// </summary>
                 LodLevel1 = 0x01000000,
+
+                /// <summary>
+                /// Really low detail mesh.
+                /// </summary>
                 LodLevel2 = 0x02000000,
+
+                /// <summary>
+                /// Some meshes have what appears to be a copy of each faceset, and the copy has this flag.
+                /// </summary>
                 Unk80000000 = 0x80000000,
             }
 
             /// <summary>
-            /// Unknown.
+            /// FaceSet Flags on this FaceSet.
             /// </summary>
             public FSFlags Flags;
 
@@ -965,14 +1013,17 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public byte Unk3;
+            public byte Unk06;
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public byte Unk4;
+            public byte Unk07;
 
-            public int Unk5;
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public int Unk18;
 
             /// <summary>
             /// Indexes to vertices in a vertex group.
@@ -982,20 +1033,21 @@ namespace SoulsFormats
             internal FaceSet(BinaryReaderEx br, int dataOffset)
             {
                 Flags = (FSFlags)br.ReadUInt32();
+
                 TriangleStrip = br.ReadBoolean();
                 CullBackfaces = br.ReadBoolean();
-                Unk3 = br.ReadByte();
-                Unk4 = br.ReadByte();
+                Unk06 = br.ReadByte();
+                Unk07 = br.ReadByte();
 
                 int vertexCount = br.ReadInt32();
                 int vertexOffset = br.ReadInt32();
                 int vertexSize = br.ReadInt32();
-
+                
+                br.AssertInt32(0);
+                Unk18 = br.AssertInt32(0, 0x10, 0x20);
+                br.AssertInt32(0);
+                
                 Vertices = br.GetUInt16s(dataOffset + vertexOffset, vertexCount);
-
-                br.AssertInt32(0);
-                Unk5 = br.AssertInt32(0, 0x10, 0x20);
-                br.AssertInt32(0);
             }
 
             internal void Write(BinaryWriterEx bw, int index)
@@ -1004,15 +1056,15 @@ namespace SoulsFormats
 
                 bw.WriteBoolean(TriangleStrip);
                 bw.WriteBoolean(CullBackfaces);
-                bw.WriteByte(Unk3);
-                bw.WriteByte(Unk4);
+                bw.WriteByte(Unk06);
+                bw.WriteByte(Unk07);
 
                 bw.WriteInt32(Vertices.Length);
                 bw.ReserveInt32($"FaceSetVertices{index}");
                 bw.WriteInt32(Vertices.Length * 2);
 
                 bw.WriteInt32(0);
-                bw.WriteInt32(Unk5);
+                bw.WriteInt32(Unk18);
                 bw.WriteInt32(0);
             }
 
@@ -1031,7 +1083,7 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk1;
+            public int Unk00;
 
             /// <summary>
             /// Index to a layout in the FLVER's layout collection.
@@ -1047,7 +1099,7 @@ namespace SoulsFormats
 
             internal VertexGroup(BinaryReaderEx br)
             {
-                Unk1 = br.ReadInt32();
+                Unk00 = br.ReadInt32();
                 VertexStructLayoutIndex = br.ReadInt32();
                 int vertexSize = br.ReadInt32();
                 vertexCount = br.ReadInt32();
@@ -1083,7 +1135,7 @@ namespace SoulsFormats
             {
                 VertexStructLayout layout = layouts[VertexStructLayoutIndex];
 
-                bw.WriteInt32(Unk1);
+                bw.WriteInt32(Unk00);
                 bw.WriteInt32(VertexStructLayoutIndex);
 
                 int vertexSize = 0;
@@ -1091,10 +1143,6 @@ namespace SoulsFormats
                 {
                     switch (member.ValueType)
                     {
-                        case VertexStructLayout.Member.MemberValueType.Vector3:
-                            vertexSize += 12;
-                            break;
-
                         case VertexStructLayout.Member.MemberValueType.Unk10:
                         case VertexStructLayout.Member.MemberValueType.BoneIndicesStruct:
                         case VertexStructLayout.Member.MemberValueType.Unk12:
@@ -1104,9 +1152,18 @@ namespace SoulsFormats
                             vertexSize += 4;
                             break;
 
+                        case VertexStructLayout.Member.MemberValueType.Float2:
                         case VertexStructLayout.Member.MemberValueType.UVPair:
                         case VertexStructLayout.Member.MemberValueType.BoneWeightsStruct:
                             vertexSize += 8;
+                            break;
+
+                        case VertexStructLayout.Member.MemberValueType.Float3:
+                            vertexSize += 12;
+                            break;
+
+                        case VertexStructLayout.Member.MemberValueType.Float4:
+                            vertexSize += 16;
                             break;
 
                         default:
@@ -1188,7 +1245,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int Unk1;
+                public int Unk00;
 
                 /// <summary>
                 /// Offset of this member from the start of a vertex struct.
@@ -1212,7 +1269,7 @@ namespace SoulsFormats
 
                 internal Member(BinaryReaderEx br)
                 {
-                    Unk1 = br.AssertInt32(0, 1);
+                    Unk00 = br.AssertInt32(0, 1);
                     StructOffset = br.ReadInt32();
                     ValueType = br.ReadEnum32<MemberValueType>();
                     Semantic = br.ReadEnum32<MemberSemantic>();
@@ -1221,7 +1278,7 @@ namespace SoulsFormats
 
                 internal void Write(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk1);
+                    bw.WriteInt32(Unk00);
                     bw.WriteInt32(StructOffset);
                     bw.WriteUInt32((uint)ValueType);
                     bw.WriteUInt32((uint)Semantic);
@@ -1242,19 +1299,19 @@ namespace SoulsFormats
                 public enum MemberValueType : uint
                 {
                     /// <summary>
-                    /// Unknown.
+                    /// Two single-precision floats.
                     /// </summary>
-                    Unk01 = 0x01,
+                    Float2 = 0x01,
 
                     /// <summary>
-                    /// Three four-byte floating point numbers.
+                    /// Three single-precision floats.
                     /// </summary>
-                    Vector3 = 0x02,
+                    Float3 = 0x02,
 
                     /// <summary>
-                    /// Unknown.
+                    /// Four single-precision floats.
                     /// </summary>
-                    Unk03 = 0x03,
+                    Float4 = 0x03,
 
                     /// <summary>
                     /// Unknown.
@@ -1286,7 +1343,10 @@ namespace SoulsFormats
                     /// </summary>
                     UVPair = 0x16,
 
-                    Unk18 = 0x18,
+                    /// <summary>
+                    /// Four shorts, maybe unsigned?
+                    /// </summary>
+                    ShortBoneIndices = 0x18,
 
                     /// <summary>
                     /// Four shorts.
@@ -1380,14 +1440,17 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public byte Unk3;
+            public byte Unk10;
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public bool Unk4;
+            public bool Unk11;
 
-            public int Unk5, Unk6;
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public int Unk14, Unk1C;
 
             internal MaterialParam(BinaryReaderEx br)
             {
@@ -1396,14 +1459,14 @@ namespace SoulsFormats
                 ScaleX = br.ReadSingle();
                 ScaleY = br.ReadSingle();
 
-                Unk3 = br.AssertByte(0, 1, 2);
-                Unk4 = br.ReadBoolean();
+                Unk10 = br.AssertByte(0, 1, 2);
+                Unk11 = br.ReadBoolean();
                 br.AssertByte(0);
                 br.AssertByte(0);
 
-                Unk5 = br.ReadInt32();
+                Unk14 = br.ReadInt32();
                 br.AssertInt32(0);
-                Unk6 = br.ReadInt32();
+                Unk1C = br.ReadInt32();
 
                 Param = br.GetUTF16(paramOffset);
                 Value = br.GetUTF16(valueOffset);
@@ -1416,14 +1479,14 @@ namespace SoulsFormats
                 bw.WriteSingle(ScaleX);
                 bw.WriteSingle(ScaleY);
 
-                bw.WriteByte(Unk3);
-                bw.WriteBoolean(Unk4);
+                bw.WriteByte(Unk10);
+                bw.WriteBoolean(Unk11);
                 bw.WriteByte(0);
                 bw.WriteByte(0);
 
-                bw.WriteInt32(Unk5);
+                bw.WriteInt32(Unk14);
                 bw.WriteInt32(0);
-                bw.WriteInt32(Unk6);
+                bw.WriteInt32(Unk1C);
             }
 
             /// <summary>
@@ -1446,12 +1509,12 @@ namespace SoulsFormats
             public Vector3 Position;
 
             /// <summary>
-            /// Bones the vertex is weighted to, indexing the parent mesh's bone indices.
+            /// Bones the vertex is weighted to, indexing the parent mesh's bone indices; must be 4 length.
             /// </summary>
-            public ushort[] BoneIndices;
+            public int[] BoneIndices;
 
             /// <summary>
-            /// Weight of the vertex's attachment to bones.
+            /// Weight of the vertex's attachment to bones; must be 4 length.
             /// </summary>
             public float[] BoneWeights;
 
@@ -1466,7 +1529,7 @@ namespace SoulsFormats
             public Vector4 Normal;
 
             /// <summary>
-            /// Unknown.
+            /// Unknown. Items must be 4 length.
             /// </summary>
             public List<byte[]> BiTangents;
 
@@ -1476,7 +1539,7 @@ namespace SoulsFormats
             public List<Color> Colors;
 
             /// <summary>
-            /// Unknown.
+            /// Unknown. Must be 4 length.
             /// </summary>
             public byte[] UnknownVector4A;
 
@@ -1495,7 +1558,7 @@ namespace SoulsFormats
                 {
                     switch (member.ValueType)
                     {
-                        case VertexStructLayout.Member.MemberValueType.Unk01:
+                        case VertexStructLayout.Member.MemberValueType.Float2:
                             if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UV)
                             {
                                 UVs.Add(new Vector3(br.ReadVector2(), 0));
@@ -1504,7 +1567,7 @@ namespace SoulsFormats
                                 throw new NotImplementedException();
                             break;
 
-                        case VertexStructLayout.Member.MemberValueType.Vector3:
+                        case VertexStructLayout.Member.MemberValueType.Float3:
                             if (member.Semantic == VertexStructLayout.Member.MemberSemantic.Position)
                             {
                                 Position = br.ReadVector3();
@@ -1517,7 +1580,7 @@ namespace SoulsFormats
                                 throw new NotImplementedException();
                             break;
 
-                        case VertexStructLayout.Member.MemberValueType.Unk03:
+                        case VertexStructLayout.Member.MemberValueType.Float4:
                             if (member.Semantic == VertexStructLayout.Member.MemberSemantic.Normal)
                             {
                                 Normal = br.ReadVector4();
@@ -1537,12 +1600,7 @@ namespace SoulsFormats
                         case VertexStructLayout.Member.MemberValueType.Unk2F:
                             if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BoneIndices)
                             {
-                                BoneIndices = new ushort[] {
-                                    br.ReadByte(),
-                                    br.ReadByte(),
-                                    br.ReadByte(),
-                                    br.ReadByte()
-                                };
+                                BoneIndices = br.ReadBytes(4).Select(b => (int)b).ToArray();
                             }
                             else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.Normal)
                             {
@@ -1601,10 +1659,10 @@ namespace SoulsFormats
                                 throw new NotImplementedException();
                             break;
 
-                        case VertexStructLayout.Member.MemberValueType.Unk18:
+                        case VertexStructLayout.Member.MemberValueType.ShortBoneIndices:
                             if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BoneIndices)
                             {
-                                BoneIndices = br.ReadUInt16s(4);
+                                BoneIndices = br.ReadUInt16s(4).Select(s => (int)s).ToArray();
                             }
                             else
                                 throw new NotImplementedException();
@@ -1661,7 +1719,7 @@ namespace SoulsFormats
                 {
                     switch (member.ValueType)
                     {
-                        case VertexStructLayout.Member.MemberValueType.Unk01:
+                        case VertexStructLayout.Member.MemberValueType.Float2:
                             if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UV)
                             {
                                 Vector3 uv = uvQueue.Dequeue();
@@ -1672,7 +1730,7 @@ namespace SoulsFormats
                                 throw new NotImplementedException();
                             break;
 
-                        case VertexStructLayout.Member.MemberValueType.Vector3:
+                        case VertexStructLayout.Member.MemberValueType.Float3:
                             if (member.Semantic == VertexStructLayout.Member.MemberSemantic.Position)
                             {
                                 bw.WriteVector3(Position);
@@ -1685,7 +1743,7 @@ namespace SoulsFormats
                                 throw new NotImplementedException();
                             break;
 
-                        case VertexStructLayout.Member.MemberValueType.Unk03:
+                        case VertexStructLayout.Member.MemberValueType.Float4:
                             if (member.Semantic == VertexStructLayout.Member.MemberSemantic.Normal)
                             {
                                 bw.WriteVector4(Normal);
@@ -1707,10 +1765,7 @@ namespace SoulsFormats
                         case VertexStructLayout.Member.MemberValueType.Unk2F:
                             if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BoneIndices)
                             {
-                                bw.WriteByte((byte)BoneIndices[0]);
-                                bw.WriteByte((byte)BoneIndices[1]);
-                                bw.WriteByte((byte)BoneIndices[2]);
-                                bw.WriteByte((byte)BoneIndices[3]);
+                                bw.WriteBytes(BoneIndices.Select(i => checked((byte)i)).ToArray());
                             }
                             else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.Normal)
                             {
@@ -1765,10 +1820,10 @@ namespace SoulsFormats
                                 throw new NotImplementedException();
                             break;
 
-                        case VertexStructLayout.Member.MemberValueType.Unk18:
+                        case VertexStructLayout.Member.MemberValueType.ShortBoneIndices:
                             if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BoneIndices)
                             {
-                                bw.WriteUInt16s(BoneIndices);
+                                bw.WriteUInt16s(BoneIndices.Select(i => checked((ushort)i)).ToArray());
                             }
                             else
                                 throw new NotImplementedException();
