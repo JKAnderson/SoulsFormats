@@ -1155,7 +1155,7 @@ namespace SoulsFormats
 
                         case VertexStructLayout.Member.MemberValueType.Float2:
                         case VertexStructLayout.Member.MemberValueType.UVPair:
-                        case VertexStructLayout.Member.MemberValueType.Short4toFloat4:
+                        case VertexStructLayout.Member.MemberValueType.Short4toFloat4A:
                             vertexSize += 8;
                             break;
 
@@ -1352,12 +1352,12 @@ namespace SoulsFormats
                     /// <summary>
                     /// Four shorts.
                     /// </summary>
-                    Short4toFloat4 = 0x1A,
+                    Short4toFloat4A = 0x1A,
 
                     /// <summary>
                     /// Unknown.
                     /// </summary>
-                    Byte4D = 0x2E,
+                    Short4toFloat4B = 0x2E,
 
                     /// <summary>
                     /// Unknown.
@@ -1577,7 +1577,7 @@ namespace SoulsFormats
                             {
                                 BoneWeights = br.ReadSBytes(4).Select(w => w / (float)sbyte.MaxValue).ToArray();
                             }
-                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Short4toFloat4)
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Short4toFloat4A)
                             {
                                 BoneWeights = br.ReadInt16s(4).Select(w => w / (float)short.MaxValue).ToArray();
                             }
@@ -1622,9 +1622,9 @@ namespace SoulsFormats
                                 float[] floats = br.ReadSBytes(4).Select(n => n / (float)sbyte.MaxValue).ToArray();
                                 Normal = new Vector4(floats[0], floats[1], floats[2], floats[3]);
                             }
-                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4D)
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Short4toFloat4B)
                             {
-                                float[] floats = br.ReadSBytes(4).Select(n => n / (float)sbyte.MaxValue).ToArray();
+                                float[] floats = br.ReadInt16s(4).Select(n => n / (float)short.MaxValue).ToArray();
                                 Normal = new Vector4(floats[0], floats[1], floats[2], floats[3]);
                             }
                             else
@@ -1759,7 +1759,7 @@ namespace SoulsFormats
                             {
                                 bw.WriteSBytes(BoneWeights.Select(w => (sbyte)(w * sbyte.MaxValue)).ToArray());
                             }
-                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Short4toFloat4)
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Short4toFloat4A)
                             {
                                 bw.WriteInt16s(BoneWeights.Select(w => (short)(w * short.MaxValue)).ToArray());
                             }
@@ -1810,12 +1810,12 @@ namespace SoulsFormats
                                 bw.WriteSByte(checked((sbyte)(Normal.Z * sbyte.MaxValue)));
                                 bw.WriteSByte(checked((sbyte)(Normal.W * sbyte.MaxValue)));
                             }
-                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4D)
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Short4toFloat4B)
                             {
-                                bw.WriteSByte(checked((sbyte)(Normal.X * sbyte.MaxValue)));
-                                bw.WriteSByte(checked((sbyte)(Normal.Y * sbyte.MaxValue)));
-                                bw.WriteSByte(checked((sbyte)(Normal.Z * sbyte.MaxValue)));
-                                bw.WriteSByte(checked((sbyte)(Normal.W * sbyte.MaxValue)));
+                                bw.WriteInt16(checked((short)(Normal.X * short.MaxValue)));
+                                bw.WriteInt16(checked((short)(Normal.Y * short.MaxValue)));
+                                bw.WriteInt16(checked((short)(Normal.Z * short.MaxValue)));
+                                bw.WriteInt16(checked((short)(Normal.W * short.MaxValue)));
                             }
                             else
                                 throw new NotImplementedException();
