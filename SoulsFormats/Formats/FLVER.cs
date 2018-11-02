@@ -154,7 +154,7 @@ namespace SoulsFormats
                 materialParams.Add(new MaterialParam(br));
 
             foreach (VertexGroup vertexGroup in vertexGroups)
-                vertexGroup.ReadVertices(br, dataOffset, VertexStructLayouts);
+                vertexGroup.ReadVertices(br, dataOffset, VertexStructLayouts, Header.Version);
 
             Dictionary<int, MaterialParam> materialParamDict = Dictionize(materialParams);
             foreach (Material material in Materials)
@@ -385,7 +385,7 @@ namespace SoulsFormats
             {
                 Mesh mesh = Meshes[i];
                 for (int j = 0; j < mesh.VertexGroups.Count; j++)
-                    mesh.VertexGroups[j].WriteVertices(bw, vertexGroupIndex + j, dataStart, VertexStructLayouts);
+                    mesh.VertexGroups[j].WriteVertices(bw, vertexGroupIndex + j, dataStart, VertexStructLayouts, Header.Version);
                 vertexGroupIndex += mesh.VertexGroups.Count;
                 bw.Pad(0x20);
             }
@@ -404,7 +404,7 @@ namespace SoulsFormats
             public bool BigEndian;
 
             /// <summary>
-            /// Exact meaning unknown. 0x2000C or 0x2000D for DS1, 0x20010 for DS3.
+            /// Exact meaning unknown.
             /// </summary>
             public int Version;
 
@@ -882,6 +882,7 @@ namespace SoulsFormats
                 if (version >= 0x20013)
                 {
                     int unkOffset = br.ReadInt32();
+                    // Always 6 as far as I can tell, even when <6 facesets.
                     unkFloats = br.GetSingles(unkOffset, 6);
                 }
                 int boneOffset = br.ReadInt32();
@@ -1042,11 +1043,11 @@ namespace SoulsFormats
                 int vertexCount = br.ReadInt32();
                 int vertexOffset = br.ReadInt32();
                 int vertexSize = br.ReadInt32();
-                
+
                 br.AssertInt32(0);
                 Unk18 = br.AssertInt32(0, 0x10, 0x20);
                 br.AssertInt32(0);
-                
+
                 Vertices = br.GetUInt16s(dataOffset + vertexOffset, vertexCount);
             }
 
@@ -1109,7 +1110,7 @@ namespace SoulsFormats
                 vertexBufferOffset = br.ReadInt32();
             }
 
-            internal void ReadVertices(BinaryReaderEx br, int dataOffset, List<VertexStructLayout> layouts)
+            internal void ReadVertices(BinaryReaderEx br, int dataOffset, List<VertexStructLayout> layouts, int version)
             {
                 VertexStructLayout layout = layouts[VertexStructLayoutIndex];
                 Vertices = new List<Vertex>();
@@ -1117,7 +1118,7 @@ namespace SoulsFormats
                 try
                 {
                     for (int i = 0; i < vertexCount; i++)
-                        Vertices.Add(new Vertex(br, layout));
+                        Vertices.Add(new Vertex(br, layout, version));
                 }
                 catch (EndOfStreamException ex)
                 {
@@ -1143,18 +1144,18 @@ namespace SoulsFormats
                 {
                     switch (member.ValueType)
                     {
-                        case VertexStructLayout.Member.MemberValueType.Unk10:
-                        case VertexStructLayout.Member.MemberValueType.BoneIndicesStruct:
-                        case VertexStructLayout.Member.MemberValueType.Unk12:
-                        case VertexStructLayout.Member.MemberValueType.PackedVector4:
+                        case VertexStructLayout.Member.MemberValueType.Byte4A:
+                        case VertexStructLayout.Member.MemberValueType.Byte4B:
+                        case VertexStructLayout.Member.MemberValueType.Short2toFloat2:
+                        case VertexStructLayout.Member.MemberValueType.Byte4C:
                         case VertexStructLayout.Member.MemberValueType.UV:
-                        case VertexStructLayout.Member.MemberValueType.Unk2F:
+                        case VertexStructLayout.Member.MemberValueType.Byte4E:
                             vertexSize += 4;
                             break;
 
                         case VertexStructLayout.Member.MemberValueType.Float2:
                         case VertexStructLayout.Member.MemberValueType.UVPair:
-                        case VertexStructLayout.Member.MemberValueType.BoneWeightsStruct:
+                        case VertexStructLayout.Member.MemberValueType.Short4toFloat4:
                             vertexSize += 8;
                             break;
 
@@ -1179,12 +1180,12 @@ namespace SoulsFormats
                 bw.ReserveInt32($"VertexGroupVertices{index}");
             }
 
-            internal void WriteVertices(BinaryWriterEx bw, int index, int dataStart, List<VertexStructLayout> layouts)
+            internal void WriteVertices(BinaryWriterEx bw, int index, int dataStart, List<VertexStructLayout> layouts, int version)
             {
                 VertexStructLayout layout = layouts[VertexStructLayoutIndex];
                 bw.FillInt32($"VertexGroupVertices{index}", (int)bw.Position - dataStart);
                 foreach (Vertex vertex in Vertices)
-                    vertex.Write(bw, layout);
+                    vertex.Write(bw, layout, version);
             }
         }
 
@@ -1211,7 +1212,7 @@ namespace SoulsFormats
                 {
                     if (member.Semantic != Member.MemberSemantic.VertexColor
                         && member.Semantic != Member.MemberSemantic.UV
-                        && member.Semantic != Member.MemberSemantic.BiTangent)
+                        && member.Semantic != Member.MemberSemantic.Tangent)
                     {
                         if (semantics.Contains(member.Semantic))
                             throw new NotImplementedException();
@@ -1316,22 +1317,22 @@ namespace SoulsFormats
                     /// <summary>
                     /// Unknown.
                     /// </summary>
-                    Unk10 = 0x10,
+                    Byte4A = 0x10,
 
                     /// <summary>
                     /// Four bytes.
                     /// </summary>
-                    BoneIndicesStruct = 0x11,
+                    Byte4B = 0x11,
 
                     /// <summary>
                     /// Two shorts?
                     /// </summary>
-                    Unk12 = 0x12,
+                    Short2toFloat2 = 0x12,
 
                     /// <summary>
                     /// Four bytes.
                     /// </summary>
-                    PackedVector4 = 0x13,
+                    Byte4C = 0x13,
 
                     /// <summary>
                     /// Two shorts.
@@ -1351,17 +1352,17 @@ namespace SoulsFormats
                     /// <summary>
                     /// Four shorts.
                     /// </summary>
-                    BoneWeightsStruct = 0x1A,
+                    Short4toFloat4 = 0x1A,
 
                     /// <summary>
                     /// Unknown.
                     /// </summary>
-                    Unk2E = 0x2E,
+                    Byte4D = 0x2E,
 
                     /// <summary>
                     /// Unknown.
                     /// </summary>
-                    Unk2F = 0x2F,
+                    Byte4E = 0x2F,
                 }
 
                 /// <summary>
@@ -1397,7 +1398,7 @@ namespace SoulsFormats
                     /// <summary>
                     /// Unknown.
                     /// </summary>
-                    BiTangent = 0x06,
+                    Tangent = 0x06,
 
                     /// <summary>
                     /// Unknown.
@@ -1531,7 +1532,7 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown. Items must be 4 length.
             /// </summary>
-            public List<byte[]> BiTangents;
+            public List<Vector4> Tangents;
 
             /// <summary>
             /// Color of the vertex (if untextured?)
@@ -1541,165 +1542,186 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown. Must be 4 length.
             /// </summary>
-            public byte[] UnknownVector4A;
+            public byte[] UnknownVector4;
 
-            internal Vertex(BinaryReaderEx br, VertexStructLayout layout)
+            internal Vertex(BinaryReaderEx br, VertexStructLayout layout, int version)
             {
                 Position = Vector3.Zero;
                 BoneIndices = null;
                 BoneWeights = null;
                 UVs = new List<Vector3>();
                 Normal = Vector4.Zero;
-                BiTangents = new List<byte[]>();
+                Tangents = new List<Vector4>();
                 Colors = new List<Color>();
-                UnknownVector4A = null;
+                UnknownVector4 = null;
+
+                float uvFactor = 1024;
+                if (version == 0x20009 || version >= 0x20010)
+                    uvFactor = 2048;
 
                 foreach (VertexStructLayout.Member member in layout)
                 {
-                    switch (member.ValueType)
+                    switch (member.Semantic)
                     {
-                        case VertexStructLayout.Member.MemberValueType.Float2:
-                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UV)
-                            {
-                                UVs.Add(new Vector3(br.ReadVector2(), 0));
-                            }
-                            else
-                                throw new NotImplementedException();
-                            break;
-
-                        case VertexStructLayout.Member.MemberValueType.Float3:
-                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.Position)
+                        case VertexStructLayout.Member.MemberSemantic.Position:
+                            if (member.ValueType == VertexStructLayout.Member.MemberValueType.Float3)
                             {
                                 Position = br.ReadVector3();
                             }
-                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UV)
+                            else
+                                throw new NotImplementedException();
+                            break;
+
+                        case VertexStructLayout.Member.MemberSemantic.BoneWeights:
+                            if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4C)
                             {
-                                UVs.Add(br.ReadVector3());
+                                BoneWeights = br.ReadSBytes(4).Select(w => w / (float)sbyte.MaxValue).ToArray();
+                            }
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Short4toFloat4)
+                            {
+                                BoneWeights = br.ReadInt16s(4).Select(w => w / (float)short.MaxValue).ToArray();
                             }
                             else
                                 throw new NotImplementedException();
                             break;
 
-                        case VertexStructLayout.Member.MemberValueType.Float4:
-                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.Normal)
+                        case VertexStructLayout.Member.MemberSemantic.BoneIndices:
+                            if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4B)
+                            {
+                                BoneIndices = br.ReadBytes(4).Select(i => (int)i).ToArray();
+                            }
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.ShortBoneIndices)
+                            {
+                                BoneIndices = br.ReadUInt16s(4).Select(i => (int)i).ToArray();
+                            }
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4E)
+                            {
+                                BoneIndices = br.ReadBytes(4).Select(i => (int)i).ToArray();
+                            }
+                            else
+                                throw new NotImplementedException();
+                            break;
+
+                        case VertexStructLayout.Member.MemberSemantic.Normal:
+                            if (member.ValueType == VertexStructLayout.Member.MemberValueType.Float4)
                             {
                                 Normal = br.ReadVector4();
                             }
-                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.VertexColor)
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4A)
                             {
-                                Vector4 color = br.ReadVector4();
-                                Colors.Add(Color.FromArgb((byte)color.X, (byte)color.Y, (byte)color.Z, (byte)color.W));
+                                float[] floats = br.ReadSBytes(4).Select(n => n / (float)sbyte.MaxValue).ToArray();
+                                Normal = new Vector4(floats[0], floats[1], floats[2], floats[3]);
+                            }
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4B)
+                            {
+                                float[] floats = br.ReadSBytes(4).Select(n => n / (float)sbyte.MaxValue).ToArray();
+                                Normal = new Vector4(floats[0], floats[1], floats[2], floats[3]);
+                            }
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4C)
+                            {
+                                float[] floats = br.ReadSBytes(4).Select(n => n / (float)sbyte.MaxValue).ToArray();
+                                Normal = new Vector4(floats[0], floats[1], floats[2], floats[3]);
+                            }
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4D)
+                            {
+                                float[] floats = br.ReadSBytes(4).Select(n => n / (float)sbyte.MaxValue).ToArray();
+                                Normal = new Vector4(floats[0], floats[1], floats[2], floats[3]);
                             }
                             else
                                 throw new NotImplementedException();
                             break;
 
-                        case VertexStructLayout.Member.MemberValueType.Unk10:
-                        case VertexStructLayout.Member.MemberValueType.BoneIndicesStruct:
-                        case VertexStructLayout.Member.MemberValueType.PackedVector4:
-                        case VertexStructLayout.Member.MemberValueType.Unk2F:
-                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BoneIndices)
+                        case VertexStructLayout.Member.MemberSemantic.UV:
+                            if (member.ValueType == VertexStructLayout.Member.MemberValueType.Float2)
                             {
-                                BoneIndices = br.ReadBytes(4).Select(b => (int)b).ToArray();
+                                UVs.Add(new Vector3(br.ReadVector2() / uvFactor, 0));
                             }
-                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.Normal)
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Float3)
                             {
-                                Normal = new Vector4(
-                                    br.ReadByte(),
-                                    br.ReadByte(),
-                                    br.ReadByte(),
-                                    br.ReadByte()
-                                );
+                                UVs.Add(br.ReadVector3() / uvFactor);
                             }
-                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BiTangent)
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4A)
                             {
-                                BiTangents.Add(br.ReadBytes(4));
+                                UVs.Add(new Vector3(br.ReadInt16() / 1024f, br.ReadInt16() / uvFactor, 0));
                             }
-                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UnknownVector4A)
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4B)
                             {
-                                UnknownVector4A = br.ReadBytes(4);
+                                UVs.Add(new Vector3(br.ReadInt16() / 1024f, br.ReadInt16() / uvFactor, 0));
                             }
-                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.VertexColor)
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Short2toFloat2)
                             {
-                                Colors.Add(ReadColor(br));
+                                UVs.Add(new Vector3(br.ReadInt16() / 1024f, br.ReadInt16() / uvFactor, 0));
                             }
-                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BoneWeights)
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4C)
                             {
-                                BoneWeights = new float[] {
-                                    br.ReadByte() / 255f,
-                                    br.ReadByte() / 255f,
-                                    br.ReadByte() / 255f,
-                                    br.ReadByte() / 255f
-                                };
+                                UVs.Add(new Vector3(br.ReadInt16() / 1024f, br.ReadInt16() / uvFactor, 0));
                             }
-                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UV)
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.UV)
                             {
-                                UVs.Add(ReadUV(br));
+                                UVs.Add(new Vector3(br.ReadInt16() / 1024f, br.ReadInt16() / uvFactor, 0));
+                            }
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.UVPair)
+                            {
+                                UVs.Add(new Vector3(br.ReadInt16() / 1024f, br.ReadInt16() / uvFactor, 0));
+                                UVs.Add(new Vector3(br.ReadInt16() / 1024f, br.ReadInt16() / uvFactor, 0));
                             }
                             else
                                 throw new NotImplementedException();
                             break;
 
-                        case VertexStructLayout.Member.MemberValueType.UV:
-                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UV)
+                        case VertexStructLayout.Member.MemberSemantic.Tangent:
+                            if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4A)
                             {
-                                UVs.Add(ReadUV(br));
+                                float[] floats = br.ReadSBytes(4).Select(n => n / (float)sbyte.MaxValue).ToArray();
+                                Tangents.Add(new Vector4(floats[0], floats[1], floats[2], floats[3]));
+                            }
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4B)
+                            {
+                                float[] floats = br.ReadSBytes(4).Select(n => n / (float)sbyte.MaxValue).ToArray();
+                                Tangents.Add(new Vector4(floats[0], floats[1], floats[2], floats[3]));
+                            }
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4C)
+                            {
+                                float[] floats = br.ReadSBytes(4).Select(n => n / (float)sbyte.MaxValue).ToArray();
+                                Tangents.Add(new Vector4(floats[0], floats[1], floats[2], floats[3]));
                             }
                             else
                                 throw new NotImplementedException();
                             break;
 
-                        case VertexStructLayout.Member.MemberValueType.UVPair:
-                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UV)
+                        case VertexStructLayout.Member.MemberSemantic.UnknownVector4A:
+                            if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4B)
                             {
-                                UVs.Add(ReadUV(br));
-                                UVs.Add(ReadUV(br));
+                                UnknownVector4 = br.ReadBytes(4);
+                            }
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4C)
+                            {
+                                UnknownVector4 = br.ReadBytes(4);
                             }
                             else
                                 throw new NotImplementedException();
                             break;
 
-                        case VertexStructLayout.Member.MemberValueType.ShortBoneIndices:
-                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BoneIndices)
+                        case VertexStructLayout.Member.MemberSemantic.VertexColor:
+                            if (member.ValueType == VertexStructLayout.Member.MemberValueType.Float4)
                             {
-                                BoneIndices = br.ReadUInt16s(4).Select(s => (int)s).ToArray();
+                                // TODO
+                                float[] floats = br.ReadSingles(4);
+                                foreach (float f in floats)
+                                    if (f > 1.005 || f < 0)
+                                        Console.WriteLine(f);
+                                byte[] bytes = floats.Select(f => (byte)(f * byte.MaxValue)).ToArray();
+                                Colors.Add(Color.FromArgb(bytes[3], bytes[0], bytes[1], bytes[2]));
                             }
-                            else
-                                throw new NotImplementedException();
-                            break;
-
-                        case VertexStructLayout.Member.MemberValueType.BoneWeightsStruct:
-                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BoneWeights)
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4A)
                             {
-                                BoneWeights = new float[] {
-                                    br.ReadUInt16() / 65535f,
-                                    br.ReadUInt16() / 65535f,
-                                    br.ReadUInt16() / 65535f,
-                                    br.ReadUInt16() / 65535f
-                                };
+                                byte[] bytes = br.ReadBytes(4);
+                                Colors.Add(Color.FromArgb(bytes[0], bytes[1], bytes[2], bytes[3]));
                             }
-                            else
-                                throw new NotImplementedException();
-                            break;
-
-                        case VertexStructLayout.Member.MemberValueType.Unk12:
-                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UV)
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4C)
                             {
-                                UVs.Add(ReadUV(br));
-                            }
-                            else
-                                throw new NotImplementedException();
-                            break;
-
-                        case VertexStructLayout.Member.MemberValueType.Unk2E:
-                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.Normal)
-                            {
-                                Normal = new Vector4(
-                                    br.ReadByte(),
-                                    br.ReadByte(),
-                                    br.ReadByte(),
-                                    br.ReadByte()
-                                );
+                                byte[] bytes = br.ReadBytes(4);
+                                Colors.Add(Color.FromArgb(bytes[3], bytes[0], bytes[1], bytes[2]));
                             }
                             else
                                 throw new NotImplementedException();
@@ -1711,152 +1733,216 @@ namespace SoulsFormats
                 }
             }
 
-            internal void Write(BinaryWriterEx bw, VertexStructLayout layout)
+            internal void Write(BinaryWriterEx bw, VertexStructLayout layout, int version)
             {
                 var uvQueue = new Queue<Vector3>(UVs);
 
+                float uvFactor = 1024;
+                if (version == 0x20009 || version >= 0x20010)
+                    uvFactor = 2048;
+
                 foreach (VertexStructLayout.Member member in layout)
                 {
-                    switch (member.ValueType)
+                    switch (member.Semantic)
                     {
-                        case VertexStructLayout.Member.MemberValueType.Float2:
-                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UV)
-                            {
-                                Vector3 uv = uvQueue.Dequeue();
-                                bw.WriteSingle(uv.X);
-                                bw.WriteSingle(uv.Y);
-                            }
-                            else
-                                throw new NotImplementedException();
-                            break;
-
-                        case VertexStructLayout.Member.MemberValueType.Float3:
-                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.Position)
+                        case VertexStructLayout.Member.MemberSemantic.Position:
+                            if (member.ValueType == VertexStructLayout.Member.MemberValueType.Float3)
                             {
                                 bw.WriteVector3(Position);
                             }
-                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UV)
+                            else
+                                throw new NotImplementedException();
+                            break;
+
+                        case VertexStructLayout.Member.MemberSemantic.BoneWeights:
+                            if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4C)
                             {
-                                bw.WriteVector3(uvQueue.Dequeue());
+                                bw.WriteSBytes(BoneWeights.Select(w => (sbyte)(w * sbyte.MaxValue)).ToArray());
+                            }
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Short4toFloat4)
+                            {
+                                bw.WriteInt16s(BoneWeights.Select(w => (short)(w * short.MaxValue)).ToArray());
                             }
                             else
                                 throw new NotImplementedException();
                             break;
 
-                        case VertexStructLayout.Member.MemberValueType.Float4:
-                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.Normal)
-                            {
-                                bw.WriteVector4(Normal);
-                            }
-                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.VertexColor)
-                            {
-                                bw.WriteSingle(Colors[member.Index].A);
-                                bw.WriteSingle(Colors[member.Index].R);
-                                bw.WriteSingle(Colors[member.Index].G);
-                                bw.WriteSingle(Colors[member.Index].B);
-                            }
-                            else
-                                throw new NotImplementedException();
-                            break;
-
-                        case VertexStructLayout.Member.MemberValueType.Unk10:
-                        case VertexStructLayout.Member.MemberValueType.BoneIndicesStruct:
-                        case VertexStructLayout.Member.MemberValueType.PackedVector4:
-                        case VertexStructLayout.Member.MemberValueType.Unk2F:
-                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BoneIndices)
+                        case VertexStructLayout.Member.MemberSemantic.BoneIndices:
+                            if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4B)
                             {
                                 bw.WriteBytes(BoneIndices.Select(i => checked((byte)i)).ToArray());
                             }
-                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.Normal)
-                            {
-                                bw.WriteByte((byte)Normal.X);
-                                bw.WriteByte((byte)Normal.Y);
-                                bw.WriteByte((byte)Normal.Z);
-                                bw.WriteByte((byte)Normal.W);
-                            }
-                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BiTangent)
-                            {
-                                bw.WriteBytes(BiTangents[member.Index]);
-                            }
-                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UnknownVector4A)
-                            {
-                                bw.WriteBytes(UnknownVector4A);
-                            }
-                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.VertexColor)
-                            {
-                                WriteColor(bw, Colors[member.Index]);
-                            }
-                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BoneWeights)
-                            {
-                                bw.WriteByte((byte)(BoneWeights[0] * 255));
-                                bw.WriteByte((byte)(BoneWeights[1] * 255));
-                                bw.WriteByte((byte)(BoneWeights[2] * 255));
-                                bw.WriteByte((byte)(BoneWeights[3] * 255));
-                            }
-                            else if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UV)
-                            {
-                                WriteUV(bw, uvQueue.Dequeue());
-                            }
-                            else
-                                throw new NotImplementedException();
-                            break;
-
-                        case VertexStructLayout.Member.MemberValueType.UV:
-                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UV)
-                            {
-                                WriteUV(bw, uvQueue.Dequeue());
-                            }
-                            else
-                                throw new NotImplementedException();
-                            break;
-
-                        case VertexStructLayout.Member.MemberValueType.UVPair:
-                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UV)
-                            {
-                                WriteUV(bw, uvQueue.Dequeue());
-                                WriteUV(bw, uvQueue.Dequeue());
-                            }
-                            else
-                                throw new NotImplementedException();
-                            break;
-
-                        case VertexStructLayout.Member.MemberValueType.ShortBoneIndices:
-                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BoneIndices)
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.ShortBoneIndices)
                             {
                                 bw.WriteUInt16s(BoneIndices.Select(i => checked((ushort)i)).ToArray());
                             }
-                            else
-                                throw new NotImplementedException();
-                            break;
-
-                        case VertexStructLayout.Member.MemberValueType.BoneWeightsStruct:
-                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.BoneWeights)
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4E)
                             {
-                                bw.WriteUInt16((ushort)(BoneWeights[0] * 65535));
-                                bw.WriteUInt16((ushort)(BoneWeights[1] * 65535));
-                                bw.WriteUInt16((ushort)(BoneWeights[2] * 65535));
-                                bw.WriteUInt16((ushort)(BoneWeights[3] * 65535));
+                                bw.WriteBytes(BoneIndices.Select(i => checked((byte)i)).ToArray());
                             }
                             else
                                 throw new NotImplementedException();
                             break;
 
-                        case VertexStructLayout.Member.MemberValueType.Unk12:
-                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.UV)
+                        case VertexStructLayout.Member.MemberSemantic.Normal:
+                            if (member.ValueType == VertexStructLayout.Member.MemberValueType.Float4)
                             {
-                                WriteUV(bw, uvQueue.Dequeue());
+                                bw.WriteVector4(Normal);
+                            }
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4A)
+                            {
+                                bw.WriteSByte(checked((sbyte)(Normal.X * sbyte.MaxValue)));
+                                bw.WriteSByte(checked((sbyte)(Normal.Y * sbyte.MaxValue)));
+                                bw.WriteSByte(checked((sbyte)(Normal.Z * sbyte.MaxValue)));
+                                bw.WriteSByte(checked((sbyte)(Normal.W * sbyte.MaxValue)));
+                            }
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4B)
+                            {
+                                bw.WriteSByte(checked((sbyte)(Normal.X * sbyte.MaxValue)));
+                                bw.WriteSByte(checked((sbyte)(Normal.Y * sbyte.MaxValue)));
+                                bw.WriteSByte(checked((sbyte)(Normal.Z * sbyte.MaxValue)));
+                                bw.WriteSByte(checked((sbyte)(Normal.W * sbyte.MaxValue)));
+                            }
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4C)
+                            {
+                                bw.WriteSByte(checked((sbyte)(Normal.X * sbyte.MaxValue)));
+                                bw.WriteSByte(checked((sbyte)(Normal.Y * sbyte.MaxValue)));
+                                bw.WriteSByte(checked((sbyte)(Normal.Z * sbyte.MaxValue)));
+                                bw.WriteSByte(checked((sbyte)(Normal.W * sbyte.MaxValue)));
+                            }
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4D)
+                            {
+                                bw.WriteSByte(checked((sbyte)(Normal.X * sbyte.MaxValue)));
+                                bw.WriteSByte(checked((sbyte)(Normal.Y * sbyte.MaxValue)));
+                                bw.WriteSByte(checked((sbyte)(Normal.Z * sbyte.MaxValue)));
+                                bw.WriteSByte(checked((sbyte)(Normal.W * sbyte.MaxValue)));
                             }
                             else
                                 throw new NotImplementedException();
                             break;
 
-                        case VertexStructLayout.Member.MemberValueType.Unk2E:
-                            if (member.Semantic == VertexStructLayout.Member.MemberSemantic.Normal)
+                        case VertexStructLayout.Member.MemberSemantic.UV:
+                            if (member.ValueType == VertexStructLayout.Member.MemberValueType.Float2)
                             {
-                                bw.WriteByte((byte)Normal.X);
-                                bw.WriteByte((byte)Normal.Y);
-                                bw.WriteByte((byte)Normal.Z);
-                                bw.WriteByte((byte)Normal.W);
+                                Vector3 uv = uvQueue.Dequeue() * uvFactor;
+                                bw.WriteSingle(uv.X);
+                                bw.WriteSingle(uv.Y);
+                            }
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Float3)
+                            {
+                                Vector3 uv = uvQueue.Dequeue() * uvFactor;
+                                bw.WriteVector3(uv);
+                            }
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4A)
+                            {
+                                Vector3 uv = uvQueue.Dequeue() * uvFactor;
+                                bw.WriteInt16(checked((short)uv.X));
+                                bw.WriteInt16(checked((short)uv.Y));
+                            }
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4B)
+                            {
+                                Vector3 uv = uvQueue.Dequeue() * uvFactor;
+                                bw.WriteInt16(checked((short)uv.X));
+                                bw.WriteInt16(checked((short)uv.Y));
+                            }
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Short2toFloat2)
+                            {
+                                Vector3 uv = uvQueue.Dequeue() * uvFactor;
+                                bw.WriteInt16(checked((short)uv.X));
+                                bw.WriteInt16(checked((short)uv.Y));
+                            }
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4C)
+                            {
+                                Vector3 uv = uvQueue.Dequeue() * uvFactor;
+                                bw.WriteInt16(checked((short)uv.X));
+                                bw.WriteInt16(checked((short)uv.Y));
+                            }
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.UV)
+                            {
+                                Vector3 uv = uvQueue.Dequeue() * uvFactor;
+                                bw.WriteInt16(checked((short)uv.X));
+                                bw.WriteInt16(checked((short)uv.Y));
+                            }
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.UVPair)
+                            {
+                                Vector3 uv = uvQueue.Dequeue() * uvFactor;
+                                bw.WriteInt16(checked((short)uv.X));
+                                bw.WriteInt16(checked((short)uv.Y));
+
+                                uv = uvQueue.Dequeue() * uvFactor;
+                                bw.WriteInt16(checked((short)uv.X));
+                                bw.WriteInt16(checked((short)uv.Y));
+                            }
+                            else
+                                throw new NotImplementedException();
+                            break;
+
+                        case VertexStructLayout.Member.MemberSemantic.Tangent:
+                            if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4A)
+                            {
+                                Vector4 tangent = Tangents[member.Index];
+                                bw.WriteSByte(checked((sbyte)(tangent.X * sbyte.MaxValue)));
+                                bw.WriteSByte(checked((sbyte)(tangent.Y * sbyte.MaxValue)));
+                                bw.WriteSByte(checked((sbyte)(tangent.Z * sbyte.MaxValue)));
+                                bw.WriteSByte(checked((sbyte)(tangent.W * sbyte.MaxValue)));
+                            }
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4B)
+                            {
+                                Vector4 tangent = Tangents[member.Index];
+                                bw.WriteSByte(checked((sbyte)(tangent.X * sbyte.MaxValue)));
+                                bw.WriteSByte(checked((sbyte)(tangent.Y * sbyte.MaxValue)));
+                                bw.WriteSByte(checked((sbyte)(tangent.Z * sbyte.MaxValue)));
+                                bw.WriteSByte(checked((sbyte)(tangent.W * sbyte.MaxValue)));
+                            }
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4C)
+                            {
+                                Vector4 tangent = Tangents[member.Index];
+                                bw.WriteSByte(checked((sbyte)(tangent.X * sbyte.MaxValue)));
+                                bw.WriteSByte(checked((sbyte)(tangent.Y * sbyte.MaxValue)));
+                                bw.WriteSByte(checked((sbyte)(tangent.Z * sbyte.MaxValue)));
+                                bw.WriteSByte(checked((sbyte)(tangent.W * sbyte.MaxValue)));
+                            }
+                            else
+                                throw new NotImplementedException();
+                            break;
+
+                        case VertexStructLayout.Member.MemberSemantic.UnknownVector4A:
+                            if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4B)
+                            {
+                                bw.WriteBytes(UnknownVector4);
+                            }
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4C)
+                            {
+                                bw.WriteBytes(UnknownVector4);
+                            }
+                            else
+                                throw new NotImplementedException();
+                            break;
+
+                        case VertexStructLayout.Member.MemberSemantic.VertexColor:
+                            if (member.ValueType == VertexStructLayout.Member.MemberValueType.Float4)
+                            {
+                                Color color = Colors[member.Index];
+                                bw.WriteSingle(color.R / (float)byte.MaxValue);
+                                bw.WriteSingle(color.G / (float)byte.MaxValue);
+                                bw.WriteSingle(color.B / (float)byte.MaxValue);
+                                bw.WriteSingle(color.A / (float)byte.MaxValue);
+                            }
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4A)
+                            {
+                                Color color = Colors[member.Index];
+                                bw.WriteByte(color.A);
+                                bw.WriteByte(color.R);
+                                bw.WriteByte(color.G);
+                                bw.WriteByte(color.B);
+                            }
+                            else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4C)
+                            {
+                                Color color = Colors[member.Index];
+                                bw.WriteByte(color.R);
+                                bw.WriteByte(color.G);
+                                bw.WriteByte(color.B);
+                                bw.WriteByte(color.A);
                             }
                             else
                                 throw new NotImplementedException();

@@ -317,7 +317,7 @@ namespace SoulsFormats
             br.AssertASCII("DCA\0");
             int compressedHeaderLength = br.ReadInt32();
 
-            return Util.ReadZlib(br, uncompressedSize);
+            return Util.ReadZlib(br, compressedSize);
         }
 
         #region Public Compress
