@@ -1642,28 +1642,28 @@ namespace SoulsFormats
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4A)
                             {
-                                UVs.Add(new Vector3(br.ReadInt16() / 1024f, br.ReadInt16() / uvFactor, 0));
+                                UVs.Add(new Vector3(br.ReadInt16() / uvFactor, br.ReadInt16() / uvFactor, 0));
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4B)
                             {
-                                UVs.Add(new Vector3(br.ReadInt16() / 1024f, br.ReadInt16() / uvFactor, 0));
+                                UVs.Add(new Vector3(br.ReadInt16() / uvFactor, br.ReadInt16() / uvFactor, 0));
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Short2toFloat2)
                             {
-                                UVs.Add(new Vector3(br.ReadInt16() / 1024f, br.ReadInt16() / uvFactor, 0));
+                                UVs.Add(new Vector3(br.ReadInt16() / uvFactor, br.ReadInt16() / uvFactor, 0));
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4C)
                             {
-                                UVs.Add(new Vector3(br.ReadInt16() / 1024f, br.ReadInt16() / uvFactor, 0));
+                                UVs.Add(new Vector3(br.ReadInt16() / uvFactor, br.ReadInt16() / uvFactor, 0));
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.UV)
                             {
-                                UVs.Add(new Vector3(br.ReadInt16() / 1024f, br.ReadInt16() / uvFactor, 0));
+                                UVs.Add(new Vector3(br.ReadInt16() / uvFactor, br.ReadInt16() / uvFactor, 0));
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.UVPair)
                             {
-                                UVs.Add(new Vector3(br.ReadInt16() / 1024f, br.ReadInt16() / uvFactor, 0));
-                                UVs.Add(new Vector3(br.ReadInt16() / 1024f, br.ReadInt16() / uvFactor, 0));
+                                UVs.Add(new Vector3(br.ReadInt16() / uvFactor, br.ReadInt16() / uvFactor, 0));
+                                UVs.Add(new Vector3(br.ReadInt16() / uvFactor, br.ReadInt16() / uvFactor, 0));
                             }
                             else
                                 throw new NotImplementedException();
