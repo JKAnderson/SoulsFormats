@@ -1963,36 +1963,6 @@ namespace SoulsFormats
                     }
                 }
             }
-
-            private static Vector3 ReadUV(BinaryReaderEx br)
-            {
-                float u = br.ReadInt16() / 1024f;
-                float v = br.ReadInt16() / 1024f;
-                return new Vector3(u, v, 0);
-            }
-
-            private static void WriteUV(BinaryWriterEx bw, Vector3 uv)
-            {
-                bw.WriteInt16((short)(uv.X * 1024f));
-                bw.WriteInt16((short)(uv.Y * 1024f));
-            }
-
-            private static Color ReadColor(BinaryReaderEx br)
-            {
-                byte r = br.ReadByte();
-                byte g = br.ReadByte();
-                byte b = br.ReadByte();
-                byte a = br.ReadByte();
-                return Color.FromArgb(a, r, g, b);
-            }
-
-            private static void WriteColor(BinaryWriterEx bw, Color color)
-            {
-                bw.WriteByte(color.R);
-                bw.WriteByte(color.G);
-                bw.WriteByte(color.B);
-                bw.WriteByte(color.A);
-            }
         }
     }
 }
