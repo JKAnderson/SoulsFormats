@@ -1022,7 +1022,7 @@ namespace SoulsFormats
             public byte Unk07;
 
             /// <summary>
-            /// Unknown.
+            /// Bits per index; 0 or 16 for shorts, 32 for ints.
             /// </summary>
             public int IndexSize;
 
@@ -1045,15 +1045,13 @@ namespace SoulsFormats
                 int vertexSize = br.ReadInt32();
 
                 br.AssertInt32(0);
-                IndexSize = br.AssertInt32(0, 0x10, 0x20);
+                IndexSize = br.AssertInt32(0, 16, 32);
                 br.AssertInt32(0);
 
-                if (IndexSize == 0x10)
+                if (IndexSize == 0 || IndexSize == 16)
                     Vertices = br.GetUInt16s(dataOffset + vertexOffset, vertexCount).Select(i => (uint)i).ToArray();
-                else if (IndexSize == 0x20)
+                else if (IndexSize == 32)
                     Vertices = br.GetUInt32s(dataOffset + vertexOffset, vertexCount);
-                else
-                    throw new NotImplementedException("I don't know what 0 index size means.");
             }
 
             internal void Write(BinaryWriterEx bw, int index)
@@ -1077,12 +1075,10 @@ namespace SoulsFormats
             internal void WriteVertices(BinaryWriterEx bw, int index, int dataStart)
             {
                 bw.FillInt32($"FaceSetVertices{index}", (int)bw.Position - dataStart);
-                if (IndexSize == 0x10)
+                if (IndexSize == 0 || IndexSize == 16)
                     bw.WriteUInt16s(Vertices.Select(i => checked((ushort)i)).ToArray());
-                else if (IndexSize == 0x20)
+                else if (IndexSize == 32)
                     bw.WriteUInt32s(Vertices);
-                else
-                    throw new NotImplementedException("I don't know what 0 index size means.");
             }
         }
 
