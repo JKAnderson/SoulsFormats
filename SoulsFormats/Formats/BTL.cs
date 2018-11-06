@@ -48,7 +48,7 @@ namespace SoulsFormats
 
             long nameStart = br.Position;
             br.Position = nameStart + nameSize;
-            Lights = new List<Light>();
+            Lights = new List<Light>(entryCount);
             for (int i = 0; i < entryCount; i++)
                 Lights.Add(new Light(br, nameStart));
         }
@@ -74,7 +74,7 @@ namespace SoulsFormats
             bw.WriteInt32(0);
 
             long nameStart = bw.Position;
-            var nameOffsets = new List<int>();
+            var nameOffsets = new List<int>(Lights.Count);
             foreach (Light entry in Lights)
             {
                 int nameOffset = (int)(bw.Position - nameStart);

@@ -121,35 +121,35 @@ namespace SoulsFormats
             br.AssertInt32(0);
             br.AssertInt32(0);
 
-            Dummies = new List<Dummy>();
+            Dummies = new List<Dummy>(dummyCount);
             for (int i = 0; i < dummyCount; i++)
                 Dummies.Add(new Dummy(br));
 
-            Materials = new List<Material>();
+            Materials = new List<Material>(materialCount);
             for (int i = 0; i < materialCount; i++)
                 Materials.Add(new Material(br));
 
-            Bones = new List<Bone>();
+            Bones = new List<Bone>(boneCount);
             for (int i = 0; i < boneCount; i++)
                 Bones.Add(new Bone(br));
 
-            Meshes = new List<Mesh>();
+            Meshes = new List<Mesh>(meshCount);
             for (int i = 0; i < meshCount; i++)
                 Meshes.Add(new Mesh(br, Header.Version));
 
-            var faceSets = new List<FaceSet>();
+            var faceSets = new List<FaceSet>(faceSetCount);
             for (int i = 0; i < faceSetCount; i++)
                 faceSets.Add(new FaceSet(br, dataOffset));
 
-            var vertexGroups = new List<VertexGroup>();
+            var vertexGroups = new List<VertexGroup>(vertexGroupCount);
             for (int i = 0; i < vertexGroupCount; i++)
                 vertexGroups.Add(new VertexGroup(br));
 
-            VertexStructLayouts = new List<VertexStructLayout>();
+            VertexStructLayouts = new List<VertexStructLayout>(vertexStructLayoutCount);
             for (int i = 0; i < vertexStructLayoutCount; i++)
                 VertexStructLayouts.Add(new VertexStructLayout(br));
 
-            var materialParams = new List<MaterialParam>();
+            var materialParams = new List<MaterialParam>(materialParameterCount);
             for (int i = 0; i < materialParameterCount; i++)
                 materialParams.Add(new MaterialParam(br));
 
@@ -183,7 +183,7 @@ namespace SoulsFormats
         /// </summary>
         private static Dictionary<int, T> Dictionize<T>(List<T> items)
         {
-            var dict = new Dictionary<int, T>();
+            var dict = new Dictionary<int, T>(items.Count);
             for (int i = 0; i < items.Count; i++)
                 dict[i] = items[i];
             return dict;
@@ -626,7 +626,7 @@ namespace SoulsFormats
 
             internal void TakeParams(Dictionary<int, MaterialParam> paramDict)
             {
-                Params = new List<MaterialParam>();
+                Params = new List<MaterialParam>(paramCount);
                 for (int i = paramIndex; i < paramIndex + paramCount; i++)
                 {
                     if (!paramDict.ContainsKey(i))
@@ -899,7 +899,7 @@ namespace SoulsFormats
 
             internal void TakeFaceSets(Dictionary<int, FaceSet> faceSetDict)
             {
-                FaceSets = new List<FaceSet>();
+                FaceSets = new List<FaceSet>(faceSetIndices.Length);
                 foreach (int i in faceSetIndices)
                 {
                     if (!faceSetDict.ContainsKey(i))
@@ -913,7 +913,7 @@ namespace SoulsFormats
 
             internal void TakeVertexGroups(Dictionary<int, VertexGroup> vertexGroupDict)
             {
-                VertexGroups = new List<VertexGroup>();
+                VertexGroups = new List<VertexGroup>(vertexGroupIndices.Length);
                 foreach (int i in vertexGroupIndices)
                 {
                     if (!vertexGroupDict.ContainsKey(i))
@@ -1124,7 +1124,7 @@ namespace SoulsFormats
             internal void ReadVertices(BinaryReaderEx br, int dataOffset, List<VertexStructLayout> layouts, int version)
             {
                 VertexStructLayout layout = layouts[VertexStructLayoutIndex];
-                Vertices = new List<Vertex>();
+                Vertices = new List<Vertex>(vertexCount);
                 int vertexDataStart = dataOffset + vertexBufferOffset;
                 br.StepIn(vertexDataStart);
                 for (int i = 0; i < vertexCount; i++)

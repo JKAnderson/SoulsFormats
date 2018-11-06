@@ -126,7 +126,7 @@ namespace SoulsFormats
             br.AssertInt32(0);
             br.AssertInt32(0);
 
-            Rows = new List<Row>();
+            Rows = new List<Row>(rowCount);
             for (int i = 0; i < rowCount; i++)
                 Rows.Add(new Row(br, Unk4));
 
@@ -259,7 +259,7 @@ namespace SoulsFormats
             {
                 ID = id;
                 Name = name;
-                Cells = new List<Cell>();
+                Cells = new List<Cell>(layout.Count);
 
                 foreach (Layout.Entry entry in layout)
                 {
@@ -297,7 +297,7 @@ namespace SoulsFormats
             internal void ReadRow(BinaryReaderEx br, Layout layout)
             {
                 br.StepIn(Offset);
-                Cells = new List<Cell>();
+                Cells = new List<Cell>(layout.Count);
 
                 for (int i = 0; i < layout.Count; i++)
                 {

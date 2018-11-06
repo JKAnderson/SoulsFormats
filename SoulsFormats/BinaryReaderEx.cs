@@ -59,7 +59,7 @@ namespace SoulsFormats
         /// </summary>
         private byte[] ReadEndian(int length)
         {
-            byte[] bytes = br.ReadBytes(length);
+            byte[] bytes = ReadBytes(length);
             if (BigEndian)
                 Array.Reverse(bytes);
             return bytes;
@@ -117,7 +117,7 @@ namespace SoulsFormats
             {
                 string strValue = string.Format(valueFormat, value);
 
-                List<string> strOptions = new List<string>();
+                List<string> strOptions = new List<string>(options.Length);
                 foreach (T option in options)
                     strOptions.Add(string.Format(valueFormat, option));
 

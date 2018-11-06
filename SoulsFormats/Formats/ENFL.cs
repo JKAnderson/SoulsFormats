@@ -45,18 +45,18 @@ namespace SoulsFormats
             int unkCount2 = br.ReadInt32();
             br.AssertInt32(0);
 
-            Struct1s = new List<Struct1>();
+            Struct1s = new List<Struct1>(unkCount1);
             for (int i = 0; i < unkCount1; i++)
                 Struct1s.Add(new Struct1(br));
             br.Pad(0x10);
 
-            Struct2s = new List<Struct2>();
+            Struct2s = new List<Struct2>(unkCount2);
             for (int i = 0; i < unkCount2; i++)
                 Struct2s.Add(new Struct2(br));
             br.Pad(0x10);
 
             br.AssertInt16(0);
-            Strings = new List<string>();
+            Strings = new List<string>(unkCount2);
             for (int i = 0; i < unkCount2; i++)
                 Strings.Add(br.ReadUTF16());
         }

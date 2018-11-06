@@ -75,7 +75,7 @@ namespace SoulsFormats
                 br.AssertInt32(0);
             }
 
-            Files = new List<File>();
+            Files = new List<File>(fileCount);
             for (int i = 0; i < fileCount; i++)
             {
                 Files.Add(new File(br, Lite));

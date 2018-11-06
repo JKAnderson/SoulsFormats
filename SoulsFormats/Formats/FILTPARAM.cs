@@ -60,7 +60,7 @@ namespace SoulsFormats
             offsets.Unk4 = br.ReadInt32();
             br.AssertInt32(0);
 
-            Groups = new List<Group>();
+            Groups = new List<Group>(groupCount);
             for (int i = 0; i < groupCount; i++)
                 Groups.Add(new Group(br, offsets));
 
@@ -182,7 +182,7 @@ namespace SoulsFormats
                 Name = br.ReadShiftJIS();
 
                 br.StepIn(offsets.ParamHeaderOffsets + paramHeaderOffsetsOffset);
-                Params = new List<Param>();
+                Params = new List<Param>(paramCount);
                 for (int i = 0; i < paramCount; i++)
                     Params.Add(new Param(br, offsets));
                 br.StepOut();
@@ -350,7 +350,7 @@ namespace SoulsFormats
                 Name = br.ReadShiftJIS();
 
                 br.StepIn(offsets.Values + valuesOffset);
-                Values = new List<object>();
+                Values = new List<object>(valueCount);
                 for (int i = 0; i < valueCount; i++)
                 {
                     switch (Type)

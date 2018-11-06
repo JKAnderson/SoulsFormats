@@ -122,7 +122,7 @@ namespace SoulsFormats
             else
                 br.AssertInt64(0);
 
-            Files = new List<File>();
+            Files = new List<File>(fileCount);
             for (int i = 0; i < fileCount; i++)
             {
                 Files.Add(new File(br, Unicode, Format));
@@ -136,14 +136,14 @@ namespace SoulsFormats
                 // Probably 4 bytes
                 br.AssertInt32(0x00080810);
 
-                var hashGroups = new List<HashGroup>();
+                var hashGroups = new List<HashGroup>(hashGroupsCount);
                 for (int i = 0; i < hashGroupsCount; i++)
                 {
                     hashGroups.Add(new HashGroup(br));
                 }
 
                 br.Position = pathHashesOffset;
-                var pathHashes = new List<PathHash>();
+                var pathHashes = new List<PathHash>(fileCount);
                 for (int i = 0; i < fileCount; i++)
                 {
                     pathHashes.Add(new PathHash(br));

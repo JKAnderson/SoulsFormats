@@ -207,7 +207,7 @@ namespace SoulsFormats
             BHD = new BHF4(bhdReader);
             BDT = new BDF4(bdtReader);
 
-            Files = new List<File>();
+            Files = new List<File>(BHD.FileHeaders.Count);
             foreach (BHF4.FileHeader fileHeader in BHD.FileHeaders)
             {
                 Files.Add(new File(bdtReader, fileHeader));
@@ -381,7 +381,7 @@ namespace SoulsFormats
                 br.AssertInt32(0);
                 long hashGroupsOffset = br.ReadInt64();
 
-                FileHeaders = new List<FileHeader>();
+                FileHeaders = new List<FileHeader>(fileCount);
                 for (int i = 0; i < fileCount; i++)
                 {
                     FileHeaders.Add(new FileHeader(br, Unicode, Format));
@@ -395,14 +395,14 @@ namespace SoulsFormats
                     // Probably 4 bytes
                     br.AssertInt32(0x00080810);
 
-                    var hashGroups = new List<HashGroup>();
+                    var hashGroups = new List<HashGroup>(hashGroupsCount);
                     for (int i = 0; i < hashGroupsCount; i++)
                     {
                         hashGroups.Add(new HashGroup(br));
                     }
 
                     br.Position = pathHashesOffset;
-                    var pathHashes = new List<PathHash>();
+                    var pathHashes = new List<PathHash>(fileCount);
                     for (int i = 0; i < fileCount; i++)
                     {
                         pathHashes.Add(new PathHash(br));

@@ -64,7 +64,7 @@ namespace SoulsFormats
             Encoding = br.AssertByte(0, 1, 2);
             br.AssertByte(0);
 
-            Textures = new List<Texture>();
+            Textures = new List<Texture>(fileCount);
             for (int i = 0; i < fileCount; i++)
             {
                 Textures.Add(new Texture(br, Platform, Encoding));

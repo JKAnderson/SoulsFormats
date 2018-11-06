@@ -25,7 +25,7 @@ namespace SoulsFormats
             {
                 Unk1 = unk1;
 
-                Entries = new List<byte[]>();
+                Entries = new List<byte[]>(offsets);
                 for (int i = 0; i < offsets; i++)
                 {
                     long offset = br.ReadInt64();

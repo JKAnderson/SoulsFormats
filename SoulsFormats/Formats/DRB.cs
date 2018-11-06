@@ -80,7 +80,7 @@ namespace SoulsFormats
             ReadSectionHeader(br, "STR\0", out int entrySize, out int entryCount);
 
             int startPosition = (int)br.Position;
-            Dictionary<int, string> strings = new Dictionary<int, string>();
+            Dictionary<int, string> strings = new Dictionary<int, string>(entryCount);
             for (int i = 0; i < entryCount; i++)
             {
                 int offset = (int)br.Position - startPosition;
@@ -96,7 +96,7 @@ namespace SoulsFormats
             ReadSectionHeader(br, "TEXI", out int entrySize, out int entryCount);
 
             int startPosition = (int)br.Position;
-            List<TEXIEntry> textures = new List<TEXIEntry>();
+            List<TEXIEntry> textures = new List<TEXIEntry>(entryCount);
             for (int i = 0; i < entryCount; i++)
             {
                 int offset = (int)br.Position - startPosition;
@@ -173,7 +173,7 @@ namespace SoulsFormats
             ReadSectionHeader(br, "SHAP", out int entrySize, out int entryCount);
 
             int startPosition = (int)br.Position;
-            Dictionary<int, SHAPEntry> shapEntries = new Dictionary<int, SHAPEntry>();
+            Dictionary<int, SHAPEntry> shapEntries = new Dictionary<int, SHAPEntry>(entryCount);
             for (int i = 0; i < entryCount; i++)
             {
                 int offset = (int)br.Position - startPosition;
@@ -503,7 +503,7 @@ namespace SoulsFormats
             ReadSectionHeader(br, "CTRL", out int entrySize, out int entryCount);
 
             int startPosition = (int)br.Position;
-            Dictionary<int, CTRLEntry> ctrlEntries = new Dictionary<int, CTRLEntry>();
+            Dictionary<int, CTRLEntry> ctrlEntries = new Dictionary<int, CTRLEntry>(entryCount);
             for (int i = 0; i < entryCount; i++)
             {
                 int offset = (int)br.Position - startPosition;
@@ -583,7 +583,7 @@ namespace SoulsFormats
             ReadSectionHeader(br, "ANIK", out int entrySize, out int entryCount);
 
             int startPosition = (int)br.Position;
-            Dictionary<int, ANIKEntry> anikEntries = new Dictionary<int, ANIKEntry>();
+            Dictionary<int, ANIKEntry> anikEntries = new Dictionary<int, ANIKEntry>(entryCount);
             for (int i = 0; i < entryCount; i++)
             {
                 int offset = (int)br.Position - startPosition;
@@ -620,7 +620,7 @@ namespace SoulsFormats
             ReadSectionHeader(br, "ANIO", out int entrySize, out int entryCount);
 
             int startPosition = (int)br.Position;
-            Dictionary<int, ANIOEntry> anioEntries = new Dictionary<int, ANIOEntry>();
+            Dictionary<int, ANIOEntry> anioEntries = new Dictionary<int, ANIOEntry>(entryCount);
             for (int i = 0; i < entryCount; i++)
             {
                 int offset = (int)br.Position - startPosition;
@@ -658,7 +658,7 @@ namespace SoulsFormats
             ReadSectionHeader(br, "ANIM", out int entrySize, out int entryCount);
 
             int startPosition = (int)br.Position;
-            Dictionary<int, ANIMEntry> animEntries = new Dictionary<int, ANIMEntry>();
+            Dictionary<int, ANIMEntry> animEntries = new Dictionary<int, ANIMEntry>(entryCount);
             for (int i = 0; i < entryCount; i++)
             {
                 int offset = (int)br.Position - startPosition;
@@ -700,7 +700,7 @@ namespace SoulsFormats
             ReadSectionHeader(br, "SCDK", out int entrySize, out int entryCount);
 
             int startPosition = (int)br.Position;
-            Dictionary<int, SCDKEntry> scdkEntries = new Dictionary<int, SCDKEntry>();
+            Dictionary<int, SCDKEntry> scdkEntries = new Dictionary<int, SCDKEntry>(entryCount);
             for (int i = 0; i < entryCount; i++)
             {
                 int offset = (int)br.Position - startPosition;
@@ -738,7 +738,7 @@ namespace SoulsFormats
             ReadSectionHeader(br, "SCDO", out int entrySize, out int entryCount);
 
             int startPosition = (int)br.Position;
-            Dictionary<int, SCDOEntry> scdoEntries = new Dictionary<int, SCDOEntry>();
+            Dictionary<int, SCDOEntry> scdoEntries = new Dictionary<int, SCDOEntry>(entryCount);
             for (int i = 0; i < entryCount; i++)
             {
                 int offset = (int)br.Position - startPosition;
@@ -773,7 +773,7 @@ namespace SoulsFormats
             ReadSectionHeader(br, "SCDL", out int entrySize, out int entryCount);
 
             int startPosition = (int)br.Position;
-            Dictionary<int, SCDLEntry> scdlEntries = new Dictionary<int, SCDLEntry>();
+            Dictionary<int, SCDLEntry> scdlEntries = new Dictionary<int, SCDLEntry>(entryCount);
             for (int i = 0; i < entryCount; i++)
             {
                 int offset = (int)br.Position - startPosition;
@@ -808,7 +808,7 @@ namespace SoulsFormats
             ReadSectionHeader(br, "DLGO", out int entrySize, out int entryCount);
 
             int startPosition = (int)br.Position;
-            Dictionary<int, DLGOEntry> dlgoEntries = new Dictionary<int, DLGOEntry>();
+            Dictionary<int, DLGOEntry> dlgoEntries = new Dictionary<int, DLGOEntry>(entryCount);
             for (int i = 0; i < entryCount; i++)
             {
                 int offset = (int)br.Position - startPosition;
@@ -848,7 +848,7 @@ namespace SoulsFormats
             ReadSectionHeader(br, "DLG\0", out int entrySize, out int entryCount);
 
             int startPosition = (int)br.Position;
-            Dictionary<int, DLGEntry> dlgEntries = new Dictionary<int, DLGEntry>();
+            Dictionary<int, DLGEntry> dlgEntries = new Dictionary<int, DLGEntry>(entryCount);
             for (int i = 0; i < entryCount; i++)
             {
                 int offset = (int)br.Position - startPosition;

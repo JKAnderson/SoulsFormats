@@ -41,7 +41,7 @@ namespace SoulsFormats
 
             long nameStart = br.Position;
             br.Position = nameStart + nameSize;
-            Entries = new List<Entry>();
+            Entries = new List<Entry>(entryCount);
             for (int i = 0; i < entryCount; i++)
                 Entries.Add(new Entry(br, nameStart));
         }
@@ -67,7 +67,7 @@ namespace SoulsFormats
             bw.WriteInt32(0);
 
             long nameStart = bw.Position;
-            var nameOffsets = new List<int>();
+            var nameOffsets = new List<int>(Entries.Count * 2);
             foreach (Entry entry in Entries)
             {
                 int nameOffset = (int)(bw.Position - nameStart);

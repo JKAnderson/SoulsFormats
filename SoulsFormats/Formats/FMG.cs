@@ -54,7 +54,7 @@ namespace SoulsFormats
             br.AssertInt32(0);
             br.AssertInt32(0);
 
-            Entries = new List<Entry>();
+            Entries = new List<Entry>(groupCount);
             for (int i = 0; i < groupCount; i++)
             {
                 int offsetIndex = br.ReadInt32();

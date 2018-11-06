@@ -84,15 +84,15 @@ namespace SoulsFormats
 
             unk8 = br.ReadInt32();
 
-            Params = new List<Param>();
             int paramCount = br.ReadInt32();
+            Params = new List<Param>(paramCount);
             for (int i = 0; i < paramCount; i++)
                 Params.Add(new Param(br));
 
             unk9 = br.ReadInt32();
 
-            Textures = new List<Texture>();
             int textureCount = br.ReadInt32();
+            Textures = new List<Texture>(textureCount);
             for (int i = 0; i < textureCount; i++)
                 Textures.Add(new Texture(br));
 

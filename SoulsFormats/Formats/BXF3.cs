@@ -238,7 +238,7 @@ namespace SoulsFormats
             BDTTimestamp = bdtReader.ReadASCII(8).TrimEnd('\0');
             bdtReader.AssertInt32(0);
 
-            Files = new List<File>();
+            Files = new List<File>(bhd.FileHeaders.Count);
             for (int i = 0; i < bhd.FileHeaders.Count; i++)
             {
                 BHD3.FileHeader fileHeader = bhd.FileHeaders[i];
@@ -316,7 +316,7 @@ namespace SoulsFormats
                 br.AssertInt32(0);
                 br.AssertInt32(0);
 
-                FileHeaders = new List<FileHeader>();
+                FileHeaders = new List<FileHeader>(fileCount);
                 for (int i = 0; i < fileCount; i++)
                 {
                     FileHeaders.Add(new FileHeader(br, Format));
