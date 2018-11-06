@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
 using System.Linq;
 using System.Numerics;
 
@@ -1614,11 +1613,15 @@ namespace SoulsFormats
                         case VertexStructLayout.Member.MemberSemantic.BoneWeights:
                             if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4C)
                             {
-                                BoneWeights = br.ReadSBytes(4).Select(w => w / (float)sbyte.MaxValue).ToArray();
+                                BoneWeights = new float[4];
+                                for (int i = 0; i < 4; i++)
+                                    BoneWeights[i] = br.ReadSByte() / (float)sbyte.MaxValue;
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Short4toFloat4A)
                             {
-                                BoneWeights = br.ReadInt16s(4).Select(w => w / (float)short.MaxValue).ToArray();
+                                BoneWeights = new float[4];
+                                for (int i = 0; i < 4; i++)
+                                    BoneWeights[i] = br.ReadInt16() / (float)short.MaxValue;
                             }
                             else
                                 throw new NotImplementedException();
@@ -1627,15 +1630,21 @@ namespace SoulsFormats
                         case VertexStructLayout.Member.MemberSemantic.BoneIndices:
                             if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4B)
                             {
-                                BoneIndices = br.ReadBytes(4).Select(i => (int)i).ToArray();
+                                BoneIndices = new int[4];
+                                for (int i = 0; i < 4; i++)
+                                    BoneIndices[i] = br.ReadByte();
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.ShortBoneIndices)
                             {
-                                BoneIndices = br.ReadUInt16s(4).Select(i => (int)i).ToArray();
+                                BoneIndices = new int[4];
+                                for (int i = 0; i < 4; i++)
+                                    BoneIndices[i] = br.ReadUInt16();
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4E)
                             {
-                                BoneIndices = br.ReadBytes(4).Select(i => (int)i).ToArray();
+                                BoneIndices = new int[4];
+                                for (int i = 0; i < 4; i++)
+                                    BoneIndices[i] = br.ReadByte();
                             }
                             else
                                 throw new NotImplementedException();
@@ -1648,22 +1657,30 @@ namespace SoulsFormats
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4A)
                             {
-                                float[] floats = br.ReadBytes(4).Select(n => (n - 127) / 127f).ToArray();
+                                float[] floats = new float[4];
+                                for (int i = 0; i < 4; i++)
+                                    floats[i] = (br.ReadByte() - 127) / 127f;
                                 Normal = new Vector4(floats[0], floats[1], floats[2], floats[3]);
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4B)
                             {
-                                float[] floats = br.ReadBytes(4).Select(n => (n - 127) / 127f).ToArray();
+                                float[] floats = new float[4];
+                                for (int i = 0; i < 4; i++)
+                                    floats[i] = (br.ReadByte() - 127) / 127f;
                                 Normal = new Vector4(floats[0], floats[1], floats[2], floats[3]);
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4C)
                             {
-                                float[] floats = br.ReadBytes(4).Select(n => (n - 127) / 127f).ToArray();
+                                float[] floats = new float[4];
+                                for (int i = 0; i < 4; i++)
+                                    floats[i] = (br.ReadByte() - 127) / 127f;
                                 Normal = new Vector4(floats[0], floats[1], floats[2], floats[3]);
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Short4toFloat4B)
                             {
-                                float[] floats = br.ReadUInt16s(4).Select(n => (n - 32767) / 32767f).ToArray();
+                                float[] floats = new float[4];
+                                for (int i = 0; i < 4; i++)
+                                    floats[i] = (br.ReadUInt16() - 32767) / 32767f;
                                 Normal = new Vector4(floats[0], floats[1], floats[2], floats[3]);
                             }
                             else
@@ -1711,17 +1728,23 @@ namespace SoulsFormats
                         case VertexStructLayout.Member.MemberSemantic.Tangent:
                             if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4A)
                             {
-                                float[] floats = br.ReadBytes(4).Select(n => (n - 127) / 127f).ToArray();
+                                float[] floats = new float[4];
+                                for (int i = 0; i < 4; i++)
+                                    floats[i] = (br.ReadByte() - 127) / 127f;
                                 Tangents.Add(new Vector4(floats[0], floats[1], floats[2], floats[3]));
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4B)
                             {
-                                float[] floats = br.ReadBytes(4).Select(n => (n - 127) / 127f).ToArray();
+                                float[] floats = new float[4];
+                                for (int i = 0; i < 4; i++)
+                                    floats[i] = (br.ReadByte() - 127) / 127f;
                                 Tangents.Add(new Vector4(floats[0], floats[1], floats[2], floats[3]));
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4C)
                             {
-                                float[] floats = br.ReadBytes(4).Select(n => (n - 127) / 127f).ToArray();
+                                float[] floats = new float[4];
+                                for (int i = 0; i < 4; i++)
+                                    floats[i] = (br.ReadByte() - 127) / 127f;
                                 Tangents.Add(new Vector4(floats[0], floats[1], floats[2], floats[3]));
                             }
                             else
@@ -1745,11 +1768,9 @@ namespace SoulsFormats
                             if (member.ValueType == VertexStructLayout.Member.MemberValueType.Float4)
                             {
                                 // TODO
-                                float[] floats = br.ReadSingles(4);
-                                foreach (float f in floats)
-                                    if (f > 1.005 || f < 0)
-                                        Console.WriteLine(f);
-                                byte[] bytes = floats.Select(f => (byte)(f * byte.MaxValue)).ToArray();
+                                byte[] bytes = new byte[4];
+                                for (int i = 0; i < 4; i++)
+                                    bytes[i] = (byte)(br.ReadSingle() * byte.MaxValue);
                                 Colors.Add(Color.FromArgb(bytes[3], bytes[0], bytes[1], bytes[2]));
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4A)
