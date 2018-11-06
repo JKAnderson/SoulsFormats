@@ -1102,17 +1102,22 @@ namespace SoulsFormats
             /// </summary>
             public List<Vertex> Vertices;
 
+            /// <summary>
+            /// Size of the data for each vertex; -1 means it matches the VSL size, which it should, but often doesn't in DSR.
+            /// </summary>
+            public int VertexSize;
+
             private int vertexCount, vertexBufferOffset;
 
             internal VertexGroup(BinaryReaderEx br)
             {
                 Unk00 = br.ReadInt32();
                 VertexStructLayoutIndex = br.ReadInt32();
-                int vertexSize = br.ReadInt32();
+                VertexSize = br.ReadInt32();
                 vertexCount = br.ReadInt32();
                 br.AssertInt32(0);
                 br.AssertInt32(0);
-                int vertexBufferSize = br.ReadInt32();
+                br.AssertInt32(VertexSize * vertexCount);
                 vertexBufferOffset = br.ReadInt32();
             }
 
@@ -1120,19 +1125,17 @@ namespace SoulsFormats
             {
                 VertexStructLayout layout = layouts[VertexStructLayoutIndex];
                 Vertices = new List<Vertex>();
-                br.StepIn(dataOffset + vertexBufferOffset);
-                try
+                int vertexDataStart = dataOffset + vertexBufferOffset;
+                br.StepIn(vertexDataStart);
+                for (int i = 0; i < vertexCount; i++)
                 {
-                    for (int i = 0; i < vertexCount; i++)
-                        Vertices.Add(new Vertex(br, layout, version));
-                }
-                catch (EndOfStreamException ex)
-                {
-                    throw new MissingFieldException(
-                        "Some FLVERs in DSR have vertex struct layouts that don't match the actual data. "
-                        + "This is probably one of them.", ex);
+                    br.Position = vertexDataStart + i * VertexSize;
+                    Vertices.Add(new Vertex(br, layout, VertexSize, version));
                 }
                 br.StepOut();
+
+                if (VertexSize == layout.Size)
+                    VertexSize = -1;
 
                 vertexCount = -1;
                 vertexBufferOffset = -1;
@@ -1145,38 +1148,7 @@ namespace SoulsFormats
                 bw.WriteInt32(Unk00);
                 bw.WriteInt32(VertexStructLayoutIndex);
 
-                int vertexSize = 0;
-                foreach (VertexStructLayout.Member member in layout)
-                {
-                    switch (member.ValueType)
-                    {
-                        case VertexStructLayout.Member.MemberValueType.Byte4A:
-                        case VertexStructLayout.Member.MemberValueType.Byte4B:
-                        case VertexStructLayout.Member.MemberValueType.Short2toFloat2:
-                        case VertexStructLayout.Member.MemberValueType.Byte4C:
-                        case VertexStructLayout.Member.MemberValueType.UV:
-                        case VertexStructLayout.Member.MemberValueType.Byte4E:
-                            vertexSize += 4;
-                            break;
-
-                        case VertexStructLayout.Member.MemberValueType.Float2:
-                        case VertexStructLayout.Member.MemberValueType.UVPair:
-                        case VertexStructLayout.Member.MemberValueType.Short4toFloat4A:
-                            vertexSize += 8;
-                            break;
-
-                        case VertexStructLayout.Member.MemberValueType.Float3:
-                            vertexSize += 12;
-                            break;
-
-                        case VertexStructLayout.Member.MemberValueType.Float4:
-                            vertexSize += 16;
-                            break;
-
-                        default:
-                            throw new NotImplementedException();
-                    }
-                }
+                int vertexSize = VertexSize == -1 ? layout.Size : VertexSize;
                 bw.WriteInt32(vertexSize);
 
                 bw.WriteInt32(Vertices.Count);
@@ -1190,8 +1162,10 @@ namespace SoulsFormats
             {
                 VertexStructLayout layout = layouts[VertexStructLayoutIndex];
                 bw.FillInt32($"VertexGroupVertices{index}", (int)bw.Position - dataStart);
+
+                int vertexSize = VertexSize == -1 ? layout.Size : VertexSize;
                 foreach (Vertex vertex in Vertices)
-                    vertex.Write(bw, layout, version);
+                    vertex.Write(bw, layout, vertexSize, version);
             }
         }
 
@@ -1200,6 +1174,17 @@ namespace SoulsFormats
         /// </summary>
         public class VertexStructLayout : List<VertexStructLayout.Member>
         {
+            /// <summary>
+            /// The total size of all ValueTypes in this layout.
+            /// </summary>
+            public int Size
+            {
+                get
+                {
+                    return this.Aggregate(0, (size, member) => size + member.Size);
+                }
+            }
+
             internal VertexStructLayout(BinaryReaderEx br) : base()
             {
                 int memberCount = br.ReadInt32();
@@ -1273,6 +1258,42 @@ namespace SoulsFormats
                 /// For semantics that may appear more than once such as UVs, which one this member is.
                 /// </summary>
                 public int Index;
+
+                /// <summary>
+                /// The size of this member's ValueType, in bytes.
+                /// </summary>
+                public int Size
+                {
+                    get
+                    {
+                        switch (ValueType)
+                        {
+                            case MemberValueType.Byte4A:
+                            case MemberValueType.Byte4B:
+                            case MemberValueType.Short2toFloat2:
+                            case MemberValueType.Byte4C:
+                            case MemberValueType.UV:
+                            case MemberValueType.Byte4E:
+                                return 4;
+
+                            case MemberValueType.Float2:
+                            case MemberValueType.UVPair:
+                            case MemberValueType.ShortBoneIndices:
+                            case MemberValueType.Short4toFloat4A:
+                            case MemberValueType.Short4toFloat4B:
+                                return 8;
+
+                            case MemberValueType.Float3:
+                                return 12;
+
+                            case MemberValueType.Float4:
+                                return 16;
+
+                            default:
+                                throw new NotImplementedException();
+                        }
+                    }
+                }
 
                 internal Member(BinaryReaderEx br)
                 {
@@ -1550,7 +1571,12 @@ namespace SoulsFormats
             /// </summary>
             public byte[] UnknownVector4;
 
-            internal Vertex(BinaryReaderEx br, VertexStructLayout layout, int version)
+            /// <summary>
+            /// Extra data in the vertex struct not accounted for by the VSL. Should be null for none, but often isn't in DSR.
+            /// </summary>
+            public byte[] ExtraBytes;
+
+            internal Vertex(BinaryReaderEx br, VertexStructLayout layout, int vertexSize, int version)
             {
                 Position = Vector3.Zero;
                 BoneIndices = null;
@@ -1560,13 +1586,20 @@ namespace SoulsFormats
                 Tangents = new List<Vector4>();
                 Colors = new List<Color>();
                 UnknownVector4 = null;
+                ExtraBytes = null;
 
                 float uvFactor = 1024;
                 if (version == 0x20009 || version >= 0x20010)
                     uvFactor = 2048;
 
+                int currentSize = 0;
                 foreach (VertexStructLayout.Member member in layout)
                 {
+                    if (currentSize + member.Size > vertexSize)
+                        break;
+                    else
+                        currentSize += member.Size;
+
                     switch (member.Semantic)
                     {
                         case VertexStructLayout.Member.MemberSemantic.Position:
@@ -1737,9 +1770,12 @@ namespace SoulsFormats
                             throw new NotImplementedException();
                     }
                 }
+
+                if (currentSize < vertexSize)
+                    ExtraBytes = br.ReadBytes(vertexSize - currentSize);
             }
 
-            internal void Write(BinaryWriterEx bw, VertexStructLayout layout, int version)
+            internal void Write(BinaryWriterEx bw, VertexStructLayout layout, int vertexSize, int version)
             {
                 var uvQueue = new Queue<Vector3>(UVs);
 
@@ -1747,8 +1783,14 @@ namespace SoulsFormats
                 if (version == 0x20009 || version >= 0x20010)
                     uvFactor = 2048;
 
+                int currentSize = 0;
                 foreach (VertexStructLayout.Member member in layout)
                 {
+                    if (currentSize + member.Size > vertexSize)
+                        break;
+                    else
+                        currentSize += member.Size;
+
                     switch (member.Semantic)
                     {
                         case VertexStructLayout.Member.MemberSemantic.Position:
@@ -1958,6 +2000,9 @@ namespace SoulsFormats
                             throw new NotImplementedException();
                     }
                 }
+
+                if (currentSize < vertexSize)
+                    bw.WriteBytes(ExtraBytes);
             }
         }
     }
