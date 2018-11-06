@@ -1826,11 +1826,13 @@ namespace SoulsFormats
                         case VertexStructLayout.Member.MemberSemantic.BoneWeights:
                             if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4C)
                             {
-                                bw.WriteSBytes(BoneWeights.Select(w => (sbyte)(w * sbyte.MaxValue)).ToArray());
+                                for (int i = 0; i < 4; i++)
+                                    bw.WriteSByte((sbyte)(BoneWeights[i] * sbyte.MaxValue));
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Short4toFloat4A)
                             {
-                                bw.WriteInt16s(BoneWeights.Select(w => (short)(w * short.MaxValue)).ToArray());
+                                for (int i = 0; i < 4; i++)
+                                    bw.WriteInt16((short)(BoneWeights[i] * short.MaxValue));
                             }
                             else
                                 throw new NotImplementedException();
@@ -1839,15 +1841,18 @@ namespace SoulsFormats
                         case VertexStructLayout.Member.MemberSemantic.BoneIndices:
                             if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4B)
                             {
-                                bw.WriteBytes(BoneIndices.Select(i => checked((byte)i)).ToArray());
+                                for (int i = 0; i < 4; i++)
+                                    bw.WriteByte((byte)BoneIndices[i]);
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.ShortBoneIndices)
                             {
-                                bw.WriteUInt16s(BoneIndices.Select(i => checked((ushort)i)).ToArray());
+                                for (int i = 0; i < 4; i++)
+                                    bw.WriteUInt16((ushort)BoneIndices[i]);
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4E)
                             {
-                                bw.WriteBytes(BoneIndices.Select(i => checked((byte)i)).ToArray());
+                                for (int i = 0; i < 4; i++)
+                                    bw.WriteByte((byte)BoneIndices[i]);
                             }
                             else
                                 throw new NotImplementedException();
@@ -1860,31 +1865,31 @@ namespace SoulsFormats
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4A)
                             {
-                                bw.WriteSByte(checked((sbyte)(Normal.X * sbyte.MaxValue)));
-                                bw.WriteSByte(checked((sbyte)(Normal.Y * sbyte.MaxValue)));
-                                bw.WriteSByte(checked((sbyte)(Normal.Z * sbyte.MaxValue)));
-                                bw.WriteSByte(checked((sbyte)(Normal.W * sbyte.MaxValue)));
+                                bw.WriteByte((byte)(Normal.X * 127 + 127));
+                                bw.WriteByte((byte)(Normal.Y * 127 + 127));
+                                bw.WriteByte((byte)(Normal.Z * 127 + 127));
+                                bw.WriteByte((byte)(Normal.W * 127 + 127));
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4B)
                             {
-                                bw.WriteSByte(checked((sbyte)(Normal.X * sbyte.MaxValue)));
-                                bw.WriteSByte(checked((sbyte)(Normal.Y * sbyte.MaxValue)));
-                                bw.WriteSByte(checked((sbyte)(Normal.Z * sbyte.MaxValue)));
-                                bw.WriteSByte(checked((sbyte)(Normal.W * sbyte.MaxValue)));
+                                bw.WriteByte((byte)(Normal.X * 127 + 127));
+                                bw.WriteByte((byte)(Normal.Y * 127 + 127));
+                                bw.WriteByte((byte)(Normal.Z * 127 + 127));
+                                bw.WriteByte((byte)(Normal.W * 127 + 127));
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4C)
                             {
-                                bw.WriteSByte(checked((sbyte)(Normal.X * sbyte.MaxValue)));
-                                bw.WriteSByte(checked((sbyte)(Normal.Y * sbyte.MaxValue)));
-                                bw.WriteSByte(checked((sbyte)(Normal.Z * sbyte.MaxValue)));
-                                bw.WriteSByte(checked((sbyte)(Normal.W * sbyte.MaxValue)));
+                                bw.WriteByte((byte)(Normal.X * 127 + 127));
+                                bw.WriteByte((byte)(Normal.Y * 127 + 127));
+                                bw.WriteByte((byte)(Normal.Z * 127 + 127));
+                                bw.WriteByte((byte)(Normal.W * 127 + 127));
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Short4toFloat4B)
                             {
-                                bw.WriteInt16(checked((short)(Normal.X * short.MaxValue)));
-                                bw.WriteInt16(checked((short)(Normal.Y * short.MaxValue)));
-                                bw.WriteInt16(checked((short)(Normal.Z * short.MaxValue)));
-                                bw.WriteInt16(checked((short)(Normal.W * short.MaxValue)));
+                                bw.WriteInt16((short)(Normal.X * 32767 + 32767));
+                                bw.WriteInt16((short)(Normal.Y * 32767 + 32767));
+                                bw.WriteInt16((short)(Normal.Z * 32767 + 32767));
+                                bw.WriteInt16((short)(Normal.W * 32767 + 32767));
                             }
                             else
                                 throw new NotImplementedException();
@@ -1905,42 +1910,42 @@ namespace SoulsFormats
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4A)
                             {
                                 Vector3 uv = uvQueue.Dequeue() * uvFactor;
-                                bw.WriteInt16(checked((short)uv.X));
-                                bw.WriteInt16(checked((short)uv.Y));
+                                bw.WriteInt16((short)uv.X);
+                                bw.WriteInt16((short)uv.Y);
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4B)
                             {
                                 Vector3 uv = uvQueue.Dequeue() * uvFactor;
-                                bw.WriteInt16(checked((short)uv.X));
-                                bw.WriteInt16(checked((short)uv.Y));
+                                bw.WriteInt16((short)uv.X);
+                                bw.WriteInt16((short)uv.Y);
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Short2toFloat2)
                             {
                                 Vector3 uv = uvQueue.Dequeue() * uvFactor;
-                                bw.WriteInt16(checked((short)uv.X));
-                                bw.WriteInt16(checked((short)uv.Y));
+                                bw.WriteInt16((short)uv.X);
+                                bw.WriteInt16((short)uv.Y);
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4C)
                             {
                                 Vector3 uv = uvQueue.Dequeue() * uvFactor;
-                                bw.WriteInt16(checked((short)uv.X));
-                                bw.WriteInt16(checked((short)uv.Y));
+                                bw.WriteInt16((short)uv.X);
+                                bw.WriteInt16((short)uv.Y);
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.UV)
                             {
                                 Vector3 uv = uvQueue.Dequeue() * uvFactor;
-                                bw.WriteInt16(checked((short)uv.X));
-                                bw.WriteInt16(checked((short)uv.Y));
+                                bw.WriteInt16((short)uv.X);
+                                bw.WriteInt16((short)uv.Y);
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.UVPair)
                             {
                                 Vector3 uv = uvQueue.Dequeue() * uvFactor;
-                                bw.WriteInt16(checked((short)uv.X));
-                                bw.WriteInt16(checked((short)uv.Y));
+                                bw.WriteInt16((short)uv.X);
+                                bw.WriteInt16((short)uv.Y);
 
                                 uv = uvQueue.Dequeue() * uvFactor;
-                                bw.WriteInt16(checked((short)uv.X));
-                                bw.WriteInt16(checked((short)uv.Y));
+                                bw.WriteInt16((short)uv.X);
+                                bw.WriteInt16((short)uv.Y);
                             }
                             else
                                 throw new NotImplementedException();
@@ -1950,26 +1955,26 @@ namespace SoulsFormats
                             if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4A)
                             {
                                 Vector4 tangent = Tangents[member.Index];
-                                bw.WriteSByte(checked((sbyte)(tangent.X * sbyte.MaxValue)));
-                                bw.WriteSByte(checked((sbyte)(tangent.Y * sbyte.MaxValue)));
-                                bw.WriteSByte(checked((sbyte)(tangent.Z * sbyte.MaxValue)));
-                                bw.WriteSByte(checked((sbyte)(tangent.W * sbyte.MaxValue)));
+                                bw.WriteByte((byte)(tangent.X * 127 + 127));
+                                bw.WriteByte((byte)(tangent.Y * 127 + 127));
+                                bw.WriteByte((byte)(tangent.Z * 127 + 127));
+                                bw.WriteByte((byte)(tangent.W * 127 + 127));
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4B)
                             {
                                 Vector4 tangent = Tangents[member.Index];
-                                bw.WriteSByte(checked((sbyte)(tangent.X * sbyte.MaxValue)));
-                                bw.WriteSByte(checked((sbyte)(tangent.Y * sbyte.MaxValue)));
-                                bw.WriteSByte(checked((sbyte)(tangent.Z * sbyte.MaxValue)));
-                                bw.WriteSByte(checked((sbyte)(tangent.W * sbyte.MaxValue)));
+                                bw.WriteByte((byte)(tangent.X * 127 + 127));
+                                bw.WriteByte((byte)(tangent.Y * 127 + 127));
+                                bw.WriteByte((byte)(tangent.Z * 127 + 127));
+                                bw.WriteByte((byte)(tangent.W * 127 + 127));
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4C)
                             {
                                 Vector4 tangent = Tangents[member.Index];
-                                bw.WriteSByte(checked((sbyte)(tangent.X * sbyte.MaxValue)));
-                                bw.WriteSByte(checked((sbyte)(tangent.Y * sbyte.MaxValue)));
-                                bw.WriteSByte(checked((sbyte)(tangent.Z * sbyte.MaxValue)));
-                                bw.WriteSByte(checked((sbyte)(tangent.W * sbyte.MaxValue)));
+                                bw.WriteByte((byte)(tangent.X * 127 + 127));
+                                bw.WriteByte((byte)(tangent.Y * 127 + 127));
+                                bw.WriteByte((byte)(tangent.Z * 127 + 127));
+                                bw.WriteByte((byte)(tangent.W * 127 + 127));
                             }
                             else
                                 throw new NotImplementedException();
