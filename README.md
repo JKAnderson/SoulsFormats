@@ -90,13 +90,13 @@ Extension: `.*bnd`
 * BB: Full Read and Write
 
 ### BTAB
-Something to do with map part lighting/shadowing.
+Something to do with map part lighting/shadowing.  
 Extension: `*.btab`
 * DS3: Full Read and Write
 * BB: Full Read and Write
 
 ### BTL
-Point light sources in maps.
+Point light sources in maps.  
 Extension: `*.btl`
 * DS3: Full Read and Write
 * BB: Partial Read and Write
@@ -134,13 +134,13 @@ Extension: `.drb`
 * NB: Untested
 
 ### ENFL
-Unknown. Believed to determine which assets load based on where you are in a map.
+Unknown. Believed to determine which assets load based on where you are in a map.  
 Extension: `.entryfilelist`
 * DS3: Full Read and Write
 * BB: Untested
 
 ### FILTPARAM
-A graphics configuration format used in DS2.
+A graphics configuration format used in DS2.  
 Extension: `.filtparam`
 * DS2: Partial Read and Write
 
@@ -155,7 +155,7 @@ Extension: `.flv` or `.flver`
 * BB: Full Read and Write
 
 ### FMG
-A text bundle format used throughout the series.
+A text bundle format used throughout the series.  
 Extension: `.fmg`
 * DS1: No support
 * DS2: Untested
@@ -164,7 +164,7 @@ Extension: `.fmg`
 * BB: Untested
 
 ### GPARAM
-A graphics configuration format used in DS3 and BB.
+A graphics configuration format used in DS3 and BB.  
 * DS3: Partial Read and Write
 * BB: Untested
 
@@ -185,8 +185,13 @@ Extension: `.mtd`
 * NB: Untested
 
 ### PARAM64
-A general configuration file used in DS3.
+A general configuration file used in DS3.  
 Extension: `.param`
+* DS3: Full Read and Write
+
+### TAE3
+Controls when different events happen during animations; this specific version used in DS3.  
+Extension: `.tae`
 * DS3: Full Read and Write
 
 ### TPF

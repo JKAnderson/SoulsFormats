@@ -23,6 +23,9 @@ namespace SoulsFormats
         /// </summary>
         public static bool Is(byte[] bytes)
         {
+            if (bytes.Length == 0)
+                return false;
+
             BinaryReaderEx br = new BinaryReaderEx(false, bytes);
             var dummy = new TFormat();
             return dummy.Is(Util.GetDecompressedBR(br, out _));
@@ -35,6 +38,9 @@ namespace SoulsFormats
         {
             using (FileStream stream = File.OpenRead(path))
             {
+                if (stream.Length == 0)
+                    return false;
+
                 BinaryReaderEx br = new BinaryReaderEx(false, stream);
                 var dummy = new TFormat();
                 return dummy.Is(Util.GetDecompressedBR(br, out _));
