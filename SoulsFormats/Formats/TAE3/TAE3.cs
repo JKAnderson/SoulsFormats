@@ -397,6 +397,15 @@ namespace SoulsFormats
             /// </summary>
             public List<int> Indices;
 
+            /// <summary>
+            /// Creates a new empty EventGroup with the given type.
+            /// </summary>
+            public EventGroup(EventType type)
+            {
+                Type = type;
+                Indices = new List<int>();
+            }
+
             internal EventGroup(BinaryReaderEx br, List<long> eventHeaderOffsets)
             {
                 long entryCount = br.ReadInt64();

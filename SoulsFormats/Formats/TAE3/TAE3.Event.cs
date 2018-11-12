@@ -37,7 +37,7 @@ namespace SoulsFormats
             Unk119 = 119,
             Unk120 = 120,
             Unk121 = 121,
-            Unk128 = 128,
+            PlaySound = 128,
             Unk129 = 129,
             Unk130 = 130,
             Unk131 = 131,
@@ -94,7 +94,7 @@ namespace SoulsFormats
             Unk703 = 703,
             Unk705 = 705,
             Unk707 = 707,
-            Unk710 = 710,
+            HideWeapon = 710,
             Unk711 = 711,
             Unk712 = 712,
             Unk713 = 713,
@@ -177,6 +177,14 @@ namespace SoulsFormats
 
             internal abstract void WriteSpecific(BinaryWriterEx bw);
 
+            /// <summary>
+            /// Returns the start time, end time, and type of the event.
+            /// </summary>
+            public override string ToString()
+            {
+                return $"{StartTime:F3} - {EndTime:F3} {Type}";
+            }
+
             internal static Event Read(BinaryReaderEx br)
             {
                 long startTimeOffset = br.ReadInt64();
@@ -219,7 +227,7 @@ namespace SoulsFormats
                         case EventType.Unk119: result = new Unk119(type, startTime, endTime, br); break;
                         case EventType.Unk120: result = new Unk120(type, startTime, endTime, br); break;
                         case EventType.Unk121: result = new Unk121(type, startTime, endTime, br); break;
-                        case EventType.Unk128: result = new Unk128(type, startTime, endTime, br); break;
+                        case EventType.PlaySound: result = new PlaySound(type, startTime, endTime, br); break;
                         case EventType.Unk129: result = new Unk129(type, startTime, endTime, br); break;
                         case EventType.Unk130: result = new Unk130(type, startTime, endTime, br); break;
                         case EventType.Unk131: result = new Unk131(type, startTime, endTime, br); break;
@@ -272,7 +280,7 @@ namespace SoulsFormats
                         case EventType.Unk703: result = new Unk703(type, startTime, endTime, br); break;
                         case EventType.Unk705: result = new Unk705(type, startTime, endTime, br); break;
                         case EventType.Unk707: result = new Unk707(type, startTime, endTime, br); break;
-                        case EventType.Unk710: result = new Unk710(type, startTime, endTime, br); break;
+                        case EventType.HideWeapon: result = new HideWeapon(type, startTime, endTime, br); break;
                         case EventType.Unk711: result = new Unk711(type, startTime, endTime, br); break;
                         case EventType.Unk712: result = new Unk712(type, startTime, endTime, br); break;
                         case EventType.Unk713: result = new Unk713(type, startTime, endTime, br); break;
@@ -315,6 +323,14 @@ namespace SoulsFormats
             {
                 public int Unk00, Unk04, Unk08, Unk0C;
 
+                public Unk000(float startTime, float endTime, int unk00, int unk04, int unk08, int unk0C) : base(EventType.Unk000, startTime, endTime)
+                {
+                    Unk00 = unk00;
+                    Unk04 = unk04;
+                    Unk08 = unk08;
+                    Unk0C = unk0C;
+                }
+
                 internal Unk000(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
                 {
                     Unk00 = br.ReadInt32();
@@ -355,8 +371,18 @@ namespace SoulsFormats
 
             public class Unk002 : Event
             {
-                public int Unk00, Unk04, Unk08, Unk0C, Unk14;
+                public int Unk00, Unk04, Unk08, Unk0C;
                 public short Unk10, Unk12;
+
+                public Unk002(float startTime, float endTime, int unk00, int unk04, int unk08, int unk0C, short unk10, short unk12) : base(EventType.Unk002, startTime, endTime)
+                {
+                    Unk00 = unk00;
+                    Unk04 = unk04;
+                    Unk08 = unk08;
+                    Unk0C = unk0C;
+                    Unk10 = unk10;
+                    Unk12 = unk12;
+                }
 
                 internal Unk002(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
                 {
@@ -366,7 +392,7 @@ namespace SoulsFormats
                     Unk0C = br.ReadInt32();
                     Unk10 = br.ReadInt16();
                     Unk12 = br.AssertInt16(0);
-                    Unk14 = br.AssertInt32(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
@@ -377,7 +403,7 @@ namespace SoulsFormats
                     bw.WriteInt32(Unk0C);
                     bw.WriteInt16(Unk10);
                     bw.WriteInt16(Unk12);
-                    bw.WriteInt32(Unk14);
+                    bw.WriteInt32(0);
                 }
             }
 
@@ -579,18 +605,23 @@ namespace SoulsFormats
 
             public class Unk066 : Event
             {
-                public int Unk00, Unk04;
+                public int Unk00;
+
+                public Unk066(float startTime, float endTime, int unk00) : base(EventType.Unk066, startTime, endTime)
+                {
+                    Unk00 = unk00;
+                }
 
                 internal Unk066(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
                 {
                     Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
+                    bw.WriteInt32(0);
                 }
             }
 
@@ -899,24 +930,24 @@ namespace SoulsFormats
                 }
             }
 
-            public class Unk128 : Event
+            public class PlaySound : Event
             {
-                public int Unk00, Unk04, Unk08, Unk0C;
+                public int SoundType, SoundID;
 
-                internal Unk128(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                internal PlaySound(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
                 {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadInt32();
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
+                    SoundType = br.ReadInt32();
+                    SoundID = br.ReadInt32();
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
+                    bw.WriteInt32(SoundType);
+                    bw.WriteInt32(SoundID);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
                 }
             }
 
@@ -1926,8 +1957,11 @@ namespace SoulsFormats
 
             public class Unk700 : Event
             {
-                public float Unk00, Unk04, Unk08, Unk0C, Unk18, Unk1C, Unk20, Unk24;
-                public int Unk10, Unk14;
+                public float Unk00, Unk04, Unk08, Unk0C;
+                public int Unk10;
+                // 6 - head turn
+                public byte Unk14;
+                public float Unk18, Unk1C, Unk20, Unk24;
 
                 internal Unk700(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
                 {
@@ -1936,7 +1970,12 @@ namespace SoulsFormats
                     Unk08 = br.ReadSingle();
                     Unk0C = br.ReadSingle();
                     Unk10 = br.ReadInt32();
-                    Unk14 = br.ReadInt32();
+
+                    Unk14 = br.ReadByte();
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+
                     Unk18 = br.ReadSingle();
                     Unk1C = br.ReadSingle();
                     Unk20 = br.ReadSingle();
@@ -1950,7 +1989,12 @@ namespace SoulsFormats
                     bw.WriteSingle(Unk08);
                     bw.WriteSingle(Unk0C);
                     bw.WriteInt32(Unk10);
-                    bw.WriteInt32(Unk14);
+
+                    bw.WriteByte(Unk14);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+
                     bw.WriteSingle(Unk18);
                     bw.WriteSingle(Unk1C);
                     bw.WriteSingle(Unk20);
@@ -2021,11 +2065,11 @@ namespace SoulsFormats
                 }
             }
 
-            public class Unk710 : Event
+            public class HideWeapon : Event
             {
                 public int Unk00, Unk04, Unk08, Unk0C;
 
-                internal Unk710(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                internal HideWeapon(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
                 {
                     Unk00 = br.ReadInt32();
                     Unk04 = br.AssertInt32(0);

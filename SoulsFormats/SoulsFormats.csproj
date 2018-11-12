@@ -91,6 +91,7 @@
     <Compile Include="Formats\FLVER.cs" />
     <Compile Include="Formats\FMG.cs" />
     <Compile Include="Formats\FILTPARAM.cs" />
+    <Compile Include="Formats\FXR3.cs" />
     <Compile Include="Formats\GPARAM.cs" />
     <Compile Include="Formats\MSB3\MSB3.cs" />
     <Compile Include="Formats\MSB3\MSB3.BoneNamesSection.cs" />
