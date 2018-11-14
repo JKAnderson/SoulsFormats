@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SoulsFormats
 {
+    /// <summary>
+    /// An SFX definition file used in DS3. Extension: .fxr
+    /// </summary>
     public class FXR3 : SoulsFile<FXR3>
     {
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         public int ID;
 
         public Section1 Section1Tree;
@@ -146,7 +148,7 @@ namespace SoulsFormats
 
             foreach (Section10 section10 in section10List)
                 section10.Take(section11s);
-            
+
             if (section2s.Count != 0)
                 throw null;
 
@@ -247,13 +249,13 @@ namespace SoulsFormats
 
             internal Section3(BinaryReaderEx br)
             {
-                Unk00 = br.ReadInt32();
+                Unk00 = br.AssertInt32(0x100000B);
                 br.AssertInt32(0);
                 Unk08 = br.ReadInt32();
                 br.AssertInt32(0);
-                Unk10 = br.ReadInt32();
+                Unk10 = br.AssertInt32(0x100FFFC, 0x100FFFD);
                 br.AssertInt32(0);
-                Unk18 = br.ReadInt32();
+                Unk18 = br.AssertInt32(1);
                 br.AssertInt32(0);
                 section11Offset1 = br.ReadInt32();
                 br.AssertInt32(0);
@@ -261,9 +263,9 @@ namespace SoulsFormats
                 br.AssertInt32(0);
                 br.AssertInt32(0);
                 br.AssertInt32(0);
-                Unk38 = br.ReadInt32();
+                Unk38 = br.AssertInt32(0x100FFFC, 0x100FFFD);
                 br.AssertInt32(0);
-                Unk40 = br.ReadInt32();
+                Unk40 = br.AssertInt32(1);
                 br.AssertInt32(0);
                 section11Offset2 = br.ReadInt32();
                 br.AssertInt32(0);
@@ -612,5 +614,6 @@ namespace SoulsFormats
                 }
             }
         }
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }
