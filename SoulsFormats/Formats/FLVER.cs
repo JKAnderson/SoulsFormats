@@ -1798,6 +1798,8 @@ namespace SoulsFormats
 
             internal void Write(BinaryWriterEx bw, VertexStructLayout layout, int vertexSize, int version)
             {
+                var tangentQueue = new Queue<Vector4>(Tangents);
+                var colorQueue = new Queue<Color>(Colors);
                 var uvQueue = new Queue<Vector3>(UVs);
 
                 float uvFactor = 1024;
@@ -1954,7 +1956,7 @@ namespace SoulsFormats
                         case VertexStructLayout.Member.MemberSemantic.Tangent:
                             if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4A)
                             {
-                                Vector4 tangent = Tangents[member.Index];
+                                Vector4 tangent = tangentQueue.Dequeue();
                                 bw.WriteByte((byte)(tangent.X * 127 + 127));
                                 bw.WriteByte((byte)(tangent.Y * 127 + 127));
                                 bw.WriteByte((byte)(tangent.Z * 127 + 127));
@@ -1962,7 +1964,7 @@ namespace SoulsFormats
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4B)
                             {
-                                Vector4 tangent = Tangents[member.Index];
+                                Vector4 tangent = tangentQueue.Dequeue();
                                 bw.WriteByte((byte)(tangent.X * 127 + 127));
                                 bw.WriteByte((byte)(tangent.Y * 127 + 127));
                                 bw.WriteByte((byte)(tangent.Z * 127 + 127));
@@ -1970,7 +1972,7 @@ namespace SoulsFormats
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4C)
                             {
-                                Vector4 tangent = Tangents[member.Index];
+                                Vector4 tangent = tangentQueue.Dequeue();
                                 bw.WriteByte((byte)(tangent.X * 127 + 127));
                                 bw.WriteByte((byte)(tangent.Y * 127 + 127));
                                 bw.WriteByte((byte)(tangent.Z * 127 + 127));
@@ -1996,7 +1998,7 @@ namespace SoulsFormats
                         case VertexStructLayout.Member.MemberSemantic.VertexColor:
                             if (member.ValueType == VertexStructLayout.Member.MemberValueType.Float4)
                             {
-                                Color color = Colors[member.Index];
+                                Color color = colorQueue.Dequeue();
                                 bw.WriteSingle(color.R / (float)byte.MaxValue);
                                 bw.WriteSingle(color.G / (float)byte.MaxValue);
                                 bw.WriteSingle(color.B / (float)byte.MaxValue);
@@ -2004,7 +2006,7 @@ namespace SoulsFormats
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4A)
                             {
-                                Color color = Colors[member.Index];
+                                Color color = colorQueue.Dequeue();
                                 bw.WriteByte(color.A);
                                 bw.WriteByte(color.R);
                                 bw.WriteByte(color.G);
@@ -2012,7 +2014,7 @@ namespace SoulsFormats
                             }
                             else if (member.ValueType == VertexStructLayout.Member.MemberValueType.Byte4C)
                             {
-                                Color color = Colors[member.Index];
+                                Color color = colorQueue.Dequeue();
                                 bw.WriteByte(color.R);
                                 bw.WriteByte(color.G);
                                 bw.WriteByte(color.B);
