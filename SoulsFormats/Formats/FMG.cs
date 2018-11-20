@@ -52,6 +52,7 @@ namespace SoulsFormats
                 stringOffsetsOffset = br.ReadInt32();
 
             br.AssertInt32(0);
+            // Comment this out to load Kuon FMGs '_>'
             br.AssertInt32(0);
 
             Entries = new List<Entry>(groupCount);

@@ -17,17 +17,17 @@ namespace SoulsFormats
         /// <summary>
         /// Unknown.
         /// </summary>
-        public int Unk1, Unk2;
+        public int Unk1;
 
         /// <summary>
         /// Unknown.
         /// </summary>
-        public byte[] UnkBlock1, UnkBlock2, UnkBlock3, UnkBlock4, UnkBlock5, CommentOffsetsBlock, CommentBlock;
+        public List<Unk3> Unk3s;
 
         /// <summary>
-        /// Read only.
+        /// Unknown.
         /// </summary>
-        public List<string> Comments;
+        public byte[] UnkBlock2;
 
         /// <summary>
         /// Creates an uninitialized GPARAM. Should not be used publicly; use GPARAM.Read instead.
@@ -50,7 +50,7 @@ namespace SoulsFormats
             br.AssertInt32(0);
             int groupCount = br.ReadInt32();
             Unk1 = br.ReadInt32();
-            // Header size
+            // Header size or group header headers offset, you decide
             br.AssertInt32(0x50);
 
             Offsets offsets;
@@ -61,42 +61,25 @@ namespace SoulsFormats
             offsets.Unk1 = br.ReadInt32();
             offsets.Unk2 = br.ReadInt32();
 
-            Unk2 = br.ReadInt32();
+            int unk3Count = br.ReadInt32();
             offsets.Unk3 = br.ReadInt32();
-            offsets.Unk4 = br.ReadInt32();
-
+            offsets.Unk3Values = br.ReadInt32();
             br.AssertInt32(0);
-            offsets.Unk5 = br.ReadInt32();
+
+            offsets.CommentOffsetsOffsets = br.ReadInt32();
             offsets.CommentOffsets = br.ReadInt32();
             offsets.Comments = br.ReadInt32();
 
             Groups = new List<Group>(groupCount);
             for (int i = 0; i < groupCount; i++)
-                Groups.Add(new Group(br, offsets));
+                Groups.Add(new Group(br, i, offsets));
 
-            UnkBlock1 = br.GetBytes(offsets.Unk1, offsets.Unk2 - offsets.Unk1);
             UnkBlock2 = br.GetBytes(offsets.Unk2, offsets.Unk3 - offsets.Unk2);
-            UnkBlock3 = br.GetBytes(offsets.Unk3, offsets.Unk4 - offsets.Unk3);
-            UnkBlock4 = br.GetBytes(offsets.Unk4, offsets.Unk5 - offsets.Unk4);
-            UnkBlock5 = br.GetBytes(offsets.Unk5, offsets.CommentOffsets - offsets.Unk5);
-            CommentOffsetsBlock = br.GetBytes(offsets.CommentOffsets, offsets.Comments - offsets.CommentOffsets);
-            CommentBlock = br.GetBytes(offsets.Comments, (int)br.Stream.Length - offsets.Comments);
 
-            br.Position = offsets.Unk5;
-            Comments = new List<string>();
-            if (offsets.CommentOffsets < br.Stream.Length)
-            {
-                while (br.Position < offsets.Comments)
-                {
-                    int commentOffset = br.ReadInt32();
-                    if (offsets.Comments + commentOffset < br.Stream.Length)
-                    {
-                        string comment = br.GetUTF16(offsets.Comments + commentOffset);
-                        if (comment != "")
-                            Comments.Add(comment);
-                    }
-                }
-            }
+            br.Position = offsets.Unk3;
+            Unk3s = new List<Unk3>(unk3Count);
+            for (int i = 0; i < unk3Count; i++)
+                Unk3s.Add(new Unk3(br, offsets));
         }
 
         internal override void Write(BinaryWriterEx bw)
@@ -114,15 +97,15 @@ namespace SoulsFormats
             bw.ReserveInt32("ParamHeaderOffsetsOffset");
             bw.ReserveInt32("ParamHeadersOffset");
             bw.ReserveInt32("ValuesOffset");
-            bw.ReserveInt32("UnkBlock1Offset");
-            bw.ReserveInt32("UnkBlock2Offset");
+            bw.ReserveInt32("UnkOffset1");
+            bw.ReserveInt32("UnkOffset2");
 
-            bw.WriteInt32(Unk2);
-            bw.ReserveInt32("UnkBlock3Offset");
-            bw.ReserveInt32("UnkBlock4Offset");
-
+            bw.WriteInt32(Unk3s.Count);
+            bw.ReserveInt32("UnkOffset3");
+            bw.ReserveInt32("Unk3ValuesOffset");
             bw.WriteInt32(0);
-            bw.ReserveInt32("UnkBlock5Offset");
+
+            bw.ReserveInt32("CommentOffsetsOffsetsOffset");
             bw.ReserveInt32("CommentOffsetsOffset");
             bw.ReserveInt32("CommentsOffset");
 
@@ -149,26 +132,36 @@ namespace SoulsFormats
             for (int i = 0; i < Groups.Count; i++)
                 Groups[i].WriteValues(bw, i, valuesOffset);
 
-            bw.FillInt32("UnkBlock1Offset", (int)bw.Position);
-            bw.WriteBytes(UnkBlock1);
+            int unkOffset1 = (int)bw.Position;
+            bw.FillInt32("UnkOffset1", (int)bw.Position);
+            for (int i = 0; i < Groups.Count; i++)
+                Groups[i].WriteUnk1(bw, i, unkOffset1);
 
-            bw.FillInt32("UnkBlock2Offset", (int)bw.Position);
+            bw.FillInt32("UnkOffset2", (int)bw.Position);
             bw.WriteBytes(UnkBlock2);
 
-            bw.FillInt32("UnkBlock3Offset", (int)bw.Position);
-            bw.WriteBytes(UnkBlock3);
+            bw.FillInt32("UnkOffset3", (int)bw.Position);
+            for (int i = 0; i < Unk3s.Count; i++)
+                Unk3s[i].WriteHeader(bw, i);
 
-            bw.FillInt32("UnkBlock4Offset", (int)bw.Position);
-            bw.WriteBytes(UnkBlock4);
+            int unk3ValuesOffset = (int)bw.Position;
+            bw.FillInt32("Unk3ValuesOffset", unk3ValuesOffset);
+            for (int i = 0; i < Unk3s.Count; i++)
+                Unk3s[i].WriteValues(bw, i, unk3ValuesOffset);
 
-            bw.FillInt32("UnkBlock5Offset", (int)bw.Position);
-            bw.WriteBytes(UnkBlock5);
+            bw.FillInt32("CommentOffsetsOffsetsOffset", (int)bw.Position);
+            for (int i = 0; i < Groups.Count; i++)
+                Groups[i].WriteCommentOffsetsOffset(bw, i);
 
-            bw.FillInt32("CommentOffsetsOffset", (int)bw.Position);
-            bw.WriteBytes(CommentOffsetsBlock);
+            int commentOffsetsOffset = (int)bw.Position;
+            bw.FillInt32("CommentOffsetsOffset", commentOffsetsOffset);
+            for (int i = 0; i < Groups.Count; i++)
+                Groups[i].WriteCommentOffsets(bw, i, commentOffsetsOffset);
 
-            bw.FillInt32("CommentsOffset", (int)bw.Position);
-            bw.WriteBytes(CommentBlock);
+            int commentsOffset = (int)bw.Position;
+            bw.FillInt32("CommentsOffset", commentsOffset);
+            for (int i = 0; i < Groups.Count; i++)
+                Groups[i].WriteComments(bw, i, commentsOffset);
         }
 
         /// <summary>
@@ -196,8 +189,8 @@ namespace SoulsFormats
             public int Unk1;
             public int Unk2;
             public int Unk3;
-            public int Unk4;
-            public int Unk5;
+            public int Unk3Values;
+            public int CommentOffsetsOffsets;
             public int CommentOffsets;
             public int Comments;
         }
@@ -222,7 +215,12 @@ namespace SoulsFormats
             /// </summary>
             public List<Param> Params;
 
-            internal Group(BinaryReaderEx br, Offsets offsets)
+            /// <summary>
+            /// Comments indicating the purpose of each entry in param values.
+            /// </summary>
+            public List<string> Comments;
+
+            internal Group(BinaryReaderEx br, int index, Offsets offsets)
             {
                 int groupHeaderOffset = br.ReadInt32();
                 br.StepIn(offsets.GroupHeaders + groupHeaderOffset);
@@ -233,10 +231,32 @@ namespace SoulsFormats
                 Name2 = br.ReadUTF16();
 
                 br.StepIn(offsets.ParamHeaderOffsets + paramHeaderOffsetsOffset);
-                Params = new List<Param>(paramCount);
-                for (int i = 0; i < paramCount; i++)
-                    Params.Add(new Param(br, offsets));
+                {
+                    Params = new List<Param>(paramCount);
+                    for (int i = 0; i < paramCount; i++)
+                        Params.Add(new Param(br, offsets));
+                }
                 br.StepOut();
+
+                if (Params.Count > 0)
+                {
+                    int commentCount = Params[0].Values.Count;
+                    Comments = new List<string>(commentCount);
+                    int commentOffsetsOffset = br.GetInt32(offsets.CommentOffsetsOffsets + index * 4);
+                    br.StepIn(offsets.CommentOffsets + commentOffsetsOffset);
+                    {
+                        for (int i = 0; i < commentCount; i++)
+                        {
+                            int commentOffset = br.ReadInt32();
+                            Comments.Add(br.GetUTF16(offsets.Comments + commentOffset));
+                        }
+                    }
+                    br.StepOut();
+                }
+                else
+                {
+                    Comments = new List<string>();
+                }
 
                 br.StepOut();
             }
@@ -273,6 +293,33 @@ namespace SoulsFormats
             {
                 for (int i = 0; i < Params.Count; i++)
                     Params[i].WriteValues(bw, groupindex, i, valuesOffset);
+            }
+
+            internal void WriteUnk1(BinaryWriterEx bw, int groupIndex, int unkOffset1)
+            {
+                for (int i = 0; i < Params.Count; i++)
+                    Params[i].WriteUnk1(bw, groupIndex, i, unkOffset1);
+            }
+
+            internal void WriteCommentOffsetsOffset(BinaryWriterEx bw, int index)
+            {
+                bw.ReserveInt32($"CommentOffsetsOffset{index}");
+            }
+
+            internal void WriteCommentOffsets(BinaryWriterEx bw, int index, int commentOffsetsOffset)
+            {
+                bw.FillInt32($"CommentOffsetsOffset{index}", (int)bw.Position - commentOffsetsOffset);
+                for (int i = 0; i < Comments.Count; i++)
+                    bw.ReserveInt32($"CommentOffset{index}:{i}");
+            }
+
+            internal void WriteComments(BinaryWriterEx bw, int index, int commentsOffset)
+            {
+                for (int i = 0; i < Comments.Count; i++)
+                {
+                    bw.FillInt32($"CommentOffset{index}:{i}", (int)bw.Position - commentsOffset);
+                    bw.WriteUTF16(Comments[i], true);
+                }
             }
 
             /// <summary>
@@ -382,9 +429,9 @@ namespace SoulsFormats
             public List<object> Values;
 
             /// <summary>
-            /// Offset to something in the next block. Don't change this.
+            /// Unknown.
             /// </summary>
-            public int UnkOffset1;
+            public List<int> Unk1Values;
 
             internal Param(BinaryReaderEx br, Offsets offsets)
             {
@@ -392,7 +439,7 @@ namespace SoulsFormats
                 br.StepIn(offsets.ParamHeaders + paramHeaderOffset);
 
                 int valuesOffset = br.ReadInt32();
-                UnkOffset1 = br.ReadInt32();
+                int unkOffset1 = br.ReadInt32();
 
                 Type = br.ReadEnum8<ParamType>();
                 byte valueCount = br.ReadByte();
@@ -453,6 +500,8 @@ namespace SoulsFormats
                 }
                 br.StepOut();
 
+                Unk1Values = new List<int>(br.GetInt32s(offsets.Unk1 + unkOffset1, valueCount));
+
                 br.StepOut();
             }
 
@@ -465,7 +514,7 @@ namespace SoulsFormats
             {
                 bw.FillInt32($"ParamHeaderOffset{groupIndex}:{paramIndex}", (int)bw.Position - paramHeadersOffset);
                 bw.ReserveInt32($"ValuesOffset{groupIndex}:{paramIndex}");
-                bw.WriteInt32(UnkOffset1);
+                bw.ReserveInt32($"Unk1Offset{groupIndex}:{paramIndex}");
 
                 bw.WriteByte((byte)Type);
                 bw.WriteByte((byte)Values.Count);
@@ -531,6 +580,12 @@ namespace SoulsFormats
                 bw.Pad(4);
             }
 
+            internal void WriteUnk1(BinaryWriterEx bw, int groupIndex, int paramIndex, int unkOffset1)
+            {
+                bw.FillInt32($"Unk1Offset{groupIndex}:{paramIndex}", (int)bw.Position - unkOffset1);
+                bw.WriteInt32s(Unk1Values);
+            }
+
             /// <summary>
             /// Returns the value in this param at the given index.
             /// </summary>
@@ -552,6 +607,44 @@ namespace SoulsFormats
             public override string ToString()
             {
                 return $"{Name1} | {Name2}";
+            }
+        }
+
+        /// <summary>
+        /// Unknown.
+        /// </summary>
+        public class Unk3
+        {
+            /// <summary>
+            /// Almost the index, but skips numbers sometimes.
+            /// </summary>
+            public int ID;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public List<int> Values;
+
+            internal Unk3(BinaryReaderEx br, Offsets offsets)
+            {
+                ID = br.ReadInt32();
+                int count = br.ReadInt32();
+                int valuesOffset = br.ReadInt32();
+
+                Values = new List<int>(br.GetInt32s(offsets.Unk3Values + valuesOffset, count));
+            }
+
+            internal void WriteHeader(BinaryWriterEx bw, int index)
+            {
+                bw.WriteInt32(ID);
+                bw.WriteInt32(Values.Count);
+                bw.ReserveInt32($"Unk3ValuesOffset{index}");
+            }
+
+            internal void WriteValues(BinaryWriterEx bw, int index, int unk3ValuesOffset)
+            {
+                bw.FillInt32($"Unk3ValuesOffset{index}", (int)bw.Position - unk3ValuesOffset);
+                bw.WriteInt32s(Values);
             }
         }
     }

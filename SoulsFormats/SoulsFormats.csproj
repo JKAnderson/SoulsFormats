@@ -77,6 +77,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Formats\BND0.cs" />
+    <Compile Include="Formats\Kuon\DVDBND0.cs" />
+    <Compile Include="Formats\Kuon\BND0.cs" />
     <Compile Include="Formats\BTAB.cs" />
     <Compile Include="Formats\BTL.cs" />
     <Compile Include="Formats\BXF3.cs" />
