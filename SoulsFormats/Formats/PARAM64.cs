@@ -206,7 +206,6 @@ namespace SoulsFormats
         /// <summary>
         /// Sets the layout to use when writing
         /// </summary>
-        /// <param name="layout"></param>
         public void SetLayout(Layout layout)
         {
             this.layout = layout;
@@ -270,7 +269,7 @@ namespace SoulsFormats
                     else
                         value = entry.Default;
 
-                    Cells.Add(new Cell(entry.Type, entry.Name, value));
+                    Cells.Add(new Cell(entry, value));
                 }
             }
 
@@ -336,7 +335,7 @@ namespace SoulsFormats
                                 break;
 
                             byte mask = (byte)(1 << j);
-                            Cells.Add(new Cell("b8", layout[i + j].Name, (b & mask) != 0));
+                            Cells.Add(new Cell(layout[i + j], (b & mask) != 0));
                         }
                         i += j - 1;
                     }
@@ -350,7 +349,7 @@ namespace SoulsFormats
                                 break;
 
                             byte mask = (byte)(1 << (j % 8));
-                            Cells.Add(new Cell("b32", layout[i + j].Name, (b[j / 8] & mask) != 0));
+                            Cells.Add(new Cell(layout[i + j], (b[j / 8] & mask) != 0));
                         }
                         i += j - 1;
                     }
@@ -358,7 +357,7 @@ namespace SoulsFormats
                         throw new NotImplementedException($"Unsupported param layout type: {type}");
 
                     if (value != null)
-                        Cells.Add(new Cell(type, entry.Name, value));
+                        Cells.Add(new Cell(entry, value));
                 }
 
                 br.StepOut();
@@ -476,24 +475,28 @@ namespace SoulsFormats
         public class Cell
         {
             /// <summary>
+            /// 
+            /// </summary>
+            public Layout.Entry Layout;
+
+            /// <summary>
             /// The type of value stored in this cell.
             /// </summary>
-            public string Type { get; set; }
+            public string Type => Layout.Type;
 
             /// <summary>
             /// A name given to this cell based on the param layout; no functional significance.
             /// </summary>
-            public string Name { get; set; }
+            public string Name => Layout.Name;
 
             /// <summary>
             /// The value of this cell.
             /// </summary>
             public object Value { get; set; }
 
-            internal Cell(string type, string name, object value)
+            internal Cell(Layout.Entry layout, object value)
             {
-                Type = type;
-                Name = name;
+                Layout = layout;
                 Value = value;
             }
         }

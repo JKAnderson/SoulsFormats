@@ -17,17 +17,17 @@ namespace SoulsFormats
             Unk016 = 016,
             Unk017 = 017,
             Unk024 = 024,
-            Unk032 = 032,
-            Unk033 = 033,
+            SwitchWeapon1 = 032,
+            SwitchWeapon2 = 033,
             Unk034 = 034,
             Unk035 = 035,
             Unk064 = 064,
             Unk065 = 065,
-            Unk066 = 066,
-            Unk067 = 067,
-            Unk096 = 096,
+            CreateSpEffect1 = 066,
+            CreateSpEffect2 = 067,
+            PlayFFX = 096,
             Unk110 = 110,
-            Unk112 = 112,
+            HitEffect = 112,
             Unk113 = 113,
             Unk114 = 114,
             Unk115 = 115,
@@ -207,17 +207,17 @@ namespace SoulsFormats
                         case EventType.Unk016: result = new Unk016(type, startTime, endTime, br); break;
                         case EventType.Unk017: result = new Unk017(type, startTime, endTime, br); break;
                         case EventType.Unk024: result = new Unk024(type, startTime, endTime, br); break;
-                        case EventType.Unk032: result = new SwitchWeapon1(type, startTime, endTime, br); break;
-                        case EventType.Unk033: result = new SwitchWeapon2(type, startTime, endTime, br); break;
+                        case EventType.SwitchWeapon1: result = new SwitchWeapon1(type, startTime, endTime, br); break;
+                        case EventType.SwitchWeapon2: result = new SwitchWeapon2(type, startTime, endTime, br); break;
                         case EventType.Unk034: result = new Unk034(type, startTime, endTime, br); break;
                         case EventType.Unk035: result = new Unk035(type, startTime, endTime, br); break;
                         case EventType.Unk064: result = new Unk064(type, startTime, endTime, br); break;
                         case EventType.Unk065: result = new Unk065(type, startTime, endTime, br); break;
-                        case EventType.Unk066: result = new CreateSpEffect1(type, startTime, endTime, br); break;
-                        case EventType.Unk067: result = new CreateSpEffect2(type, startTime, endTime, br); break;
-                        case EventType.Unk096: result = new PlayFFX(type, startTime, endTime, br); break;
+                        case EventType.CreateSpEffect1: result = new CreateSpEffect1(type, startTime, endTime, br); break;
+                        case EventType.CreateSpEffect2: result = new CreateSpEffect2(type, startTime, endTime, br); break;
+                        case EventType.PlayFFX: result = new PlayFFX(type, startTime, endTime, br); break;
                         case EventType.Unk110: result = new Unk110(type, startTime, endTime, br); break;
-                        case EventType.Unk112: result = new HitEffect(type, startTime, endTime, br); break;
+                        case EventType.HitEffect: result = new HitEffect(type, startTime, endTime, br); break;
                         case EventType.Unk113: result = new Unk113(type, startTime, endTime, br); break;
                         case EventType.Unk114: result = new Unk114(type, startTime, endTime, br); break;
                         case EventType.Unk115: result = new Unk115(type, startTime, endTime, br); break;
@@ -358,6 +358,16 @@ namespace SoulsFormats
                 public byte Unk0C { get; set; }
                 public byte Unk0D { get; set; }
                 public short StateInfo { get; set; }
+
+                public Unk001(float startTime, float endTime, int unk00, int unk04, int condition, byte unk0C, byte unk0D, short stateInfo) : base(EventType.Unk001, startTime, endTime)
+                {
+                    Unk00 = unk00;
+                    Unk04 = unk04;
+                    Condition = condition;
+                    Unk0C = unk0C;
+                    Unk0D = unk0D;
+                    StateInfo = stateInfo;
+                }
 
                 internal Unk001(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
                 {
@@ -582,6 +592,7 @@ namespace SoulsFormats
                 public byte Unk08;
                 public byte Unk09;
                 public byte Unk0A;
+                public byte Unk0B;
 
                 internal Unk064(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
                 {
@@ -591,7 +602,7 @@ namespace SoulsFormats
                     Unk08 = br.ReadByte();
                     Unk09 = br.ReadByte();
                     Unk0A = br.ReadByte();
-                    br.AssertByte(0);
+                    Unk0B = br.ReadByte();
                     br.AssertInt32(0);
                 }
 
@@ -603,7 +614,7 @@ namespace SoulsFormats
                     bw.WriteByte(Unk08);
                     bw.WriteByte(Unk09);
                     bw.WriteByte(Unk0A);
-                    bw.WriteByte(0);
+                    bw.WriteByte(Unk0B);
                     bw.WriteInt32(0);
                 }
             }
@@ -642,7 +653,7 @@ namespace SoulsFormats
             {
                 public int SpEffectID;
 
-                public CreateSpEffect1(float startTime, float endTime, int unk00) : base(EventType.Unk066, startTime, endTime)
+                public CreateSpEffect1(float startTime, float endTime, int unk00) : base(EventType.CreateSpEffect1, startTime, endTime)
                 {
                     SpEffectID = unk00;
                 }
@@ -1596,6 +1607,13 @@ namespace SoulsFormats
             public class Unk307 : Event
             {
                 public int Unk00, Unk04, Unk08, Unk0C;
+
+                public Unk307(float startTime, float endTime, int unk00, int unk04, int unk08) : base(EventType.Unk307, startTime, endTime)
+                {
+                    Unk00 = unk00;
+                    Unk04 = unk04;
+                    Unk08 = unk08;
+                }
 
                 internal Unk307(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
                 {
