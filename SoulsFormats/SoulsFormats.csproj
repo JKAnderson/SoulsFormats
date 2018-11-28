@@ -97,6 +97,9 @@
     <Compile Include="Formats\FILTPARAM.cs" />
     <Compile Include="Formats\FXR3.cs" />
     <Compile Include="Formats\GPARAM.cs" />
+    <Compile Include="Formats\MSB2\MSB2.cs" />
+    <Compile Include="Formats\MSB2\MSB2.ModelSection.cs" />
+    <Compile Include="Formats\MSB2\MSB2.PartsSection.cs" />
     <Compile Include="Formats\MSB3\MSB3.cs" />
     <Compile Include="Formats\MSB3\MSB3.BoneNamesSection.cs" />
     <Compile Include="Formats\MSB3\MSB3.PartsPoseSection.cs" />

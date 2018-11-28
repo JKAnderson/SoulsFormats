@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace SoulsFormats
 {
     /// <summary>
-    /// A map layout format used in DS3.
+    /// Extremely barebones support for DS2 MSBs, reading only models and part positions.
     /// </summary>
-    public partial class MSB3 : SoulsFile<MSB3>
+    public partial class MSB2 : SoulsFile<MSB2>
     {
         /// <summary>
         /// Models in this MSB.
@@ -14,39 +17,9 @@ namespace SoulsFormats
         public ModelSection Models;
 
         /// <summary>
-        /// Events in this MSB.
-        /// </summary>
-        public EventSection Events;
-
-        /// <summary>
-        /// Regions in this MSB.
-        /// </summary>
-        public PointSection Regions;
-
-        /// <summary>
-        /// Routes in this MSB.
-        /// </summary>
-        public RouteSection Routes;
-
-        /// <summary>
-        /// Layers in this MSB.
-        /// </summary>
-        public LayerSection Layers;
-
-        /// <summary>
         /// Parts in this MSB.
         /// </summary>
         public PartsSection Parts;
-
-        /// <summary>
-        /// PartsPose data in this MSB.
-        /// </summary>
-        public PartsPoseSection PartsPoses;
-
-        /// <summary>
-        /// Bone names in this MSB.
-        /// </summary>
-        public BoneNameSection BoneNames;
 
         internal override bool Is(BinaryReaderEx br)
         {
@@ -57,12 +30,12 @@ namespace SoulsFormats
         internal struct Entries
         {
             public List<Model> Models;
-            public List<Event> Events;
-            public List<Region> Regions;
-            public List<Route> Routes;
-            public List<Layer> Layers;
+            //public List<Event> Events;
+            //public List<Region> Regions;
+            //public List<Route> Routes;
+            //public List<Layer> Layers;
             public List<Part> Parts;
-            public List<string> BoneNames;
+            //public List<string> BoneNames;
         }
 
         internal override void Read(BinaryReaderEx br)
@@ -99,113 +72,62 @@ namespace SoulsFormats
                         entries.Models = Models.Read(br, offsets);
                         break;
 
-                    case "EVENT_PARAM_ST":
-                        Events = new EventSection(br, unk1);
-                        entries.Events = Events.Read(br, offsets);
-                        break;
+                    //case "EVENT_PARAM_ST":
+                    //    Events = new EventSection(br, unk1);
+                    //    entries.Events = Events.Read(br, offsets);
+                    //    break;
 
-                    case "POINT_PARAM_ST":
-                        Regions = new PointSection(br, unk1);
-                        entries.Regions = Regions.Read(br, offsets);
-                        break;
+                    //case "POINT_PARAM_ST":
+                    //    Regions = new PointSection(br, unk1);
+                    //    entries.Regions = Regions.Read(br, offsets);
+                    //    break;
 
-                    case "ROUTE_PARAM_ST":
-                        Routes = new RouteSection(br, unk1);
-                        entries.Routes = Routes.Read(br, offsets);
-                        break;
+                    //case "ROUTE_PARAM_ST":
+                    //    Routes = new RouteSection(br, unk1);
+                    //    entries.Routes = Routes.Read(br, offsets);
+                    //    break;
 
-                    case "LAYER_PARAM_ST":
-                        Layers = new LayerSection(br, unk1);
-                        entries.Layers = Layers.Read(br, offsets);
-                        break;
+                    //case "LAYER_PARAM_ST":
+                    //    Layers = new LayerSection(br, unk1);
+                    //    entries.Layers = Layers.Read(br, offsets);
+                    //    break;
 
                     case "PARTS_PARAM_ST":
                         Parts = new PartsSection(br, unk1);
                         entries.Parts = Parts.Read(br, offsets);
                         break;
 
-                    case "MAPSTUDIO_PARTS_POSE_ST":
-                        PartsPoses = new PartsPoseSection(br, unk1, offsets);
-                        break;
+                    //case "MAPSTUDIO_PARTS_POSE_ST":
+                    //    PartsPoses = new PartsPoseSection(br, unk1, offsets);
+                    //    break;
 
-                    case "MAPSTUDIO_BONE_NAME_STRING":
-                        BoneNames = new BoneNameSection(br, unk1);
-                        entries.BoneNames = BoneNames.Read(br, offsets);
-                        break;
+                    //case "MAPSTUDIO_BONE_NAME_STRING":
+                    //    BoneNames = new BoneNameSection(br, unk1);
+                    //    entries.BoneNames = BoneNames.Read(br, offsets);
+                    //    break;
 
                     default:
-                        throw new NotImplementedException($"Unimplemented section: {type}");
+                        //throw new NotImplementedException($"Unimplemented section: {type}");
+                        br.Skip(offsets * 8);
+                        break;
                 }
 
                 nextSectionOffset = br.ReadInt64();
             }
 
-            DisambiguateNames(entries.Events);
+            //DisambiguateNames(entries.Events);
             DisambiguateNames(entries.Models);
             DisambiguateNames(entries.Parts);
-            DisambiguateNames(entries.Regions);
+            //DisambiguateNames(entries.Regions);
 
-            Events.GetNames(this, entries);
+            //Events.GetNames(this, entries);
             Parts.GetNames(this, entries);
-            Regions.GetNames(this, entries);
+            //Regions.GetNames(this, entries);
         }
 
         internal override void Write(BinaryWriterEx bw)
         {
-            bw.BigEndian = false;
-
-            Entries entries;
-            entries.Models = Models.GetEntries();
-            entries.Events = Events.GetEntries();
-            entries.Regions = Regions.GetEntries();
-            entries.Routes = Routes.GetEntries();
-            entries.Layers = Layers.GetEntries();
-            entries.Parts = Parts.GetEntries();
-            entries.BoneNames = BoneNames.GetEntries();
-
-            Events.GetIndices(this, entries);
-            Parts.GetIndices(this, entries);
-            Regions.GetIndices(this, entries);
-
-            bw.WriteASCII("MSB ");
-            bw.WriteInt32(1);
-            bw.WriteInt32(0x10);
-
-            bw.WriteByte(0);
-            bw.WriteByte(0);
-            bw.WriteByte(1);
-            bw.WriteByte(0xFF);
-
-            Models.Write(bw, entries.Models);
-            bw.Pad(8);
-            bw.FillInt64("NextOffset", bw.Position);
-
-            Events.Write(bw, entries.Events);
-            bw.Pad(8);
-            bw.FillInt64("NextOffset", bw.Position);
-
-            Regions.Write(bw, entries.Regions);
-            bw.Pad(8);
-            bw.FillInt64("NextOffset", bw.Position);
-
-            Routes.Write(bw, entries.Routes);
-            bw.Pad(8);
-            bw.FillInt64("NextOffset", bw.Position);
-
-            Layers.Write(bw, entries.Layers);
-            bw.Pad(8);
-            bw.FillInt64("NextOffset", bw.Position);
-
-            Parts.Write(bw, entries.Parts);
-            bw.Pad(8);
-            bw.FillInt64("NextOffset", bw.Position);
-
-            PartsPoses.Write(bw);
-            bw.Pad(8);
-            bw.FillInt64("NextOffset", bw.Position);
-
-            BoneNames.Write(bw, entries.BoneNames);
-            bw.FillInt64("NextOffset", 0);
+            throw new NotImplementedException();
         }
 
         private static void DisambiguateNames<T>(List<T> entries) where T : Entry
