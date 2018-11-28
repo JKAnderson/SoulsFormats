@@ -37,40 +37,40 @@ namespace SoulsFormats
             Unk119 = 119,
             Unk120 = 120,
             Unk121 = 121,
-            PlaySound = 128,
-            Unk129 = 129,
-            Unk130 = 130,
-            Unk131 = 131,
-            Unk132 = 132,
+            PlaySound1 = 128,
+            PlaySound2 = 129,
+            PlaySound3 = 130,
+            PlaySound4 = 131,
+            PlaySound5 = 132,
             Unk136 = 136,
             Unk137 = 137,
-            Unk138 = 138,
+            CreateDecal = 138,
             Unk144 = 144,
             Unk145 = 145,
             Unk150 = 150,
             Unk151 = 151,
             Unk161 = 161,
             Unk192 = 192,
-            Unk193 = 193,
+            FadeOut = 193,
             Unk194 = 194,
             Unk224 = 224,
-            Unk225 = 225,
+            DisableStaminaRegen = 225,
             Unk226 = 226,
             Unk227 = 227,
-            Unk228 = 228,
+            RagdollReviveTime = 228,
             Unk229 = 229,
-            Unk231 = 231,
+            SetEventMessageID = 231,
             Unk232 = 232,
-            Unk233 = 233,
-            Unk236 = 236,
-            Unk237 = 237,
+            ChangeDrawMask = 233,
+            RollDistanceReduction = 236,
+            CreateAISound = 237,
             Unk300 = 300,
             Unk301 = 301,
-            Unk302 = 302,
-            Unk303 = 303,
-            Unk304 = 304,
+            AddSpEffectDragonForm = 302,
+            PlayAnimation = 303,
+            BehaviorThing = 304,
             Unk306 = 306,
-            Unk307 = 307,
+            CreateBehaviorPC = 307,
             Unk308 = 308,
             Unk310 = 310,
             Unk311 = 311,
@@ -78,49 +78,49 @@ namespace SoulsFormats
             Unk317 = 317,
             Unk320 = 320,
             Unk330 = 330,
-            Unk331 = 331,
+            EffectDuringThrow = 331,
             Unk332 = 332,
-            Unk401 = 401,
+            CreateSpEffect = 401,
             Unk500 = 500,
             Unk510 = 510,
             Unk520 = 520,
-            Unk522 = 522,
+            KingOfTheStorm = 522,
             Unk600 = 600,
             Unk601 = 601,
-            Unk603 = 603,
+            DebugAnimSpeed = 603,
             Unk605 = 605,
             Unk606 = 606,
             Unk700 = 700,
-            Unk703 = 703,
-            Unk705 = 705,
+            EnableTurningDirection = 703,
+            FacingAngleCorrection = 705,
             Unk707 = 707,
             HideWeapon = 710,
-            Unk711 = 711,
-            Unk712 = 712,
-            Unk713 = 713,
-            Unk714 = 714,
+            HideModelMask = 711,
+            DamageLevelModule = 712,
+            ModelMask = 713,
+            DamageLevelFunction = 714,
             Unk715 = 715,
-            Unk720 = 720,
+            CultStart = 720,
             Unk730 = 730,
             Unk740 = 740,
-            Unk760 = 760,
-            Unk770 = 770,
-            Unk771 = 771,
-            Unk772 = 772,
-            Unk781 = 781,
+            IFrameState = 760,
+            BonePos = 770,
+            BoneFixOn1 = 771,
+            BoneFixOn2 = 772,
+            TurnLowerBody = 781,
             Unk782 = 782,
-            Unk785 = 785,
+            SpawnBulletByCultSacrifice1 = 785,
             Unk786 = 786,
             Unk790 = 790,
             Unk791 = 791,
-            Unk792 = 792,
-            Unk793 = 793,
-            Unk794 = 794,
-            Unk795 = 795,
-            Unk796 = 796,
-            Unk797 = 797,
-            Unk798 = 798,
-            Unk799 = 799,
+            HitEffect2 = 792,
+            CultSacrifice1 = 793,
+            SacrificeEmpty = 794,
+            Toughness = 795,
+            BringCultMenu = 796,
+            CeremonyParamID = 797,
+            CultSingle = 798,
+            CultEmpty2 = 799,
             Unk800 = 800,
             Unk900 = 900,
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
@@ -134,7 +134,7 @@ namespace SoulsFormats
             /// <summary>
             /// The type of this event.
             /// </summary>
-            public readonly EventType Type;
+            public abstract EventType Type { get; }
 
             /// <summary>
             /// When the event begins.
@@ -146,9 +146,8 @@ namespace SoulsFormats
             /// </summary>
             public float EndTime;
 
-            internal Event(EventType type, float startTime, float endTime)
+            internal Event(float startTime, float endTime)
             {
-                Type = type;
                 StartTime = startTime;
                 EndTime = endTime;
             }
@@ -200,114 +199,114 @@ namespace SoulsFormats
                     br.AssertInt64(br.Position + 8);
                     switch (type)
                     {
-                        case EventType.Unk000: result = new Unk000(type, startTime, endTime, br); break;
-                        case EventType.Unk001: result = new Unk001(type, startTime, endTime, br); break;
-                        case EventType.Unk002: result = new Unk002(type, startTime, endTime, br); break;
-                        case EventType.Unk005: result = new Unk005(type, startTime, endTime, br); break;
-                        case EventType.Unk016: result = new Unk016(type, startTime, endTime, br); break;
-                        case EventType.Unk017: result = new Unk017(type, startTime, endTime, br); break;
-                        case EventType.Unk024: result = new Unk024(type, startTime, endTime, br); break;
-                        case EventType.SwitchWeapon1: result = new SwitchWeapon1(type, startTime, endTime, br); break;
-                        case EventType.SwitchWeapon2: result = new SwitchWeapon2(type, startTime, endTime, br); break;
-                        case EventType.Unk034: result = new Unk034(type, startTime, endTime, br); break;
-                        case EventType.Unk035: result = new Unk035(type, startTime, endTime, br); break;
-                        case EventType.Unk064: result = new Unk064(type, startTime, endTime, br); break;
-                        case EventType.Unk065: result = new Unk065(type, startTime, endTime, br); break;
-                        case EventType.CreateSpEffect1: result = new CreateSpEffect1(type, startTime, endTime, br); break;
-                        case EventType.CreateSpEffect2: result = new CreateSpEffect2(type, startTime, endTime, br); break;
-                        case EventType.PlayFFX: result = new PlayFFX(type, startTime, endTime, br); break;
-                        case EventType.Unk110: result = new Unk110(type, startTime, endTime, br); break;
-                        case EventType.HitEffect: result = new HitEffect(type, startTime, endTime, br); break;
-                        case EventType.Unk113: result = new Unk113(type, startTime, endTime, br); break;
-                        case EventType.Unk114: result = new Unk114(type, startTime, endTime, br); break;
-                        case EventType.Unk115: result = new Unk115(type, startTime, endTime, br); break;
-                        case EventType.Unk116: result = new Unk116(type, startTime, endTime, br); break;
-                        case EventType.Unk117: result = new Unk117(type, startTime, endTime, br); break;
-                        case EventType.Unk118: result = new Unk118(type, startTime, endTime, br); break;
-                        case EventType.Unk119: result = new Unk119(type, startTime, endTime, br); break;
-                        case EventType.Unk120: result = new Unk120(type, startTime, endTime, br); break;
-                        case EventType.Unk121: result = new Unk121(type, startTime, endTime, br); break;
-                        case EventType.PlaySound: result = new PlaySound(type, startTime, endTime, br); break;
-                        case EventType.Unk129: result = new Unk129(type, startTime, endTime, br); break;
-                        case EventType.Unk130: result = new Unk130(type, startTime, endTime, br); break;
-                        case EventType.Unk131: result = new Unk131(type, startTime, endTime, br); break;
-                        case EventType.Unk132: result = new Unk132(type, startTime, endTime, br); break;
-                        case EventType.Unk137: result = new Unk137(type, startTime, endTime, br); break;
-                        case EventType.Unk138: result = new Unk138(type, startTime, endTime, br); break;
-                        case EventType.Unk144: result = new Unk144(type, startTime, endTime, br); break;
-                        case EventType.Unk145: result = new Unk145(type, startTime, endTime, br); break;
-                        case EventType.Unk150: result = new Unk150(type, startTime, endTime, br); break;
-                        case EventType.Unk151: result = new Unk151(type, startTime, endTime, br); break;
-                        case EventType.Unk161: result = new Unk161(type, startTime, endTime, br); break;
-                        case EventType.Unk193: result = new Unk193(type, startTime, endTime, br); break;
-                        case EventType.Unk194: result = new Unk194(type, startTime, endTime, br); break;
-                        case EventType.Unk224: result = new Unk224(type, startTime, endTime, br); break;
-                        case EventType.Unk225: result = new Unk225(type, startTime, endTime, br); break;
-                        case EventType.Unk226: result = new Unk226(type, startTime, endTime, br); break;
-                        case EventType.Unk227: result = new Unk227(type, startTime, endTime, br); break;
-                        case EventType.Unk228: result = new Unk228(type, startTime, endTime, br); break;
-                        case EventType.Unk229: result = new Unk229(type, startTime, endTime, br); break;
-                        case EventType.Unk231: result = new Unk231(type, startTime, endTime, br); break;
-                        case EventType.Unk232: result = new Unk232(type, startTime, endTime, br); break;
-                        case EventType.Unk233: result = new Unk233(type, startTime, endTime, br); break;
-                        case EventType.Unk236: result = new Unk236(type, startTime, endTime, br); break;
-                        case EventType.Unk237: result = new Unk237(type, startTime, endTime, br); break;
-                        case EventType.Unk300: result = new Unk300(type, startTime, endTime, br); break;
-                        case EventType.Unk301: result = new Unk301(type, startTime, endTime, br); break;
-                        case EventType.Unk302: result = new Unk302(type, startTime, endTime, br); break;
-                        case EventType.Unk303: result = new Unk303(type, startTime, endTime, br); break;
-                        case EventType.Unk304: result = new Unk304(type, startTime, endTime, br); break;
-                        case EventType.Unk307: result = new Unk307(type, startTime, endTime, br); break;
-                        case EventType.Unk308: result = new Unk308(type, startTime, endTime, br); break;
-                        case EventType.Unk310: result = new Unk310(type, startTime, endTime, br); break;
-                        case EventType.Unk311: result = new Unk311(type, startTime, endTime, br); break;
-                        case EventType.Unk312: result = new Unk312(type, startTime, endTime, br); break;
-                        case EventType.Unk320: result = new Unk320(type, startTime, endTime, br); break;
-                        case EventType.Unk330: result = new Unk330(type, startTime, endTime, br); break;
-                        case EventType.Unk331: result = new Unk331(type, startTime, endTime, br); break;
-                        case EventType.Unk332: result = new Unk332(type, startTime, endTime, br); break;
-                        case EventType.Unk401: result = new Unk401(type, startTime, endTime, br); break;
-                        case EventType.Unk500: result = new Unk500(type, startTime, endTime, br); break;
-                        case EventType.Unk510: result = new Unk510(type, startTime, endTime, br); break;
-                        case EventType.Unk520: result = new Unk520(type, startTime, endTime, br); break;
-                        case EventType.Unk522: result = new Unk522(type, startTime, endTime, br); break;
-                        case EventType.Unk600: result = new Unk600(type, startTime, endTime, br); break;
-                        case EventType.Unk601: result = new Unk601(type, startTime, endTime, br); break;
-                        case EventType.Unk603: result = new Unk603(type, startTime, endTime, br); break;
-                        case EventType.Unk605: result = new Unk605(type, startTime, endTime, br); break;
-                        case EventType.Unk606: result = new Unk606(type, startTime, endTime, br); break;
-                        case EventType.Unk700: result = new Unk700(type, startTime, endTime, br); break;
-                        case EventType.Unk703: result = new Unk703(type, startTime, endTime, br); break;
-                        case EventType.Unk705: result = new Unk705(type, startTime, endTime, br); break;
-                        case EventType.Unk707: result = new Unk707(type, startTime, endTime, br); break;
-                        case EventType.HideWeapon: result = new HideWeapon(type, startTime, endTime, br); break;
-                        case EventType.Unk711: result = new Unk711(type, startTime, endTime, br); break;
-                        case EventType.Unk712: result = new Unk712(type, startTime, endTime, br); break;
-                        case EventType.Unk713: result = new Unk713(type, startTime, endTime, br); break;
-                        case EventType.Unk714: result = new Unk714(type, startTime, endTime, br); break;
-                        case EventType.Unk715: result = new Unk715(type, startTime, endTime, br); break;
-                        case EventType.Unk720: result = new Unk720(type, startTime, endTime, br); break;
-                        case EventType.Unk730: result = new Unk730(type, startTime, endTime, br); break;
-                        case EventType.Unk740: result = new Unk740(type, startTime, endTime, br); break;
-                        case EventType.Unk760: result = new Unk760(type, startTime, endTime, br); break;
-                        case EventType.Unk770: result = new Unk770(type, startTime, endTime, br); break;
-                        case EventType.Unk771: result = new Unk771(type, startTime, endTime, br); break;
-                        case EventType.Unk772: result = new Unk772(type, startTime, endTime, br); break;
-                        case EventType.Unk781: result = new Unk781(type, startTime, endTime, br); break;
-                        case EventType.Unk782: result = new Unk782(type, startTime, endTime, br); break;
-                        case EventType.Unk785: result = new Unk785(type, startTime, endTime, br); break;
-                        case EventType.Unk786: result = new Unk786(type, startTime, endTime, br); break;
-                        case EventType.Unk790: result = new Unk790(type, startTime, endTime, br); break;
-                        case EventType.Unk791: result = new Unk791(type, startTime, endTime, br); break;
-                        case EventType.Unk792: result = new Unk792(type, startTime, endTime, br); break;
-                        case EventType.Unk793: result = new Unk793(type, startTime, endTime, br); break;
-                        case EventType.Unk794: result = new Unk794(type, startTime, endTime, br); break;
-                        case EventType.Unk795: result = new Unk795(type, startTime, endTime, br); break;
-                        case EventType.Unk796: result = new Unk796(type, startTime, endTime, br); break;
-                        case EventType.Unk797: result = new Unk797(type, startTime, endTime, br); break;
-                        case EventType.Unk798: result = new Unk798(type, startTime, endTime, br); break;
-                        case EventType.Unk799: result = new Unk799(type, startTime, endTime, br); break;
-                        case EventType.Unk800: result = new Unk800(type, startTime, endTime, br); break;
+                        case EventType.Unk000: result = new Unk000(startTime, endTime, br); break;
+                        case EventType.Unk001: result = new Unk001(startTime, endTime, br); break;
+                        case EventType.Unk002: result = new Unk002(startTime, endTime, br); break;
+                        case EventType.Unk005: result = new Unk005(startTime, endTime, br); break;
+                        case EventType.Unk016: result = new Unk016(startTime, endTime, br); break;
+                        case EventType.Unk017: result = new Unk017(startTime, endTime, br); break;
+                        case EventType.Unk024: result = new Unk024(startTime, endTime, br); break;
+                        case EventType.SwitchWeapon1: result = new SwitchWeapon1(startTime, endTime, br); break;
+                        case EventType.SwitchWeapon2: result = new SwitchWeapon2(startTime, endTime, br); break;
+                        case EventType.Unk034: result = new Unk034(startTime, endTime, br); break;
+                        case EventType.Unk035: result = new Unk035(startTime, endTime, br); break;
+                        case EventType.Unk064: result = new Unk064(startTime, endTime, br); break;
+                        case EventType.Unk065: result = new Unk065(startTime, endTime, br); break;
+                        case EventType.CreateSpEffect1: result = new CreateSpEffect1(startTime, endTime, br); break;
+                        case EventType.CreateSpEffect2: result = new CreateSpEffect2(startTime, endTime, br); break;
+                        case EventType.PlayFFX: result = new PlayFFX(startTime, endTime, br); break;
+                        case EventType.Unk110: result = new Unk110(startTime, endTime, br); break;
+                        case EventType.HitEffect: result = new HitEffect(startTime, endTime, br); break;
+                        case EventType.Unk113: result = new Unk113(startTime, endTime, br); break;
+                        case EventType.Unk114: result = new Unk114(startTime, endTime, br); break;
+                        case EventType.Unk115: result = new Unk115(startTime, endTime, br); break;
+                        case EventType.Unk116: result = new Unk116(startTime, endTime, br); break;
+                        case EventType.Unk117: result = new Unk117(startTime, endTime, br); break;
+                        case EventType.Unk118: result = new Unk118(startTime, endTime, br); break;
+                        case EventType.Unk119: result = new Unk119(startTime, endTime, br); break;
+                        case EventType.Unk120: result = new Unk120(startTime, endTime, br); break;
+                        case EventType.Unk121: result = new Unk121(startTime, endTime, br); break;
+                        case EventType.PlaySound1: result = new PlaySound1(startTime, endTime, br); break;
+                        case EventType.PlaySound2: result = new PlaySound2(startTime, endTime, br); break;
+                        case EventType.PlaySound3: result = new PlaySound3(startTime, endTime, br); break;
+                        case EventType.PlaySound4: result = new PlaySound4(startTime, endTime, br); break;
+                        case EventType.PlaySound5: result = new PlaySound5(startTime, endTime, br); break;
+                        case EventType.Unk137: result = new Unk137(startTime, endTime, br); break;
+                        case EventType.CreateDecal: result = new CreateDecal(startTime, endTime, br); break;
+                        case EventType.Unk144: result = new Unk144(startTime, endTime, br); break;
+                        case EventType.Unk145: result = new Unk145(startTime, endTime, br); break;
+                        case EventType.Unk150: result = new Unk150(startTime, endTime, br); break;
+                        case EventType.Unk151: result = new Unk151(startTime, endTime, br); break;
+                        case EventType.Unk161: result = new Unk161(startTime, endTime, br); break;
+                        case EventType.FadeOut: result = new FadeOut(startTime, endTime, br); break;
+                        case EventType.Unk194: result = new Unk194(startTime, endTime, br); break;
+                        case EventType.Unk224: result = new Unk224(startTime, endTime, br); break;
+                        case EventType.DisableStaminaRegen: result = new DisableStaminaRegen(startTime, endTime, br); break;
+                        case EventType.Unk226: result = new Unk226(startTime, endTime, br); break;
+                        case EventType.Unk227: result = new Unk227(startTime, endTime, br); break;
+                        case EventType.RagdollReviveTime: result = new RagdollReviveTime(startTime, endTime, br); break;
+                        case EventType.Unk229: result = new Unk229(startTime, endTime, br); break;
+                        case EventType.SetEventMessageID: result = new SetEventMessageID(startTime, endTime, br); break;
+                        case EventType.Unk232: result = new Unk232(startTime, endTime, br); break;
+                        case EventType.ChangeDrawMask: result = new ChangeDrawMask(startTime, endTime, br); break;
+                        case EventType.RollDistanceReduction: result = new RollDistanceReduction(startTime, endTime, br); break;
+                        case EventType.CreateAISound: result = new CreateAISound(startTime, endTime, br); break;
+                        case EventType.Unk300: result = new Unk300(startTime, endTime, br); break;
+                        case EventType.Unk301: result = new Unk301(startTime, endTime, br); break;
+                        case EventType.AddSpEffectDragonForm: result = new AddSpEffectDragonForm(startTime, endTime, br); break;
+                        case EventType.PlayAnimation: result = new PlayAnimation(startTime, endTime, br); break;
+                        case EventType.BehaviorThing: result = new BehaviorThing(startTime, endTime, br); break;
+                        case EventType.CreateBehaviorPC: result = new CreateBehaviorPC(startTime, endTime, br); break;
+                        case EventType.Unk308: result = new Unk308(startTime, endTime, br); break;
+                        case EventType.Unk310: result = new Unk310(startTime, endTime, br); break;
+                        case EventType.Unk311: result = new Unk311(startTime, endTime, br); break;
+                        case EventType.Unk312: result = new Unk312(startTime, endTime, br); break;
+                        case EventType.Unk320: result = new Unk320(startTime, endTime, br); break;
+                        case EventType.Unk330: result = new Unk330(startTime, endTime, br); break;
+                        case EventType.EffectDuringThrow: result = new EffectDuringThrow(startTime, endTime, br); break;
+                        case EventType.Unk332: result = new Unk332(startTime, endTime, br); break;
+                        case EventType.CreateSpEffect: result = new CreateSpEffect(startTime, endTime, br); break;
+                        case EventType.Unk500: result = new Unk500(startTime, endTime, br); break;
+                        case EventType.Unk510: result = new Unk510(startTime, endTime, br); break;
+                        case EventType.Unk520: result = new Unk520(startTime, endTime, br); break;
+                        case EventType.KingOfTheStorm: result = new KingOfTheStorm(startTime, endTime, br); break;
+                        case EventType.Unk600: result = new Unk600(startTime, endTime, br); break;
+                        case EventType.Unk601: result = new Unk601(startTime, endTime, br); break;
+                        case EventType.DebugAnimSpeed: result = new DebugAnimSpeed(startTime, endTime, br); break;
+                        case EventType.Unk605: result = new Unk605(startTime, endTime, br); break;
+                        case EventType.Unk606: result = new Unk606(startTime, endTime, br); break;
+                        case EventType.Unk700: result = new Unk700(startTime, endTime, br); break;
+                        case EventType.EnableTurningDirection: result = new EnableTurningDirection(startTime, endTime, br); break;
+                        case EventType.FacingAngleCorrection: result = new FacingAngleCorrection(startTime, endTime, br); break;
+                        case EventType.Unk707: result = new Unk707(startTime, endTime, br); break;
+                        case EventType.HideWeapon: result = new HideWeapon(startTime, endTime, br); break;
+                        case EventType.HideModelMask: result = new HideModelMask(startTime, endTime, br); break;
+                        case EventType.DamageLevelModule: result = new DamageLevelModule(startTime, endTime, br); break;
+                        case EventType.ModelMask: result = new ModelMask(startTime, endTime, br); break;
+                        case EventType.DamageLevelFunction: result = new DamageLevelFunction(startTime, endTime, br); break;
+                        case EventType.Unk715: result = new Unk715(startTime, endTime, br); break;
+                        case EventType.CultStart: result = new CultStart(startTime, endTime, br); break;
+                        case EventType.Unk730: result = new Unk730(startTime, endTime, br); break;
+                        case EventType.Unk740: result = new Unk740(startTime, endTime, br); break;
+                        case EventType.IFrameState: result = new IFrameState(startTime, endTime, br); break;
+                        case EventType.BonePos: result = new BonePos(startTime, endTime, br); break;
+                        case EventType.BoneFixOn1: result = new BoneFixOn1(startTime, endTime, br); break;
+                        case EventType.BoneFixOn2: result = new BoneFixOn2(startTime, endTime, br); break;
+                        case EventType.TurnLowerBody: result = new TurnLowerBody(startTime, endTime, br); break;
+                        case EventType.Unk782: result = new Unk782(startTime, endTime, br); break;
+                        case EventType.SpawnBulletByCultSacrifice1: result = new SpawnBulletByCultSacrifice1(startTime, endTime, br); break;
+                        case EventType.Unk786: result = new Unk786(startTime, endTime, br); break;
+                        case EventType.Unk790: result = new Unk790(startTime, endTime, br); break;
+                        case EventType.Unk791: result = new Unk791(startTime, endTime, br); break;
+                        case EventType.HitEffect2: result = new HitEffect2(startTime, endTime, br); break;
+                        case EventType.CultSacrifice1: result = new CultSacrifice1(startTime, endTime, br); break;
+                        case EventType.SacrificeEmpty: result = new SacrificeEmpty(startTime, endTime, br); break;
+                        case EventType.Toughness: result = new Toughness(startTime, endTime, br); break;
+                        case EventType.BringCultMenu: result = new BringCultMenu(startTime, endTime, br); break;
+                        case EventType.CeremonyParamID: result = new CeremonyParamID(startTime, endTime, br); break;
+                        case EventType.CultSingle: result = new CultSingle(startTime, endTime, br); break;
+                        case EventType.CultEmpty2: result = new CultEmpty2(startTime, endTime, br); break;
+                        case EventType.Unk800: result = new Unk800(startTime, endTime, br); break;
 
                         default:
                             throw new NotImplementedException();
@@ -324,14 +323,16 @@ namespace SoulsFormats
             /// </summary>
             public class Unk000 : Event // 000
             {
+                public override EventType Type => EventType.Unk000;
+
                 public int JumpTableID { get; set; }
                 public int Unk04 { get; set; }
                 // Used for jump table ID 3
                 public int Unk08 { get; set; }
                 public short Unk0C { get; set; }
                 public short Unk0E { get; set; }
-                
-                internal Unk000(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+
+                internal Unk000(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     JumpTableID = br.ReadInt32();
                     Unk04 = br.ReadInt32();
@@ -352,6 +353,8 @@ namespace SoulsFormats
 
             public class Unk001 : Event // 001
             {
+                public override EventType Type => EventType.Unk001;
+
                 public int Unk00 { get; set; }
                 public int Unk04 { get; set; }
                 public int Condition { get; set; }
@@ -359,7 +362,7 @@ namespace SoulsFormats
                 public byte Unk0D { get; set; }
                 public short StateInfo { get; set; }
 
-                public Unk001(float startTime, float endTime, int unk00, int unk04, int condition, byte unk0C, byte unk0D, short stateInfo) : base(EventType.Unk001, startTime, endTime)
+                public Unk001(float startTime, float endTime, int unk00, int unk04, int condition, byte unk0C, byte unk0D, short stateInfo) : base(startTime, endTime)
                 {
                     Unk00 = unk00;
                     Unk04 = unk04;
@@ -369,7 +372,7 @@ namespace SoulsFormats
                     StateInfo = stateInfo;
                 }
 
-                internal Unk001(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                internal Unk001(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     Unk00 = br.ReadInt32();
                     Unk04 = br.ReadInt32();
@@ -392,6 +395,8 @@ namespace SoulsFormats
 
             public class Unk002 : Event // 002
             {
+                public override EventType Type => EventType.Unk002;
+
                 public int Unk00;
                 public int Unk04;
                 public int ChrAsmStyle;
@@ -399,8 +404,8 @@ namespace SoulsFormats
                 public byte Unk0D;
                 public ushort Unk0E;
                 public ushort Unk10;
-                
-                internal Unk002(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+
+                internal Unk002(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     Unk00 = br.ReadInt32();
                     Unk04 = br.ReadInt32();
@@ -429,10 +434,12 @@ namespace SoulsFormats
 
             public class Unk005 : Event // 005
             {
+                public override EventType Type => EventType.Unk005;
+
                 public int Unk00;
                 public int Unk04;
 
-                internal Unk005(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                internal Unk005(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     Unk00 = br.ReadInt32();
                     Unk04 = br.ReadInt32();
@@ -447,43 +454,44 @@ namespace SoulsFormats
 
             public class Unk016 : Event
             {
-                internal Unk016(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime) { }
+                public override EventType Type => EventType.Unk000;
+
+                internal Unk016(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime) { }
 
                 internal override void WriteSpecific(BinaryWriterEx bw) { }
             }
 
             public class Unk017 : Event // 017
             {
-                public int Unk00;
-                public int Unk04;
-                public int Unk08;
-                public int Unk0C;
+                public override EventType Type => EventType.Unk017;
 
-                internal Unk017(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                internal Unk017(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.AssertInt32(0);
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
                 }
             }
 
             public class Unk024 : Event // 024
             {
+                public override EventType Type => EventType.Unk024;
+
                 public int Unk00;
                 public int Unk04;
                 public int Unk08;
                 public int Unk0C;
 
-                internal Unk024(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                internal Unk024(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     Unk00 = br.ReadInt32();
                     Unk04 = br.ReadInt32();
@@ -502,13 +510,13 @@ namespace SoulsFormats
 
             public class SwitchWeapon1 : Event // 032
             {
+                public override EventType Type => EventType.SwitchWeapon1;
+
                 public int SwitchState;
 
-                internal SwitchWeapon1(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                internal SwitchWeapon1(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     SwitchState = br.ReadInt32();
-                    br.AssertInt32(0);
-                    br.AssertInt32(0);
                     br.AssertInt32(0);
                 }
 
@@ -516,16 +524,16 @@ namespace SoulsFormats
                 {
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
-                    bw.WriteInt32(0);
-                    bw.WriteInt32(0);
                 }
             }
 
             public class SwitchWeapon2 : Event // 033
             {
+                public override EventType Type => EventType.SwitchWeapon2;
+
                 public int SwitchState;
 
-                internal SwitchWeapon2(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                internal SwitchWeapon2(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     SwitchState = br.ReadInt32();
                     br.AssertInt32(0);
@@ -544,9 +552,11 @@ namespace SoulsFormats
 
             public class Unk034 : Event // 034
             {
+                public override EventType Type => EventType.Unk034;
+
                 public int State;
 
-                internal Unk034(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                internal Unk034(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     State = br.ReadInt32();
                     br.AssertInt32(0);
@@ -565,9 +575,11 @@ namespace SoulsFormats
 
             public class Unk035 : Event // 035
             {
+                public override EventType Type => EventType.Unk035;
+
                 public int State;
 
-                internal Unk035(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                internal Unk035(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     State = br.ReadInt32();
                     br.AssertInt32(0);
@@ -586,6 +598,8 @@ namespace SoulsFormats
 
             public class Unk064 : Event // 064
             {
+                public override EventType Type => EventType.Unk064;
+
                 public int Unk00;
                 public ushort Unk04;
                 public ushort Unk06;
@@ -594,7 +608,7 @@ namespace SoulsFormats
                 public byte Unk0A;
                 public byte Unk0B;
 
-                internal Unk064(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                internal Unk064(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     Unk00 = br.ReadInt32();
                     Unk04 = br.ReadUInt16();
@@ -621,13 +635,15 @@ namespace SoulsFormats
 
             public class Unk065 : Event // 065
             {
+                public override EventType Type => EventType.Unk065;
+
                 public int Unk00;
                 public byte Unk04;
                 public byte Unk05;
                 public ushort Unk06;
                 public int Unk08;
 
-                internal Unk065(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                internal Unk065(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     Unk00 = br.ReadInt32();
                     Unk04 = br.ReadByte();
@@ -651,14 +667,16 @@ namespace SoulsFormats
             // During attack
             public class CreateSpEffect1 : Event // 066
             {
+                public override EventType Type => EventType.CreateSpEffect1;
+
                 public int SpEffectID;
 
-                public CreateSpEffect1(float startTime, float endTime, int unk00) : base(EventType.CreateSpEffect1, startTime, endTime)
+                public CreateSpEffect1(float startTime, float endTime, int speffectID) : base(startTime, endTime)
                 {
-                    SpEffectID = unk00;
+                    SpEffectID = speffectID;
                 }
 
-                internal CreateSpEffect1(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                internal CreateSpEffect1(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     SpEffectID = br.ReadInt32();
                     br.AssertInt32(0);
@@ -674,9 +692,11 @@ namespace SoulsFormats
             // During roll
             public class CreateSpEffect2 : Event // 067
             {
+                public override EventType Type => EventType.CreateSpEffect2;
+
                 public int SpEffectID;
 
-                internal CreateSpEffect2(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                internal CreateSpEffect2(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     SpEffectID = br.ReadInt32();
                     br.AssertInt32(0);
@@ -691,6 +711,8 @@ namespace SoulsFormats
 
             public class PlayFFX : Event // 096
             {
+                public override EventType Type => EventType.PlayFFX;
+
                 public int FFXID;
                 public int Unk04;
                 public int Unk08;
@@ -699,7 +721,7 @@ namespace SoulsFormats
                 public sbyte GhostFFXCondition;
                 public byte Unk0F;
 
-                internal PlayFFX(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                internal PlayFFX(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     FFXID = br.ReadInt32();
                     Unk04 = br.ReadInt32();
@@ -724,9 +746,11 @@ namespace SoulsFormats
 
             public class Unk110 : Event // 110
             {
+                public override EventType Type => EventType.Unk110;
+
                 public int ID;
 
-                internal Unk110(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                internal Unk110(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     ID = br.ReadInt32();
                     br.AssertInt32(0);
@@ -741,11 +765,13 @@ namespace SoulsFormats
 
             public class HitEffect : Event // 112
             {
+                public override EventType Type => EventType.HitEffect;
+
                 public int Size;
                 public int Unk04;
                 public int Unk08;
 
-                internal HitEffect(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                internal HitEffect(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     Size = br.ReadInt32();
                     Unk04 = br.ReadInt32();
@@ -764,7 +790,9 @@ namespace SoulsFormats
 
             public class Unk113 : Event // 113
             {
-                internal Unk113(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public override EventType Type => EventType.Unk113;
+
+                internal Unk113(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -779,18 +807,121 @@ namespace SoulsFormats
 
             public class Unk114 : Event // 114
             {
-                public int Unk00, Unk04, Unk08, Unk0C, Unk10, Unk14, Unk18, Unk1C;
+                public override EventType Type => EventType.Unk114;
 
-                internal Unk114(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public int Unk00;
+                public ushort Unk04;
+                public ushort Unk06;
+                public int Unk08;
+                public byte Unk0C;
+                public sbyte Unk0D;
+                public sbyte Unk0E;
+                public byte Unk0F;
+                public byte Unk10;
+                public byte Unk11;
+                public short Unk12;
+
+                internal Unk114(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    Unk00 = br.ReadInt32();
+                    Unk04 = br.ReadUInt16();
+                    Unk06 = br.ReadUInt16();
+                    Unk08 = br.ReadInt32();
+                    Unk0C = br.ReadByte();
+                    Unk0D = br.ReadSByte();
+                    Unk0E = br.ReadSByte();
+                    Unk0F = br.ReadByte();
+                    Unk10 = br.ReadByte();
+                    Unk11 = br.ReadByte();
+                    Unk12 = br.ReadInt16();
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(Unk00);
+                    bw.WriteUInt16(Unk04);
+                    bw.WriteUInt16(Unk06);
+                    bw.WriteInt32(Unk08);
+                    bw.WriteByte(Unk0C);
+                    bw.WriteSByte(Unk0D);
+                    bw.WriteSByte(Unk0E);
+                    bw.WriteByte(Unk0F);
+                    bw.WriteByte(Unk10);
+                    bw.WriteByte(Unk11);
+                    bw.WriteInt16(Unk12);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class Unk115 : Event // 115
+            {
+                public override EventType Type => EventType.Unk115;
+
+                public int Unk00;
+                public ushort Unk04;
+                public ushort Unk06;
+                public int Unk08;
+                public byte Unk0C;
+                public byte Unk0D;
+                public byte Unk0E;
+                public byte Unk0F;
+                public byte Unk10;
+                public byte Unk11;
+                public short Unk12;
+
+                internal Unk115(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    Unk00 = br.ReadInt32();
+                    Unk04 = br.ReadUInt16();
+                    Unk06 = br.ReadUInt16();
+                    Unk08 = br.ReadInt32();
+                    Unk0C = br.ReadByte();
+                    Unk0D = br.ReadByte();
+                    Unk0E = br.ReadByte();
+                    Unk0F = br.ReadByte();
+                    Unk10 = br.ReadByte();
+                    Unk11 = br.ReadByte();
+                    Unk12 = br.ReadInt16();
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(Unk00);
+                    bw.WriteUInt16(Unk04);
+                    bw.WriteUInt16(Unk06);
+                    bw.WriteInt32(Unk08);
+                    bw.WriteByte(Unk0C);
+                    bw.WriteByte(Unk0D);
+                    bw.WriteByte(Unk0E);
+                    bw.WriteByte(Unk0F);
+                    bw.WriteByte(Unk10);
+                    bw.WriteByte(Unk11);
+                    bw.WriteInt16(Unk12);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class Unk116 : Event // 116
+            {
+                public override EventType Type => EventType.Unk116;
+
+                public int Unk00;
+                public int Unk04;
+                public int Unk08;
+                public int Unk0C;
+
+                internal Unk116(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     Unk00 = br.ReadInt32();
                     Unk04 = br.ReadInt32();
                     Unk08 = br.ReadInt32();
                     Unk0C = br.ReadInt32();
-                    Unk10 = br.ReadInt32();
-                    Unk14 = br.AssertInt32(0);
-                    Unk18 = br.ReadInt32();
-                    Unk1C = br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
@@ -799,27 +930,93 @@ namespace SoulsFormats
                     bw.WriteInt32(Unk04);
                     bw.WriteInt32(Unk08);
                     bw.WriteInt32(Unk0C);
-                    bw.WriteInt32(Unk10);
-                    bw.WriteInt32(Unk14);
-                    bw.WriteInt32(Unk18);
-                    bw.WriteInt32(Unk1C);
                 }
             }
 
-            public class Unk115 : Event
+            public class Unk117 : Event // 117
             {
-                public int Unk00, Unk04, Unk08, Unk0C, Unk10, Unk14, Unk18, Unk1C;
+                public override EventType Type => EventType.Unk117;
 
-                internal Unk115(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public int Unk00;
+                public int Unk04;
+                public int Unk08;
+                public byte Unk0C;
+                public byte Unk0D;
+                public byte Unk0E;
+                public byte Unk0F;
+
+                internal Unk117(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    Unk00 = br.ReadInt32();
+                    Unk04 = br.ReadInt32();
+                    Unk08 = br.ReadInt32(); // -1
+                    Unk0C = br.ReadByte();
+                    Unk0D = br.ReadByte();
+                    Unk0E = br.ReadByte();
+                    Unk0F = br.ReadByte();
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(Unk00);
+                    bw.WriteInt32(Unk04);
+                    bw.WriteInt32(Unk08);
+                    bw.WriteByte(Unk0C);
+                    bw.WriteByte(Unk0D);
+                    bw.WriteByte(Unk0E);
+                    bw.WriteByte(Unk0F);
+                }
+            }
+
+            public class Unk118 : Event // 118
+            {
+                public override EventType Type => EventType.Unk118;
+
+                public int Unk00;
+                public ushort Unk04;
+                public ushort Unk06;
+                public ushort Unk08;
+                public ushort Unk0A;
+
+                internal Unk118(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    Unk00 = br.ReadInt32();
+                    Unk04 = br.ReadUInt16();
+                    Unk06 = br.ReadUInt16();
+                    Unk08 = br.ReadUInt16();
+                    Unk0A = br.ReadUInt16();
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(Unk00);
+                    bw.WriteUInt16(Unk04);
+                    bw.WriteUInt16(Unk06);
+                    bw.WriteUInt16(Unk08);
+                    bw.WriteUInt16(Unk0A);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class Unk119 : Event // 119
+            {
+                public override EventType Type => EventType.Unk119;
+
+                public int Unk00;
+                public int Unk04;
+                public int Unk08;
+                public byte Unk0C;
+
+                internal Unk119(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     Unk00 = br.ReadInt32();
                     Unk04 = br.ReadInt32();
                     Unk08 = br.ReadInt32();
-                    Unk0C = br.ReadInt32();
-                    Unk10 = br.ReadInt32();
-                    Unk14 = br.AssertInt32(0);
-                    Unk18 = br.AssertInt32(0);
-                    Unk1C = br.AssertInt32(0);
+                    Unk0C = br.ReadByte(); // 0
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
@@ -827,169 +1024,88 @@ namespace SoulsFormats
                     bw.WriteInt32(Unk00);
                     bw.WriteInt32(Unk04);
                     bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                    bw.WriteInt32(Unk10);
-                    bw.WriteInt32(Unk14);
-                    bw.WriteInt32(Unk18);
-                    bw.WriteInt32(Unk1C);
+                    bw.WriteByte(Unk0C);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
                 }
             }
 
-            public class Unk116 : Event
+            public class Unk120 : Event // 120
             {
-                public int Unk00, Unk04, Unk08, Unk0C;
+                public override EventType Type => EventType.Unk120;
 
-                internal Unk116(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public int ChrType;
+                public int[] FFXIDs { get; private set; }
+                public int Unk30;
+                public int Unk34;
+                public byte Unk38;
+
+                internal Unk120(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadInt32();
-                    Unk08 = br.ReadInt32();
-                    Unk0C = br.ReadInt32();
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk117 : Event
-            {
-                public int Unk00, Unk04, Unk08, Unk0C;
-
-                internal Unk117(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadInt32();
-                    Unk08 = br.AssertInt32(-1);
-                    Unk0C = br.ReadInt32();
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk118 : Event
-            {
-                public int Unk00, Unk04, Unk08, Unk0C;
-
-                internal Unk118(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadInt32();
-                    Unk08 = br.ReadInt32();
-                    Unk0C = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk119 : Event
-            {
-                public int Unk00, Unk04, Unk08, Unk0C;
-
-                internal Unk119(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadInt32();
-                    Unk08 = br.ReadInt32();
-                    Unk0C = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk120 : Event
-            {
-                public int Unk00, Unk04, Unk08, Unk0C, Unk10, Unk14, Unk18, Unk1C, Unk20, Unk24, Unk28, Unk2C, Unk30, Unk34, Unk38, Unk3C;
-
-                internal Unk120(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadInt32();
-                    Unk08 = br.ReadInt32();
-                    Unk0C = br.ReadInt32();
-                    Unk10 = br.ReadInt32();
-                    Unk14 = br.ReadInt32();
-                    Unk18 = br.ReadInt32();
-                    Unk1C = br.ReadInt32();
-                    Unk20 = br.ReadInt32();
-                    Unk24 = br.ReadInt32();
-                    Unk28 = br.ReadInt32();
-                    Unk2C = br.ReadInt32();
+                    ChrType = br.ReadInt32();
+                    FFXIDs = br.ReadInt32s(11);
                     Unk30 = br.ReadInt32();
                     Unk34 = br.ReadInt32();
-                    Unk38 = br.ReadInt32();
-                    Unk3C = br.AssertInt32(0);
+                    Unk38 = br.ReadByte();
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                    bw.WriteInt32(Unk10);
-                    bw.WriteInt32(Unk14);
-                    bw.WriteInt32(Unk18);
-                    bw.WriteInt32(Unk1C);
-                    bw.WriteInt32(Unk20);
-                    bw.WriteInt32(Unk24);
-                    bw.WriteInt32(Unk28);
-                    bw.WriteInt32(Unk2C);
+                    bw.WriteInt32(ChrType);
+                    bw.WriteInt32s(FFXIDs);
                     bw.WriteInt32(Unk30);
                     bw.WriteInt32(Unk34);
-                    bw.WriteInt32(Unk38);
-                    bw.WriteInt32(Unk3C);
+                    bw.WriteByte(Unk38);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk121 : Event
+            public class Unk121 : Event // 121
             {
-                public int Unk00, Unk04, Unk08, Unk0C;
+                public override EventType Type => EventType.Unk121;
 
-                internal Unk121(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public int Unk00;
+                public ushort Unk04;
+                public byte Unk06;
+                public byte Unk07;
+
+                internal Unk121(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadInt32();
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
+                    Unk04 = br.ReadUInt16();
+                    Unk06 = br.ReadByte();
+                    Unk07 = br.ReadByte();
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
+                    bw.WriteUInt16(Unk04);
+                    bw.WriteByte(Unk06);
+                    bw.WriteByte(Unk07);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class PlaySound : Event
+            public class PlaySound1 : Event // 128
             {
-                public int SoundType, SoundID;
+                public override EventType Type => EventType.PlaySound1;
 
-                internal PlaySound(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public int SoundType;
+                public int SoundID;
+
+                internal PlaySound1(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     SoundType = br.ReadInt32();
                     SoundID = br.ReadInt32();
@@ -1006,287 +1122,334 @@ namespace SoulsFormats
                 }
             }
 
-            public class Unk129 : Event
+            public class PlaySound2 : Event // 129
             {
-                public int Unk00, Unk04, Unk08, Unk0C, Unk10, Unk14;
+                public override EventType Type => EventType.PlaySound2;
 
-                internal Unk129(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public int SoundType;
+                public int SoundID;
+                public int Unk08;
+                public int Unk0C;
+                public int Unk10;
+
+                internal PlaySound2(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadInt32();
+                    SoundType = br.ReadInt32();
+                    SoundID = br.ReadInt32();
                     Unk08 = br.ReadInt32();
                     Unk0C = br.ReadInt32();
                     Unk10 = br.ReadInt32();
-                    Unk14 = br.AssertInt32(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
+                    bw.WriteInt32(SoundType);
+                    bw.WriteInt32(SoundID);
                     bw.WriteInt32(Unk08);
                     bw.WriteInt32(Unk0C);
                     bw.WriteInt32(Unk10);
-                    bw.WriteInt32(Unk14);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk130 : Event
+            public class PlaySound3 : Event // 130
             {
-                public int Unk00, Unk04, Unk08, Unk0C, Unk10, Unk14;
+                public override EventType Type => EventType.PlaySound3;
 
-                internal Unk130(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public int SoundType;
+                public int SoundID;
+                public float Unk08;
+                public float Unk0C;
+
+                internal PlaySound3(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadInt32();
+                    SoundType = br.ReadInt32();
+                    SoundID = br.ReadInt32();
+                    Unk08 = br.ReadSingle();
+                    Unk0C = br.ReadSingle(); // int -1
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(SoundType);
+                    bw.WriteInt32(SoundID);
+                    bw.WriteSingle(Unk08);
+                    bw.WriteSingle(Unk0C);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class PlaySound4 : Event // 131
+            {
+                public override EventType Type => EventType.PlaySound4;
+
+                public int SoundType;
+                public int SoundID;
+                public int Unk08;
+
+                internal PlaySound4(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    SoundType = br.ReadInt32();
+                    SoundID = br.ReadInt32();
                     Unk08 = br.ReadInt32();
-                    Unk0C = br.AssertInt32(-1);
-                    Unk10 = br.AssertInt32(0);
-                    Unk14 = br.AssertInt32(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(SoundType);
+                    bw.WriteInt32(SoundID);
+                    bw.WriteInt32(Unk08);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class PlaySound5 : Event // 132
+            {
+                public override EventType Type => EventType.PlaySound5;
+
+                public int SoundType;
+                public int SoundID;
+
+                internal PlaySound5(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    SoundType = br.ReadInt32();
+                    SoundID = br.ReadInt32();
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(SoundType);
+                    bw.WriteInt32(SoundID);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class Unk137 : Event // 137
+            {
+                public override EventType Type => EventType.Unk137;
+
+                public int Unk00;
+
+                internal Unk137(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    Unk00 = br.ReadInt32();
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                    bw.WriteInt32(Unk10);
-                    bw.WriteInt32(Unk14);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk131 : Event
+            public class CreateDecal : Event // 138
             {
-                public int Unk00, Unk04, Unk08, Unk0C;
+                public override EventType Type => EventType.CreateDecal;
 
-                internal Unk131(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public int DecalParamID, Unk04;
+
+                internal CreateDecal(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.ReadInt32();
+                    DecalParamID = br.ReadInt32();
                     Unk04 = br.ReadInt32();
-                    Unk08 = br.ReadInt32();
-                    Unk0C = br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
+                    bw.WriteInt32(DecalParamID);
                     bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk132 : Event
+            public class Unk144 : Event // 144
             {
-                public int Unk00, Unk04, Unk08, Unk0C;
+                public override EventType Type => EventType.Unk144;
 
-                internal Unk132(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public ushort Unk00;
+                public ushort Unk02;
+                public float Unk04;
+                public float Unk08;
+
+                internal Unk144(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadInt32();
-                    Unk0C = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk137 : Event
-            {
-                public int Unk00, Unk04;
-
-                internal Unk137(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                }
-            }
-
-            public class Unk138 : Event
-            {
-                public int Unk00, Unk04, Unk08, Unk0C;
-
-                internal Unk138(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadInt32();
-                    Unk0C = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk144 : Event
-            {
-                public int Unk00, Unk0C;
-                public float Unk04, Unk08;
-
-                internal Unk144(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
+                    Unk00 = br.ReadUInt16();
+                    Unk02 = br.ReadUInt16();
                     Unk04 = br.ReadSingle();
                     Unk08 = br.ReadSingle();
-                    Unk0C = br.AssertInt32(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
+                    bw.WriteUInt16(Unk00);
+                    bw.WriteUInt16(Unk02);
                     bw.WriteSingle(Unk04);
                     bw.WriteSingle(Unk08);
-                    bw.WriteInt32(Unk0C);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk145 : Event
+            public class Unk145 : Event // 145
             {
-                public int Unk00, Unk04, Unk08, Unk0C;
+                public override EventType Type => EventType.Unk145;
 
-                internal Unk145(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public short Unk00;
+                public short Condition;
+
+                internal Unk145(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    Unk00 = br.ReadInt16();
+                    Condition = br.ReadInt16();
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt16(Unk00);
+                    bw.WriteInt16(Condition);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class Unk150 : Event // 150
+            {
+                public override EventType Type => EventType.Unk150;
+
+                public int Unk00;
+
+                internal Unk150(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.ReadInt32();
-                    Unk0C = br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk150 : Event
-            {
-                public int Unk00, Unk04, Unk08, Unk0C;
-
-                internal Unk150(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
                 }
             }
 
             public class Unk151 : Event
             {
-                public int Unk00, Unk04, Unk08, Unk0C;
+                public override EventType Type => EventType.Unk000;
 
-                internal Unk151(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public int DummyPointID;
+
+                internal Unk151(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
+                    DummyPointID = br.ReadInt32();
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
+                    bw.WriteInt32(DummyPointID);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk161 : Event
+            public class Unk161 : Event // 161
             {
-                public int Unk00, Unk04, Unk08, Unk0C;
+                public override EventType Type => EventType.Unk161;
 
-                internal Unk161(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                internal Unk161(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.AssertInt32(0);
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk193 : Event
+            public class FadeOut : Event // 193
             {
-                public float Unk00, Unk04;
+                public override EventType Type => EventType.FadeOut;
 
-                internal Unk193(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public float GhostVal1;
+                public float GhostVal2;
+
+                internal FadeOut(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.ReadSingle();
-                    Unk04 = br.ReadSingle();
+                    GhostVal1 = br.ReadSingle();
+                    GhostVal2 = br.ReadSingle();
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteSingle(Unk00);
-                    bw.WriteSingle(Unk04);
+                    bw.WriteSingle(GhostVal1);
+                    bw.WriteSingle(GhostVal2);
                 }
             }
 
-            public class Unk194 : Event
+            public class Unk194 : Event // 194
             {
-                public float Unk00, Unk08;
-                public int Unk04, Unk0C;
+                public override EventType Type => EventType.Unk194;
 
-                internal Unk194(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public ushort Unk00;
+                public ushort Unk02;
+                public ushort Unk04;
+                public ushort Unk06;
+                public float Unk08;
+
+                internal Unk194(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.ReadSingle();
-                    Unk04 = br.AssertInt32(0);
+                    Unk00 = br.ReadUInt16();
+                    Unk02 = br.ReadUInt16();
+                    Unk04 = br.ReadUInt16();
+                    Unk06 = br.ReadUInt16();
                     Unk08 = br.ReadSingle();
-                    Unk0C = br.AssertInt32(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteSingle(Unk00);
-                    bw.WriteInt32(Unk04);
+                    bw.WriteUInt16(Unk00);
+                    bw.WriteUInt16(Unk02);
+                    bw.WriteUInt16(Unk04);
+                    bw.WriteUInt16(Unk06);
                     bw.WriteSingle(Unk08);
-                    bw.WriteInt32(Unk0C);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk224 : Event
+            public class Unk224 : Event // 224
             {
+                public override EventType Type => EventType.Unk224;
+
                 public float Unk00;
                 public int Unk04;
 
-                internal Unk224(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                internal Unk224(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     Unk00 = br.ReadSingle();
                     Unk04 = br.ReadInt32();
@@ -1299,745 +1462,871 @@ namespace SoulsFormats
                 }
             }
 
-            public class Unk225 : Event
+            public class DisableStaminaRegen : Event // 225
             {
-                public int Unk00, Unk04, Unk08, Unk0C;
+                public override EventType Type => EventType.DisableStaminaRegen;
 
-                internal Unk225(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                // "0x64 - Enables Regen Back" -Pav
+                public byte State;
+
+                internal DisableStaminaRegen(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.ReadInt32();
-                    Unk0C = br.AssertInt32(0);
+                    State = br.ReadByte();
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
+                    bw.WriteByte(State);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk226 : Event
+            public class Unk226 : Event // 226
             {
-                public int Unk00, Unk04;
+                public override EventType Type => EventType.Unk226;
 
-                internal Unk226(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                // "x/100 Coefficient" -Pav
+                public byte State;
+
+                internal Unk226(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
+                    State = br.ReadByte();
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
+                    bw.WriteByte(State);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk227 : Event
+            public class Unk227 : Event // 227
             {
-                public int Unk00, Unk04;
+                public override EventType Type => EventType.Unk227;
 
-                internal Unk227(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public int Mask;
+
+                internal Unk227(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
+                    Mask = br.ReadInt32();
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
+                    bw.WriteInt32(Mask);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk228 : Event
+            public class RagdollReviveTime : Event // 228
             {
-                public float Unk00, Unk04;
-                public int Unk08, Unk0C;
+                public override EventType Type => EventType.RagdollReviveTime;
 
-                internal Unk228(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadSingle();
-                    Unk04 = br.ReadSingle();
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteSingle(Unk00);
-                    bw.WriteSingle(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk229 : Event
-            {
-                public int Unk00, Unk04;
-
-                internal Unk229(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                }
-            }
-
-            public class Unk231 : Event
-            {
-                public int Unk00, Unk04;
-
-                internal Unk231(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                }
-            }
-
-            public class Unk232 : Event
-            {
-                public int Unk00, Unk04, Unk08, Unk0C;
-
-                internal Unk232(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.ReadInt32();
-                    Unk0C = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk233 : Event
-            {
-                public int Unk00, Unk10, Unk14, Unk18, Unk1C;
-                public short Unk04, Unk06, Unk08, Unk0A, Unk0C, Unk0E;
-
-                internal Unk233(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadInt16();
-                    Unk06 = br.ReadInt16();
-                    Unk08 = br.ReadInt16();
-                    Unk0A = br.ReadInt16();
-                    Unk0C = br.ReadInt16();
-                    Unk0E = br.ReadInt16();
-                    Unk10 = br.ReadInt32();
-                    Unk14 = br.ReadInt32();
-                    Unk18 = br.ReadInt32();
-                    Unk1C = br.ReadInt32();
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt16(Unk04);
-                    bw.WriteInt16(Unk06);
-                    bw.WriteInt16(Unk08);
-                    bw.WriteInt16(Unk0A);
-                    bw.WriteInt16(Unk0C);
-                    bw.WriteInt16(Unk0E);
-                    bw.WriteInt32(Unk10);
-                    bw.WriteInt32(Unk14);
-                    bw.WriteInt32(Unk18);
-                    bw.WriteInt32(Unk1C);
-                }
-            }
-
-            public class Unk236 : Event
-            {
-                public float Unk00, Unk04;
-                public int Unk08, Unk0C;
-
-                internal Unk236(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadSingle();
-                    Unk04 = br.ReadSingle();
-                    Unk08 = br.ReadInt32();
-                    Unk0C = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteSingle(Unk00);
-                    bw.WriteSingle(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk237 : Event
-            {
-                public int Unk00, Unk04, Unk08, Unk0C;
-
-                internal Unk237(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.ReadInt32();
-                    Unk0C = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk300 : Event
-            {
-                public int Unk00, Unk0C;
-                public float Unk04, Unk08;
-
-                internal Unk300(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadSingle();
-                    Unk08 = br.ReadSingle();
-                    Unk0C = br.ReadInt32();
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteSingle(Unk04);
-                    bw.WriteSingle(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk301 : Event
-            {
-                public int Unk00, Unk04;
-
-                internal Unk301(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                }
-            }
-
-            public class Unk302 : Event
-            {
-                public int Unk00, Unk04;
-
-                internal Unk302(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                }
-            }
-
-            public class Unk303 : Event
-            {
-                public int Unk00, Unk04, Unk08, Unk0C;
-
-                internal Unk303(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk304 : Event
-            {
-                public int Unk00, Unk04;
-
-                internal Unk304(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadInt32();
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                }
-            }
-
-            public class Unk307 : Event
-            {
-                public int Unk00, Unk04, Unk08, Unk0C;
-
-                public Unk307(float startTime, float endTime, int unk00, int unk04, int unk08) : base(EventType.Unk307, startTime, endTime)
-                {
-                    Unk00 = unk00;
-                    Unk04 = unk04;
-                    Unk08 = unk08;
-                }
-
-                internal Unk307(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadInt32();
-                    Unk08 = br.ReadInt32();
-                    Unk0C = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk308 : Event
-            {
                 public float Unk00;
-                public int Unk04, Unk08, Unk0C;
+                public float ReviveTimer;
 
-                internal Unk308(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                internal RagdollReviveTime(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     Unk00 = br.ReadSingle();
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
+                    ReviveTimer = br.ReadSingle();
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
                     bw.WriteSingle(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
+                    bw.WriteSingle(ReviveTimer);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk310 : Event
+            public class Unk229 : Event // 229
             {
-                public int Unk00, Unk04;
+                public override EventType Type => EventType.Unk229;
 
-                internal Unk310(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public int Unk00;
+
+                internal Unk229(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk311 : Event
+            public class SetEventMessageID : Event // 231
             {
-                public int Unk00, Unk04, Unk08, Unk0C;
+                public override EventType Type => EventType.SetEventMessageID;
 
-                internal Unk311(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public int EventMessageID;
+
+                internal SetEventMessageID(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
+                    EventMessageID = br.ReadInt32();
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
+                    bw.WriteInt32(EventMessageID);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk312 : Event
+            public class Unk232 : Event // 232
             {
-                public int Unk00, Unk04, Unk08, Unk0C, Unk10, Unk14, Unk18, Unk1C;
+                public override EventType Type => EventType.Unk232;
 
-                internal Unk312(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public byte Unk00;
+                public byte Unk01;
+                public byte Unk02;
+                public byte Unk03;
+
+                internal Unk232(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadInt32();
-                    Unk08 = br.ReadInt32();
-                    Unk0C = br.ReadInt32();
-                    Unk10 = br.ReadInt32();
-                    Unk14 = br.ReadInt32();
-                    Unk18 = br.ReadInt32();
-                    Unk1C = br.ReadInt32();
+                    Unk00 = br.ReadByte();
+                    Unk01 = br.ReadByte();
+                    Unk02 = br.ReadByte();
+                    Unk03 = br.ReadByte();
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                    bw.WriteInt32(Unk10);
-                    bw.WriteInt32(Unk14);
-                    bw.WriteInt32(Unk18);
-                    bw.WriteInt32(Unk1C);
+                    bw.WriteByte(Unk00);
+                    bw.WriteByte(Unk01);
+                    bw.WriteByte(Unk02);
+                    bw.WriteByte(Unk03);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk320 : Event
+            public class ChangeDrawMask : Event // 233
             {
-                public int Unk00, Unk04, Unk08, Unk0C;
+                public override EventType Type => EventType.ChangeDrawMask;
 
-                internal Unk320(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public byte[] DrawMask { get; private set; }
+
+                internal ChangeDrawMask(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadInt32();
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
+                    DrawMask = br.ReadBytes(32);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
+                    bw.WriteBytes(DrawMask);
                 }
             }
 
-            public class Unk330 : Event
+            public class RollDistanceReduction : Event // 236
             {
-                public int Unk00, Unk04, Unk08, Unk0C;
+                public override EventType Type => EventType.RollDistanceReduction;
 
-                internal Unk330(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public float Unk00;
+                public float Unk04;
+                public bool RollType;
+
+                internal RollDistanceReduction(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.AssertInt32(0);
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
+                    Unk00 = br.ReadSingle();
+                    Unk04 = br.ReadSingle();
+                    RollType = br.ReadBoolean();
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
+                    bw.WriteSingle(Unk00);
+                    bw.WriteSingle(Unk04);
+                    bw.WriteBoolean(RollType);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk331 : Event
+            public class CreateAISound : Event // 237
             {
-                public int Unk00, Unk04, Unk08, Unk0C;
+                public override EventType Type => EventType.CreateAISound;
 
-                internal Unk331(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public int AISoundID;
+
+                internal CreateAISound(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadInt32();
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
+                    AISoundID = br.ReadInt32();
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
+                    bw.WriteInt32(AISoundID);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk332 : Event
+            public class Unk300 : Event // 300
             {
-                public int Unk00, Unk04, Unk08, Unk0C;
+                public override EventType Type => EventType.Unk300;
 
-                internal Unk332(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public short JumpTableID1;
+                public short JumpTableID2;
+                public float Unk04;
+                public float Unk08;
+                public int Unk0C;
+
+                internal Unk300(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.AssertInt32(0);
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk401 : Event
-            {
-                public int Unk00, Unk04, Unk08, Unk0C;
-
-                internal Unk401(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk500 : Event
-            {
-                public int Unk00, Unk04;
-
-                internal Unk500(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                }
-            }
-
-            public class Unk510 : Event
-            {
-                public int Unk00, Unk04, Unk08, Unk0C;
-
-                internal Unk510(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.AssertInt32(0);
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk520 : Event
-            {
-                public int Unk00, Unk04, Unk08, Unk0C;
-
-                internal Unk520(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.AssertInt32(0);
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk522 : Event
-            {
-                public int Unk00, Unk04, Unk08, Unk0C;
-
-                internal Unk522(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.AssertInt32(0);
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk600 : Event
-            {
-                public int Unk00, Unk04;
-
-                internal Unk600(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                }
-            }
-
-            public class Unk601 : Event
-            {
-                public int Unk00, Unk0C;
-                public float Unk04, Unk08;
-
-                internal Unk601(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
+                    JumpTableID1 = br.ReadInt16();
+                    JumpTableID2 = br.ReadInt16();
                     Unk04 = br.ReadSingle();
                     Unk08 = br.ReadSingle();
-                    Unk0C = br.AssertInt32(0);
+                    Unk0C = br.ReadInt32();
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
+                    bw.WriteInt16(JumpTableID1);
+                    bw.WriteInt16(JumpTableID2);
                     bw.WriteSingle(Unk04);
                     bw.WriteSingle(Unk08);
                     bw.WriteInt32(Unk0C);
                 }
             }
 
-            public class Unk603 : Event
+            public class Unk301 : Event // 301
             {
-                public int Unk00, Unk04, Unk08, Unk0C;
+                public override EventType Type => EventType.Unk301;
 
-                internal Unk603(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public int Unk00;
+
+                internal Unk301(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk605 : Event
+            public class AddSpEffectDragonForm : Event // 302
             {
-                public int Unk00, Unk04, Unk10, Unk14, Unk18, Unk1C;
-                public float Unk08, Unk0C;
+                public override EventType Type => EventType.AddSpEffectDragonForm;
 
-                internal Unk605(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public int SpEffectID;
+
+                internal AddSpEffectDragonForm(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.ReadInt32();
+                    SpEffectID = br.ReadInt32();
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(SpEffectID);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class PlayAnimation : Event // 303
+            {
+                public override EventType Type => EventType.PlayAnimation;
+
+                public int AnimationID;
+
+                internal PlayAnimation(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    AnimationID = br.ReadInt32();
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(AnimationID);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            // "Behavior Thing?" -Pav
+            public class BehaviorThing : Event // 304
+            {
+                public override EventType Type => EventType.BehaviorThing;
+
+                public ushort Unk00;
+                public short Unk02;
+                public int BehaviorListID;
+
+                internal BehaviorThing(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    Unk00 = br.ReadUInt16();
+                    Unk02 = br.ReadInt16();
+                    BehaviorListID = br.ReadInt32();
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteUInt16(Unk00);
+                    bw.WriteInt16(Unk02);
+                    bw.WriteInt32(BehaviorListID);
+                }
+            }
+
+            public class CreateBehaviorPC : Event // 307
+            {
+                public override EventType Type => EventType.CreateBehaviorPC;
+
+                public short Unk00;
+                public short Unk02;
+                public int Condition;
+                public int Unk08;
+
+                internal CreateBehaviorPC(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    Unk00 = br.ReadInt16();
+                    Unk02 = br.ReadInt16();
+                    Condition = br.ReadInt32();
+                    Unk08 = br.ReadInt32();
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt16(Unk00);
+                    bw.WriteInt16(Unk02);
+                    bw.WriteInt32(Condition);
+                    bw.WriteInt32(Unk08);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class Unk308 : Event // 308
+            {
+                public override EventType Type => EventType.Unk308;
+
+                public float Unk00;
+
+                internal Unk308(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    Unk00 = br.ReadSingle();
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteSingle(Unk00);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            // "Behavior?" -Pav
+            public class Unk310 : Event // 310
+            {
+                public override EventType Type => EventType.Unk310;
+
+                public byte Unk00;
+                public byte Unk01;
+
+                internal Unk310(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    Unk00 = br.ReadByte();
+                    Unk01 = br.ReadByte();
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteByte(Unk00);
+                    bw.WriteByte(Unk01);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class Unk311 : Event // 311
+            {
+                public override EventType Type => EventType.Unk311;
+
+                public byte Unk00;
+                public byte Unk01;
+                public byte Unk02;
+
+                internal Unk311(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    Unk00 = br.ReadByte();
+                    Unk01 = br.ReadByte();
+                    Unk02 = br.ReadByte();
+                    br.AssertByte(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteByte(Unk00);
+                    bw.WriteByte(Unk01);
+                    bw.WriteByte(Unk02);
+                    bw.WriteByte(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class Unk312 : Event // 312
+            {
+                public override EventType Type => EventType.Unk312;
+
+                public byte[] BehaviorMask { get; private set; }
+
+                internal Unk312(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    BehaviorMask = br.ReadBytes(32);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteBytes(BehaviorMask);
+                }
+            }
+
+            public class Unk320 : Event // 320
+            {
+                public override EventType Type => EventType.Unk320;
+
+                public bool Unk00;
+                public bool Unk01;
+                public bool Unk02;
+                public bool Unk03;
+                public bool Unk04;
+                public bool Unk05;
+                public bool Unk06;
+
+                internal Unk320(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    Unk00 = br.ReadBoolean();
+                    Unk01 = br.ReadBoolean();
+                    Unk02 = br.ReadBoolean();
+                    Unk03 = br.ReadBoolean();
+                    Unk04 = br.ReadBoolean();
+                    Unk05 = br.ReadBoolean();
+                    Unk06 = br.ReadBoolean();
+                    br.AssertByte(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteBoolean(Unk00);
+                    bw.WriteBoolean(Unk01);
+                    bw.WriteBoolean(Unk02);
+                    bw.WriteBoolean(Unk03);
+                    bw.WriteBoolean(Unk04);
+                    bw.WriteBoolean(Unk05);
+                    bw.WriteBoolean(Unk06);
+                    bw.WriteByte(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class Unk330 : Event // 330
+            {
+                public override EventType Type => EventType.Unk330;
+
+                internal Unk330(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class EffectDuringThrow : Event // 331
+            {
+                public override EventType Type => EventType.EffectDuringThrow;
+
+                public int SpEffectID1;
+                public int SpEffectID2;
+
+                internal EffectDuringThrow(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    SpEffectID1 = br.ReadInt32();
+                    SpEffectID2 = br.ReadInt32();
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(SpEffectID1);
+                    bw.WriteInt32(SpEffectID2);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class Unk332 : Event // 332
+            {
+                public override EventType Type => EventType.Unk332;
+
+                internal Unk332(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            // "When Landing" -Pav
+            public class CreateSpEffect : Event // 401
+            {
+                public override EventType Type => EventType.CreateSpEffect;
+
+                public int SpEffectID;
+
+                internal CreateSpEffect(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    SpEffectID = br.ReadInt32();
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(SpEffectID);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class Unk500 : Event // 500
+            {
+                public override EventType Type => EventType.Unk500;
+
+                public byte Unk00;
+                public byte Unk01;
+
+                internal Unk500(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    Unk00 = br.ReadByte();
+                    Unk01 = br.ReadByte();
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteByte(Unk00);
+                    bw.WriteByte(Unk01);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class Unk510 : Event // 510
+            {
+                public override EventType Type => EventType.Unk510;
+
+                internal Unk510(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class Unk520 : Event // 520
+            {
+                public override EventType Type => EventType.Unk520;
+
+                internal Unk520(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class KingOfTheStorm : Event // 522
+            {
+                public override EventType Type => EventType.KingOfTheStorm;
+
+                public float Unk00;
+
+                internal KingOfTheStorm(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    Unk00 = br.ReadSingle(); // 0
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteSingle(Unk00);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class Unk600 : Event // 600
+            {
+                public override EventType Type => EventType.Unk600;
+
+                public int Mask;
+
+                internal Unk600(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    Mask = br.ReadInt32();
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(Mask);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class Unk601 : Event // 601
+            {
+                public override EventType Type => EventType.Unk601;
+
+                public int StayAnimType;
+                public float Unk04;
+                public float Unk08;
+
+                internal Unk601(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    StayAnimType = br.ReadInt32();
+                    Unk04 = br.ReadSingle();
+                    Unk08 = br.ReadSingle();
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(StayAnimType);
+                    bw.WriteSingle(Unk04);
+                    bw.WriteSingle(Unk08);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            // "TAE Debug Anim Speed" -Pav
+            public class DebugAnimSpeed : Event // 603
+            {
+                public override EventType Type => EventType.DebugAnimSpeed;
+
+                public uint AnimSpeed;
+
+                internal DebugAnimSpeed(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    AnimSpeed = br.ReadUInt32();
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteUInt32(AnimSpeed);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class Unk605 : Event // 605
+            {
+                public override EventType Type => EventType.Unk605;
+
+                public bool Unk00;
+                public byte Unk01;
+                public byte Unk02;
+                public byte Unk03;
+                public int Unk04;
+                public float Unk08;
+                public float Unk0C;
+
+                internal Unk605(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    Unk00 = br.ReadBoolean();
+                    Unk01 = br.ReadByte();
+                    Unk02 = br.ReadByte();
+                    Unk03 = br.ReadByte();
                     Unk04 = br.ReadInt32();
                     Unk08 = br.ReadSingle();
                     Unk0C = br.ReadSingle();
-                    Unk10 = br.AssertInt32(0);
-                    Unk14 = br.AssertInt32(0);
-                    Unk18 = br.AssertInt32(0);
-                    Unk1C = br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
+                    bw.WriteBoolean(Unk00);
+                    bw.WriteByte(Unk01);
+                    bw.WriteByte(Unk02);
+                    bw.WriteByte(Unk03);
                     bw.WriteInt32(Unk04);
                     bw.WriteSingle(Unk08);
                     bw.WriteSingle(Unk0C);
-                    bw.WriteInt32(Unk10);
-                    bw.WriteInt32(Unk14);
-                    bw.WriteInt32(Unk18);
-                    bw.WriteInt32(Unk1C);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk606 : Event
+            public class Unk606 : Event // 606
             {
-                public int Unk00, Unk04, Unk08, Unk0C;
+                public override EventType Type => EventType.Unk606;
 
-                internal Unk606(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public byte Unk00;
+                public byte Unk04;
+                public byte Unk06;
+
+                internal Unk606(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.AssertInt32(0);
-                    Unk04 = br.ReadInt32();
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
+                    Unk00 = br.ReadByte(); // 0
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    Unk04 = br.ReadByte();
+                    br.AssertByte(0);
+                    Unk06 = br.ReadByte();
+                    br.AssertByte(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
+                    bw.WriteByte(Unk00);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteByte(Unk04);
+                    bw.WriteByte(0);
+                    bw.WriteByte(Unk06);
+                    bw.WriteByte(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk700 : Event
+            public class Unk700 : Event // 700
             {
-                public float Unk00, Unk04, Unk08, Unk0C;
+                public override EventType Type => EventType.Unk700;
+
+                public float Unk00;
+                public float Unk04;
+                public float Unk08;
+                public float Unk0C;
                 public int Unk10;
                 // 6 - head turn
-                public byte Unk14;
-                public float Unk18, Unk1C, Unk20, Unk24;
+                public sbyte Unk14;
+                public float Unk18;
+                public float Unk1C;
+                public float Unk20;
+                public float Unk24;
 
-                internal Unk700(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                internal Unk700(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     Unk00 = br.ReadSingle();
                     Unk04 = br.ReadSingle();
                     Unk08 = br.ReadSingle();
                     Unk0C = br.ReadSingle();
                     Unk10 = br.ReadInt32();
-
-                    Unk14 = br.ReadByte();
+                    Unk14 = br.ReadSByte();
                     br.AssertByte(0);
                     br.AssertByte(0);
                     br.AssertByte(0);
-
                     Unk18 = br.ReadSingle();
                     Unk1C = br.ReadSingle();
                     Unk20 = br.ReadSingle();
@@ -2051,12 +2340,10 @@ namespace SoulsFormats
                     bw.WriteSingle(Unk08);
                     bw.WriteSingle(Unk0C);
                     bw.WriteInt32(Unk10);
-
-                    bw.WriteByte(Unk14);
+                    bw.WriteSByte(Unk14);
                     bw.WriteByte(0);
                     bw.WriteByte(0);
                     bw.WriteByte(0);
-
                     bw.WriteSingle(Unk18);
                     bw.WriteSingle(Unk1C);
                     bw.WriteSingle(Unk20);
@@ -2064,294 +2351,350 @@ namespace SoulsFormats
                 }
             }
 
-            public class Unk703 : Event
+            public class EnableTurningDirection : Event // 703
             {
-                public int Unk00, Unk04, Unk08, Unk0C;
+                public override EventType Type => EventType.EnableTurningDirection;
 
-                internal Unk703(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public byte State;
+
+                internal EnableTurningDirection(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
+                    State = br.ReadByte();
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
+                    bw.WriteByte(State);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk705 : Event
+            public class FacingAngleCorrection : Event // 705
             {
-                public int Unk00, Unk04, Unk08, Unk0C;
+                public override EventType Type => EventType.FacingAngleCorrection;
 
-                internal Unk705(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public float CorrectionRate;
+
+                internal FacingAngleCorrection(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
+                    CorrectionRate = br.ReadSingle();
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
+                    bw.WriteSingle(CorrectionRate);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk707 : Event
+            public class Unk707 : Event // 707
             {
-                public int Unk00, Unk04, Unk08, Unk0C;
+                public override EventType Type => EventType.Unk707;
 
-                internal Unk707(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                internal Unk707(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.AssertInt32(0);
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class HideWeapon : Event
+            // Used for Follower's Javelin WA
+            // "Ladder State" -Pav
+            public class HideWeapon : Event // 710
             {
-                public int Unk00, Unk04, Unk08, Unk0C;
+                public override EventType Type => EventType.HideWeapon;
 
-                internal HideWeapon(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public byte Unk00;
+                public byte Unk01;
+                public byte Unk02;
+                public byte Unk03;
+
+                internal HideWeapon(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
+                    Unk00 = br.ReadByte();
+                    Unk01 = br.ReadByte();
+                    Unk02 = br.ReadByte();
+                    Unk03 = br.ReadByte();
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
+                    bw.WriteByte(Unk00);
+                    bw.WriteByte(Unk01);
+                    bw.WriteByte(Unk02);
+                    bw.WriteByte(Unk03);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk711 : Event
+            public class HideModelMask : Event // 711
             {
-                public int Unk00, Unk04, Unk08, Unk0C, Unk10, Unk14, Unk18, Unk1C;
+                public override EventType Type => EventType.HideModelMask;
 
-                internal Unk711(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public byte[] Mask { get; private set; }
+
+                internal HideModelMask(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadInt32();
-                    Unk08 = br.ReadInt32();
-                    Unk0C = br.ReadInt32();
-                    Unk10 = br.AssertInt32(0);
-                    Unk14 = br.ReadInt32();
-                    Unk18 = br.ReadInt32();
-                    Unk1C = br.AssertInt32(0);
+                    Mask = br.ReadBytes(32);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                    bw.WriteInt32(Unk10);
-                    bw.WriteInt32(Unk14);
-                    bw.WriteInt32(Unk18);
-                    bw.WriteInt32(Unk1C);
+                    bw.WriteBytes(Mask);
                 }
             }
 
-            public class Unk712 : Event
+            public class DamageLevelModule : Event // 712
             {
-                public int Unk00, Unk04, Unk08, Unk0C, Unk10, Unk14, Unk18, Unk1C;
+                public override EventType Type => EventType.DamageLevelModule;
 
-                internal Unk712(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public byte[] Mask { get; private set; }
+                public byte Unk10;
+                public byte Unk11;
+                public byte Unk12;
+
+                internal DamageLevelModule(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadInt32();
-                    Unk08 = br.ReadInt32();
-                    Unk0C = br.ReadInt32();
-                    Unk10 = br.ReadInt32();
-                    Unk14 = br.AssertInt32(0);
-                    Unk18 = br.AssertInt32(0);
-                    Unk1C = br.AssertInt32(0);
+                    Mask = br.ReadBytes(16);
+                    Unk10 = br.ReadByte();
+                    Unk11 = br.ReadByte();
+                    Unk12 = br.ReadByte();
+                    br.AssertByte(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                    bw.WriteInt32(Unk10);
-                    bw.WriteInt32(Unk14);
-                    bw.WriteInt32(Unk18);
-                    bw.WriteInt32(Unk1C);
+                    bw.WriteBytes(Mask);
+                    bw.WriteByte(Unk10);
+                    bw.WriteByte(Unk11);
+                    bw.WriteByte(Unk12);
+                    bw.WriteByte(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk713 : Event
+            public class ModelMask : Event // 713
             {
-                public int Unk00, Unk04, Unk08, Unk0C, Unk10, Unk14, Unk18, Unk1C;
+                public override EventType Type => EventType.ModelMask;
 
-                internal Unk713(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public byte[] Mask { get; private set; }
+
+                internal ModelMask(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadInt32();
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.ReadInt32();
-                    Unk10 = br.AssertInt32(0);
-                    Unk14 = br.AssertInt32(0);
-                    Unk18 = br.AssertInt32(0);
-                    Unk1C = br.AssertInt32(0);
+                    Mask = br.ReadBytes(32);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                    bw.WriteInt32(Unk10);
-                    bw.WriteInt32(Unk14);
-                    bw.WriteInt32(Unk18);
-                    bw.WriteInt32(Unk1C);
+                    bw.WriteBytes(Mask);
                 }
             }
 
-            public class Unk714 : Event
+            public class DamageLevelFunction : Event // 714
             {
-                public int Unk00, Unk04;
+                public override EventType Type => EventType.DamageLevelFunction;
 
-                internal Unk714(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public byte Unk00;
+
+                internal DamageLevelFunction(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
+                    Unk00 = br.ReadByte();
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
+                    bw.WriteByte(Unk00);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk715 : Event
+            public class Unk715 : Event // 715
             {
-                public int Unk00, Unk04, Unk08, Unk0C, Unk10, Unk14, Unk18, Unk1C;
+                public override EventType Type => EventType.Unk715;
 
-                internal Unk715(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public byte Unk00;
+                public byte Unk01;
+                public byte Unk02;
+                public byte Unk03;
+                public byte Unk04;
+                public byte Unk05;
+                public byte Unk06;
+                public byte Unk07;
+
+                internal Unk715(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadInt32();
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
-                    Unk10 = br.AssertInt32(0);
-                    Unk14 = br.AssertInt32(0);
-                    Unk18 = br.AssertInt32(0);
-                    Unk1C = br.AssertInt32(0);
+                    Unk00 = br.ReadByte();
+                    Unk01 = br.ReadByte();
+                    Unk02 = br.ReadByte();
+                    Unk03 = br.ReadByte();
+                    Unk04 = br.ReadByte();
+                    Unk05 = br.ReadByte();
+                    Unk06 = br.ReadByte();
+                    Unk07 = br.ReadByte();
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                    bw.WriteInt32(Unk10);
-                    bw.WriteInt32(Unk14);
-                    bw.WriteInt32(Unk18);
-                    bw.WriteInt32(Unk1C);
+                    bw.WriteByte(Unk00);
+                    bw.WriteByte(Unk01);
+                    bw.WriteByte(Unk02);
+                    bw.WriteByte(Unk03);
+                    bw.WriteByte(Unk04);
+                    bw.WriteByte(Unk05);
+                    bw.WriteByte(Unk06);
+                    bw.WriteByte(Unk07);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk720 : Event
+            public class CultStart : Event // 720
             {
-                public int Unk00, Unk04, Unk08, Unk0C;
+                public override EventType Type => EventType.CultStart;
 
-                internal Unk720(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public byte CultType;
+
+                internal CultStart(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.AssertInt32(0);
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
+                    CultType = br.ReadByte(); // 0
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
+                    bw.WriteByte(CultType);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk730 : Event
+            public class Unk730 : Event // 730
             {
-                public int Unk00, Unk04, Unk08, Unk0C;
+                public override EventType Type => EventType.Unk730;
 
-                internal Unk730(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadInt32();
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk740 : Event
-            {
-                public int Unk00, Unk04, Unk08, Unk0C;
-
-                internal Unk740(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.AssertInt32(0);
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk760 : Event
-            {
                 public int Unk00;
-                public float Unk04, Unk08, Unk0C, Unk10, Unk14;
+                public int Unk04;
 
-                internal Unk760(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                internal Unk730(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     Unk00 = br.ReadInt32();
+                    Unk04 = br.ReadInt32();
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(Unk00);
+                    bw.WriteInt32(Unk04);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class Unk740 : Event // 740
+            {
+                public override EventType Type => EventType.Unk740;
+
+                internal Unk740(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class IFrameState : Event // 760
+            {
+                public override EventType Type => EventType.IFrameState;
+
+                public byte Unk00;
+                public byte Unk01;
+                public byte Unk02;
+                public byte Unk03;
+                public float Unk04;
+                public float Unk08;
+                public float Unk0C;
+                public float Unk10;
+                public float Unk14;
+
+                internal IFrameState(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    Unk00 = br.ReadByte();
+                    Unk01 = br.ReadByte();
+                    Unk02 = br.ReadByte();
+                    Unk03 = br.ReadByte();
                     Unk04 = br.ReadSingle();
                     Unk08 = br.ReadSingle();
                     Unk0C = br.ReadSingle();
@@ -2361,7 +2704,10 @@ namespace SoulsFormats
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
+                    bw.WriteByte(Unk00);
+                    bw.WriteByte(Unk01);
+                    bw.WriteByte(Unk02);
+                    bw.WriteByte(Unk03);
                     bw.WriteSingle(Unk04);
                     bw.WriteSingle(Unk08);
                     bw.WriteSingle(Unk0C);
@@ -2370,364 +2716,452 @@ namespace SoulsFormats
                 }
             }
 
-            public class Unk770 : Event
+            public class BonePos : Event // 770
             {
-                public int Unk00, Unk08, Unk0C;
-                public float Unk04;
+                public override EventType Type => EventType.BonePos;
 
-                internal Unk770(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadSingle();
-                    Unk08 = br.ReadInt32();
-                    Unk0C = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteSingle(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk771 : Event
-            {
-                public int Unk00, Unk04, Unk08, Unk0C;
-
-                internal Unk771(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk772 : Event
-            {
-                public int Unk00, Unk08, Unk0C;
-                public float Unk04;
-
-                internal Unk772(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadSingle();
-                    Unk08 = br.ReadInt32();
-                    Unk0C = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteSingle(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk781 : Event
-            {
-                public int Unk00, Unk04, Unk08, Unk0C;
-
-                internal Unk781(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk782 : Event
-            {
-                public int Unk00, Unk04, Unk08, Unk0C;
-
-                internal Unk782(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.AssertInt32(0);
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk785 : Event
-            {
-                public float Unk00;
-                public int Unk04, Unk08, Unk0C;
-
-                internal Unk785(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadSingle();
-                    Unk04 = br.ReadInt32();
-                    Unk08 = br.ReadInt32();
-                    Unk0C = br.ReadInt32();
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteSingle(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk786 : Event
-            {
-                public float Unk00;
-                public int Unk04;
-
-                internal Unk786(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadSingle();
-                    Unk04 = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteSingle(Unk00);
-                    bw.WriteInt32(Unk04);
-                }
-            }
-
-            public class Unk790 : Event
-            {
-                public int Unk00, Unk04;
-
-                internal Unk790(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.AssertInt32(0);
-                    Unk04 = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                }
-            }
-
-            public class Unk791 : Event
-            {
-                public int Unk00, Unk04;
-
-                internal Unk791(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.AssertInt32(0);
-                    Unk04 = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                }
-            }
-
-            public class Unk792 : Event
-            {
-                public int Unk00, Unk04, Unk08, Unk0C;
-
-                internal Unk792(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadInt32();
-                    Unk08 = br.ReadInt32();
-                    Unk0C = br.ReadInt32();
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk793 : Event
-            {
-                public int Unk00, Unk04;
-
-                internal Unk793(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                }
-            }
-
-            public class Unk794 : Event
-            {
-                public int Unk00, Unk04, Unk08, Unk0C;
-
-                internal Unk794(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
-                {
-                    Unk00 = br.AssertInt32(0);
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
-            }
-
-            public class Unk795 : Event
-            {
                 public int Unk00;
                 public float Unk04;
+                public byte Unk08;
 
-                internal Unk795(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                internal BonePos(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     Unk00 = br.ReadInt32();
                     Unk04 = br.ReadSingle();
+                    Unk08 = br.ReadByte();
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(Unk00);
                     bw.WriteSingle(Unk04);
+                    bw.WriteByte(Unk08);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk796 : Event
+            public class BoneFixOn1 : Event // 771
             {
-                public int Unk00, Unk04, Unk08, Unk0C;
+                public override EventType Type => EventType.BoneFixOn1;
 
-                internal Unk796(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public byte BoneID;
+
+                internal BoneFixOn1(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    BoneID = br.ReadByte();
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteByte(BoneID);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class BoneFixOn2 : Event // 772
+            {
+                public override EventType Type => EventType.BoneFixOn2;
+
+                public int Unk00;
+                public float Unk04;
+                public byte Unk08;
+
+                internal BoneFixOn2(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
+                    Unk04 = br.ReadSingle();
+                    Unk08 = br.ReadByte();
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
+                    bw.WriteSingle(Unk04);
+                    bw.WriteByte(Unk08);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk797 : Event
+            public class TurnLowerBody : Event // 781
             {
-                public int Unk00, Unk04;
+                public override EventType Type => EventType.TurnLowerBody;
 
-                internal Unk797(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public byte TurnState;
+
+                internal TurnLowerBody(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.AssertInt32(0);
+                    TurnState = br.ReadByte();
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
+                    bw.WriteByte(TurnState);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk798 : Event
+            public class Unk782 : Event // 782
             {
+                public override EventType Type => EventType.Unk782;
+
+                internal Unk782(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class SpawnBulletByCultSacrifice1 : Event // 785
+            {
+                public override EventType Type => EventType.SpawnBulletByCultSacrifice1;
+
                 public float Unk00;
-                public int Unk04, Unk08, Unk0C;
+                public int DummyPointID;
+                public int BulletID;
+                public byte Unk0C;
+                public byte Unk0D;
 
-                internal Unk798(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                internal SpawnBulletByCultSacrifice1(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     Unk00 = br.ReadSingle();
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
+                    DummyPointID = br.ReadInt32();
+                    BulletID = br.ReadInt32();
+                    Unk0C = br.ReadByte();
+                    Unk0D = br.ReadByte();
+                    br.AssertByte(0);
+                    br.AssertByte(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
                     bw.WriteSingle(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
+                    bw.WriteInt32(DummyPointID);
+                    bw.WriteInt32(BulletID);
+                    bw.WriteByte(Unk0C);
+                    bw.WriteByte(Unk0D);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
                 }
             }
 
-            public class Unk799 : Event
+            public class Unk786 : Event // 786
             {
-                public int Unk00, Unk04, Unk08, Unk0C;
+                public override EventType Type => EventType.Unk786;
 
-                internal Unk799(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                public float Unk00;
+
+                internal Unk786(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.AssertInt32(0);
-                    Unk04 = br.AssertInt32(0);
-                    Unk08 = br.AssertInt32(0);
-                    Unk0C = br.AssertInt32(0);
+                    Unk00 = br.ReadSingle();
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
+                    bw.WriteSingle(Unk00);
+                    bw.WriteInt32(0);
                 }
             }
 
-            public class Unk800 : Event
+            public class Unk790 : Event // 790
             {
-                public float Unk00, Unk04, Unk08;
-                public int Unk0C;
+                public override EventType Type => EventType.Unk790;
 
-                internal Unk800(EventType type, float startTime, float endTime, BinaryReaderEx br) : base(type, startTime, endTime)
+                internal Unk790(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
-                    Unk00 = br.ReadSingle();
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class Unk791 : Event // 791
+            {
+                public override EventType Type => EventType.Unk791;
+
+                internal Unk791(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class HitEffect2 : Event // 792
+            {
+                public override EventType Type => EventType.HitEffect2;
+
+                public short Unk00;
+                public int Unk04;
+                public int Unk08;
+                public byte Unk0C;
+                public byte Unk0D;
+                public byte Unk0E;
+                public byte Unk0F;
+
+                internal HitEffect2(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    Unk00 = br.ReadInt16();
+                    br.AssertInt16(0);
+                    Unk04 = br.ReadInt32();
+                    Unk08 = br.ReadInt32();
+                    Unk0C = br.ReadByte();
+                    Unk0D = br.ReadByte();
+                    Unk0E = br.ReadByte();
+                    Unk0F = br.ReadByte();
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt16(Unk00);
+                    bw.WriteInt16(0);
+                    bw.WriteInt32(Unk04);
+                    bw.WriteInt32(Unk08);
+                    bw.WriteByte(Unk0C);
+                    bw.WriteByte(Unk0D);
+                    bw.WriteByte(Unk0E);
+                    bw.WriteByte(Unk0F);
+                }
+            }
+
+            public class CultSacrifice1 : Event // 793
+            {
+                public override EventType Type => EventType.CultSacrifice1;
+
+                public int SacrificeValue;
+
+                internal CultSacrifice1(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    SacrificeValue = br.ReadInt32();
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(SacrificeValue);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class SacrificeEmpty : Event // 794
+            {
+                public override EventType Type => EventType.SacrificeEmpty;
+
+                internal SacrificeEmpty(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class Toughness : Event // 795
+            {
+                public override EventType Type => EventType.Toughness;
+
+                public byte ToughnessParamID;
+                // 0-3
+                public byte ConditionState;
+                public float Unk04;
+
+                internal Toughness(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    ToughnessParamID = br.ReadByte();
+                    ConditionState = br.ReadByte();
+                    br.AssertByte(0);
+                    br.AssertByte(0);
                     Unk04 = br.ReadSingle();
-                    Unk08 = br.ReadSingle();
-                    Unk0C = br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteByte(ToughnessParamID);
+                    bw.WriteByte(ConditionState);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteSingle(Unk04);
+                }
+            }
+
+            public class BringCultMenu : Event // 796
+            {
+                public override EventType Type => EventType.BringCultMenu;
+
+                public byte MenuType;
+
+                internal BringCultMenu(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    MenuType = br.ReadByte();
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteByte(MenuType);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class CeremonyParamID : Event // 797
+            {
+                public override EventType Type => EventType.CeremonyParamID;
+
+                public int ParamID;
+
+                internal CeremonyParamID(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    ParamID = br.ReadInt32();
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(ParamID);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class CultSingle : Event // 798
+            {
+                public override EventType Type => EventType.CultSingle;
+
+                public float Unk00;
+
+                internal CultSingle(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    Unk00 = br.ReadSingle();
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
                     bw.WriteSingle(Unk00);
-                    bw.WriteSingle(Unk04);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class CultEmpty2 : Event // 799
+            {
+                public override EventType Type => EventType.CultEmpty2;
+
+                internal CultEmpty2(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            public class Unk800 : Event // 800
+            {
+                public override EventType Type => EventType.Unk800;
+
+                public float MetersPerTick;
+                public float MetersOnTurn;
+                public float Unk08;
+
+                internal Unk800(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                {
+                    MetersPerTick = br.ReadSingle();
+                    MetersOnTurn = br.ReadSingle();
+                    Unk08 = br.ReadSingle();
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteSingle(MetersPerTick);
+                    bw.WriteSingle(MetersOnTurn);
                     bw.WriteSingle(Unk08);
-                    bw.WriteInt32(Unk0C);
+                    bw.WriteInt32(0);
                 }
             }
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
