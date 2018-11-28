@@ -936,8 +936,8 @@ namespace SoulsFormats
         /// </summary>
         public Vector2 ReadVector2()
         {
-            float x = br.ReadSingle();
-            float y = br.ReadSingle();
+            float x = ReadSingle();
+            float y = ReadSingle();
             return new Vector2(x, y);
         }
 
@@ -946,9 +946,9 @@ namespace SoulsFormats
         /// </summary>
         public Vector3 ReadVector3()
         {
-            float x = br.ReadSingle();
-            float y = br.ReadSingle();
-            float z = br.ReadSingle();
+            float x = ReadSingle();
+            float y = ReadSingle();
+            float z = ReadSingle();
             return new Vector3(x, y, z);
         }
 
@@ -957,10 +957,10 @@ namespace SoulsFormats
         /// </summary>
         public Vector4 ReadVector4()
         {
-            float x = br.ReadSingle();
-            float y = br.ReadSingle();
-            float z = br.ReadSingle();
-            float w = br.ReadSingle();
+            float x = ReadSingle();
+            float y = ReadSingle();
+            float z = ReadSingle();
+            float w = ReadSingle();
             return new Vector4(x, y, z, w);
         }
         #endregion

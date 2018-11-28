@@ -4,7 +4,7 @@ using System.Numerics;
 
 namespace SoulsFormats
 {
-    public partial class MSB2
+    public partial class MSBD
     {
         /// <summary>
         /// Instances of various "things" in this MSB.
@@ -44,6 +44,16 @@ namespace SoulsFormats
             public List<Part> Collisions;
 
             /// <summary>
+            /// Protobosses in the MSB.
+            /// </summary>
+            public List<Part> Protobosses;
+
+            /// <summary>
+            /// Navmeshes in the MSB.
+            /// </summary>
+            public List<Part> Navmeshes;
+
+            /// <summary>
             /// Dummy objects in the MSB.
             /// </summary>
             public List<Part> DummyObjects;
@@ -66,6 +76,8 @@ namespace SoulsFormats
                 Items = new List<Part>();
                 Players = new List<Part>();
                 Collisions = new List<Part>();
+                Protobosses = new List<Part>();
+                Navmeshes = new List<Part>();
                 DummyObjects = new List<Part>();
                 DummyEnemies = new List<Part>();
                 ConnectCollisions = new List<Part>();
@@ -77,12 +89,12 @@ namespace SoulsFormats
             public override List<Part> GetEntries()
             {
                 return Util.ConcatAll<Part>(
-                    MapPieces, Objects, Enemies, Items, Players, Collisions, DummyObjects, DummyEnemies, ConnectCollisions);
+                    MapPieces, Objects, Enemies, Items, Players, Collisions, Protobosses, Navmeshes, DummyObjects, DummyEnemies, ConnectCollisions);
             }
 
             internal override Part ReadEntry(BinaryReaderEx br)
             {
-                PartsType type = br.GetEnum16<PartsType>(br.Position + 8);
+                PartsType type = br.GetEnum32<PartsType>(br.Position + 4);
 
                 switch (type)
                 {
@@ -116,6 +128,16 @@ namespace SoulsFormats
                         Collisions.Add(collision);
                         return collision;
 
+                    case PartsType.Protoboss:
+                        var protoboss = new Part(br);
+                        Protobosses.Add(protoboss);
+                        return protoboss;
+
+                    case PartsType.Navmesh:
+                        var navmesh = new Part(br);
+                        Navmeshes.Add(navmesh);
+                        return navmesh;
+
                     case PartsType.DummyObject:
                         var dummyObj = new Part(br);
                         DummyObjects.Add(dummyObj);
@@ -141,20 +163,20 @@ namespace SoulsFormats
                 throw new NotImplementedException();
             }
 
-            internal void GetNames(MSB2 msb, Entries entries)
+            internal void GetNames(MSBD msb, Entries entries)
             {
                 foreach (Part part in entries.Parts)
                     part.GetNames(msb, entries);
             }
 
-            internal void GetIndices(MSB2 msb, Entries entries)
+            internal void GetIndices(MSBD msb, Entries entries)
             {
                 foreach (Part part in entries.Parts)
                     part.GetIndices(msb, entries);
             }
         }
 
-        internal enum PartsType : ushort
+        internal enum PartsType : uint
         {
             MapPiece = 0x0,
             Object = 0x1,
@@ -207,23 +229,24 @@ namespace SoulsFormats
             {
                 long start = br.Position;
 
-                long nameOffset = br.ReadInt64();
-                Type = br.ReadEnum16<PartsType>();
-                br.ReadInt16(); // ID
+                int nameOffset = br.ReadInt32();
+                Type = br.ReadEnum32<PartsType>();
+                br.ReadInt32(); // ID
                 modelIndex = br.ReadInt32();
+                br.ReadInt32();
                 Position = br.ReadVector3();
                 Rotation = br.ReadVector3();
                 Scale = br.ReadVector3();
 
-                Name = br.GetUTF16(start + nameOffset);
+                Name = br.GetShiftJIS(start + nameOffset);
             }
 
-            internal virtual void GetNames(MSB2 msb, Entries entries)
+            internal virtual void GetNames(MSBD msb, Entries entries)
             {
                 ModelName = GetName(entries.Models, modelIndex);
             }
 
-            internal virtual void GetIndices(MSB2 msb, Entries entries)
+            internal virtual void GetIndices(MSBD msb, Entries entries)
             {
                 modelIndex = GetIndex(entries.Models, ModelName);
             }

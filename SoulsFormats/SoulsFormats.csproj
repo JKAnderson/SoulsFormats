@@ -97,6 +97,9 @@
     <Compile Include="Formats\FILTPARAM.cs" />
     <Compile Include="Formats\FXR3.cs" />
     <Compile Include="Formats\GPARAM.cs" />
+    <Compile Include="Formats\MSBD\MSBD.cs" />
+    <Compile Include="Formats\MSBD\MSBD.ModelSection.cs" />
+    <Compile Include="Formats\MSBD\MSBD.PartsSection.cs" />
     <Compile Include="Formats\MSB2\MSB2.cs" />
     <Compile Include="Formats\MSB2\MSB2.ModelSection.cs" />
     <Compile Include="Formats\MSB2\MSB2.PartsSection.cs" />
