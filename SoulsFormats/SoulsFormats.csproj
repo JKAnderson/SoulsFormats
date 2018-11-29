@@ -78,6 +78,7 @@
   <ItemGroup>
     <Compile Include="Formats\BND0.cs" />
     <Compile Include="Formats\EnchantedArms\COMPBND.cs" />
+    <Compile Include="Formats\FLVERD.cs" />
     <Compile Include="Formats\KF4\DAT.cs" />
     <Compile Include="Formats\Kuon\DVDBND0.cs" />
     <Compile Include="Formats\Kuon\BND0.cs" />

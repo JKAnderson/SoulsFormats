@@ -1567,7 +1567,7 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk14, Unk1C;
+            public int Unk14, Unk18, Unk1C;
 
             internal Texture(BinaryReaderEx br)
             {
@@ -1582,7 +1582,7 @@ namespace SoulsFormats
                 br.AssertByte(0);
 
                 Unk14 = br.ReadInt32();
-                br.AssertInt32(0);
+                Unk18 = br.ReadInt32();
                 Unk1C = br.ReadInt32();
 
                 Type = br.GetUTF16(typeOffset);
@@ -1602,7 +1602,7 @@ namespace SoulsFormats
                 bw.WriteByte(0);
 
                 bw.WriteInt32(Unk14);
-                bw.WriteInt32(0);
+                bw.WriteInt32(Unk18);
                 bw.WriteInt32(Unk1C);
             }
 
