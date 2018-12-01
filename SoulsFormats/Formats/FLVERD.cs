@@ -491,24 +491,61 @@ namespace SoulsFormats
                     if (vi1 == 0xFFFF)
                     {
                         flip = false;
-                        i++;
                     }
                     else if (vi3 == 0xFFFF)
                     {
                         flip = false;
                         i += 2;
                     }
-                    else if (vi1 != vi2 && vi1 != vi3 && vi2 != vi3)
+                    else
                     {
                         if (!flip)
                             faces.Add(new Vertex[] { Vertices[vi1], Vertices[vi2], Vertices[vi3] });
                         else
                             faces.Add(new Vertex[] { Vertices[vi3], Vertices[vi2], Vertices[vi1] });
+                        flip = !flip;
                     }
-
-                    flip = !flip;
                 }
                 return faces;
+            }
+
+            public ushort[] ToTriangleList()
+            {
+                var converted = new List<ushort>();
+                bool flip = false;
+                for (int i = 0; i < VertexIndices.Length - 2; i++)
+                {
+                    ushort vi1 = VertexIndices[i];
+                    ushort vi2 = VertexIndices[i + 1];
+                    ushort vi3 = VertexIndices[i + 2];
+
+                    if (vi1 == 0xFFFF)
+                    {
+                        flip = false;
+                    }
+                    else if (vi3 == 0xFFFF)
+                    {
+                        flip = false;
+                        i += 2;
+                    }
+                    else
+                    {
+                        if (!flip)
+                        {
+                            converted.Add(vi1);
+                            converted.Add(vi2);
+                            converted.Add(vi3);
+                        }
+                        else
+                        {
+                            converted.Add(vi3);
+                            converted.Add(vi2);
+                            converted.Add(vi1);
+                        }
+                        flip = !flip;
+                    }
+                }
+                return converted.ToArray();
             }
         }
 
