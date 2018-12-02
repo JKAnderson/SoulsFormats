@@ -91,7 +91,7 @@ namespace SoulsFormats
             Header.BoundingBoxMax = br.ReadVector3();
 
             Header.Unk40 = br.ReadInt32();
-            Header.Unk44 = br.ReadInt32();
+            int totalFaceCount = br.ReadInt32();
 
             Header.Unk48 = br.AssertByte(0x00, 0x10);
             br.AssertBoolean(true);
@@ -213,7 +213,13 @@ namespace SoulsFormats
             bw.WriteVector3(Header.BoundingBoxMax);
 
             bw.WriteInt32(Header.Unk40);
-            bw.WriteInt32(Header.Unk44);
+
+            // I hope this isn't super slow :^)
+            int totalFaceCount = 0;
+            foreach (Mesh mesh in Meshes)
+                foreach (FaceSet faceSet in mesh.FaceSets)
+                    totalFaceCount += faceSet.GetFaces().Count;
+            bw.WriteInt32(totalFaceCount);
 
             bw.WriteByte(Header.Unk48);
             bw.WriteBoolean(true);
@@ -425,11 +431,6 @@ namespace SoulsFormats
             /// Unknown.
             /// </summary>
             public int Unk40;
-
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public int Unk44;
 
             /// <summary>
             /// Unknown.

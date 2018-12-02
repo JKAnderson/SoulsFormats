@@ -11,13 +11,15 @@ namespace SoulsFormats
     public class FLVERD : SoulsFile<FLVERD>
     {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+        public bool BigEndian;
+
         public int Version;
 
         public Vector3 BoundingBoxMin;
 
         public Vector3 BoundingBoxMax;
 
-        public int Unk40, Unk44, Unk48, Unk4C;
+        public int Unk40, Unk48, Unk4C;
 
         public List<Dummy> Dummies;
 
@@ -29,18 +31,28 @@ namespace SoulsFormats
 
         internal override bool Is(BinaryReaderEx br)
         {
-            br.BigEndian = true;
-            string magic = br.GetASCII(0, 6);
-            int version = br.GetInt32(8);
+            string magic = br.ReadASCII(6);
+            string endian = br.ReadASCII(2);
+            if (endian == "L\0")
+                br.BigEndian = false;
+            else if (endian == "B\0")
+                br.BigEndian = true;
+            int version = br.ReadInt32();
             return magic == "FLVER\0" && version <= 0x15;
         }
 
         internal override void Read(BinaryReaderEx br)
         {
-            br.BigEndian = true;
-
             br.AssertASCII("FLVER\0");
-            br.AssertASCII("B\0");
+            string endian = br.ReadASCII(2);
+            if (endian == "L\0")
+                BigEndian = false;
+            else if (endian == "B\0")
+                BigEndian = true;
+            else
+                throw new FormatException("FLVER endian character must be either L or B.");
+            br.BigEndian = BigEndian;
+
             int version = br.AssertInt32(0x0E, 0x0F, 0x10, 0x12, 0x13, 0x14, 0x15);
             int dataOffset = br.ReadInt32();
             int dataSize = br.ReadInt32();
@@ -48,11 +60,11 @@ namespace SoulsFormats
             int materialCount = br.ReadInt32();
             int boneCount = br.ReadInt32();
             int meshCount = br.ReadInt32();
-            int unkCount = br.ReadInt32();
+            br.AssertInt32(meshCount);
             BoundingBoxMin = br.ReadVector3();
             BoundingBoxMax = br.ReadVector3();
             Unk40 = br.ReadInt32();
-            Unk44 = br.ReadInt32();
+            int totalFaceCount = br.ReadInt32();
             Unk48 = br.ReadInt32();
             Unk4C = br.ReadInt32();
 
@@ -95,12 +107,14 @@ namespace SoulsFormats
 
             public short AttachBoneIndex;
 
+            public int Unk04;
+
             public bool Flag1, Flag2;
 
             internal Dummy(BinaryReaderEx br)
             {
                 Position = br.ReadVector3();
-                br.AssertInt32(-1);
+                Unk04 = br.ReadInt32();
                 Forward = br.ReadVector3();
                 ReferenceID = br.ReadInt16();
                 DummyBoneIndex = br.ReadInt16();
@@ -123,23 +137,21 @@ namespace SoulsFormats
 
             public List<Texture> Textures;
 
-            public BufferLayout Layout;
-
-            public int Unk10;
+            public List<BufferLayout> Layouts;
 
             internal Material(BinaryReaderEx br)
             {
                 int nameOffset = br.ReadInt32();
                 int mtdOffset = br.ReadInt32();
                 int texturesOffset = br.ReadInt32();
-                int layoutOffset = br.ReadInt32();
-                Unk10 = br.ReadInt32();
+                int layoutsOffset = br.ReadInt32();
+                int dataSize = br.ReadInt32(); // From name offset to end of buffer layouts
                 int layoutHeaderOffset = br.ReadInt32();
                 br.AssertInt32(0);
                 br.AssertInt32(0);
 
-                Name = br.GetUTF16(nameOffset);
-                MTD = br.GetUTF16(mtdOffset);
+                Name = br.BigEndian ? br.GetUTF16(nameOffset) : br.GetShiftJIS(nameOffset);
+                MTD = br.BigEndian ? br.GetUTF16(mtdOffset) : br.GetShiftJIS(mtdOffset);
 
                 br.StepIn(texturesOffset);
                 {
@@ -157,9 +169,22 @@ namespace SoulsFormats
                 }
                 br.StepOut();
 
-                br.StepIn(layoutOffset);
+                br.StepIn(layoutHeaderOffset);
                 {
-                    Layout = new BufferLayout(br);
+                    int layoutCount = br.ReadInt32();
+                    br.AssertInt32((int)br.Position + 0xC);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    Layouts = new List<BufferLayout>(layoutCount);
+                    for (int i = 0; i < layoutCount; i++)
+                    {
+                        int layoutOffset = br.ReadInt32();
+                        br.StepIn(layoutOffset);
+                        {
+                            Layouts.Add(new BufferLayout(br));
+                        }
+                        br.StepOut();
+                    }
                 }
                 br.StepOut();
             }
@@ -178,9 +203,9 @@ namespace SoulsFormats
                 br.AssertInt32(0);
                 br.AssertInt32(0);
 
-                Path = br.GetUTF16(pathOffset);
+                Path = br.BigEndian ? br.GetUTF16(pathOffset) : br.GetShiftJIS(pathOffset);
                 if (typeOffset > 0)
-                    Type = br.GetUTF16(typeOffset);
+                    Type = br.BigEndian ? br.GetUTF16(typeOffset) : br.GetShiftJIS(typeOffset);
                 else
                     Type = null;
             }
@@ -421,7 +446,7 @@ namespace SoulsFormats
                 for (int i = 0; i < 13; i++)
                     br.AssertInt32(0);
 
-                Name = br.GetUTF16(nameOffset);
+                Name = br.BigEndian ? br.GetUTF16(nameOffset) : br.GetShiftJIS(nameOffset);
             }
         }
 
@@ -431,7 +456,9 @@ namespace SoulsFormats
 
             public byte MaterialIndex;
 
-            public bool Unk02, Unk03;
+            public bool Unk02;
+            
+            public byte Unk03;
 
             public short[] BoneIndices;
 
@@ -444,8 +471,7 @@ namespace SoulsFormats
                 Dynamic = br.ReadBoolean();
                 MaterialIndex = br.ReadByte();
                 Unk02 = br.ReadBoolean();
-                Unk03 = br.ReadBoolean();
-                BufferLayout layout = materials[MaterialIndex].Layout;
+                Unk03 = br.ReadByte();
 
                 int vertexIndexCount = br.ReadInt32();
                 int vertexCount = br.ReadInt32();
@@ -453,7 +479,7 @@ namespace SoulsFormats
                 br.AssertInt16(0);
                 br.AssertInt32(vertexIndexCount * 2);
                 int vertexIndicesOffset = br.ReadInt32();
-                int bufferSize = br.AssertInt32(layout.Size * vertexCount);
+                int bufferSize = br.ReadInt32();
                 int bufferOffset = br.ReadInt32();
                 int bufferHeaderOffset = br.ReadInt32();
                 br.AssertInt32(0);
@@ -463,6 +489,13 @@ namespace SoulsFormats
 
                 br.StepIn(dataOffset + bufferOffset);
                 {
+                    BufferLayout layout = null;
+                    foreach (var bl in materials[MaterialIndex].Layouts)
+                    {
+                        if (bl.Size * vertexCount == bufferSize)
+                            layout = bl;
+                    }
+
                     Vertices = new List<Vertex>(vertexCount);
                     for (int i = 0; i < vertexCount; i++)
                     {
@@ -499,10 +532,13 @@ namespace SoulsFormats
                     }
                     else
                     {
-                        if (!flip)
-                            faces.Add(new Vertex[] { Vertices[vi1], Vertices[vi2], Vertices[vi3] });
-                        else
-                            faces.Add(new Vertex[] { Vertices[vi3], Vertices[vi2], Vertices[vi1] });
+                        if (vi1 != vi2 && vi1 != vi3 && vi2 != vi3)
+                        {
+                            if (!flip)
+                                faces.Add(new Vertex[] { Vertices[vi1], Vertices[vi2], Vertices[vi3] });
+                            else
+                                faces.Add(new Vertex[] { Vertices[vi3], Vertices[vi2], Vertices[vi1] });
+                        }
                         flip = !flip;
                     }
                 }
@@ -530,17 +566,20 @@ namespace SoulsFormats
                     }
                     else
                     {
-                        if (!flip)
+                        if (vi1 != vi2 && vi1 != vi3 && vi2 != vi3)
                         {
-                            converted.Add(vi1);
-                            converted.Add(vi2);
-                            converted.Add(vi3);
-                        }
-                        else
-                        {
-                            converted.Add(vi3);
-                            converted.Add(vi2);
-                            converted.Add(vi1);
+                            if (!flip)
+                            {
+                                converted.Add(vi1);
+                                converted.Add(vi2);
+                                converted.Add(vi3);
+                            }
+                            else
+                            {
+                                converted.Add(vi3);
+                                converted.Add(vi2);
+                                converted.Add(vi1);
+                            }
                         }
                         flip = !flip;
                     }
@@ -629,6 +668,12 @@ namespace SoulsFormats
                                 BoneWeights = new float[4];
                                 for (int i = 0; i < 4; i++)
                                     BoneWeights[i] = br.ReadSByte() / (float)sbyte.MaxValue;
+                            }
+                            else if (member.Type == BufferLayout.MemberType.UVPair)
+                            {
+                                BoneWeights = new float[4];
+                                for (int i = 0; i < 4; i++)
+                                    BoneWeights[i] = br.ReadInt16() / (float)short.MaxValue;
                             }
                             else if (member.Type == BufferLayout.MemberType.Short4toFloat4A)
                             {
