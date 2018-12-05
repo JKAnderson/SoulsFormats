@@ -42,44 +42,6 @@ namespace SoulsFormats
             }
         }
 
-        private static List<string> pathRoots = new List<string>
-        {
-            // Demon's Souls (duh)
-            @"N:\DemonsSoul\data\",
-            @"N:\DemonsSoul\",
-            // Dark Souls 1
-            @"N:\FRPG\data\",
-            @"N:\FRPG\",
-            // Dark Souls 2
-            @"N:\FRPG2\data",
-            @"N:\FRPG2\",
-            // Dark Souls 3
-            @"N:\FDP\data\",
-            @"N:\FDP\",
-            // Bloodborne
-            @"N:\SPRJ\data\",
-            @"N:\SPRJ\",
-            // Just because I don't like leading backslash
-            @"\",
-        };
-
-        /// <summary>
-        /// Removes common network path roots if present.
-        /// </summary>
-        public static string UnrootBNDPath(string path)
-        {
-            foreach (string root in pathRoots)
-            {
-                if (path.StartsWith(root))
-                    return path.Substring(root.Length);
-            }
-
-            if (path.Contains(":"))
-                return path.Substring(path.IndexOf(":") + 2);
-            else
-                return path;
-        }
-
         /// <summary>
         /// FromSoft's basic filename hashing algorithm, used in some BND and BXF formats.
         /// </summary>
@@ -247,7 +209,7 @@ namespace SoulsFormats
                 cryptor.Padding = PaddingMode.PKCS7;
                 cryptor.KeySize = 256;
                 cryptor.BlockSize = 128;
-                
+
                 byte[] iv = cryptor.IV;
 
                 using (CryptoStream cs = new CryptoStream(ms, cryptor.CreateEncryptor(key, iv), CryptoStreamMode.Write))
@@ -255,7 +217,7 @@ namespace SoulsFormats
                     cs.Write(secret, 0, secret.Length);
                 }
                 byte[] encryptedContent = ms.ToArray();
-                
+
                 byte[] result = new byte[iv.Length + encryptedContent.Length];
 
                 Buffer.BlockCopy(iv, 0, result, 0, iv.Length);
