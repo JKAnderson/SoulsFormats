@@ -19,6 +19,18 @@ namespace SoulsFormats
         public bool Long;
 
         /// <summary>
+        /// FMG version number.
+        /// </summary>
+        public int fmgVersion;
+
+        /// <summary>
+        /// FMG file endianness. (Big = true)
+        /// </summary>
+        public bool bigEndian = false;
+
+        private byte Unknown0;  // unknown byte, 0xff in version 0 FMGs, 0x00 in >= version 1 FMGs
+
+        /// <summary>
         /// Creates an uninitialized FMG. Should not be used publicly; use FMG.Read instead.
         /// </summary>
         public FMG() { }
@@ -33,12 +45,17 @@ namespace SoulsFormats
             br.BigEndian = false;
 
             br.AssertByte(0);
-            br.AssertByte(0);
-            Long = br.AssertByte(1, 2) == 2;
+            bigEndian = br.AssertByte(0, 1) == 1;
+            br.BigEndian = bigEndian;
+            fmgVersion = br.AssertByte(0, 1, 2);
+            Long = fmgVersion == 2;
             br.AssertByte(0);
 
             int fileSize = br.ReadInt32();
-            br.AssertInt32(1);
+            br.AssertByte(1);
+            Unknown0 = br.ReadByte();
+            br.AssertByte(0);
+            br.AssertByte(0);
             int groupCount = br.ReadInt32();
             int stringCount = br.ReadInt32();
 
@@ -51,9 +68,10 @@ namespace SoulsFormats
             else
                 stringOffsetsOffset = br.ReadInt32();
 
-            br.AssertInt32(0);
-            // Comment this out to load Kuon FMGs '_>'
-            br.AssertInt32(0);
+            if (Long)
+                br.AssertInt64(0);
+            else
+                br.AssertInt32(0);
 
             Entries = new List<Entry>(groupCount);
             for (int i = 0; i < groupCount; i++)
@@ -84,15 +102,19 @@ namespace SoulsFormats
 
         internal override void Write(BinaryWriterEx bw)
         {
-            bw.BigEndian = false;
+            //bw.BigEndian = false;
+            bw.BigEndian = bigEndian;
 
             bw.WriteByte(0);
-            bw.WriteByte(0);
-            bw.WriteByte((byte)(Long ? 2 : 1));
+            bw.WriteBoolean(bw.BigEndian);
+            bw.WriteByte((byte)fmgVersion);
             bw.WriteByte(0);
 
             bw.ReserveInt32("FileSize");
-            bw.WriteInt32(1);
+            bw.WriteByte(1);
+            bw.WriteByte(Unknown0);
+            bw.WriteByte(0);
+            bw.WriteByte(0);
             bw.ReserveInt32("GroupCount");
             bw.WriteInt32(Entries.Count);
 
@@ -104,8 +126,10 @@ namespace SoulsFormats
             else
                 bw.ReserveInt32("StringOffsets");
 
-            bw.WriteInt32(0);
-            bw.WriteInt32(0);
+            if (Long)
+                bw.WriteInt64(0);
+            else
+                bw.WriteInt32(0);
 
             int groupCount = 0;
             Entries.Sort((e1, e2) => e1.ID.CompareTo(e2.ID));
@@ -144,7 +168,7 @@ namespace SoulsFormats
                 if (Long)
                     bw.FillInt64($"StringOffset{i}", text == null ? 0 : bw.Position);
                 else
-                    bw.FillInt64($"StringOffset{i}", text == null ? 0 : (int)bw.Position);
+                    bw.FillInt32($"StringOffset{i}", text == null ? 0 : (int)bw.Position);
 
                 if (text != null)
                     bw.WriteUTF16(Entries[i].Text, true);
