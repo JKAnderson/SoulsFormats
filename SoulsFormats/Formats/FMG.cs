@@ -14,26 +14,19 @@ namespace SoulsFormats
         public List<Entry> Entries;
 
         /// <summary>
-        /// If true, use DS3 format with 64-bit string offsets.
+        /// Indicates file format; 0 - DeS, 1 - DS1/DS2, 2 - DS3.
         /// </summary>
-        public bool Long;
-
-        /// <summary>
-        /// FMG version number.
-        /// </summary>
-        public int fmgVersion;
+        public byte Version;
 
         /// <summary>
         /// FMG file endianness. (Big = true)
         /// </summary>
-        public bool bigEndian = false;
-
-        private byte Unknown0;  // unknown byte, 0xff in version 0 FMGs, 0x00 in >= version 1 FMGs
+        public bool BigEndian;
 
         /// <summary>
-        /// Creates an uninitialized FMG. Should not be used publicly; use FMG.Read instead.
+        /// Unknown; 0xFF in version 0, 0x00 in version 1/2.
         /// </summary>
-        public FMG() { }
+        public byte Unk09;
 
         internal override bool Is(BinaryReaderEx br)
         {
@@ -42,33 +35,32 @@ namespace SoulsFormats
 
         internal override void Read(BinaryReaderEx br)
         {
-            br.BigEndian = false;
+            br.AssertByte(0);
+            BigEndian = br.ReadBoolean();
+            Version = br.AssertByte(0, 1, 2);
+            br.AssertByte(0);
 
-            br.AssertByte(0);
-            bigEndian = br.AssertByte(0, 1) == 1;
-            br.BigEndian = bigEndian;
-            fmgVersion = br.AssertByte(0, 1, 2);
-            Long = fmgVersion == 2;
-            br.AssertByte(0);
+            br.BigEndian = BigEndian;
+            bool wide = Version == 2;
 
             int fileSize = br.ReadInt32();
             br.AssertByte(1);
-            Unknown0 = br.ReadByte();
+            Unk09 = br.ReadByte();
             br.AssertByte(0);
             br.AssertByte(0);
             int groupCount = br.ReadInt32();
             int stringCount = br.ReadInt32();
 
-            if (Long)
+            if (wide)
                 br.AssertInt32(0xFF);
 
             long stringOffsetsOffset;
-            if (Long)
+            if (wide)
                 stringOffsetsOffset = br.ReadInt64();
             else
                 stringOffsetsOffset = br.ReadInt32();
 
-            if (Long)
+            if (wide)
                 br.AssertInt64(0);
             else
                 br.AssertInt32(0);
@@ -80,21 +72,23 @@ namespace SoulsFormats
                 int firstID = br.ReadInt32();
                 int lastID = br.ReadInt32();
 
-                if (Long)
+                if (wide)
                     br.AssertInt32(0);
 
-                br.StepIn(stringOffsetsOffset + offsetIndex * (Long ? 8 : 4));
-                for (int j = 0; j < lastID - firstID + 1; j++)
+                br.StepIn(stringOffsetsOffset + offsetIndex * (wide ? 8 : 4));
                 {
-                    long stringOffset;
-                    if (Long)
-                        stringOffset = br.ReadInt64();
-                    else
-                        stringOffset = br.ReadInt32();
+                    for (int j = 0; j < lastID - firstID + 1; j++)
+                    {
+                        long stringOffset;
+                        if (wide)
+                            stringOffset = br.ReadInt64();
+                        else
+                            stringOffset = br.ReadInt32();
 
-                    int id = firstID + j;
-                    string text = stringOffset != 0 ? br.GetUTF16(stringOffset) : null;
-                    Entries.Add(new Entry(id, text));
+                        int id = firstID + j;
+                        string text = stringOffset != 0 ? br.GetUTF16(stringOffset) : null;
+                        Entries.Add(new Entry(id, text));
+                    }
                 }
                 br.StepOut();
             }
@@ -102,31 +96,31 @@ namespace SoulsFormats
 
         internal override void Write(BinaryWriterEx bw)
         {
-            //bw.BigEndian = false;
-            bw.BigEndian = bigEndian;
+            bw.BigEndian = BigEndian;
+            bool wide = Version == 2;
 
             bw.WriteByte(0);
             bw.WriteBoolean(bw.BigEndian);
-            bw.WriteByte((byte)fmgVersion);
+            bw.WriteByte(Version);
             bw.WriteByte(0);
 
             bw.ReserveInt32("FileSize");
             bw.WriteByte(1);
-            bw.WriteByte(Unknown0);
+            bw.WriteByte(Unk09);
             bw.WriteByte(0);
             bw.WriteByte(0);
             bw.ReserveInt32("GroupCount");
             bw.WriteInt32(Entries.Count);
 
-            if (Long)
+            if (wide)
                 bw.WriteInt32(0xFF);
 
-            if (Long)
+            if (wide)
                 bw.ReserveInt64("StringOffsets");
             else
                 bw.ReserveInt32("StringOffsets");
 
-            if (Long)
+            if (wide)
                 bw.WriteInt64(0);
             else
                 bw.WriteInt32(0);
@@ -141,21 +135,21 @@ namespace SoulsFormats
                     i++;
                 bw.WriteInt32(Entries[i].ID);
 
-                if (Long)
+                if (wide)
                     bw.WriteInt32(0);
 
                 groupCount++;
             }
             bw.FillInt32("GroupCount", groupCount);
 
-            if (Long)
+            if (wide)
                 bw.FillInt64("StringOffsets", bw.Position);
             else
                 bw.FillInt32("StringOffsets", (int)bw.Position);
 
             for (int i = 0; i < Entries.Count; i++)
             {
-                if (Long)
+                if (wide)
                     bw.ReserveInt64($"StringOffset{i}");
                 else
                     bw.ReserveInt32($"StringOffset{i}");
@@ -165,7 +159,7 @@ namespace SoulsFormats
             {
                 string text = Entries[i].Text;
 
-                if (Long)
+                if (wide)
                     bw.FillInt64($"StringOffset{i}", text == null ? 0 : bw.Position);
                 else
                     bw.FillInt32($"StringOffset{i}", text == null ? 0 : (int)bw.Position);
@@ -180,18 +174,7 @@ namespace SoulsFormats
         /// <summary>
         /// Returns the string with the given ID, or null if not present.
         /// </summary>
-        public string this[int id]
-        {
-            get
-            {
-                foreach (Entry entry in Entries)
-                {
-                    if (entry.ID == id)
-                        return entry.Text;
-                }
-                return null;
-            }
-        }
+        public string this[int id] => Entries.Find(entry => entry.ID == id)?.Text;
 
         /// <summary>
         /// A string in an FMG identified with an ID number.
