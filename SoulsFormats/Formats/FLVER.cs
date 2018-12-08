@@ -1034,11 +1034,12 @@ namespace SoulsFormats
             /// <summary>
             /// Returns a list of arrays of 3 vertices, each representing a triangle in the mesh.
             /// Faces are taken from the first FaceSet in the mesh with the given flags,
-            /// using None by default for the highest detail mesh.
+            /// using None by default for the highest detail mesh. If not found, the first FaceSet is used.
             /// </summary>
             public List<Vertex[]> GetFaces(FaceSet.FSFlags fsFlags = FaceSet.FSFlags.None)
             {
-                List<uint[]> indices = FaceSets.Find(fs => fs.Flags == fsFlags).GetFaces();
+                FaceSet faceset = FaceSets.Find(fs => fs.Flags == fsFlags) ?? FaceSets[0];
+                List<uint[]> indices = faceset.GetFaces();
                 var vertices = new List<Vertex[]>(indices.Count);
                 foreach (uint[] face in indices)
                     vertices.Add(new Vertex[] { Vertices[(int)face[0]], Vertices[(int)face[1]], Vertices[(int)face[2]] });

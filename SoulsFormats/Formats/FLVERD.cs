@@ -169,24 +169,36 @@ namespace SoulsFormats
                 }
                 br.StepOut();
 
-                br.StepIn(layoutHeaderOffset);
+                if (layoutHeaderOffset != 0)
                 {
-                    int layoutCount = br.ReadInt32();
-                    br.AssertInt32((int)br.Position + 0xC);
-                    br.AssertInt32(0);
-                    br.AssertInt32(0);
-                    Layouts = new List<BufferLayout>(layoutCount);
-                    for (int i = 0; i < layoutCount; i++)
+                    br.StepIn(layoutHeaderOffset);
                     {
-                        int layoutOffset = br.ReadInt32();
-                        br.StepIn(layoutOffset);
+                        int layoutCount = br.ReadInt32();
+                        br.AssertInt32((int)br.Position + 0xC);
+                        br.AssertInt32(0);
+                        br.AssertInt32(0);
+                        Layouts = new List<BufferLayout>(layoutCount);
+                        for (int i = 0; i < layoutCount; i++)
                         {
-                            Layouts.Add(new BufferLayout(br));
+                            int layoutOffset = br.ReadInt32();
+                            br.StepIn(layoutOffset);
+                            {
+                                Layouts.Add(new BufferLayout(br));
+                            }
+                            br.StepOut();
                         }
-                        br.StepOut();
                     }
+                    br.StepOut();
                 }
-                br.StepOut();
+                else
+                {
+                    Layouts = new List<BufferLayout>(1);
+                    br.StepIn(layoutsOffset);
+                    {
+                        Layouts.Add(new BufferLayout(br));
+                    }
+                    br.StepOut();
+                }
             }
         }
 

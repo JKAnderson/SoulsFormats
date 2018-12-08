@@ -106,7 +106,6 @@ Essentially a BND3 split into separate header and data files.
 Extensions: `.*bhd` (header) and `.*bdt` (data)
 * DS1: Full Read and Write
 * DSR: Full Read and Write
-* DeS: Untested
 
 ### BXF4
 Essentially a BND4 split into separate header and data files.  
@@ -145,14 +144,19 @@ Extension: `.filtparam`
 * DS2: Partial Read and Write
 
 ### FLVER
-A 3D model file used throughout the series.  
+A 3D model file used since DS1.  
 Extension: `.flv` or `.flver`
 * DS1: Full Read and Write
 * DSR: Full Read and Write
 * DS2: Full Read and Write
 * DS3: Full Read and Write
-* DeS: No support
 * BB: Full Read and Write
+
+### FLVERD
+A 3D model file used before DS1.  
+Extension: `.flver`
+* DeS: Full Read, No Write
+* NB: Partial Read, No Write
 
 ### FMG
 A text bundle format used throughout the series.  
@@ -187,6 +191,11 @@ Extension: `.mtd`
 ### PARAM64
 A general configuration file used in DS3.  
 Extension: `.param`
+* DS3: Full Read and Write
+
+### PMDCL
+Defines static decals in maps in DS3.  
+Extension: `.pmdcl`
 * DS3: Full Read and Write
 
 ### TAE3
