@@ -207,20 +207,24 @@ namespace SoulsFormats
             public Vector3 Scale;
 
             /// <summary>
-            /// Controls when the part is drawn.
+            /// Unknown.
             /// </summary>
-            public uint DrawGroup1, DrawGroup2, DrawGroup3, DrawGroup4;
+            public uint OldDrawGroup1, OldDrawGroup2, OldDrawGroup3, OldDrawGroup4;
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public uint DispGroup1, DispGroup2, DispGroup3, DispGroup4;
+            public uint OldDispGroup1, OldDispGroup2, OldDispGroup3, OldDispGroup4;
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int UnkF01, UnkF02, UnkF03, UnkF04, UnkF05, UnkF06, UnkF07, UnkF08, UnkF09,
-                UnkF10, UnkF11, UnkF12, UnkF13, UnkF14, UnkF15, UnkF16, UnkF17, UnkF18;
+            public int UnkF64, UnkF68, UnkF8C, UnkF90, UnkF94, UnkF98, UnkF9C, UnkFA0, UnkFA4, UnkFA8;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public uint DrawGroup1, DrawGroup2, DrawGroup3, DrawGroup4, DrawGroup5, DrawGroup6, DrawGroup7, DrawGroup8;
 
             /// <summary>
             /// Used to identify the part in event scripts.
@@ -228,29 +232,29 @@ namespace SoulsFormats
             public int EventEntityID;
 
             /// <summary>
-            /// Controls which values in the gparam are applied to this part.
+            /// Unknown.
             /// </summary>
-            public sbyte LightID, FogID, ScatterID, LensFlareID;
+            public sbyte OldLightID, OldFogID, OldScatterID, OldLensFlareID;
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public sbyte LanternID, LodParamID, UnkB0E;
+            public sbyte OldLanternID, OldLodParamID, UnkB0E;
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public bool IsShadowDest;
+            public bool OldIsShadowDest;
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public bool IsShadowOnly, DrawByReflectCam, DrawOnlyReflectCam, UseDepthBiasFloat;
+            public bool OldIsShadowOnly, OldDrawByReflectCam, OldDrawOnlyReflectCam, OldUseDepthBiasFloat;
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public bool DisablePointLightEffect;
+            public bool OldDisablePointLightEffect;
 
             /// <summary>
             /// Unknown.
@@ -276,46 +280,46 @@ namespace SoulsFormats
                 Position = new Vector3(clone.Position.X, clone.Position.Y, clone.Position.Z);
                 Rotation = new Vector3(clone.Rotation.X, clone.Rotation.Y, clone.Rotation.Z);
                 Scale = new Vector3(clone.Scale.X, clone.Scale.Y, clone.Scale.Z);
+                OldDrawGroup1 = clone.OldDrawGroup1;
+                OldDrawGroup2 = clone.OldDrawGroup2;
+                OldDrawGroup3 = clone.OldDrawGroup3;
+                OldDrawGroup4 = clone.OldDrawGroup4;
+                OldDispGroup1 = clone.OldDispGroup1;
+                OldDispGroup2 = clone.OldDispGroup2;
+                OldDispGroup3 = clone.OldDispGroup3;
+                OldDispGroup4 = clone.OldDispGroup4;
+                UnkF64 = clone.UnkF64;
+                UnkF68 = clone.UnkF68;
                 DrawGroup1 = clone.DrawGroup1;
                 DrawGroup2 = clone.DrawGroup2;
                 DrawGroup3 = clone.DrawGroup3;
                 DrawGroup4 = clone.DrawGroup4;
-                DispGroup1 = clone.DispGroup1;
-                DispGroup2 = clone.DispGroup2;
-                DispGroup3 = clone.DispGroup3;
-                DispGroup4 = clone.DispGroup4;
-                UnkF01 = clone.UnkF01;
-                UnkF02 = clone.UnkF02;
-                UnkF03 = clone.UnkF03;
-                UnkF04 = clone.UnkF04;
-                UnkF05 = clone.UnkF05;
-                UnkF06 = clone.UnkF06;
-                UnkF07 = clone.UnkF07;
-                UnkF08 = clone.UnkF08;
-                UnkF09 = clone.UnkF09;
-                UnkF10 = clone.UnkF10;
-                UnkF11 = clone.UnkF11;
-                UnkF12 = clone.UnkF12;
-                UnkF13 = clone.UnkF13;
-                UnkF14 = clone.UnkF14;
-                UnkF15 = clone.UnkF15;
-                UnkF16 = clone.UnkF16;
-                UnkF17 = clone.UnkF17;
-                UnkF18 = clone.UnkF18;
+                DrawGroup5 = clone.DrawGroup5;
+                DrawGroup6 = clone.DrawGroup6;
+                DrawGroup7 = clone.DrawGroup7;
+                DrawGroup8 = clone.DrawGroup8;
+                UnkF8C = clone.UnkF8C;
+                UnkF90 = clone.UnkF90;
+                UnkF94 = clone.UnkF94;
+                UnkF98 = clone.UnkF98;
+                UnkF9C = clone.UnkF9C;
+                UnkFA0 = clone.UnkFA0;
+                UnkFA4 = clone.UnkFA4;
+                UnkFA8 = clone.UnkFA8;
                 EventEntityID = clone.EventEntityID;
-                LightID = clone.LightID;
-                FogID = clone.FogID;
-                ScatterID = clone.ScatterID;
-                LensFlareID = clone.LensFlareID;
-                LanternID = clone.LanternID;
-                LodParamID = clone.LodParamID;
+                OldLightID = clone.OldLightID;
+                OldFogID = clone.OldFogID;
+                OldScatterID = clone.OldScatterID;
+                OldLensFlareID = clone.OldLensFlareID;
+                OldLanternID = clone.OldLanternID;
+                OldLodParamID = clone.OldLodParamID;
                 UnkB0E = clone.UnkB0E;
-                IsShadowDest = clone.IsShadowDest;
-                IsShadowOnly = clone.IsShadowOnly;
-                DrawByReflectCam = clone.DrawByReflectCam;
-                DrawOnlyReflectCam = clone.DrawOnlyReflectCam;
-                UseDepthBiasFloat = clone.UseDepthBiasFloat;
-                DisablePointLightEffect = clone.DisablePointLightEffect;
+                OldIsShadowDest = clone.OldIsShadowDest;
+                OldIsShadowOnly = clone.OldIsShadowOnly;
+                OldDrawByReflectCam = clone.OldDrawByReflectCam;
+                OldDrawOnlyReflectCam = clone.OldDrawOnlyReflectCam;
+                OldUseDepthBiasFloat = clone.OldUseDepthBiasFloat;
+                OldDisablePointLightEffect = clone.OldDisablePointLightEffect;
                 UnkB15 = clone.UnkB15;
                 UnkB16 = clone.UnkB16;
                 UnkB17 = clone.UnkB17;
@@ -345,33 +349,33 @@ namespace SoulsFormats
                 Rotation = br.ReadVector3();
                 Scale = br.ReadVector3();
 
+                OldDrawGroup1 = br.ReadUInt32(); // -1
+                OldDrawGroup2 = br.ReadUInt32();
+                OldDrawGroup3 = br.ReadUInt32();
+                OldDrawGroup4 = br.ReadUInt32();
+                OldDispGroup1 = br.ReadUInt32();
+                OldDispGroup2 = br.ReadUInt32();
+                OldDispGroup3 = br.ReadUInt32();
+                OldDispGroup4 = br.ReadUInt32();
+
+                UnkF64 = br.ReadInt32();
+                UnkF68 = br.ReadInt32();
                 DrawGroup1 = br.ReadUInt32();
                 DrawGroup2 = br.ReadUInt32();
                 DrawGroup3 = br.ReadUInt32();
                 DrawGroup4 = br.ReadUInt32();
-                DispGroup1 = br.ReadUInt32();
-                DispGroup2 = br.ReadUInt32();
-                DispGroup3 = br.ReadUInt32();
-                DispGroup4 = br.ReadUInt32();
-
-                UnkF01 = br.ReadInt32();
-                UnkF02 = br.ReadInt32();
-                UnkF03 = br.ReadInt32();
-                UnkF04 = br.ReadInt32();
-                UnkF05 = br.ReadInt32();
-                UnkF06 = br.ReadInt32();
-                UnkF07 = br.ReadInt32();
-                UnkF08 = br.ReadInt32();
-                UnkF09 = br.ReadInt32();
-                UnkF10 = br.ReadInt32();
-                UnkF11 = br.ReadInt32();
-                UnkF12 = br.ReadInt32();
-                UnkF13 = br.ReadInt32();
-                UnkF14 = br.ReadInt32();
-                UnkF15 = br.ReadInt32();
-                UnkF16 = br.ReadInt32();
-                UnkF17 = br.ReadInt32();
-                UnkF18 = br.ReadInt32();
+                DrawGroup5 = br.ReadUInt32();
+                DrawGroup6 = br.ReadUInt32();
+                DrawGroup7 = br.ReadUInt32();
+                DrawGroup8 = br.ReadUInt32();
+                UnkF8C = br.ReadInt32();
+                UnkF90 = br.ReadInt32();
+                UnkF94 = br.ReadInt32();
+                UnkF98 = br.ReadInt32();
+                UnkF9C = br.ReadInt32();
+                UnkFA0 = br.ReadInt32();
+                UnkFA4 = br.ReadInt32();
+                UnkFA8 = br.ReadInt32();
                 br.AssertInt32(0);
 
                 long baseDataOffset = br.ReadInt64();
@@ -392,24 +396,24 @@ namespace SoulsFormats
                 br.StepIn(start + baseDataOffset);
                 EventEntityID = br.ReadInt32();
 
-                LightID = br.ReadSByte();
-                FogID = br.ReadSByte();
-                ScatterID = br.ReadSByte();
-                LensFlareID = br.ReadSByte();
+                OldLightID = br.ReadSByte();
+                OldFogID = br.ReadSByte();
+                OldScatterID = br.ReadSByte();
+                OldLensFlareID = br.ReadSByte();
 
                 br.AssertInt32(0);
 
-                LanternID = br.ReadSByte();
-                LodParamID = br.ReadSByte();
+                OldLanternID = br.ReadSByte();
+                OldLodParamID = br.ReadSByte();
                 UnkB0E = br.ReadSByte();
-                IsShadowDest = br.ReadBoolean();
+                OldIsShadowDest = br.ReadBoolean();
 
-                IsShadowOnly = br.ReadBoolean();
-                DrawByReflectCam = br.ReadBoolean();
-                DrawOnlyReflectCam = br.ReadBoolean();
-                UseDepthBiasFloat = br.ReadBoolean();
+                OldIsShadowOnly = br.ReadBoolean();
+                OldDrawByReflectCam = br.ReadBoolean();
+                OldDrawOnlyReflectCam = br.ReadBoolean();
+                OldUseDepthBiasFloat = br.ReadBoolean();
 
-                DisablePointLightEffect = br.ReadBoolean();
+                OldDisablePointLightEffect = br.ReadBoolean();
                 UnkB15 = br.ReadByte();
                 UnkB16 = br.ReadByte();
                 UnkB17 = br.ReadByte();
@@ -447,33 +451,33 @@ namespace SoulsFormats
                 bw.WriteVector3(Rotation);
                 bw.WriteVector3(Scale);
 
+                bw.WriteUInt32(OldDrawGroup1);
+                bw.WriteUInt32(OldDrawGroup2);
+                bw.WriteUInt32(OldDrawGroup3);
+                bw.WriteUInt32(OldDrawGroup4);
+                bw.WriteUInt32(OldDispGroup1);
+                bw.WriteUInt32(OldDispGroup2);
+                bw.WriteUInt32(OldDispGroup3);
+                bw.WriteUInt32(OldDispGroup4);
+
+                bw.WriteInt32(UnkF64);
+                bw.WriteInt32(UnkF68);
                 bw.WriteUInt32(DrawGroup1);
                 bw.WriteUInt32(DrawGroup2);
                 bw.WriteUInt32(DrawGroup3);
                 bw.WriteUInt32(DrawGroup4);
-                bw.WriteUInt32(DispGroup1);
-                bw.WriteUInt32(DispGroup2);
-                bw.WriteUInt32(DispGroup3);
-                bw.WriteUInt32(DispGroup4);
-
-                bw.WriteInt32(UnkF01);
-                bw.WriteInt32(UnkF02);
-                bw.WriteInt32(UnkF03);
-                bw.WriteInt32(UnkF04);
-                bw.WriteInt32(UnkF05);
-                bw.WriteInt32(UnkF06);
-                bw.WriteInt32(UnkF07);
-                bw.WriteInt32(UnkF08);
-                bw.WriteInt32(UnkF09);
-                bw.WriteInt32(UnkF10);
-                bw.WriteInt32(UnkF11);
-                bw.WriteInt32(UnkF12);
-                bw.WriteInt32(UnkF13);
-                bw.WriteInt32(UnkF14);
-                bw.WriteInt32(UnkF15);
-                bw.WriteInt32(UnkF16);
-                bw.WriteInt32(UnkF17);
-                bw.WriteInt32(UnkF18);
+                bw.WriteUInt32(DrawGroup5);
+                bw.WriteUInt32(DrawGroup6);
+                bw.WriteUInt32(DrawGroup7);
+                bw.WriteUInt32(DrawGroup8);
+                bw.WriteInt32(UnkF8C);
+                bw.WriteInt32(UnkF90);
+                bw.WriteInt32(UnkF94);
+                bw.WriteInt32(UnkF98);
+                bw.WriteInt32(UnkF9C);
+                bw.WriteInt32(UnkFA0);
+                bw.WriteInt32(UnkFA4);
+                bw.WriteInt32(UnkFA8);
                 bw.WriteInt32(0);
 
                 bw.ReserveInt64("BaseDataOffset");
@@ -495,24 +499,24 @@ namespace SoulsFormats
                 bw.FillInt64("BaseDataOffset", bw.Position - start);
                 bw.WriteInt32(EventEntityID);
 
-                bw.WriteSByte(LightID);
-                bw.WriteSByte(FogID);
-                bw.WriteSByte(ScatterID);
-                bw.WriteSByte(LensFlareID);
+                bw.WriteSByte(OldLightID);
+                bw.WriteSByte(OldFogID);
+                bw.WriteSByte(OldScatterID);
+                bw.WriteSByte(OldLensFlareID);
 
                 bw.WriteInt32(0);
 
-                bw.WriteSByte(LanternID);
-                bw.WriteSByte(LodParamID);
+                bw.WriteSByte(OldLanternID);
+                bw.WriteSByte(OldLodParamID);
                 bw.WriteSByte(UnkB0E);
-                bw.WriteBoolean(IsShadowDest);
+                bw.WriteBoolean(OldIsShadowDest);
 
-                bw.WriteBoolean(IsShadowOnly);
-                bw.WriteBoolean(DrawByReflectCam);
-                bw.WriteBoolean(DrawOnlyReflectCam);
-                bw.WriteBoolean(UseDepthBiasFloat);
+                bw.WriteBoolean(OldIsShadowOnly);
+                bw.WriteBoolean(OldDrawByReflectCam);
+                bw.WriteBoolean(OldDrawOnlyReflectCam);
+                bw.WriteBoolean(OldUseDepthBiasFloat);
 
-                bw.WriteBoolean(DisablePointLightEffect);
+                bw.WriteBoolean(OldDisablePointLightEffect);
                 bw.WriteByte(UnkB15);
                 bw.WriteByte(UnkB16);
                 bw.WriteByte(UnkB17);
@@ -570,9 +574,19 @@ namespace SoulsFormats
                 internal override PartsType Type => PartsType.MapPiece;
 
                 /// <summary>
+                /// Controls which value from LightSet in the gparam is used.
+                /// </summary>
+                public int LightParamID;
+
+                /// <summary>
+                /// Controls which value from FogParam in the gparam is used.
+                /// </summary>
+                public int FogParamID;
+
+                /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT01, UnkT02, UnkT03, UnkT04;
+                public int UnkT03, UnkT04;
 
                 internal MapPiece(BinaryReaderEx br) : base(br) { }
 
@@ -580,8 +594,8 @@ namespace SoulsFormats
                 {
                     br.AssertInt32(0);
                     br.AssertInt32(0);
-                    UnkT01 = br.ReadInt32();
-                    UnkT02 = br.ReadInt32();
+                    LightParamID = br.ReadInt32();
+                    FogParamID = br.ReadInt32();
                     UnkT03 = br.ReadInt32();
                     UnkT04 = br.ReadInt32();
                     br.AssertInt32(0);
@@ -594,8 +608,8 @@ namespace SoulsFormats
                 {
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
-                    bw.WriteInt32(UnkT01);
-                    bw.WriteInt32(UnkT02);
+                    bw.WriteInt32(LightParamID);
+                    bw.WriteInt32(FogParamID);
                     bw.WriteInt32(UnkT03);
                     bw.WriteInt32(UnkT04);
                     bw.WriteInt32(0);
