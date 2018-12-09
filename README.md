@@ -161,11 +161,11 @@ Extension: `.flver`
 ### FMG
 A text bundle format used throughout the series.  
 Extension: `.fmg`
-* DS1: No support
-* DS2: Untested
-* DS3: Full Read and Write
-* DeS: No support
-* BB: Untested
+* DS1: Full Read, Write, and Create
+* DS2: Full Read, Write, and Create
+* DS3: Full Read, Write, and Create
+* DeS: Full Read, Write, and Create
+* BB: Full Read, Write, and Create
 
 ### GPARAM
 A graphics configuration format used in DS3 and BB.  
@@ -216,10 +216,11 @@ Extension: `.tpf`
 
 ## Special Thanks
 To everyone below, for either creating tools that I learned from, or helping decipher these formats one way or another. Please yell at me on Discord if I missed you.
+* albeartron
 * Atvaark
 * B3LYP
 * HotPocketRemix
-* Ian
+* katalash
 * Lance
 * Meowmaritus
 * Nyxojaele

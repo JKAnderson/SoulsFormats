@@ -14,7 +14,7 @@ namespace SoulsFormats
         public List<Entry> Entries;
 
         /// <summary>
-        /// Indicates file format; 0 - DeS, 1 - DS1/DS2, 2 - DS3.
+        /// Indicates file format; 0 - DeS, 1 - DS1/DS2, 2 - DS3/BB.
         /// </summary>
         public byte Version;
 
@@ -27,6 +27,28 @@ namespace SoulsFormats
         /// Unknown; 0xFF in version 0, 0x00 in version 1/2.
         /// </summary>
         public byte Unk09;
+
+        /// <summary>
+        /// Creates an empty FMG configured for DS1/DS2.
+        /// </summary>
+        public FMG()
+        {
+            Entries = new List<Entry>();
+            Version = 1;
+            BigEndian = false;
+            Unk09 = 0;
+        }
+
+        /// <summary>
+        /// Creates an empty FMG configured for the specified version.
+        /// </summary>
+        public FMG(byte version)
+        {
+            Entries = new List<Entry>();
+            Version = version;
+            BigEndian = Version == 0;
+            Unk09 = (byte)(Version == 0 ? 0xFF : 0);
+        }
 
         internal override bool Is(BinaryReaderEx br)
         {
