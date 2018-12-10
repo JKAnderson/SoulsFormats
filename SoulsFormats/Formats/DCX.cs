@@ -11,6 +11,9 @@ namespace SoulsFormats
     {
         internal static bool Is(BinaryReaderEx br)
         {
+            if (br.Stream.Length < 4)
+                return false;
+
             string magic = br.GetASCII(0, 4);
             return magic == "DCX\0" || magic == "DCP\0";
         }
