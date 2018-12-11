@@ -7,7 +7,7 @@ namespace SoulsFormats
     /// <summary>
     /// A general-purpose headered file container used in DS2, DS3, and BB. Extensions: .*bhd (header) and .*bdt (data)
     /// </summary>
-    public class BXF4
+    public class BXF4 : IBinder
     {
         #region Public Is
         /// <summary>
@@ -170,6 +170,8 @@ namespace SoulsFormats
         /// </summary>
         public List<File> Files;
 
+        IReadOnlyList<IBinderFile> IBinder.Files => Files;
+
         /// <summary>
         /// Information about this BXF4's header file.
         /// </summary>
@@ -240,12 +242,12 @@ namespace SoulsFormats
         /// <summary>
         /// A generic file in a BXF4 container.
         /// </summary>
-        public class File
+        public class File : IBinderFile
         {
             /// <summary>
             /// The name of the file, typically a virtual path.
             /// </summary>
-            public string Name;
+            public string Name { get; set; }
 
             /// <summary>
             /// Flags indicating compression (0x80) and possibly some other things.
@@ -255,12 +257,12 @@ namespace SoulsFormats
             /// <summary>
             /// The ID number of the file.
             /// </summary>
-            public int? ID;
+            public int ID { get; set; }
 
             /// <summary>
             /// The raw data of the file.
             /// </summary>
-            public byte[] Bytes;
+            public byte[] Bytes { get; set; }
 
             /// <summary>
             /// Creates a new File with the specified information.
@@ -523,7 +525,7 @@ namespace SoulsFormats
                 public byte Flags;
                 public ulong Offset;
                 public long CompressedSize, UncompressedSize;
-                public int? ID;
+                public int ID;
 
                 public FileHeader(BinaryReaderEx br, bool unicode, byte format)
                 {
@@ -545,7 +547,7 @@ namespace SoulsFormats
                     if (format == 0x2E || format == 0x3E || format == 0x74)
                         ID = br.ReadInt32();
                     else
-                        ID = null;
+                        ID = -1;
 
                     int nameOffset = br.ReadInt32();
                     if (unicode)
@@ -572,7 +574,7 @@ namespace SoulsFormats
                         bw.ReserveUInt32($"FileOffset{index}");
 
                     if (format == 0x2E || format == 0x3E || format == 0x74)
-                        bw.WriteInt32(file.ID ?? 0);
+                        bw.WriteInt32(file.ID);
 
                     bw.ReserveInt32($"FileName{index}");
                 }

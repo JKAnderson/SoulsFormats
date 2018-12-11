@@ -6,12 +6,14 @@ namespace SoulsFormats
     /// <summary>
     /// A general-purpose file container used in DS1, DSR, DeS, and NB. Extension: .*bnd
     /// </summary>
-    public class BND3 : SoulsFile<BND3>
+    public class BND3 : SoulsFile<BND3>, IBinder
     {
         /// <summary>
         /// The files contained within this BND3.
         /// </summary>
         public List<File> Files;
+
+        IReadOnlyList<IBinderFile> IBinder.Files => Files;
 
         /// <summary>
         /// A timestamp of unknown purpose.
@@ -135,17 +137,17 @@ namespace SoulsFormats
         /// <summary>
         /// A generic file in a BND3 container.
         /// </summary>
-        public class File
+        public class File : IBinderFile
         {
             /// <summary>
             /// The name of the file, typically a virtual path.
             /// </summary>
-            public string Name;
+            public string Name { get; set; }
 
             /// <summary>
             /// The ID number of the file.
             /// </summary>
-            public int ID;
+            public int ID { get; set; }
 
             /// <summary>
             /// Flags indicating whether to compress the file (0x80) and other things we don't understand.
@@ -155,7 +157,7 @@ namespace SoulsFormats
             /// <summary>
             /// The raw data of the file.
             /// </summary>
-            public byte[] Bytes;
+            public byte[] Bytes { get; set; }
 
             /// <summary>
             /// Creates a new File with the given information.
