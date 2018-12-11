@@ -177,8 +177,7 @@ namespace SoulsFormats
                 Header = null;
 
                 DDS dds = new DDS(bytes);
-                // DDSCAPS2_CUBEMAP
-                Cubemap = (dds.dwCaps2 & 0x200) != 0;
+                Cubemap = dds.dwCaps2.HasFlag(DDS.DDSCAPS2.CUBEMAP);
                 Mipmaps = (byte)dds.dwMipMapCount;
             }
 
@@ -241,8 +240,7 @@ namespace SoulsFormats
                 if (platform == TPFPlatform.PC)
                 {
                     DDS dds = new DDS(Bytes);
-                    // DDSCAPS2_CUBEMAP
-                    Cubemap = (dds.dwCaps2 & 0x200) != 0;
+                    Cubemap = dds.dwCaps2.HasFlag(DDS.DDSCAPS2.CUBEMAP);
                     Mipmaps = (byte)dds.dwMipMapCount;
                 }
 
