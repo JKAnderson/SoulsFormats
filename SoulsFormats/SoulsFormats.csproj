@@ -113,6 +113,9 @@
     <Compile Include="Formats\MSB3\MSB3.PartsSection.cs" />
     <Compile Include="Formats\MSB3\MSB3.EventSection.cs" />
     <Compile Include="Formats\MSB3\MSB3.ModelSection.cs" />
+    <Compile Include="Formats\MSBN\MSBN.cs" />
+    <Compile Include="Formats\MSBN\MSBN.ModelSection.cs" />
+    <Compile Include="Formats\MSBN\MSBN.PartsSection.cs" />
     <Compile Include="Formats\MTD.cs" />
     <Compile Include="Formats\PARAM64.cs" />
     <Compile Include="Formats\PARAM64.Layout.cs" />

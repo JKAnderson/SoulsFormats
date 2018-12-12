@@ -469,7 +469,7 @@ namespace SoulsFormats
             public byte MaterialIndex;
 
             public bool Unk02;
-            
+
             public byte Unk03;
 
             public short[] BoneIndices;
@@ -660,6 +660,9 @@ namespace SoulsFormats
                 UnknownVector4 = null;
 
                 float uvFactor = 1024;
+                // NB hack
+                if (!br.BigEndian)
+                    uvFactor = 2048;
 
                 foreach (BufferLayout.Member member in layout)
                 {
