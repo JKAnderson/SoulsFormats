@@ -586,7 +586,15 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT03, UnkT04;
+                public int UnkT10, UnkT14;
+
+                public MapPiece(MapPiece clone) : base(clone)
+                {
+                    LightParamID = clone.LightParamID;
+                    FogParamID = clone.FogParamID;
+                    UnkT10 = clone.UnkT10;
+                    UnkT14 = clone.UnkT14;
+                }
 
                 internal MapPiece(BinaryReaderEx br) : base(br) { }
 
@@ -596,8 +604,8 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                     LightParamID = br.ReadInt32();
                     FogParamID = br.ReadInt32();
-                    UnkT03 = br.ReadInt32();
-                    UnkT04 = br.ReadInt32();
+                    UnkT10 = br.ReadInt32();
+                    UnkT14 = br.ReadInt32();
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -610,8 +618,8 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                     bw.WriteInt32(LightParamID);
                     bw.WriteInt32(FogParamID);
-                    bw.WriteInt32(UnkT03);
-                    bw.WriteInt32(UnkT04);
+                    bw.WriteInt32(UnkT10);
+                    bw.WriteInt32(UnkT14);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);

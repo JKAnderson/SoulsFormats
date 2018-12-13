@@ -49,7 +49,7 @@ namespace SoulsFormats
             // dwSize
             br.AssertInt32(124);
 
-            dwFlags = br.ReadEnum32<DDSD>();
+            dwFlags = (DDSD)br.ReadUInt32();
             dwHeight = br.ReadInt32();
             dwWidth = br.ReadInt32();
             dwPitchOrLinearSize = br.ReadInt32();
@@ -60,8 +60,8 @@ namespace SoulsFormats
             br.Skip(4 * 11);
 
             ddspf = new PIXELFORMAT(br);
-            dwCaps = br.ReadEnum32<DDSCAPS>();
-            dwCaps2 = br.ReadEnum32<DDSCAPS2>();
+            dwCaps = (DDSCAPS)br.ReadUInt32();
+            dwCaps2 = (DDSCAPS2)br.ReadUInt32();
 
             // dwCaps3, dwCaps4, dwReserved2
             br.Skip(4 * 3);

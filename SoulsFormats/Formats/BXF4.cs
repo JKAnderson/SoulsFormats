@@ -423,7 +423,7 @@ namespace SoulsFormats
                 bw.WriteInt32(0x10000);
                 bw.WriteInt32(files.Count);
                 bw.WriteInt64(0x40);
-                bw.WriteASCII(Timestamp);
+                bw.WriteASCII(Timestamp.PadRight(8, '\0'));
                 if (Format == 0x0C || Format == 0x30)
                     bw.WriteInt64(0x18);
                 else if (Format == 0x2E || Format == 0x74)

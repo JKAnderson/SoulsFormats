@@ -1114,6 +1114,17 @@ namespace SoulsFormats
             /// </summary>
             public uint[] Vertices;
 
+            public FaceSet(FSFlags flags, bool triangleStrip, bool cullBackfaces, byte unk06, byte unk07, int indexSize, uint[] vertices)
+            {
+                Flags = flags;
+                TriangleStrip = triangleStrip;
+                CullBackfaces = cullBackfaces;
+                Unk06 = unk06;
+                Unk07 = unk07;
+                IndexSize = indexSize;
+                Vertices = vertices;
+            }
+
             internal FaceSet(BinaryReaderEx br, int dataOffset)
             {
                 Flags = (FSFlags)br.ReadUInt32();
@@ -1225,6 +1236,13 @@ namespace SoulsFormats
 
             internal int BufferOffset;
 
+            public VertexBuffer(int bufferIndex, int layoutIndex, int vertexSize)
+            {
+                BufferIndex = bufferIndex;
+                LayoutIndex = layoutIndex;
+                VertexSize = vertexSize;
+            }
+
             internal VertexBuffer(BinaryReaderEx br)
             {
                 BufferIndex = br.ReadInt32();
@@ -1291,6 +1309,8 @@ namespace SoulsFormats
             /// The total size of all ValueTypes in this layout.
             /// </summary>
             public int Size => this.Sum(member => member.Size);
+
+            public BufferLayout() : base() { }
 
             internal BufferLayout(BinaryReaderEx br) : base()
             {
@@ -1384,6 +1404,15 @@ namespace SoulsFormats
                                 throw new NotImplementedException();
                         }
                     }
+                }
+
+                public Member(int unk00, int structOffset, MemberType type, MemberSemantic semantic, int index)
+                {
+                    Unk00 = unk00;
+                    StructOffset = structOffset;
+                    Type = type;
+                    Semantic = semantic;
+                    Index = index;
                 }
 
                 internal Member(BinaryReaderEx br)
@@ -1570,6 +1599,19 @@ namespace SoulsFormats
             /// Unknown.
             /// </summary>
             public int Unk14, Unk18, Unk1C;
+
+            public Texture(string type, string path, float scaleX, float scaleY, byte unk10, bool unk11, int unk14, int unk18, int unk1C)
+            {
+                Type = type;
+                Path = path;
+                ScaleX = scaleX;
+                ScaleY = scaleY;
+                Unk10 = unk10;
+                Unk11 = unk11;
+                Unk14 = unk14;
+                Unk18 = unk18;
+                Unk1C = unk1C;
+            }
 
             internal Texture(BinaryReaderEx br)
             {
