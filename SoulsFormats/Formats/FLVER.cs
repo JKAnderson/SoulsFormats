@@ -591,6 +591,18 @@ namespace SoulsFormats
 
             private int textureIndex, textureCount;
 
+            /// <summary>
+            /// Creates a new Material with the given values and an empty texture list.
+            /// </summary>
+            public Material(string name, string mtd, int flags, byte[] gxBytes = null)
+            {
+                Name = name;
+                MTD = mtd;
+                Flags = flags;
+                Textures = new List<Texture>();
+                GXBytes = gxBytes;
+            }
+
             internal Material(BinaryReaderEx br)
             {
                 int nameOffset = br.ReadInt32();
@@ -1114,6 +1126,9 @@ namespace SoulsFormats
             /// </summary>
             public uint[] Vertices;
 
+            /// <summary>
+            /// Creates a new FaceSet with the specified values.
+            /// </summary>
             public FaceSet(FSFlags flags, bool triangleStrip, bool cullBackfaces, byte unk06, byte unk07, int indexSize, uint[] vertices)
             {
                 Flags = flags;
@@ -1236,11 +1251,24 @@ namespace SoulsFormats
 
             internal int BufferOffset;
 
+            /// <summary>
+            /// Creates a new VertexBuffer with the specified values.
+            /// </summary>
             public VertexBuffer(int bufferIndex, int layoutIndex, int vertexSize)
             {
                 BufferIndex = bufferIndex;
                 LayoutIndex = layoutIndex;
                 VertexSize = vertexSize;
+            }
+
+            /// <summary>
+            /// Creates a new VertexBuffer with the specified layout index, buffer index 0, and vertex size -1.
+            /// </summary>
+            public VertexBuffer(int layoutIndex)
+            {
+                BufferIndex = 0;
+                LayoutIndex = layoutIndex;
+                VertexSize = -1;
             }
 
             internal VertexBuffer(BinaryReaderEx br)
@@ -1310,6 +1338,9 @@ namespace SoulsFormats
             /// </summary>
             public int Size => this.Sum(member => member.Size);
 
+            /// <summary>
+            /// Creates a new empty BufferLayout.
+            /// </summary>
             public BufferLayout() : base() { }
 
             internal BufferLayout(BinaryReaderEx br) : base()
@@ -1406,6 +1437,9 @@ namespace SoulsFormats
                     }
                 }
 
+                /// <summary>
+                /// Creates a new Member with the specified values.
+                /// </summary>
                 public Member(int unk00, int structOffset, MemberType type, MemberSemantic semantic, int index)
                 {
                     Unk00 = unk00;
@@ -1600,6 +1634,9 @@ namespace SoulsFormats
             /// </summary>
             public int Unk14, Unk18, Unk1C;
 
+            /// <summary>
+            /// Creates a new Texture with the specified values.
+            /// </summary>
             public Texture(string type, string path, float scaleX, float scaleY, byte unk10, bool unk11, int unk14, int unk18, int unk1C)
             {
                 Type = type;

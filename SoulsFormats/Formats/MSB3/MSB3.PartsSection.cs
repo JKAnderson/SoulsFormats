@@ -588,6 +588,9 @@ namespace SoulsFormats
                 /// </summary>
                 public int UnkT10, UnkT14;
 
+                /// <summary>
+                /// Creates a new MapPiece with values copied from another.
+                /// </summary>
                 public MapPiece(MapPiece clone) : base(clone)
                 {
                     LightParamID = clone.LightParamID;
