@@ -63,7 +63,7 @@ namespace SoulsFormats
             /// </summary>
             public override List<Model> GetEntries()
             {
-                return Util.ConcatAll<Model>(
+                return SFUtil.ConcatAll<Model>(
                     MapPieces, Objects, Enemies, Items, Players, Collisions, Others);
             }
 

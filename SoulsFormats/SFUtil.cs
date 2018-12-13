@@ -12,7 +12,7 @@ namespace SoulsFormats
     /// <summary>
     /// Miscellaneous utility functions for SoulsFormats, mostly for internal use.
     /// </summary>
-    public static class Util
+    public static class SFUtil
     {
         /// <summary>
         /// Returns the extension of the specified file path, removing .dcx if present.
@@ -79,7 +79,7 @@ namespace SoulsFormats
         /// <summary>
         /// Converts a BND/BXF timestamp string to a DateTime object.
         /// </summary>
-        public static DateTime ParseBNDTimestamp(string timestamp)
+        public static DateTime BinderTimestampToDate(string timestamp)
         {
             Match match = timestampRx.Match(timestamp);
             if (!match.Success)
@@ -97,7 +97,7 @@ namespace SoulsFormats
         /// <summary>
         /// Converts a DateTime object to a BND/BXF timestamp string.
         /// </summary>
-        public static string UnparseBNDTimestamp(DateTime dateTime)
+        public static string DateToBinderTimestamp(DateTime dateTime)
         {
             int year = dateTime.Year - 2000;
             if (year < 0 || year > 99)

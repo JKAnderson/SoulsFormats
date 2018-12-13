@@ -28,7 +28,7 @@ namespace SoulsFormats
 
             BinaryReaderEx br = new BinaryReaderEx(false, bytes);
             var dummy = new TFormat();
-            return dummy.Is(Util.GetDecompressedBR(br, out _));
+            return dummy.Is(SFUtil.GetDecompressedBR(br, out _));
         }
 
         /// <summary>
@@ -43,7 +43,7 @@ namespace SoulsFormats
 
                 BinaryReaderEx br = new BinaryReaderEx(false, stream);
                 var dummy = new TFormat();
-                return dummy.Is(Util.GetDecompressedBR(br, out _));
+                return dummy.Is(SFUtil.GetDecompressedBR(br, out _));
             }
         }
 
@@ -59,7 +59,7 @@ namespace SoulsFormats
         {
             BinaryReaderEx br = new BinaryReaderEx(false, bytes);
             TFormat file = new TFormat();
-            br = Util.GetDecompressedBR(br, out file.Compression);
+            br = SFUtil.GetDecompressedBR(br, out file.Compression);
             file.Read(br);
             return file;
         }
@@ -73,7 +73,7 @@ namespace SoulsFormats
             {
                 BinaryReaderEx br = new BinaryReaderEx(false, stream);
                 TFormat file = new TFormat();
-                br = Util.GetDecompressedBR(br, out file.Compression);
+                br = SFUtil.GetDecompressedBR(br, out file.Compression);
                 file.Read(br);
                 return file;
             }

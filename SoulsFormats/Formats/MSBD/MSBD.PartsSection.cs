@@ -88,7 +88,7 @@ namespace SoulsFormats
             /// </summary>
             public override List<Part> GetEntries()
             {
-                return Util.ConcatAll<Part>(
+                return SFUtil.ConcatAll<Part>(
                     MapPieces, Objects, Enemies, Items, Players, Collisions, Protobosses, Navmeshes, DummyObjects, DummyEnemies, ConnectCollisions);
             }
 

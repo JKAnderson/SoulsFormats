@@ -70,7 +70,7 @@ namespace SoulsFormats
             /// </summary>
             public override List<Event> GetEntries()
             {
-                return Util.ConcatAll<Event>(
+                return SFUtil.ConcatAll<Event>(
                     Treasures, Generators, ObjActs, MapOffsets, Invasions, WalkRoutes, GroupTours, Others);
             }
 

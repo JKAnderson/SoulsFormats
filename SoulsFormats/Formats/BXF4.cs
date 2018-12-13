@@ -16,7 +16,7 @@ namespace SoulsFormats
         public static bool IsBHD(byte[] bytes)
         {
             BinaryReaderEx br = new BinaryReaderEx(false, bytes);
-            return IsBHD(Util.GetDecompressedBR(br, out _));
+            return IsBHD(SFUtil.GetDecompressedBR(br, out _));
         }
 
         /// <summary>
@@ -27,7 +27,7 @@ namespace SoulsFormats
             using (FileStream fs = System.IO.File.OpenRead(path))
             {
                 BinaryReaderEx br = new BinaryReaderEx(false, fs);
-                return IsBHD(Util.GetDecompressedBR(br, out _));
+                return IsBHD(SFUtil.GetDecompressedBR(br, out _));
             }
         }
 
@@ -37,7 +37,7 @@ namespace SoulsFormats
         public static bool IsBDT(byte[] bytes)
         {
             BinaryReaderEx br = new BinaryReaderEx(false, bytes);
-            return IsBDT(Util.GetDecompressedBR(br, out _));
+            return IsBDT(SFUtil.GetDecompressedBR(br, out _));
         }
 
         /// <summary>
@@ -48,7 +48,7 @@ namespace SoulsFormats
             using (FileStream fs = System.IO.File.OpenRead(path))
             {
                 BinaryReaderEx br = new BinaryReaderEx(false, fs);
-                return IsBDT(Util.GetDecompressedBR(br, out _));
+                return IsBDT(SFUtil.GetDecompressedBR(br, out _));
             }
         }
         #endregion
@@ -299,20 +299,10 @@ namespace SoulsFormats
         /// </summary>
         public class BHF4
         {
-            private string timestamp;
             /// <summary>
-            /// A timestamp of unknown purpose.
+            /// A timestamp or version number, 8 characters maximum.
             /// </summary>
-            public string Timestamp
-            {
-                get { return timestamp; }
-                set
-                {
-                    if (value.Length > 8)
-                        throw new ArgumentException("Timestamp may not be longer than 8 characters.");
-                    timestamp = value;
-                }
-            }
+            public string Timestamp;
 
             /// <summary>
             /// Indicates the format of the BXF4.
@@ -343,7 +333,7 @@ namespace SoulsFormats
 
             internal BHF4()
             {
-                Timestamp = Util.UnparseBNDTimestamp(DateTime.Now);
+                Timestamp = SFUtil.DateToBinderTimestamp(DateTime.Now);
                 Flag1 = false;
                 Flag2 = false;
                 Unicode = true;
@@ -364,7 +354,7 @@ namespace SoulsFormats
                 int fileCount = br.ReadInt32();
                 // File headers start
                 br.AssertInt64(0x40);
-                Timestamp = br.ReadASCII(8).TrimEnd('\0');
+                Timestamp = br.ReadFixStr(8);
                 // File header size
                 long fileHeaderSize = br.AssertInt64(0x18, 0x24, 0x28);
                 // Would be data start in BND4
@@ -423,7 +413,7 @@ namespace SoulsFormats
                 bw.WriteInt32(0x10000);
                 bw.WriteInt32(files.Count);
                 bw.WriteInt64(0x40);
-                bw.WriteASCII(Timestamp.PadRight(8, '\0'));
+                bw.WriteFixStr(Timestamp, 8);
                 if (Format == 0x0C || Format == 0x30)
                     bw.WriteInt64(0x18);
                 else if (Format == 0x2E || Format == 0x74)
@@ -463,7 +453,7 @@ namespace SoulsFormats
                     uint groupCount = 0;
                     for (uint p = (uint)files.Count / 7; p <= 100000; p++)
                     {
-                        if (Util.IsPrime(p))
+                        if (SFUtil.IsPrime(p))
                         {
                             groupCount = p;
                             break;
@@ -594,7 +584,7 @@ namespace SoulsFormats
                 public PathHash(int index, string path)
                 {
                     Index = index;
-                    Hash = Util.FromPathHash(path);
+                    Hash = SFUtil.FromPathHash(path);
                 }
 
                 public void Write(BinaryWriterEx bw)
@@ -633,20 +623,10 @@ namespace SoulsFormats
         /// </summary>
         public class BDF4
         {
-            private string timestamp;
             /// <summary>
-            /// A timestamp of unknown purpose.
+            /// A timestamp or version number, 8 characters maximum.
             /// </summary>
-            public string Timestamp
-            {
-                get { return timestamp; }
-                set
-                {
-                    if (value.Length > 8)
-                        throw new ArgumentException("Timestamp may not be longer than 8 characters.");
-                    timestamp = value;
-                }
-            }
+            public string Timestamp;
 
             /// <summary>
             /// Unknown.
@@ -665,7 +645,7 @@ namespace SoulsFormats
 
             internal BDF4()
             {
-                Timestamp = Util.UnparseBNDTimestamp(DateTime.Now);
+                Timestamp = SFUtil.DateToBinderTimestamp(DateTime.Now);
                 Flag1 = false;
                 Flag2 = false;
                 BigEndian = false;
@@ -685,7 +665,7 @@ namespace SoulsFormats
                 br.AssertInt32(0);
                 // I thought this was data start, but it's 0x40 in ds2 network test gamedata.bdt, so I don't know
                 Unk1 = br.AssertInt64(0x30, 0x40);
-                Timestamp = br.ReadASCII(8).TrimEnd('\0');
+                Timestamp = br.ReadFixStr(8);
                 br.AssertInt64(0);
                 br.AssertInt64(0);
             }
@@ -701,7 +681,7 @@ namespace SoulsFormats
                 bw.WriteInt32(0x10000);
                 bw.WriteInt32(0);
                 bw.WriteInt64(Unk1);
-                bw.WriteASCII(Timestamp.PadRight(8, '\0'));
+                bw.WriteFixStr(Timestamp, 8);
                 bw.WriteInt64(0);
                 bw.WriteInt64(0);
             }

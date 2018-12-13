@@ -54,7 +54,7 @@ namespace SoulsFormats.EnchantedArms
 
             Name = br.GetShiftJIS(nameOffset);
             br.Position = dataOffset;
-            Data = Util.ReadZlib(br, compressedSize);
+            Data = SFUtil.ReadZlib(br, compressedSize);
         }
 
         internal override void Write(BinaryWriterEx bw)

@@ -130,7 +130,7 @@ namespace SoulsFormats
             /// </summary>
             public override List<Region> GetEntries()
             {
-                return Util.ConcatAll<Region>(
+                return SFUtil.ConcatAll<Region>(
                     General, Unk00s, InvasionPoints, EnvironmentMapPoints, Sounds, SFX, WindSFX, SpawnPoints, Messages,
                     WalkRoutes, Unk12s, WarpPoints, ActivationAreas, Events, EnvironmentMapEffectBoxes, WindAreas, MufflingBoxes, MufflingPortals);
             }

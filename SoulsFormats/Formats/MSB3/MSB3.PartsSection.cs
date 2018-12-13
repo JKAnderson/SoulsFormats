@@ -70,7 +70,7 @@ namespace SoulsFormats
             /// </summary>
             public override List<Part> GetEntries()
             {
-                return Util.ConcatAll<Part>(
+                return SFUtil.ConcatAll<Part>(
                     MapPieces, Objects, Enemies, Players, Collisions, DummyObjects, DummyEnemies, ConnectCollisions);
             }
 

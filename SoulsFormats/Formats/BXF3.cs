@@ -16,7 +16,7 @@ namespace SoulsFormats
         public static bool IsBHD(byte[] bytes)
         {
             BinaryReaderEx br = new BinaryReaderEx(false, bytes);
-            return IsBHD(Util.GetDecompressedBR(br, out _));
+            return IsBHD(SFUtil.GetDecompressedBR(br, out _));
         }
 
         /// <summary>
@@ -27,7 +27,7 @@ namespace SoulsFormats
             using (FileStream fs = System.IO.File.OpenRead(path))
             {
                 BinaryReaderEx br = new BinaryReaderEx(false, fs);
-                return IsBHD(Util.GetDecompressedBR(br, out _));
+                return IsBHD(SFUtil.GetDecompressedBR(br, out _));
             }
         }
 
@@ -37,7 +37,7 @@ namespace SoulsFormats
         public static bool IsBDT(byte[] bytes)
         {
             BinaryReaderEx br = new BinaryReaderEx(false, bytes);
-            return IsBDT(Util.GetDecompressedBR(br, out _));
+            return IsBDT(SFUtil.GetDecompressedBR(br, out _));
         }
 
         /// <summary>
@@ -48,7 +48,7 @@ namespace SoulsFormats
             using (FileStream fs = System.IO.File.OpenRead(path))
             {
                 BinaryReaderEx br = new BinaryReaderEx(false, fs);
-                return IsBDT(Util.GetDecompressedBR(br, out _));
+                return IsBDT(SFUtil.GetDecompressedBR(br, out _));
             }
         }
         #endregion
@@ -172,35 +172,15 @@ namespace SoulsFormats
 
         IReadOnlyList<IBinderFile> IBinder.Files => Files;
 
-        private string bhdTimestamp;
         /// <summary>
-        /// A timestamp of unknown purpose.
+        ///A timestamp or version number, 8 characters maximum.
         /// </summary>
-        public string BHDTimestamp
-        {
-            get { return bhdTimestamp; }
-            set
-            {
-                if (value.Length > 8)
-                    throw new ArgumentException("Timestamp may not be longer than 8 characters.");
-                bhdTimestamp = value;
-            }
-        }
+        public string BHDTimestamp;
 
-        private string bdtTimestamp;
         /// <summary>
-        /// A timestamp of unknown purpose.
+        /// A timestamp or version number, 8 characters maximum.
         /// </summary>
-        public string BDTTimestamp
-        {
-            get { return bdtTimestamp; }
-            set
-            {
-                if (value.Length > 8)
-                    throw new ArgumentException("Timestamp may not be longer than 8 characters.");
-                bdtTimestamp = value;
-            }
-        }
+        public string BDTTimestamp;
 
         /// <summary>
         /// Indicates the format of this BXF3.
@@ -213,8 +193,8 @@ namespace SoulsFormats
         public BXF3()
         {
             Files = new List<File>();
-            BHDTimestamp = Util.UnparseBNDTimestamp(DateTime.Now);
-            BDTTimestamp = Util.UnparseBNDTimestamp(DateTime.Now);
+            BHDTimestamp = SFUtil.DateToBinderTimestamp(DateTime.Now);
+            BDTTimestamp = SFUtil.DateToBinderTimestamp(DateTime.Now);
             Format = 0x74;
         }
 
@@ -237,7 +217,7 @@ namespace SoulsFormats
             Format = bhd.Format;
 
             bdtReader.AssertASCII("BDF3");
-            BDTTimestamp = bdtReader.ReadASCII(8).TrimEnd('\0');
+            BDTTimestamp = bdtReader.ReadFixStr(8);
             bdtReader.AssertInt32(0);
 
             Files = new List<File>(bhd.FileHeaders.Count);
@@ -253,7 +233,7 @@ namespace SoulsFormats
         private void Write(BinaryWriterEx bhdWriter, BinaryWriterEx bdtWriter)
         {
             bhdWriter.WriteASCII("BHF3");
-            bhdWriter.WriteASCII(BHDTimestamp.PadRight(8, '\0'));
+            bhdWriter.WriteFixStr(BHDTimestamp, 8);
             bhdWriter.WriteByte(Format);
             bhdWriter.WriteByte(0);
             bhdWriter.WriteByte(0);
@@ -266,7 +246,7 @@ namespace SoulsFormats
             bhdWriter.WriteInt32(0);
 
             bdtWriter.WriteASCII("BDF3");
-            bdtWriter.WriteASCII(BDTTimestamp.PadRight(8, '\0'));
+            bdtWriter.WriteFixStr(BDTTimestamp, 8);
             bdtWriter.WriteInt32(0);
 
             for (int i = 0; i < Files.Count; i++)
@@ -306,7 +286,7 @@ namespace SoulsFormats
             public BHD3(BinaryReaderEx br)
             {
                 br.AssertASCII("BHF3");
-                Timestamp = br.ReadASCII(8).TrimEnd('\0');
+                Timestamp = br.ReadFixStr(8);
                 Format = br.AssertByte(0x54, 0x74, 0xE0);
                 br.AssertByte(0);
                 br.AssertByte(0);

@@ -16,20 +16,9 @@ namespace SoulsFormats
         IReadOnlyList<IBinderFile> IBinder.Files => Files;
 
         /// <summary>
-        /// A timestamp of unknown purpose.
+        /// A timestamp or version number, 8 characters maximum.
         /// </summary>
-        public string Timestamp
-        {
-            get { return timestamp; }
-            set
-            {
-                if (value.Length > 8)
-                    throw new ArgumentException("Timestamp may not be longer than 8 characters.");
-                timestamp = value;
-            }
-        }
-
-        private string timestamp;
+        public string Timestamp;
 
         /// <summary>
         /// Indicates the format of this BND4.
@@ -67,7 +56,7 @@ namespace SoulsFormats
         public BND4()
         {
             Files = new List<File>();
-            Timestamp = Util.UnparseBNDTimestamp(DateTime.Now);
+            Timestamp = SFUtil.DateToBinderTimestamp(DateTime.Now);
             Format = 0x74;
             BigEndian = false;
             Flag1 = false;
@@ -103,7 +92,7 @@ namespace SoulsFormats
             int fileCount = br.ReadInt32();
             // Header size
             br.AssertInt64(0x40);
-            Timestamp = br.ReadASCII(8).TrimEnd('\0');
+            Timestamp = br.ReadFixStr(8);
             // File header size
             long fileHeaderSize = br.AssertInt64(0x18, 0x1C, 0x24);
             long dataStart = br.ReadInt64();
@@ -170,7 +159,7 @@ namespace SoulsFormats
             bw.WriteInt32(0x10000);
             bw.WriteInt32(Files.Count);
             bw.WriteInt64(0x40);
-            bw.WriteASCII(Timestamp.PadRight(8, '\0'));
+            bw.WriteFixStr(Timestamp, 8);
             if (Format == 0x0C)
                 bw.WriteInt64(0x18);
             else if (Format == 0x70)
@@ -210,7 +199,7 @@ namespace SoulsFormats
                 uint groupCount = 0;
                 for (uint p = (uint)Files.Count / 7; p <= 100000; p++)
                 {
-                    if (Util.IsPrime(p))
+                    if (SFUtil.IsPrime(p))
                     {
                         groupCount = p;
                         break;
@@ -279,7 +268,7 @@ namespace SoulsFormats
 
                 if (file.Flags == 0x03 || file.Flags == 0xC0)
                 {
-                    compressedSize = Util.WriteZlib(bw, 0x9C, bytes);
+                    compressedSize = SFUtil.WriteZlib(bw, 0x9C, bytes);
                 }
                 else
                 {
@@ -353,7 +342,7 @@ namespace SoulsFormats
                 if (Flags == 0x03 || Flags == 0xC0)
                 {
                     br.StepIn(fileOffset);
-                    Bytes = Util.ReadZlib(br, (int)compressedSize);
+                    Bytes = SFUtil.ReadZlib(br, (int)compressedSize);
                     br.StepOut();
                 }
                 else
@@ -405,7 +394,7 @@ namespace SoulsFormats
             public PathHash(int index, string path)
             {
                 Index = index;
-                Hash = Util.FromPathHash(path);
+                Hash = SFUtil.FromPathHash(path);
             }
 
             public void Write(BinaryWriterEx bw)

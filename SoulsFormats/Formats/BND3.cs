@@ -16,19 +16,9 @@ namespace SoulsFormats
         IReadOnlyList<IBinderFile> IBinder.Files => Files;
 
         /// <summary>
-        /// A timestamp of unknown purpose.
+        /// A timestamp or version number, 8 characters maximum.
         /// </summary>
-        public string Timestamp
-        {
-            get { return timestamp; }
-            set
-            {
-                if (value.Length > 8)
-                    throw new ArgumentException("Timestamp may not be longer than 8 characters.");
-                timestamp = value;
-            }
-        }
-        private string timestamp;
+        public string Timestamp;
 
         /// <summary>
         /// Indicates the format of the BND3.
@@ -56,7 +46,7 @@ namespace SoulsFormats
         public BND3()
         {
             Files = new List<File>();
-            Timestamp = Util.UnparseBNDTimestamp(DateTime.Now);
+            Timestamp = SFUtil.DateToBinderTimestamp(DateTime.Now);
             Format = 0x74;
             BigEndian = false;
             Unk1 = false;
@@ -79,7 +69,7 @@ namespace SoulsFormats
         {
             br.BigEndian = false;
             br.AssertASCII("BND3");
-            Timestamp = br.ReadASCII(8).TrimEnd('\0');
+            Timestamp = br.ReadFixStr(8);
 
             Format = br.AssertByte(0x0E, 0x2E, 0x40, 0x54, 0x60, 0x64, 0x70, 0x74, 0xE0, 0xF0);
             BigEndian = br.ReadBoolean();
@@ -107,7 +97,7 @@ namespace SoulsFormats
         {
             bw.BigEndian = false;
             bw.WriteASCII("BND3");
-            bw.WriteASCII(Timestamp.PadRight(8, '\0'));
+            bw.WriteFixStr(Timestamp, 8);
             bw.WriteByte(Format);
             bw.WriteBoolean(BigEndian);
             bw.WriteBoolean(Unk1);
@@ -199,7 +189,7 @@ namespace SoulsFormats
                 if (Flags == 0xC0)
                 {
                     br.StepIn(fileOffset);
-                    Bytes = Util.ReadZlib(br, compressedSize);
+                    Bytes = SFUtil.ReadZlib(br, compressedSize);
                     br.StepOut();
                 }
                 else
@@ -244,7 +234,7 @@ namespace SoulsFormats
 
                 if (Flags == 0xC0)
                 {
-                    compressedSize = Util.WriteZlib(bw, 0x9C, bytes);
+                    compressedSize = SFUtil.WriteZlib(bw, 0x9C, bytes);
                 }
                 else
                 {

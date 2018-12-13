@@ -145,7 +145,7 @@ namespace SoulsFormats
             int uncompressedSize = br.ReadInt32();
             int compressedSize = br.ReadInt32();
 
-            byte[] decompressed = Util.ReadZlib(br, compressedSize);
+            byte[] decompressed = SFUtil.ReadZlib(br, compressedSize);
 
             br.AssertASCII("DCA\0");
             br.AssertInt32(8);
@@ -320,7 +320,7 @@ namespace SoulsFormats
             br.AssertASCII("DCA\0");
             int compressedHeaderLength = br.ReadInt32();
 
-            return Util.ReadZlib(br, compressedSize);
+            return SFUtil.ReadZlib(br, compressedSize);
         }
 
         #region Public Compress
@@ -378,7 +378,7 @@ namespace SoulsFormats
             bw.WriteInt32(data.Length);
             bw.ReserveInt32("CompressedSize");
 
-            int compressedSize = Util.WriteZlib(bw, 0xDA, data);
+            int compressedSize = SFUtil.WriteZlib(bw, 0xDA, data);
             bw.FillInt32("CompressedSize", compressedSize);
 
             bw.WriteASCII("DCA\0");
@@ -504,7 +504,7 @@ namespace SoulsFormats
             bw.WriteInt32(0x8);
 
             long compressedStart = bw.Position;
-            Util.WriteZlib(bw, 0xDA, data);
+            SFUtil.WriteZlib(bw, 0xDA, data);
             bw.FillInt32("CompressedSize", (int)(bw.Position - compressedStart));
         }
 
