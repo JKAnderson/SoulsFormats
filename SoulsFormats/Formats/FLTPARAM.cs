@@ -7,7 +7,7 @@ namespace SoulsFormats
     /// <summary>
     /// A graphics config file used in DS2.
     /// </summary>
-    public class FILTPARAM : SoulsFile<FILTPARAM>
+    public class FLTPARAM : SoulsFile<FLTPARAM>
     {
         /// <summary>
         /// Groups of params in this file.
@@ -23,12 +23,7 @@ namespace SoulsFormats
         /// Unknown.
         /// </summary>
         public byte[] UnkBlock1, UnkBlock2, UnkBlock3, UnkBlock4;
-
-        /// <summary>
-        /// Creates an uninitialized FILTPARAM. Should not be used publicly; use FILTPARAM.Read instead.
-        /// </summary>
-        public FILTPARAM() { }
-
+        
         internal override bool Is(BinaryReaderEx br)
         {
             string magic = br.GetASCII(0, 4);
