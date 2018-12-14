@@ -21,7 +21,7 @@ namespace SoulsFormats
             /// <summary>
             /// Generators in the MSB.
             /// </summary>
-            public List<Event.Generators> Generators;
+            public List<Event.Generator> Generators;
 
             /// <summary>
             /// Object actions in the MSB.
@@ -59,7 +59,7 @@ namespace SoulsFormats
             public EventSection(int unk1 = 3) : base(unk1)
             {
                 Treasures = new List<Event.Treasure>();
-                Generators = new List<Event.Generators>();
+                Generators = new List<Event.Generator>();
                 ObjActs = new List<Event.ObjAct>();
                 MapOffsets = new List<Event.MapOffset>();
                 Invasions = new List<Event.Invasion>();
@@ -89,7 +89,7 @@ namespace SoulsFormats
                         return treasure;
 
                     case EventType.Generator:
-                        var generator = new Event.Generators(br);
+                        var generator = new Event.Generator(br);
                         Generators.Add(generator);
                         return generator;
 
@@ -210,10 +210,17 @@ namespace SoulsFormats
             /// </summary>
             public int EventEntityID;
 
-            /// <summary>
-            /// Creates a new Event with values copied from another.
-            /// </summary>
-            public Event(Event clone)
+            internal Event(int id, string name)
+            {
+                ID = id;
+                Name = name;
+                EventIndex = -1;
+                PartName = null;
+                PointName = null;
+                EventEntityID = -1;
+            }
+
+            internal Event(Event clone)
             {
                 Name = clone.Name;
                 EventIndex = clone.EventIndex;
@@ -333,6 +340,19 @@ namespace SoulsFormats
                 public bool StartDisabled;
 
                 /// <summary>
+                /// Creates a new Treasure with the given ID and name.
+                /// </summary>
+                public Treasure(int id, string name) : base(id, name)
+                {
+                    PartName2 = null;
+                    ItemLot1 = -1;
+                    ItemLot2 = -1;
+                    PickupAnimID = -1;
+                    InChest = false;
+                    StartDisabled = false;
+                }
+
+                /// <summary>
                 /// Creates a new Treasure with values copied from another.
                 /// </summary>
                 public Treasure(Treasure clone) : base(clone)
@@ -421,7 +441,7 @@ namespace SoulsFormats
             /// <summary>
             /// A continuous enemy spawner.
             /// </summary>
-            public class Generators : Event
+            public class Generator : Event
             {
                 internal override EventType Type => EventType.Generator;
 
@@ -477,7 +497,43 @@ namespace SoulsFormats
                 /// </summary>
                 public float UnkT14, UnkT18;
 
-                internal Generators(BinaryReaderEx br) : base(br) { }
+                /// <summary>
+                /// Creates a new Generator with the given ID and name.
+                /// </summary>
+                public Generator(int id, string name) : base(id, name)
+                {
+                    MaxNum = 0;
+                    LimitNum = 0;
+                    MinGenNum = 0;
+                    MaxGenNum = 0;
+                    MinInterval = 0;
+                    MaxInterval = 0;
+                    UnkT10 = 0;
+                    UnkT14 = 0;
+                    UnkT18 = 0;
+                    SpawnPointNames = new string[8];
+                    SpawnPartNames = new string[32];
+                }
+
+                /// <summary>
+                /// Creates a new Generator with values copied from another.
+                /// </summary>
+                public Generator(Generator clone) : base(clone)
+                {
+                    MaxNum = clone.MaxNum;
+                    LimitNum = clone.LimitNum;
+                    MinGenNum = clone.MinGenNum;
+                    MaxGenNum = clone.MaxGenNum;
+                    MinInterval = clone.MinInterval;
+                    MaxInterval = clone.MaxInterval;
+                    UnkT10 = clone.UnkT10;
+                    UnkT14 = clone.UnkT14;
+                    UnkT18 = clone.UnkT18;
+                    SpawnPointNames = (string[])clone.SpawnPointNames.Clone();
+                    SpawnPartNames = (string[])clone.SpawnPartNames.Clone();
+                }
+
+                internal Generator(BinaryReaderEx br) : base(br) { }
 
                 internal override void Read(BinaryReaderEx br)
                 {
@@ -601,6 +657,30 @@ namespace SoulsFormats
                 /// </summary>
                 public int EventFlagID;
 
+                /// <summary>
+                /// Creates a new ObjAct with the given ID and name.
+                /// </summary>
+                public ObjAct(int id, string name) : base(id, name)
+                {
+                    ObjActEntityID = -1;
+                    PartName2 = null;
+                    ParameterID = 0;
+                    UnkT10 = 0;
+                    EventFlagID = 0;
+                }
+
+                /// <summary>
+                /// Creates a new ObjAct with values copied from another.
+                /// </summary>
+                public ObjAct(ObjAct clone) : base(clone)
+                {
+                    ObjActEntityID = clone.ObjActEntityID;
+                    PartName2 = clone.PartName2;
+                    ParameterID = clone.ParameterID;
+                    UnkT10 = clone.UnkT10;
+                    EventFlagID = clone.EventFlagID;
+                }
+
                 internal ObjAct(BinaryReaderEx br) : base(br) { }
 
                 internal override void Read(BinaryReaderEx br)
@@ -656,6 +736,24 @@ namespace SoulsFormats
                 /// Rotation of the map offset.
                 /// </summary>
                 public float Degree;
+
+                /// <summary>
+                /// Creates a new MapOffset with the given ID and name.
+                /// </summary>
+                public MapOffset(int id, string name) : base(id, name)
+                {
+                    Position = Vector3.Zero;
+                    Degree = 0;
+                }
+
+                /// <summary>
+                /// Creates a new MapOffset with values copied from another.
+                /// </summary>
+                public MapOffset(MapOffset clone) : base(clone)
+                {
+                    Position = clone.Position;
+                    Degree = clone.Degree;
+                }
 
                 internal MapOffset(BinaryReaderEx br) : base(br) { }
 
@@ -714,6 +812,34 @@ namespace SoulsFormats
                 /// </summary>
                 public int UnkT18;
 
+                /// <summary>
+                /// Creates a new Invasion with the given ID and name.
+                /// </summary>
+                public Invasion(int id, string name) : base(id, name)
+                {
+                    HostEventEntityID = -1;
+                    InvasionEventEntityID = -1;
+                    InvasionRegionIndex = -1;
+                    SoundIDMaybe = -1;
+                    MapEventIDMaybe = -1;
+                    FlagsMaybe = 0;
+                    UnkT18 = 0;
+                }
+
+                /// <summary>
+                /// Creates a new Invasion with values copied from another.
+                /// </summary>
+                public Invasion(Invasion clone) : base(clone)
+                {
+                    HostEventEntityID = clone.HostEventEntityID;
+                    InvasionEventEntityID = clone.InvasionEventEntityID;
+                    InvasionRegionIndex = clone.InvasionRegionIndex;
+                    SoundIDMaybe = clone.SoundIDMaybe;
+                    MapEventIDMaybe = clone.MapEventIDMaybe;
+                    FlagsMaybe = clone.FlagsMaybe;
+                    UnkT18 = clone.UnkT18;
+                }
+
                 internal Invasion(BinaryReaderEx br) : base(br) { }
 
                 internal override void Read(BinaryReaderEx br)
@@ -758,6 +884,24 @@ namespace SoulsFormats
                 /// List of points in the route.
                 /// </summary>
                 public string[] WalkPointNames { get; private set; }
+
+                /// <summary>
+                /// Creates a new WalkRoute with the given ID and name.
+                /// </summary>
+                public WalkRoute(int id, string name) : base(id, name)
+                {
+                    UnkT00 = 0;
+                    WalkPointNames = new string[32];
+                }
+
+                /// <summary>
+                /// Creates a new WalkRoute with values copied from another.
+                /// </summary>
+                public WalkRoute(WalkRoute clone) : base(clone)
+                {
+                    UnkT00 = clone.UnkT00;
+                    WalkPointNames = (string[])clone.WalkPointNames.Clone();
+                }
 
                 internal WalkRoute(BinaryReaderEx br) : base(br) { }
 
@@ -814,6 +958,26 @@ namespace SoulsFormats
                 /// </summary>
                 public string[] GroupPartsNames { get; private set; }
 
+                /// <summary>
+                /// Creates a new GroupTour with the given ID and name.
+                /// </summary>
+                public GroupTour(int id, string name) : base(id, name)
+                {
+                    UnkT00 = 0;
+                    UnkT04 = 0;
+                    GroupPartsNames = new string[32];
+                }
+
+                /// <summary>
+                /// Creates a new GroupTour with values copied from another.
+                /// </summary>
+                public GroupTour(GroupTour clone) : base(clone)
+                {
+                    UnkT00 = clone.UnkT00;
+                    UnkT04 = clone.UnkT04;
+                    GroupPartsNames = (string[])clone.GroupPartsNames.Clone();
+                }
+
                 internal GroupTour(BinaryReaderEx br) : base(br) { }
 
                 internal override void Read(BinaryReaderEx br)
@@ -850,7 +1014,7 @@ namespace SoulsFormats
                         groupPartsIndices[i] = GetIndex(entries.Parts, GroupPartsNames[i]);
                 }
             }
-            
+
             /// <summary>
             /// Unknown. Only appears once in one unused MSB so it's hard to draw too many conclusions from it.
             /// </summary>
@@ -867,6 +1031,24 @@ namespace SoulsFormats
                 /// Unknown.
                 /// </summary>
                 public int SoundIDMaybe;
+
+                /// <summary>
+                /// Creates a new Other with the given ID and name.
+                /// </summary>
+                public Other(int id, string name) : base(id, name)
+                {
+                    SoundTypeMaybe = 0;
+                    SoundIDMaybe = 0;
+                }
+
+                /// <summary>
+                /// Creates a new Other with values copied from another.
+                /// </summary>
+                public Other(Other clone) : base(clone)
+                {
+                    SoundTypeMaybe = clone.SoundTypeMaybe;
+                    SoundIDMaybe = clone.SoundIDMaybe;
+                }
 
                 internal Other(BinaryReaderEx br) : base(br) { }
 

@@ -341,15 +341,28 @@ namespace SoulsFormats
             /// </summary>
             public int EventEntityID;
 
-            /// <summary>
-            /// Creates a new Region with values copied from another.
-            /// </summary>
-            public Region(Region clone)
+            internal Region(int id, string name, bool hasTypeData)
+            {
+                ID = id;
+                Name = name;
+                Position = Vector3.Zero;
+                Rotation = Vector3.Zero;
+                Shape = new Shape.Point();
+                ActivationPartName = null;
+                EventEntityID = -1;
+                Unk2 = 0;
+                Unk3 = 0;
+                Unk4 = 0;
+                DrawGroup = 0;
+                HasTypeData = hasTypeData;
+            }
+
+            internal Region(Region clone)
             {
                 Name = clone.Name;
                 ID = clone.ID;
-                Position = new Vector3(clone.Position.X, clone.Position.Y, clone.Position.Z);
-                Rotation = new Vector3(clone.Rotation.X, clone.Rotation.Y, clone.Rotation.Z);
+                Position = clone.Position;
+                Rotation = clone.Rotation;
                 Shape = clone.Shape.Clone();
                 ActivationPartName = clone.ActivationPartName;
                 EventEntityID = clone.EventEntityID;
@@ -512,10 +525,9 @@ namespace SoulsFormats
             /// </summary>
             public abstract class SimpleRegion : Region
             {
-                /// <summary>
-                /// Creates a new SimpleRegion with values copied from another.
-                /// </summary>
-                public SimpleRegion(SimpleRegion clone) : base(clone) { }
+                internal SimpleRegion(int id, string name) : base(id, name, false) { }
+
+                internal SimpleRegion(SimpleRegion clone) : base(clone) { }
 
                 internal SimpleRegion(BinaryReaderEx br) : base(br) { }
 
@@ -536,10 +548,17 @@ namespace SoulsFormats
             public class General : SimpleRegion
             {
                 internal override RegionType Type => RegionType.General;
+
+                /// <summary>
+                /// Creates a new General with the given ID and name.
+                /// </summary>
+                public General(int id, string name) : base(id, name) { }
+
                 /// <summary>
                 /// Creates a new General region with values copied from another.
                 /// </summary>
                 public General(General clone) : base(clone) { }
+
                 internal General(BinaryReaderEx br) : base(br) { }
             }
 
@@ -549,10 +568,17 @@ namespace SoulsFormats
             public class Unk00 : SimpleRegion
             {
                 internal override RegionType Type => RegionType.Unk00;
+
+                /// <summary>
+                /// Creates a new Unk00 with the given ID and name.
+                /// </summary>
+                public Unk00(int id, string name) : base(id, name) { }
+
                 /// <summary>
                 /// Creates a new Unk00 with values copied from another.
                 /// </summary>
                 public Unk00(General clone) : base(clone) { }
+
                 internal Unk00(BinaryReaderEx br) : base(br) { }
             }
 
@@ -567,6 +593,14 @@ namespace SoulsFormats
                 /// Not sure what this does.
                 /// </summary>
                 public int Priority;
+
+                /// <summary>
+                /// Creates a new InvasionPoint with the given ID and name.
+                /// </summary>
+                public InvasionPoint(int id, string name) : base(id, name, true)
+                {
+                    Priority = 0;
+                }
 
                 /// <summary>
                 /// Creates a new InvasionPoint with values copied from another.
@@ -601,6 +635,14 @@ namespace SoulsFormats
                 /// Unknown. Only ever 1 bit set, so probably flags.
                 /// </summary>
                 public int UnkFlags;
+
+                /// <summary>
+                /// Creates a new EnvironmentMapPoint with the given ID and name.
+                /// </summary>
+                public EnvironmentMapPoint(int id, string name) : base(id, name, true)
+                {
+                    UnkFlags = 0;
+                }
 
                 /// <summary>
                 /// Creates a new EnvironmentMapPoint with values copied from another.
@@ -670,6 +712,16 @@ namespace SoulsFormats
                 public string[] ChildRegionNames { get; private set; }
 
                 /// <summary>
+                /// Creates a new Sound with the given ID and name.
+                /// </summary>
+                public Sound(int id, string name) : base(id, name, true)
+                {
+                    SoundType = SndType.Environment;
+                    SoundID = 0;
+                    ChildRegionNames = new string[16];
+                }
+
+                /// <summary>
                 /// Creates a new Sound region with values copied from another.
                 /// </summary>
                 public Sound(Sound clone) : base(clone)
@@ -731,6 +783,15 @@ namespace SoulsFormats
                 public bool StartDisabled;
 
                 /// <summary>
+                /// Creates a new SFX with the given ID and name.
+                /// </summary>
+                public SFX(int id, string name) : base(id, name, true)
+                {
+                    FFXID = -1;
+                    StartDisabled = false;
+                }
+
+                /// <summary>
                 /// Creates a new SFX with values copied from another.
                 /// </summary>
                 public SFX(SFX clone) : base(clone)
@@ -777,11 +838,19 @@ namespace SoulsFormats
                 public int FFXID;
 
                 private int WindAreaIndex;
-
                 /// <summary>
                 /// Name of a corresponding WindArea region.
                 /// </summary>
                 public string WindAreaName;
+
+                /// <summary>
+                /// Creates a new WindSFX with the given ID and name.
+                /// </summary>
+                public WindSFX(int id, string name) : base(id, name, true)
+                {
+                    FFXID = -1;
+                    WindAreaName = null;
+                }
 
                 /// <summary>
                 /// Creates a new WindSFX with values copied from another.
@@ -843,6 +912,14 @@ namespace SoulsFormats
                 public int UnkT00;
 
                 /// <summary>
+                /// Creates a new SpawnPoint with the given ID and name.
+                /// </summary>
+                public SpawnPoint(int id, string name) : base(id, name, true)
+                {
+                    UnkT00 = -1;
+                }
+
+                /// <summary>
                 /// Creates a new SpawnPoint with values copied from another.
                 /// </summary>
                 public SpawnPoint(SpawnPoint clone) : base(clone)
@@ -893,6 +970,16 @@ namespace SoulsFormats
                 public bool Hidden;
 
                 /// <summary>
+                /// Creates a new Message with the given ID and name.
+                /// </summary>
+                public Message(int id, string name) : base(id, name, true)
+                {
+                    MessageID = -1;
+                    UnkT02 = 0;
+                    Hidden = false;
+                }
+
+                /// <summary>
                 /// Creates a new Message with values copied from another.
                 /// </summary>
                 public Message(Message clone) : base(clone)
@@ -926,10 +1013,17 @@ namespace SoulsFormats
             public class WalkRoute : SimpleRegion
             {
                 internal override RegionType Type => RegionType.WalkRoute;
+
+                /// <summary>
+                /// Creates a new WalkRoute with the given ID and name.
+                /// </summary>
+                public WalkRoute(int id, string name) : base(id, name) { }
+
                 /// <summary>
                 /// Creates a new WalkRoute with values copied from another.
                 /// </summary>
                 public WalkRoute(General clone) : base(clone) { }
+
                 internal WalkRoute(BinaryReaderEx br) : base(br) { }
             }
 
@@ -939,10 +1033,17 @@ namespace SoulsFormats
             public class Unk12 : SimpleRegion
             {
                 internal override RegionType Type => RegionType.Unk12;
+
+                /// <summary>
+                /// Creates a new Unk12 with the given ID and name.
+                /// </summary>
+                public Unk12(int id, string name) : base(id, name) { }
+
                 /// <summary>
                 /// Creates a new Unk12 with values copied from another.
                 /// </summary>
                 public Unk12(General clone) : base(clone) { }
+
                 internal Unk12(BinaryReaderEx br) : base(br) { }
             }
 
@@ -952,10 +1053,17 @@ namespace SoulsFormats
             public class WarpPoint : SimpleRegion
             {
                 internal override RegionType Type => RegionType.WarpPoint;
+
+                /// <summary>
+                /// Creates a new WarpPoint with the given ID and name.
+                /// </summary>
+                public WarpPoint(int id, string name) : base(id, name) { }
+
                 /// <summary>
                 /// Creates a new WarpPoint with values copied from another.
                 /// </summary>
                 public WarpPoint(General clone) : base(clone) { }
+
                 internal WarpPoint(BinaryReaderEx br) : base(br) { }
             }
 
@@ -965,10 +1073,17 @@ namespace SoulsFormats
             public class ActivationArea : SimpleRegion
             {
                 internal override RegionType Type => RegionType.ActivationArea;
+
+                /// <summary>
+                /// Creates a new ActivationArea with the given ID and name.
+                /// </summary>
+                public ActivationArea(int id, string name) : base(id, name) { }
+
                 /// <summary>
                 /// Creates a new ActivationArea with values copied from another.
                 /// </summary>
                 public ActivationArea(General clone) : base(clone) { }
+
                 internal ActivationArea(BinaryReaderEx br) : base(br) { }
             }
 
@@ -978,10 +1093,17 @@ namespace SoulsFormats
             public class Event : SimpleRegion
             {
                 internal override RegionType Type => RegionType.Event;
+
+                /// <summary>
+                /// Creates a new Event with the given ID and name.
+                /// </summary>
+                public Event(int id, string name) : base(id, name) { }
+
                 /// <summary>
                 /// Creates a new Event with values copied from another.
                 /// </summary>
                 public Event(General clone) : base(clone) { }
+
                 internal Event(BinaryReaderEx br) : base(br) { }
             }
 
@@ -1006,6 +1128,17 @@ namespace SoulsFormats
                 /// Unknown.
                 /// </summary>
                 public short UnkT08, UnkT0A;
+
+                /// <summary>
+                /// Creates a new EnvironmentMapEffectBox with the given ID and name.
+                /// </summary>
+                public EnvironmentMapEffectBox(int id, string name) : base(id, name, true)
+                {
+                    UnkT00 = 0;
+                    UnkT04 = 0;
+                    UnkT08 = 0;
+                    UnkT0A = 0;
+                }
 
                 /// <summary>
                 /// Creates a new EnvironmentMapEffectBox with values copied from another.
@@ -1060,10 +1193,17 @@ namespace SoulsFormats
             public class WindArea : SimpleRegion
             {
                 internal override RegionType Type => RegionType.WindArea;
+
+                /// <summary>
+                /// Creates a new WindArea with the given ID and name.
+                /// </summary>
+                public WindArea(int id, string name) : base(id, name) { }
+
                 /// <summary>
                 /// Creates a new WindArea with values copied from another.
                 /// </summary>
                 public WindArea(General clone) : base(clone) { }
+
                 internal WindArea(BinaryReaderEx br) : base(br) { }
             }
 
@@ -1078,6 +1218,14 @@ namespace SoulsFormats
                 /// Unknown.
                 /// </summary>
                 public int UnkT00;
+
+                /// <summary>
+                /// Creates a new MufflingBox with the given ID and name.
+                /// </summary>
+                public MufflingBox(int id, string name) : base(id, name, true)
+                {
+                    UnkT00 = 0;
+                }
 
                 /// <summary>
                 /// Creates a new MufflingBox with values copied from another.
@@ -1107,10 +1255,17 @@ namespace SoulsFormats
             public class MufflingPortal : SimpleRegion
             {
                 internal override RegionType Type => RegionType.MufflingPortal;
+
+                /// <summary>
+                /// Creates a new MufflingPortal with the given ID and name.
+                /// </summary>
+                public MufflingPortal(int id, string name) : base(id, name) { }
+
                 /// <summary>
                 /// Creates a new MufflingPortal with values copied from another.
                 /// </summary>
                 public MufflingPortal(General clone) : base(clone) { }
+
                 internal MufflingPortal(BinaryReaderEx br) : base(br) { }
             }
         }

@@ -271,18 +271,78 @@ namespace SoulsFormats
 
             private long UnkOffset1Delta, UnkOffset2Delta;
 
-            /// <summary>
-            /// Creates a new Part with values copied from another.
-            /// </summary>
-            public Part(Part clone)
+            internal Part(int id, string name, long unkOffset1Delta, long unkOffset2Delta)
+            {
+                ID = id;
+                Name = name;
+                ModelName = null;
+                Position = Vector3.Zero;
+                Rotation = Vector3.Zero;
+                Scale = Vector3.One;
+                OldDrawGroup1 = 0;
+                OldDrawGroup2 = 0;
+                OldDrawGroup3 = 0;
+                OldDrawGroup4 = 0;
+                OldDispGroup1 = 0;
+                OldDispGroup2 = 0;
+                OldDispGroup3 = 0;
+                OldDispGroup4 = 0;
+                UnkF64 = 0;
+                UnkF68 = 0;
+                DrawGroup1 = 0;
+                DrawGroup2 = 0;
+                DrawGroup3 = 0;
+                DrawGroup4 = 0;
+                DrawGroup5 = 0;
+                DrawGroup6 = 0;
+                DrawGroup7 = 0;
+                DrawGroup8 = 0;
+                UnkF8C = 0;
+                UnkF90 = 0;
+                UnkF94 = 0;
+                UnkF98 = 0;
+                UnkF9C = 0;
+                UnkFA0 = 0;
+                UnkFA4 = 0;
+                UnkFA8 = 0;
+                EventEntityID = -1;
+                OldLightID = 0;
+                OldFogID = 0;
+                OldScatterID = 0;
+                OldLensFlareID = 0;
+                OldLanternID = 0;
+                OldLodParamID = 0;
+                UnkB0E = 0;
+                OldIsShadowDest = false;
+                OldIsShadowOnly = false;
+                OldDrawByReflectCam = false;
+                OldDrawOnlyReflectCam = false;
+                OldUseDepthBiasFloat = false;
+                OldDisablePointLightEffect = false;
+                UnkB15 = 0;
+                UnkB16 = 0;
+                UnkB17 = 0;
+                UnkB18 = 0;
+                UnkB1C = 0;
+                UnkB20 = 0;
+                UnkB24 = 0;
+                UnkB28 = 0;
+                UnkB30 = 0;
+                UnkB34 = 0;
+                UnkB38 = 0;
+                UnkOffset1Delta = unkOffset1Delta;
+                UnkOffset2Delta = unkOffset2Delta;
+            }
+
+            internal Part(Part clone)
             {
                 Name = clone.Name;
                 Placeholder = clone.Placeholder;
                 ID = clone.ID;
                 ModelName = clone.ModelName;
-                Position = new Vector3(clone.Position.X, clone.Position.Y, clone.Position.Z);
-                Rotation = new Vector3(clone.Rotation.X, clone.Rotation.Y, clone.Rotation.Z);
-                Scale = new Vector3(clone.Scale.X, clone.Scale.Y, clone.Scale.Z);
+                Position = clone.Position;
+                Rotation = clone.Rotation;
+                Scale = clone.Scale;
                 OldDrawGroup1 = clone.OldDrawGroup1;
                 OldDrawGroup2 = clone.OldDrawGroup2;
                 OldDrawGroup3 = clone.OldDrawGroup3;
@@ -592,6 +652,17 @@ namespace SoulsFormats
                 public int UnkT10, UnkT14;
 
                 /// <summary>
+                /// Creates a new MapPiece with the given ID and name.
+                /// </summary>
+                public MapPiece(int id, string name) : base(id, name, 8, 0)
+                {
+                    LightParamID = 0;
+                    FogParamID = 0;
+                    UnkT10 = 0;
+                    UnkT14 = 0;
+                }
+
+                /// <summary>
                 /// Creates a new MapPiece with values copied from another.
                 /// </summary>
                 public MapPiece(MapPiece clone) : base(clone)
@@ -655,6 +726,26 @@ namespace SoulsFormats
                 /// Unknown.
                 /// </summary>
                 public short UnkT02a, UnkT02b, UnkT03a, UnkT03b, UnkT05a, UnkT05b;
+
+                /// <summary>
+                /// Creates a new Object with the given ID and name.
+                /// </summary>
+                public Object(int id, string name) : base(id, name, 32, 0)
+                {
+                    CollisionName = null;
+                    UnkT02a = 0;
+                    UnkT02b = 0;
+                    UnkT03a = 0;
+                    UnkT03b = 0;
+                    UnkT04 = 0;
+                    UnkT05a = 0;
+                    UnkT05b = 0;
+                    UnkT06 = 0;
+                    UnkT07 = 0;
+                    UnkT08 = 0;
+                    UnkT09 = 0;
+                    UnkT10 = 0;
+                }
 
                 /// <summary>
                 /// Creates a new Object with values copied from another.
@@ -784,6 +875,32 @@ namespace SoulsFormats
                 /// Unknown.
                 /// </summary>
                 public int UnkT11, UnkT12, UnkT13, UnkT14, UnkT15, UnkT16, UnkT17, UnkT18, UnkT19;
+
+                /// <summary>
+                /// Creates a new Enemy with the given ID and name.
+                /// </summary>
+                public Enemy(int id, string name) : base(id, name, 192, 0)
+                {
+                    ThinkParamID = 0;
+                    NPCParamID = 0;
+                    TalkID = 0;
+                    UnkT04 = 0;
+                    CharaInitID = 0;
+                    CollisionName = null;
+                    UnkT07 = 0;
+                    UnkT08 = 0;
+                    UnkT09 = 0;
+                    UnkT10 = 0;
+                    UnkT11 = 0;
+                    UnkT12 = 0;
+                    UnkT13 = 0;
+                    UnkT14 = 0;
+                    UnkT15 = 0;
+                    UnkT16 = 0;
+                    UnkT17 = 0;
+                    UnkT18 = 0;
+                    UnkT19 = 0;
+                }
 
                 /// <summary>
                 /// Creates a new Enemy with values copied from another.
@@ -953,6 +1070,16 @@ namespace SoulsFormats
             {
                 internal override PartsType Type => PartsType.Player;
 
+                /// <summary>
+                /// Creates a new Player with the given ID and name.
+                /// </summary>
+                public Player(int id, string name) : base(id, name, 0, 0) { }
+
+                /// <summary>
+                /// Creates a new Player with values copied from another.
+                /// </summary>
+                public Player(Player clone) : base(clone) { }
+
                 internal Player(BinaryReaderEx br) : base(br) { }
 
                 internal override void Read(BinaryReaderEx br)
@@ -1058,6 +1185,58 @@ namespace SoulsFormats
                 /// </summary>
                 public float UnkT78;
 
+                /// <summary>
+                /// Creates a new Collision with the given ID and name.
+                /// </summary>
+                public Collision(int id, string name) : base(id, name, 80, 112)
+                {
+                    HitFilterID = 0;
+                    SoundSpaceType = SoundSpace.NoReverb;
+                    EnvLightMapSpotIndex = 0;
+                    ReflectPlaneHeight = 0;
+                    MapNameID = -1;
+                    DisableStart = false;
+                    DisableBonfireEntityID = -1;
+                    UnkT2C = 0;
+                    UnkHitName = null;
+                    UnkT34 = 0;
+                    PlayRegionID = -1;
+                    LockCamID1 = 0;
+                    LockCamID2 = 0;
+                    UnkT50 = 0;
+                    UnkT54 = 0;
+                    UnkT58 = 0;
+                    UnkT5C = 0;
+                    UnkT74 = 0;
+                    UnkT78 = 0;
+                }
+
+                /// <summary>
+                /// Creates a new Collision with values copied from another.
+                /// </summary>
+                public Collision(Collision clone) : base(clone)
+                {
+                    HitFilterID = clone.HitFilterID;
+                    SoundSpaceType = clone.SoundSpaceType;
+                    EnvLightMapSpotIndex = clone.EnvLightMapSpotIndex;
+                    ReflectPlaneHeight = clone.ReflectPlaneHeight;
+                    MapNameID = clone.MapNameID;
+                    DisableStart = clone.DisableStart;
+                    DisableBonfireEntityID = clone.DisableBonfireEntityID;
+                    UnkT2C = clone.UnkT2C;
+                    UnkHitName = clone.UnkHitName;
+                    UnkT34 = clone.UnkT34;
+                    PlayRegionID = clone.PlayRegionID;
+                    LockCamID1 = clone.LockCamID1;
+                    LockCamID2 = clone.LockCamID2;
+                    UnkT50 = clone.UnkT50;
+                    UnkT54 = clone.UnkT54;
+                    UnkT58 = clone.UnkT58;
+                    UnkT5C = clone.UnkT5C;
+                    UnkT74 = clone.UnkT74;
+                    UnkT78 = clone.UnkT78;
+                }
+
                 internal Collision(BinaryReaderEx br) : base(br) { }
 
                 internal override void Read(BinaryReaderEx br)
@@ -1162,6 +1341,16 @@ namespace SoulsFormats
             {
                 internal override PartsType Type => PartsType.DummyObject;
 
+                /// <summary>
+                /// Creates a new DummyObject with the given ID and name.
+                /// </summary>
+                public DummyObject(int id, string name) : base(id, name) { }
+
+                /// <summary>
+                /// Creates a new DummyObject with values copied from another.
+                /// </summary>
+                public DummyObject(DummyObject clone) : base(clone) { }
+
                 internal DummyObject(BinaryReaderEx br) : base(br) { }
             }
 
@@ -1171,6 +1360,16 @@ namespace SoulsFormats
             public class DummyEnemy : Enemy
             {
                 internal override PartsType Type => PartsType.DummyEnemy;
+
+                /// <summary>
+                /// Creates a new DummyEnemy with the given ID and name.
+                /// </summary>
+                public DummyEnemy(int id, string name) : base(id, name) { }
+
+                /// <summary>
+                /// Creates a new DummyEnemy with values copied from another.
+                /// </summary>
+                public DummyEnemy(DummyEnemy clone) : base(clone) { }
 
                 internal DummyEnemy(BinaryReaderEx br) : base(br) { }
             }
@@ -1183,7 +1382,6 @@ namespace SoulsFormats
                 internal override PartsType Type => PartsType.ConnectCollision;
 
                 private int collisionIndex;
-
                 /// <summary>
                 /// The name of the associated collision part.
                 /// </summary>
@@ -1193,6 +1391,18 @@ namespace SoulsFormats
                 /// A map ID in format mXX_XX_XX_XX.
                 /// </summary>
                 public byte MapID1, MapID2, MapID3, MapID4;
+
+                /// <summary>
+                /// Creates a new ConnectCollision with the given ID and name.
+                /// </summary>
+                public ConnectCollision(int id, string name) : base(id, name, 0, 0)
+                {
+                    CollisionName = null;
+                    MapID1 = 0;
+                    MapID2 = 0;
+                    MapID3 = 0;
+                    MapID4 = 0;
+                }
 
                 /// <summary>
                 /// Creates a new ConnectCollision with values copied from another.
