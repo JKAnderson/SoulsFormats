@@ -181,6 +181,7 @@ namespace SoulsFormats
             entries.PartsPoses = PartsPoses.GetEntries();
             entries.BoneNames = BoneNames.GetEntries();
 
+            Models.CountInstances(entries);
             Events.GetIndices(this, entries);
             Parts.GetIndices(this, entries);
             Regions.GetIndices(this, entries);

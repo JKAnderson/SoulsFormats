@@ -62,17 +62,39 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk1, Unk2, Unk3, Unk4;
+            public int Unk08, Unk0C;
+
+            /// <summary>
+            /// Unknown; seems to always be 4.
+            /// </summary>
+            public int Unk10;
+
+            /// <summary>
+            /// Unknown; seems to just count up from 0.
+            /// </summary>
+            public int Unk14;
+
+            /// <summary>
+            /// Creates a new Route with default values.
+            /// </summary>
+            public Route()
+            {
+                Name = "";
+                Unk08 = 0;
+                Unk0C = 0;
+                Unk10 = 4;
+                Unk14 = 0;
+            }
 
             internal Route(BinaryReaderEx br)
             {
                 long start = br.Position;
 
                 long nameOffset = br.ReadInt64();
-                Unk1 = br.ReadInt32();
-                Unk2 = br.ReadInt32();
-                Unk3 = br.ReadInt32();
-                Unk4 = br.ReadInt32();
+                Unk08 = br.ReadInt32();
+                Unk0C = br.ReadInt32();
+                Unk10 = br.ReadInt32();
+                Unk14 = br.ReadInt32();
 
                 for (int i = 0; i < 26; i++)
                     br.AssertInt32(0);
@@ -85,10 +107,10 @@ namespace SoulsFormats
                 long start = bw.Position;
 
                 bw.ReserveInt64("NameOffset");
-                bw.WriteInt32(Unk1);
-                bw.WriteInt32(Unk2);
-                bw.WriteInt32(Unk3);
-                bw.WriteInt32(Unk4);
+                bw.WriteInt32(Unk08);
+                bw.WriteInt32(Unk0C);
+                bw.WriteInt32(Unk10);
+                bw.WriteInt32(Unk14);
 
                 for (int i = 0; i < 26; i++)
                     bw.WriteInt32(0);
@@ -103,7 +125,7 @@ namespace SoulsFormats
             /// </summary>
             public override string ToString()
             {
-                return $"{Name} ({Unk1}, {Unk2}, {Unk3}, {Unk4})";
+                return $"{Name} ({Unk08}, {Unk0C}, {Unk10}, {Unk14})";
             }
         }
     }

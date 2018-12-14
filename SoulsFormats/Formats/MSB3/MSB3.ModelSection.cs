@@ -113,6 +113,22 @@ namespace SoulsFormats
                     entries[i].Write(bw);
                 }
             }
+
+            internal void CountInstances(Entries entries)
+            {
+                var models = new Dictionary<string, Model>();
+                foreach (var model in entries.Models)
+                {
+                    model.InstanceCount = 0;
+                    models[model.Name] = model;
+                }
+
+                foreach (var part in entries.Parts)
+                {
+                    if (models.ContainsKey(part.ModelName))
+                        models[part.ModelName].InstanceCount++;
+                }
+            }
         }
 
         internal enum ModelType : uint
@@ -152,14 +168,19 @@ namespace SoulsFormats
             public int ID;
 
             /// <summary>
-            /// The number of instances of this model in the map.
+            /// The number of parts using this model; recalculated whenever the MSB is written.
             /// </summary>
-            public int InstanceCount;
+            public int InstanceCount { get; internal set; }
 
-            /// <summary>
-            /// Creates a new Model with values copied from another.
-            /// </summary>
-            public Model(Model clone)
+            internal Model(int id, string name)
+            {
+                ID = id;
+                Name = name;
+                Placeholder = "";
+                InstanceCount = 0;
+            }
+
+            internal Model(Model clone)
             {
                 Name = clone.Name;
                 Placeholder = clone.Placeholder;
@@ -235,6 +256,17 @@ namespace SoulsFormats
                 public bool UnkT02, UnkT03;
 
                 /// <summary>
+                /// Creates a new MapPiece with the given ID and name.
+                /// </summary>
+                public MapPiece(int id, string name) : base(id, name)
+                {
+                    UnkT00 = 0;
+                    UnkT01 = 0;
+                    UnkT02 = true;
+                    UnkT03 = true;
+                }
+
+                /// <summary>
                 /// Creates a new MapPiece with values copied from another.
                 /// </summary>
                 public MapPiece(MapPiece clone) : base(clone)
@@ -295,6 +327,17 @@ namespace SoulsFormats
                 public bool UnkT02, UnkT03;
 
                 /// <summary>
+                /// Creates a new Object with the given ID and name.
+                /// </summary>
+                public Object(int id, string name) : base(id, name)
+                {
+                    UnkT00 = 0;
+                    UnkT01 = 0;
+                    UnkT02 = true;
+                    UnkT03 = true;
+                }
+
+                /// <summary>
                 /// Creates a new Object with values copied from another.
                 /// </summary>
                 public Object(Object clone) : base(clone)
@@ -345,6 +388,11 @@ namespace SoulsFormats
                 internal override ModelType Type => ModelType.Enemy;
 
                 /// <summary>
+                /// Creates a new Enemy with the given ID and name.
+                /// </summary>
+                public Enemy(int id, string name) : base(id, name) { }
+
+                /// <summary>
                 /// Creates a new Enemy with values copied from another.
                 /// </summary>
                 public Enemy(Enemy clone) : base(clone) { }
@@ -368,6 +416,11 @@ namespace SoulsFormats
             public class Player : Model
             {
                 internal override ModelType Type => ModelType.Player;
+
+                /// <summary>
+                /// Creates a new Player with the given ID and name.
+                /// </summary>
+                public Player(int id, string name) : base(id, name) { }
 
                 /// <summary>
                 /// Creates a new Player with values copied from another.
@@ -395,6 +448,11 @@ namespace SoulsFormats
                 internal override ModelType Type => ModelType.Collision;
 
                 /// <summary>
+                /// Creates a new Collision with the given ID and name.
+                /// </summary>
+                public Collision(int id, string name) : base(id, name) { }
+
+                /// <summary>
                 /// Creates a new Collision with values copied from another.
                 /// </summary>
                 public Collision(Collision clone) : base(clone) { }
@@ -418,6 +476,11 @@ namespace SoulsFormats
             public class Other : Model
             {
                 internal override ModelType Type => ModelType.Other;
+
+                /// <summary>
+                /// Creates a new Other with the given ID and name.
+                /// </summary>
+                public Other(int id, string name) : base(id, name) { }
 
                 /// <summary>
                 /// Creates a new Other with values copied from another.
