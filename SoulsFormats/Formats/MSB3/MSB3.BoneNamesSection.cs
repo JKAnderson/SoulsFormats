@@ -16,7 +16,10 @@ namespace SoulsFormats
             /// </summary>
             public List<string> Names;
 
-            internal BoneNameSection(BinaryReaderEx br, int unk1) : base(br, unk1)
+            /// <summary>
+            /// Creates a new BoneNameSection with no bone names.
+            /// </summary>
+            public BoneNameSection(int unk1 = 0) : base(unk1)
             {
                 Names = new List<string>();
             }

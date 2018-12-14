@@ -53,7 +53,10 @@ namespace SoulsFormats
             /// </summary>
             public List<Event.Other> Others;
 
-            internal EventSection(BinaryReaderEx br, int unk1) : base(br, unk1)
+            /// <summary>
+            /// Creates a new EventSection with no events.
+            /// </summary>
+            public EventSection(int unk1 = 3) : base(unk1)
             {
                 Treasures = new List<Event.Treasure>();
                 Generators = new List<Event.Generators>();

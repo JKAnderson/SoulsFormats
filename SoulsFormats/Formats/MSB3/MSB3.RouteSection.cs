@@ -16,7 +16,10 @@ namespace SoulsFormats
             /// </summary>
             public List<Route> Routes;
 
-            internal RouteSection(BinaryReaderEx br, int unk1) : base(br, unk1)
+            /// <summary>
+            /// Creates a new RouteSection with no routes.
+            /// </summary>
+            public RouteSection(int unk1 = 3) : base(unk1)
             {
                 Routes = new List<Route>();
             }

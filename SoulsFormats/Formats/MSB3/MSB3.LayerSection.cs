@@ -16,7 +16,10 @@ namespace SoulsFormats
             /// </summary>
             public List<Layer> Layers;
 
-            internal LayerSection(BinaryReaderEx br, int unk1) : base(br, unk1)
+            /// <summary>
+            /// Creates a new LayerSection with no layers.
+            /// </summary>
+            public LayerSection(int unk1 = 3) : base(unk1)
             {
                 Layers = new List<Layer>();
             }

@@ -53,7 +53,10 @@ namespace SoulsFormats
             /// </summary>
             public List<Part.ConnectCollision> ConnectCollisions;
 
-            internal PartsSection(BinaryReaderEx br, int unk1) : base(br, unk1)
+            /// <summary>
+            /// Creates a new PartsSection with no parts.
+            /// </summary>
+            public PartsSection(int unk1 = 3) : base(unk1)
             {
                 MapPieces = new List<Part.MapPiece>();
                 Objects = new List<Part.Object>();

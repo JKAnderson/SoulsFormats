@@ -42,7 +42,10 @@ namespace SoulsFormats
             /// </summary>
             public List<Model.Other> Others;
 
-            internal ModelSection(BinaryReaderEx br, int unk1) : base(br, unk1)
+            /// <summary>
+            /// Creates a new ModelSection with no models.
+            /// </summary>
+            public ModelSection(int unk1 = 3) : base(unk1)
             {
                 MapPieces = new List<Model.MapPiece>();
                 Objects = new List<Model.Object>();

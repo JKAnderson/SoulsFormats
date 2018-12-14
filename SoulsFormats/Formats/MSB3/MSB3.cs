@@ -48,6 +48,21 @@ namespace SoulsFormats
         /// </summary>
         public BoneNameSection BoneNames;
 
+        /// <summary>
+        /// Creates a new MSB3 with all sections empty.
+        /// </summary>
+        public MSB3()
+        {
+            Models = new ModelSection();
+            Events = new EventSection();
+            Regions = new PointSection();
+            Routes = new RouteSection();
+            Layers = new LayerSection();
+            Parts = new PartsSection();
+            PartsPoses = new PartsPoseSection();
+            BoneNames = new BoneNameSection();
+        }
+
         internal override bool Is(BinaryReaderEx br)
         {
             string magic = br.GetASCII(0, 4);
@@ -62,6 +77,7 @@ namespace SoulsFormats
             public List<Route> Routes;
             public List<Layer> Layers;
             public List<Part> Parts;
+            public List<PartsPose> PartsPoses;
             public List<string> BoneNames;
         }
 
@@ -95,41 +111,42 @@ namespace SoulsFormats
                 switch (type)
                 {
                     case "MODEL_PARAM_ST":
-                        Models = new ModelSection(br, unk1);
+                        Models = new ModelSection(unk1);
                         entries.Models = Models.Read(br, offsets);
                         break;
 
                     case "EVENT_PARAM_ST":
-                        Events = new EventSection(br, unk1);
+                        Events = new EventSection(unk1);
                         entries.Events = Events.Read(br, offsets);
                         break;
 
                     case "POINT_PARAM_ST":
-                        Regions = new PointSection(br, unk1);
+                        Regions = new PointSection(unk1);
                         entries.Regions = Regions.Read(br, offsets);
                         break;
 
                     case "ROUTE_PARAM_ST":
-                        Routes = new RouteSection(br, unk1);
+                        Routes = new RouteSection(unk1);
                         entries.Routes = Routes.Read(br, offsets);
                         break;
 
                     case "LAYER_PARAM_ST":
-                        Layers = new LayerSection(br, unk1);
+                        Layers = new LayerSection(unk1);
                         entries.Layers = Layers.Read(br, offsets);
                         break;
 
                     case "PARTS_PARAM_ST":
-                        Parts = new PartsSection(br, unk1);
+                        Parts = new PartsSection(unk1);
                         entries.Parts = Parts.Read(br, offsets);
                         break;
 
                     case "MAPSTUDIO_PARTS_POSE_ST":
-                        PartsPoses = new PartsPoseSection(br, unk1, offsets);
+                        PartsPoses = new PartsPoseSection(unk1);
+                        entries.PartsPoses = PartsPoses.Read(br, offsets);
                         break;
 
                     case "MAPSTUDIO_BONE_NAME_STRING":
-                        BoneNames = new BoneNameSection(br, unk1);
+                        BoneNames = new BoneNameSection(unk1);
                         entries.BoneNames = BoneNames.Read(br, offsets);
                         break;
 
@@ -161,6 +178,7 @@ namespace SoulsFormats
             entries.Routes = Routes.GetEntries();
             entries.Layers = Layers.GetEntries();
             entries.Parts = Parts.GetEntries();
+            entries.PartsPoses = PartsPoses.GetEntries();
             entries.BoneNames = BoneNames.GetEntries();
 
             Events.GetIndices(this, entries);
@@ -200,7 +218,7 @@ namespace SoulsFormats
             bw.Pad(8);
             bw.FillInt64("NextOffset", bw.Position);
 
-            PartsPoses.Write(bw);
+            PartsPoses.Write(bw, entries.PartsPoses);
             bw.Pad(8);
             bw.FillInt64("NextOffset", bw.Position);
 
@@ -266,7 +284,7 @@ namespace SoulsFormats
 
             internal abstract string Type { get; }
 
-            internal Section(BinaryReaderEx br, int unk1)
+            internal Section(int unk1)
             {
                 Unk1 = unk1;
             }

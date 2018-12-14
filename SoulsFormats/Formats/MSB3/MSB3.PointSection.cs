@@ -103,7 +103,10 @@ namespace SoulsFormats
             /// </summary>
             public List<Region.MufflingPortal> MufflingPortals;
 
-            internal PointSection(BinaryReaderEx br, int unk1) : base(br, unk1)
+            /// <summary>
+            /// Creates a new PointSection with no regions.
+            /// </summary>
+            public PointSection(int unk1 = 3) : base(unk1)
             {
                 General = new List<Region.General>();
                 Unk00s = new List<Region.Unk00>();
