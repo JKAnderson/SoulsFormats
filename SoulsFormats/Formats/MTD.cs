@@ -179,12 +179,6 @@ namespace SoulsFormats
             /// </summary>
             public int Unk04;
 
-            /// <summary>
-            /// Unknown; definitely one of those markers judging by the 3 bytes of garbage,
-            /// but the actual marker byte can be 0xC0, 0xC5, or 0xCA.
-            /// </summary>
-            public int UnkMarker;
-
             internal Param(BinaryReaderEx br)
             {
                 br.AssertInt32(0);
@@ -210,7 +204,12 @@ namespace SoulsFormats
                 br.AssertByte(0);
 
                 br.AssertInt32(1);
-                UnkMarker = br.ReadInt32();
+                if (Type == ParamType.Bool)
+                    AssertMarker(br, 0xC0);
+                else if (Type == ParamType.Int || Type == ParamType.Int2)
+                    AssertMarker(br, 0xC5);
+                else if (Type == ParamType.Float || Type == ParamType.Float2 || Type == ParamType.Float3 || Type == ParamType.Float4)
+                    AssertMarker(br, 0xCA);
 
                 if (Type == ParamType.Bool || Type == ParamType.Float || Type == ParamType.Int)
                     br.AssertInt32(1);
@@ -252,7 +251,6 @@ namespace SoulsFormats
                 bw.WriteShiftJISLengthPrefixed(Type.ToString().ToLower(), 0x04);
                 bw.WriteInt32(1);
                 bw.WriteInt32(0);
-
                 bw.ReserveInt32("ValueSize");
                 int valueStart = (int)bw.Position;
 
@@ -267,7 +265,12 @@ namespace SoulsFormats
                 bw.WriteByte(0);
 
                 bw.WriteInt32(1);
-                bw.WriteInt32(UnkMarker);
+                if (Type == ParamType.Bool)
+                    WriteMarker(bw, 0xC0);
+                else if (Type == ParamType.Int || Type == ParamType.Int2)
+                    WriteMarker(bw, 0xC5);
+                else if (Type == ParamType.Float || Type == ParamType.Float2 || Type == ParamType.Float3 || Type == ParamType.Float4)
+                    WriteMarker(bw, 0xCA);
 
                 if (Type == ParamType.Bool || Type == ParamType.Float || Type == ParamType.Int)
                     bw.WriteInt32(1);
