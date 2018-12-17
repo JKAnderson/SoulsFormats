@@ -525,34 +525,16 @@ namespace SoulsFormats
 
             public List<Vertex[]> GetFaces()
             {
+                ushort[] indices = ToTriangleList();
                 var faces = new List<Vertex[]>();
-                bool flip = false;
-                for (int i = 0; i < VertexIndices.Length - 2; i++)
+                for (int i = 0; i < indices.Length; i += 3)
                 {
-                    ushort vi1 = VertexIndices[i];
-                    ushort vi2 = VertexIndices[i + 1];
-                    ushort vi3 = VertexIndices[i + 2];
-
-                    if (vi1 == 0xFFFF)
+                    faces.Add(new Vertex[]
                     {
-                        flip = false;
-                    }
-                    else if (vi3 == 0xFFFF)
-                    {
-                        flip = false;
-                        i += 2;
-                    }
-                    else
-                    {
-                        if (vi1 != vi2 && vi1 != vi3 && vi2 != vi3)
-                        {
-                            if (!flip)
-                                faces.Add(new Vertex[] { Vertices[vi1], Vertices[vi2], Vertices[vi3] });
-                            else
-                                faces.Add(new Vertex[] { Vertices[vi3], Vertices[vi2], Vertices[vi1] });
-                        }
-                        flip = !flip;
-                    }
+                        Vertices[indices[i + 0]],
+                        Vertices[indices[i + 1]],
+                        Vertices[indices[i + 2]],
+                    });
                 }
                 return faces;
             }
@@ -560,6 +542,7 @@ namespace SoulsFormats
             public ushort[] ToTriangleList()
             {
                 var converted = new List<ushort>();
+                bool checkFlip = false;
                 bool flip = false;
                 for (int i = 0; i < VertexIndices.Length - 2; i++)
                 {
@@ -567,19 +550,35 @@ namespace SoulsFormats
                     ushort vi2 = VertexIndices[i + 1];
                     ushort vi3 = VertexIndices[i + 2];
 
-                    if (vi1 == 0xFFFF)
+                    if (vi1 == 0xFFFF || vi2 == 0xFFFF || vi3 == 0xFFFF)
                     {
-                        flip = false;
-                    }
-                    else if (vi3 == 0xFFFF)
-                    {
-                        flip = false;
-                        i += 2;
+                        checkFlip = true;
                     }
                     else
                     {
                         if (vi1 != vi2 && vi1 != vi3 && vi2 != vi3)
                         {
+                            // Every time the triangle strip restarts, compare the average vertex normal to the face normal
+                            // and flip the starting direction if they're pointing away from each other.
+                            // I don't know why this is necessary; in most models they always restart with the same orientation
+                            // as you'd expect. But on some, I can't discern any logic to it, thus this approach.
+                            // It's probably hideously slow because I don't know anything about math.
+                            // Feel free to hit me with a PR. :slight_smile:
+                            if (checkFlip)
+                            {
+                                Vertex v1 = Vertices[vi1];
+                                Vertex v2 = Vertices[vi2];
+                                Vertex v3 = Vertices[vi3];
+                                Vector3 n1 = new Vector3(v1.Normal.X, v1.Normal.Y, v1.Normal.Z);
+                                Vector3 n2 = new Vector3(v2.Normal.X, v2.Normal.Y, v2.Normal.Z);
+                                Vector3 n3 = new Vector3(v3.Normal.X, v3.Normal.Y, v3.Normal.Z);
+                                Vector3 vertexNormal = Vector3.Normalize((n1 + n2 + n3) / 3);
+                                Vector3 faceNormal = Vector3.Normalize(Vector3.Cross(v2.Position - v1.Position, v3.Position - v1.Position));
+                                float angle = Vector3.Dot(faceNormal, vertexNormal) / (faceNormal.Length() * vertexNormal.Length());
+                                flip = angle >= 0;
+                                checkFlip = false;
+                            }
+
                             if (!flip)
                             {
                                 converted.Add(vi1);
