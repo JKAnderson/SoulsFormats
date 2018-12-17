@@ -9,7 +9,7 @@ namespace SoulsFormats
     public class MTD : SoulsFile<MTD>
     {
         /// <summary>
-        /// Unknown.
+        /// A path to the shader source file, which also determines which compiled shader to use for this material.
         /// </summary>
         public string ShaderPath { get; set; }
 
@@ -19,149 +19,133 @@ namespace SoulsFormats
         public string Description { get; set; }
 
         /// <summary>
-        /// Values for this material stored in this MTD.
+        /// Values determining material properties.
         /// </summary>
         public List<Param> Params;
 
         /// <summary>
-        /// Values for this material stored somewhere else.
+        /// Texture types required by the material shader.
         /// </summary>
         public List<Texture> Textures;
 
-        private int unk1, unk2, unk3, unk4, unk5, unk7, unk8, unk9, unk10, unk11, unk12;
-
-        /// <summary>
-        /// Creates an uninitialized MTD. Should not be used publicly; use MTD.Read instead.
-        /// </summary>
-        public MTD() { }
-
-        /// <summary>
-        /// Returns true if the data appears to be an MTD.
-        /// </summary>
         internal override bool Is(BinaryReaderEx br)
         {
             string magic = br.GetASCII(0x2C, 4);
             return magic == "MTD ";
         }
 
-        /// <summary>
-        /// Reads MTD data from a BinaryReaderEx.
-        /// </summary>
         internal override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
-            br.AssertInt32(0);
-            int fileSize = br.ReadInt32();
 
             br.AssertInt32(0);
+            int fileSize = br.ReadInt32();
+            br.AssertInt32(0);
             br.AssertInt32(3);
-            unk1 = br.ReadInt32();
+            AssertMarker(br, 0x01);
             br.AssertInt32(0);
             br.AssertInt32(0x1C);
             br.AssertInt32(1);
             br.AssertInt32(2);
-            unk2 = br.ReadInt32();
+            AssertMarker(br, 0xB0);
             br.AssertInt32(4);
             br.AssertASCII("MTD ");
-            unk3 = br.ReadInt32();
+            AssertMarker(br, 0x34);
             br.AssertInt32(0x3E8);
-            unk4 = br.ReadInt32();
+            AssertMarker(br, 0x01);
             br.AssertInt32(0);
             int dataSize = br.ReadInt32();
             br.AssertInt32(2);
             br.AssertInt32(4);
+            AssertMarker(br, 0xA3);
 
-            unk5 = br.ReadInt32();
             ShaderPath = br.ReadShiftJISLengthPrefixed(0xA3);
             Description = br.ReadShiftJISLengthPrefixed(0x03);
+
             br.AssertInt32(1);
             br.AssertInt32(0);
             int paramSize = br.ReadInt32();
             br.AssertInt32(3);
             br.AssertInt32(4);
-            unk7 = br.ReadInt32();
+            AssertMarker(br, 0xA3);
             br.AssertInt32(0);
-
-            unk8 = br.ReadInt32();
+            AssertMarker(br, 0x03);
 
             int paramCount = br.ReadInt32();
             Params = new List<Param>(paramCount);
             for (int i = 0; i < paramCount; i++)
                 Params.Add(new Param(br));
 
-            unk9 = br.ReadInt32();
+            AssertMarker(br, 0x03);
 
             int textureCount = br.ReadInt32();
             Textures = new List<Texture>(textureCount);
             for (int i = 0; i < textureCount; i++)
                 Textures.Add(new Texture(br));
 
-            unk10 = br.ReadInt32();
+            AssertMarker(br, 0x04);
             br.AssertInt32(0);
-            unk11 = br.ReadInt32();
+            AssertMarker(br, 0x04);
             br.AssertInt32(0);
-            unk12 = br.ReadInt32();
+            AssertMarker(br, 0x04);
             br.AssertInt32(0);
         }
 
-        /// <summary>
-        /// Writes MTD data to a BinaryWriterEx.
-        /// </summary>
         internal override void Write(BinaryWriterEx bw)
         {
             bw.BigEndian = false;
+
             bw.WriteInt32(0);
             bw.ReserveInt32("FileSize");
-
             int fileStart = (int)bw.Position;
             bw.WriteInt32(0);
             bw.WriteInt32(3);
-            bw.WriteInt32(unk1);
+            WriteMarker(bw, 0x01);
             bw.WriteInt32(0);
             bw.WriteInt32(0x1C);
             bw.WriteInt32(1);
             bw.WriteInt32(2);
-            bw.WriteInt32(unk2);
+            WriteMarker(bw, 0xB0);
             bw.WriteInt32(4);
             bw.WriteASCII("MTD ");
-            bw.WriteInt32(unk3);
+            WriteMarker(bw, 0x34);
             bw.WriteInt32(0x3E8);
-            bw.WriteInt32(unk4);
+            WriteMarker(bw, 0x01);
             bw.WriteInt32(0);
             bw.ReserveInt32("DataSize");
             bw.WriteInt32(2);
             bw.WriteInt32(4);
-
             int dataStart = (int)bw.Position;
-            bw.WriteInt32(unk5);
+            WriteMarker(bw, 0xA3);
+
             bw.WriteShiftJISLengthPrefixed(ShaderPath, 0xA3);
             bw.WriteShiftJISLengthPrefixed(Description, 0x03);
+
             bw.WriteInt32(1);
             bw.WriteInt32(0);
             bw.ReserveInt32("ParamSize");
             bw.WriteInt32(3);
             bw.WriteInt32(4);
-            bw.WriteInt32(unk7);
+            WriteMarker(bw, 0xA3);
             bw.WriteInt32(0);
-
             int paramStart = (int)bw.Position;
-            bw.WriteInt32(unk8);
+            WriteMarker(bw, 0x03);
 
             bw.WriteInt32(Params.Count);
             foreach (Param internalEntry in Params)
                 internalEntry.Write(bw);
 
-            bw.WriteInt32(unk9);
+            WriteMarker(bw, 0x03);
 
             bw.WriteInt32(Textures.Count);
             foreach (Texture externalEntry in Textures)
                 externalEntry.Write(bw);
 
-            bw.WriteInt32(unk10);
+            WriteMarker(bw, 0x04);
             bw.WriteInt32(0);
-            bw.WriteInt32(unk11);
+            WriteMarker(bw, 0x04);
             bw.WriteInt32(0);
-            bw.WriteInt32(unk12);
+            WriteMarker(bw, 0x04);
             bw.WriteInt32(0);
 
             int position = (int)bw.Position;
@@ -191,34 +175,28 @@ namespace SoulsFormats
             public object Value;
 
             /// <summary>
-            /// Unknown.
+            /// Unknown; often seems like the size of this struct, but varies.
             /// </summary>
-            public int Unk2;
+            public int Unk04;
 
             /// <summary>
-            /// Unknown.
+            /// Unknown; definitely one of those markers judging by the 3 bytes of garbage,
+            /// but the actual marker byte can be 0xC0, 0xC5, or 0xCA.
             /// </summary>
-            public int Unk5;
-
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public int Unk8;
+            public int UnkMarker;
 
             internal Param(BinaryReaderEx br)
             {
                 br.AssertInt32(0);
-                Unk2 = br.ReadInt32();
+                Unk04 = br.ReadInt32();
                 br.AssertInt32(4);
                 br.AssertInt32(4);
-                Unk5 = br.ReadInt32();
+                AssertMarker(br, 0xA3);
                 Name = br.ReadShiftJISLengthPrefixed(0xA3);
                 string type = br.ReadShiftJISLengthPrefixed(0x04);
-                type = char.ToUpper(type[0]) + type.Substring(1);
-                Type = (ParamType)Enum.Parse(typeof(ParamType), type);
+                Type = (ParamType)Enum.Parse(typeof(ParamType), type, true);
                 br.AssertInt32(1);
                 br.AssertInt32(0);
-
                 int valueSize = br.ReadInt32();
 
                 if (Type == ParamType.Bool)
@@ -232,7 +210,7 @@ namespace SoulsFormats
                 br.AssertByte(0);
 
                 br.AssertInt32(1);
-                Unk8 = br.ReadInt32();
+                UnkMarker = br.ReadInt32();
 
                 if (Type == ParamType.Bool || Type == ParamType.Float || Type == ParamType.Int)
                     br.AssertInt32(1);
@@ -266,10 +244,10 @@ namespace SoulsFormats
             internal void Write(BinaryWriterEx bw)
             {
                 bw.WriteInt32(0);
-                bw.WriteInt32(Unk2);
+                bw.WriteInt32(Unk04);
                 bw.WriteInt32(4);
                 bw.WriteInt32(4);
-                bw.WriteInt32(Unk5);
+                WriteMarker(bw, 0xA3);
                 bw.WriteShiftJISLengthPrefixed(Name, 0xA3);
                 bw.WriteShiftJISLengthPrefixed(Type.ToString().ToLower(), 0x04);
                 bw.WriteInt32(1);
@@ -289,7 +267,7 @@ namespace SoulsFormats
                 bw.WriteByte(0);
 
                 bw.WriteInt32(1);
-                bw.WriteInt32(Unk8);
+                bw.WriteInt32(UnkMarker);
 
                 if (Type == ParamType.Bool || Type == ParamType.Float || Type == ParamType.Int)
                     bw.WriteInt32(1);
@@ -322,7 +300,7 @@ namespace SoulsFormats
             }
 
             /// <summary>
-            /// Returns the name of the param.
+            /// Returns the name and value of the param.
             /// </summary>
             public override string ToString()
             {
@@ -336,7 +314,7 @@ namespace SoulsFormats
         }
 
         /// <summary>
-        /// Value types of internal MTD values.
+        /// Value types of MTD params.
         /// </summary>
         public enum ParamType
         {
@@ -382,69 +360,57 @@ namespace SoulsFormats
         public class Texture
         {
             /// <summary>
-            /// The name of the value.
+            /// The type of texture (g_Diffuse, g_Specular, etc).
             /// </summary>
-            public string Name { get; set; }
+            public string Type { get; set; }
+
+            /// <summary>
+            /// Unknown; often seems like the size of this struct, but varies.
+            /// </summary>
+            public int Unk04;
+
+            /// <summary>
+            /// Seems to be one more than the index of the corresponding UV in the FLVER.
+            /// </summary>
+            public int UVNumber;
 
             /// <summary>
             /// Unknown.
             /// </summary>
             public int ShaderDataIndex;
 
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public int Unk2;
-
-            /// <summary>
-            /// Unknown. Appears to be garbage padding.
-            /// </summary>
-            public int Unk5;
-
-            /// <summary>
-            /// Unknown. Some kind of texture type, usually 1 for standard textures, 2 for _2 textures, 3 for lightmaps, 4 for blendmasks, and some other stuff.
-            /// </summary>
-            public int Unk6;
-
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public int Unk7;
-
             internal Texture(BinaryReaderEx br)
             {
                 br.AssertInt32(0);
-                Unk2 = br.ReadInt32();
+                Unk04 = br.ReadInt32();
                 br.AssertInt32(0x2000);
                 br.AssertInt32(3);
-                // Always starts with 0xA3, then 3 bytes of what looks like garbage text
-                Unk5 = br.ReadInt32();
-                Name = br.ReadShiftJISLengthPrefixed(0x35);
-                Unk6 = br.ReadInt32();
-                // Always starts with 0x35
-                Unk7 = br.ReadInt32();
+                AssertMarker(br, 0xA3);
+                Type = br.ReadShiftJISLengthPrefixed(0x35);
+                UVNumber = br.ReadInt32();
+                AssertMarker(br, 0x35);
                 ShaderDataIndex = br.ReadInt32();
             }
 
             internal void Write(BinaryWriterEx bw)
             {
                 bw.WriteInt32(0);
-                bw.WriteInt32(Unk2);
+                bw.WriteInt32(Unk04);
                 bw.WriteInt32(0x2000);
                 bw.WriteInt32(3);
-                bw.WriteInt32(Unk5);
-                bw.WriteShiftJISLengthPrefixed(Name, 0x35);
-                bw.WriteInt32(Unk6);
-                bw.WriteInt32(Unk7);
+                WriteMarker(bw, 0xA3);
+                bw.WriteShiftJISLengthPrefixed(Type, 0x35);
+                bw.WriteInt32(UVNumber);
+                WriteMarker(bw, 0x35);
                 bw.WriteInt32(ShaderDataIndex);
             }
 
             /// <summary>
-            /// Returns the name of the texture.
+            /// Returns the type of the texture.
             /// </summary>
             public override string ToString()
             {
-                return Name;
+                return Type;
             }
         }
 
@@ -487,6 +453,27 @@ namespace SoulsFormats
             HemDirDifSpcx3 = 1,
             HemEnvDifSpc = 3,
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
+        }
+
+        /// <summary>
+        /// Reads weird markers throughout the file that start with the same byte and then
+        /// have what is almost definitely just uninitialized memory for the next three.
+        /// </summary>
+        private static void AssertMarker(BinaryReaderEx br, byte start)
+        {
+            br.AssertByte(start);
+            br.Skip(3);
+        }
+
+        /// <summary>
+        /// Writes the given byte and three zeroes.
+        /// </summary>
+        private static void WriteMarker(BinaryWriterEx bw, byte start)
+        {
+            bw.WriteByte(start);
+            bw.WriteByte(0);
+            bw.WriteByte(0);
+            bw.WriteByte(0);
         }
     }
 }
