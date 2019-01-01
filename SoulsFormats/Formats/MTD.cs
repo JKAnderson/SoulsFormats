@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace SoulsFormats
 {
     /// <summary>
-    /// A material definition format used in DS1, DSR, DS2, DS3, DeS, BB, and NB.
+    /// A material definition format used in all souls games.
     /// </summary>
     public class MTD : SoulsFile<MTD>
     {
@@ -27,6 +27,17 @@ namespace SoulsFormats
         /// Texture types required by the material shader.
         /// </summary>
         public List<Texture> Textures;
+
+        /// <summary>
+        /// Creates a new MTD with default values.
+        /// </summary>
+        public MTD()
+        {
+            ShaderPath = "Unknown.spx";
+            Description = "";
+            Params = new List<Param>();
+            Textures = new List<Texture>();
+        }
 
         internal override bool Is(BinaryReaderEx br)
         {
@@ -370,17 +381,17 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown; often seems like the size of this struct, but varies.
             /// </summary>
-            public int Unk04;
+            public int Unk04 { get; set; }
 
             /// <summary>
-            /// Seems to be one more than the index of the corresponding UV in the FLVER.
+            /// Indicates the order of UVs in FLVER vertex data.
             /// </summary>
-            public int UVNumber;
+            public int UVNumber { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int ShaderDataIndex;
+            public int ShaderDataIndex { get; set; }
 
             internal Texture(BinaryReaderEx br)
             {

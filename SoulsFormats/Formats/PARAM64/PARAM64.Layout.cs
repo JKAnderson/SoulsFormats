@@ -23,28 +23,28 @@ namespace SoulsFormats
 
                     for (int i = 0; i < Count; i++)
                     {
-                        string type = this[i].Type;
+                        CellType type = this[i].Type;
 
-                        if (type.StartsWith("b8"))
+                        if (type == CellType.b8)
                         {
                             size += 1;
 
                             int j;
                             for (j = 0; j < 8; j++)
                             {
-                                if (i + j >= Count || this[i + j].Type != "b8")
+                                if (i + j >= Count || this[i + j].Type != CellType.b8)
                                     break;
                             }
                             i += j - 1;
                         }
-                        else if (type.StartsWith("b32"))
+                        else if (type == CellType.b32)
                         {
                             size += 4;
 
                             int j;
                             for (j = 0; j < 32; j++)
                             {
-                                if (i + j >= Count || this[i + j].Type != "b32")
+                                if (i + j >= Count || this[i + j].Type != CellType.b32)
                                     break;
                             }
                             i += j - 1;
@@ -120,53 +120,69 @@ namespace SoulsFormats
             }
 
             /// <summary>
-            /// Parse a string according to the given param type.
+            /// Parse a string according to the given param type and culture.
             /// </summary>
-            public static object ParseParamValue(string type, string value)
+            public static object ParseParamValue(CellType type, string value, CultureInfo culture)
             {
-                if (type == "fixstr" || type == "fixstrW")
+                if (type == CellType.fixstr || type == CellType.fixstrW)
                     return value;
-                else if (type == "b8" || type == "b32")
+                else if (type == CellType.b8 || type == CellType.b32)
                     return bool.Parse(value);
-                else if (type == "s8")
+                else if (type == CellType.s8)
                     return sbyte.Parse(value);
-                else if (type == "u8")
+                else if (type == CellType.u8)
                     return byte.Parse(value);
-                else if (type == "x8")
+                else if (type == CellType.x8)
                     return Convert.ToByte(value, 16);
-                else if (type == "s16")
+                else if (type == CellType.s16)
                     return short.Parse(value);
-                else if (type == "u16")
+                else if (type == CellType.u16)
                     return ushort.Parse(value);
-                else if (type == "x16")
+                else if (type == CellType.x16)
                     return Convert.ToUInt16(value, 16);
-                else if (type == "s32")
+                else if (type == CellType.s32)
                     return int.Parse(value);
-                else if (type == "u32")
+                else if (type == CellType.u32)
                     return uint.Parse(value);
-                else if (type == "x32")
+                else if (type == CellType.x32)
                     return Convert.ToUInt32(value, 16);
-                else if (type == "f32")
-                    return float.Parse(value, CultureInfo.InvariantCulture);
+                else if (type == CellType.f32)
+                    return float.Parse(value, culture);
                 else
                     throw new InvalidCastException("Unparsable type: " + type);
             }
 
             /// <summary>
-            /// Convert a param value of the specified type to a string.
+            /// Parse a string according to the given param type and invariant culture.
             /// </summary>
-            public static string ParamValueToString(string type, object value)
+            public static object ParseParamValue(CellType type, string value)
             {
-                if (type == "x8")
+                return ParseParamValue(type, value, CultureInfo.InvariantCulture);
+            }
+
+            /// <summary>
+            /// Convert a param value of the specified type to a string using the given culture.
+            /// </summary>
+            public static string ParamValueToString(CellType type, object value, CultureInfo culture)
+            {
+                if (type == CellType.x8)
                     return $"0x{value:X2}";
-                else if (type == "x16")
+                else if (type == CellType.x16)
                     return $"0x{value:X4}";
-                else if (type == "x32")
+                else if (type == CellType.x32)
                     return $"0x{value:X8}";
-                else if (type == "f32")
-                    return Convert.ToString((float)value, CultureInfo.InvariantCulture);
+                else if (type == CellType.f32)
+                    return Convert.ToString(value, culture);
                 else
                     return value.ToString();
+            }
+
+            /// <summary>
+            /// Convert a param value of the specified type to a string using invariant culture.
+            /// </summary>
+            public static string ParamValueToString(CellType type, object value)
+            {
+                return ParamValueToString(type, value, CultureInfo.InvariantCulture);
             }
 
             /// <summary>
@@ -177,7 +193,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// The type of the cell.
                 /// </summary>
-                public string Type { get; set; }
+                public CellType Type { get; set; }
 
                 /// <summary>
                 /// The name of the cell.
@@ -193,16 +209,16 @@ namespace SoulsFormats
                 {
                     get
                     {
-                        if (Type == "fixstr" || Type == "fixstrW" || Type == "dummy8")
+                        if (IsVariableSize)
                             return size;
-                        else if (Type == "s8" || Type == "u8" || Type == "x8")
+                        else if (Type == CellType.s8 || Type == CellType.u8 || Type == CellType.x8)
                             return 1;
-                        else if (Type == "s16" || Type == "u16" || Type == "x16")
+                        else if (Type == CellType.s16 || Type == CellType.u16 || Type == CellType.x16)
                             return 2;
-                        else if (Type == "s32" || Type == "u32" || Type == "x32" || Type == "f32")
+                        else if (Type == CellType.s32 || Type == CellType.u32 || Type == CellType.x32 || Type == CellType.f32)
                             return 4;
                         // Not meaningful
-                        else if (Type == "b8" || Type == "b32")
+                        else if (Type == CellType.b8 || Type == CellType.b32)
                             return 0;
                         else
                             throw new InvalidCastException("Unknown type: " + Type);
@@ -210,33 +226,46 @@ namespace SoulsFormats
 
                     set
                     {
-                        if (Type == "fixstr" || Type == "fixstrW" || Type == "dummy8")
+                        if (IsVariableSize)
                             size = value;
                         else
                             throw new InvalidOperationException("Size may only be set for variable-width types: fixstr, fixstrW, and dummy8.");
                     }
                 }
 
+                private object def;
+
                 /// <summary>
                 /// The default value to use when creating a new row.
                 /// </summary>
-                public object Default { get; set; }
-
-                /// <summary>
-                /// Whether the size can be modified.
-                /// </summary>
-                public bool IsVariableSize
+                public object Default
                 {
                     get
                     {
-                        return Type == "fixstr" || Type == "fixstrW" || Type == "dummy8";
+                        if (Type == CellType.dummy8)
+                            return new byte[Size];
+                        else
+                            return def;
+                    }
+
+                    set
+                    {
+                        if (Type == CellType.dummy8)
+                            throw new InvalidOperationException("Default may not be set for dummy8.");
+                        else
+                            def = value;
                     }
                 }
 
                 /// <summary>
+                /// Whether the size can be modified.
+                /// </summary>
+                public bool IsVariableSize => Type == CellType.fixstr || Type == CellType.fixstrW || Type == CellType.dummy8;
+
+                /// <summary>
                 /// Create a new entry of a fixed-width type.
                 /// </summary>
-                public Entry(string type, string name, object def)
+                public Entry(CellType type, string name, object def)
                 {
                     Type = type;
                     Name = name;
@@ -246,23 +275,23 @@ namespace SoulsFormats
                 /// <summary>
                 /// Create a new entry of a variable-width type. Default is ignored for dummy8.
                 /// </summary>
-                public Entry(string type, string name, int size, object def)
+                public Entry(CellType type, string name, int size, object def)
                 {
                     Type = type;
                     Name = name;
-                    this.size = size;
-                    Default = Type == "dummy8" ? null : def;
+                    Size = size;
+                    Default = Type == CellType.dummy8 ? null : def;
                 }
 
                 internal Entry(XmlNode node)
                 {
                     Name = node.SelectSingleNode("name").InnerText;
-                    Type = node.SelectSingleNode("type").InnerText;
+                    Type = (CellType)Enum.Parse(typeof(CellType), node.SelectSingleNode("type").InnerText, true);
 
-                    if (Type == "fixstr" || Type == "fixstrW" || Type == "dummy8")
+                    if (IsVariableSize)
                         size = int.Parse(node.SelectSingleNode("size").InnerText);
 
-                    if (Type != "dummy8")
+                    if (Type != CellType.dummy8)
                         Default = ParseParamValue(Type, node.SelectSingleNode("default").InnerText);
                 }
 
@@ -270,17 +299,98 @@ namespace SoulsFormats
                 {
                     xw.WriteStartElement("entry");
                     xw.WriteElementString("name", Name);
-                    xw.WriteElementString("type", Type);
+                    xw.WriteElementString("type", Type.ToString());
 
-                    if (Type == "fixstr" || Type == "fixstrW" || Type == "dummy8")
+                    if (IsVariableSize)
                         xw.WriteElementString("size", Size.ToString());
 
-                    if (Type != "dummy8")
+                    if (Type != CellType.dummy8)
                         xw.WriteElementString("default", ParamValueToString(Type, Default));
 
                     xw.WriteEndElement();
                 }
             }
+        }
+
+        /// <summary>
+        /// Possible types for values in a param.
+        /// </summary>
+        public enum CellType
+        {
+            /// <summary>
+            /// Array of bytes.
+            /// </summary>
+            dummy8,
+
+            /// <summary>
+            /// 1-bit bool in a 1-byte field.
+            /// </summary>
+            b8,
+
+            /// <summary>
+            /// 1-bit bool in a 4-byte field.
+            /// </summary>
+            b32,
+
+            /// <summary>
+            /// Unsigned byte.
+            /// </summary>
+            u8,
+
+            /// <summary>
+            /// Unsigned byte, display as hex.
+            /// </summary>
+            x8,
+
+            /// <summary>
+            /// Signed byte.
+            /// </summary>
+            s8,
+
+            /// <summary>
+            /// Unsigned short.
+            /// </summary>
+            u16,
+
+            /// <summary>
+            /// Unsigned short, display as hex.
+            /// </summary>
+            x16,
+
+            /// <summary>
+            /// Signed short.
+            /// </summary>
+            s16,
+
+            /// <summary>
+            /// Unsigned int.
+            /// </summary>
+            u32,
+
+            /// <summary>
+            /// Unsigned int, display as hex.
+            /// </summary>
+            x32,
+
+            /// <summary>
+            /// Signed int.
+            /// </summary>
+            s32,
+
+            /// <summary>
+            /// Single-precision float.
+            /// </summary>
+            f32,
+
+            /// <summary>
+            /// Shift-JIS encoded string.
+            /// </summary>
+            fixstr,
+
+            /// <summary>
+            /// UTF-16 encoded string.
+            /// </summary>
+            fixstrW,
         }
     }
 }

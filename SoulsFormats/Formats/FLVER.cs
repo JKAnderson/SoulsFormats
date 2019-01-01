@@ -1766,6 +1766,22 @@ namespace SoulsFormats
                 ExtraBytes = null;
             }
 
+            /// <summary>
+            /// Creates a new Vertex with values copied from another.
+            /// </summary>
+            public Vertex(Vertex clone)
+            {
+                Position = clone.Position;
+                BoneIndices = (int[])clone.BoneIndices?.Clone();
+                BoneWeights = (float[])clone.BoneWeights?.Clone();
+                UVs = new List<Vector3>(clone.UVs);
+                Normal = clone.Normal;
+                Tangents = new List<Vector4>(clone.Tangents);
+                Colors = new List<Color>(clone.Colors);
+                UnknownVector4 = (byte[])clone.UnknownVector4?.Clone();
+                ExtraBytes = (byte[])clone.ExtraBytes?.Clone();
+            }
+
             internal void Read(BinaryReaderEx br, BufferLayout layout, int vertexSize, int version)
             {
                 float uvFactor = 1024;

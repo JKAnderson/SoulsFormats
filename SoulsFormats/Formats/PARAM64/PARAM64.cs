@@ -258,19 +258,10 @@ namespace SoulsFormats
             {
                 ID = id;
                 Name = name;
+
                 Cells = new List<Cell>(layout.Count);
-
                 foreach (Layout.Entry entry in layout)
-                {
-                    object value;
-
-                    if (entry.Type.StartsWith("dummy8"))
-                        value = new byte[entry.Size];
-                    else
-                        value = entry.Default;
-
-                    Cells.Add(new Cell(entry, value));
-                }
+                    Cells.Add(new Cell(entry, entry.Default));
             }
 
             internal Row(BinaryReaderEx br, short Unk4)
@@ -301,37 +292,37 @@ namespace SoulsFormats
                 for (int i = 0; i < layout.Count; i++)
                 {
                     Layout.Entry entry = layout[i];
-                    string type = entry.Type;
+                    CellType type = entry.Type;
 
                     object value = null;
 
-                    if (type == "s8")
+                    if (type == CellType.s8)
                         value = br.ReadSByte();
-                    else if (type == "u8" || type == "x8")
+                    else if (type == CellType.u8 || type == CellType.x8)
                         value = br.ReadByte();
-                    else if (type == "s16")
+                    else if (type == CellType.s16)
                         value = br.ReadInt16();
-                    else if (type == "u16" || type == "x16")
+                    else if (type == CellType.u16 || type == CellType.x16)
                         value = br.ReadUInt16();
-                    else if (type == "s32")
+                    else if (type == CellType.s32)
                         value = br.ReadInt32();
-                    else if (type == "u32" || type == "x32")
+                    else if (type == CellType.u32 || type == CellType.x32)
                         value = br.ReadUInt32();
-                    else if (type == "f32")
+                    else if (type == CellType.f32)
                         value = br.ReadSingle();
-                    else if (type == "dummy8")
+                    else if (type == CellType.dummy8)
                         value = br.ReadBytes(entry.Size);
-                    else if (type == "fixstr")
+                    else if (type == CellType.fixstr)
                         value = br.ReadFixStr(entry.Size);
-                    else if (type == "fixstrW")
+                    else if (type == CellType.fixstrW)
                         value = br.ReadFixStrW(entry.Size);
-                    else if (type == "b8")
+                    else if (type == CellType.b8)
                     {
                         byte b = br.ReadByte();
                         int j;
                         for (j = 0; j < 8; j++)
                         {
-                            if (i + j >= layout.Count || layout[i + j].Type != "b8")
+                            if (i + j >= layout.Count || layout[i + j].Type != CellType.b8)
                                 break;
 
                             byte mask = (byte)(1 << j);
@@ -339,13 +330,13 @@ namespace SoulsFormats
                         }
                         i += j - 1;
                     }
-                    else if (type == "b32")
+                    else if (type == CellType.b32)
                     {
                         byte[] b = br.ReadBytes(4);
                         int j;
                         for (j = 0; j < 32; j++)
                         {
-                            if (i + j >= layout.Count || layout[i + j].Type != "b32")
+                            if (i + j >= layout.Count || layout[i + j].Type != CellType.b32)
                                 break;
 
                             byte mask = (byte)(1 << (j % 8));
@@ -377,39 +368,39 @@ namespace SoulsFormats
                 {
                     Cell cell = Cells[j];
                     Layout.Entry entry = layout[j];
-                    string type = entry.Type;
+                    CellType type = entry.Type;
                     object value = cell.Value;
 
                     if (entry.Name != cell.Name || type != cell.Type)
                         throw new FormatException("Layout does not match cells.");
 
-                    if (type == "s8")
+                    if (type == CellType.s8)
                         bw.WriteSByte((sbyte)value);
-                    else if (type == "u8" || type == "x8")
+                    else if (type == CellType.u8 || type == CellType.x8)
                         bw.WriteByte((byte)value);
-                    else if (type == "s16")
+                    else if (type == CellType.s16)
                         bw.WriteInt16((short)value);
-                    else if (type == "u16" || type == "x16")
+                    else if (type == CellType.u16 || type == CellType.x16)
                         bw.WriteUInt16((ushort)value);
-                    else if (type == "s32")
+                    else if (type == CellType.s32)
                         bw.WriteInt32((int)value);
-                    else if (type == "u32" || type == "x32")
+                    else if (type == CellType.u32 || type == CellType.x32)
                         bw.WriteUInt32((uint)value);
-                    else if (type == "f32")
+                    else if (type == CellType.f32)
                         bw.WriteSingle((float)value);
-                    else if (type == "dummy8")
+                    else if (type == CellType.dummy8)
                         bw.WriteBytes((byte[])value);
-                    else if (type == "fixstr")
+                    else if (type == CellType.fixstr)
                         bw.WriteFixStr((string)value, entry.Size);
-                    else if (type == "fixstrW")
+                    else if (type == CellType.fixstrW)
                         bw.WriteFixStrW((string)value, entry.Size);
-                    else if (type == "b8")
+                    else if (type == CellType.b8)
                     {
                         byte b = 0;
                         int k;
                         for (k = 0; k < 8; k++)
                         {
-                            if (j + k >= layout.Count || layout[j + k].Type != "b8")
+                            if (j + k >= layout.Count || layout[j + k].Type != CellType.b8)
                                 break;
 
                             if ((bool)Cells[j + k].Value)
@@ -418,13 +409,13 @@ namespace SoulsFormats
                         j += k - 1;
                         bw.WriteByte(b);
                     }
-                    else if (type == "b32")
+                    else if (type == CellType.b32)
                     {
                         byte[] b = new byte[4];
                         int k;
                         for (k = 0; k < 32; k++)
                         {
-                            if (j + k >= layout.Count || layout[j + k].Type != "b32")
+                            if (j + k >= layout.Count || layout[j + k].Type != CellType.b32)
                                 break;
 
                             if ((bool)Cells[j + k].Value)
@@ -475,14 +466,14 @@ namespace SoulsFormats
         public class Cell
         {
             /// <summary>
-            /// 
+            /// Layout containing name and type of this cell.
             /// </summary>
             public Layout.Entry Layout;
 
             /// <summary>
             /// The type of value stored in this cell.
             /// </summary>
-            public string Type => Layout.Type;
+            public CellType Type => Layout.Type;
 
             /// <summary>
             /// A name given to this cell based on the param layout; no functional significance.
