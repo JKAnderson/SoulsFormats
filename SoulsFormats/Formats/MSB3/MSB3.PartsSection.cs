@@ -235,6 +235,11 @@ namespace SoulsFormats
             public int EventEntityID;
 
             /// <summary>
+            /// Used to identify multiple parts with the same ID in event scripts.
+            /// </summary>
+            public int EventEntityGroup;
+
+            /// <summary>
             /// Unknown.
             /// </summary>
             public sbyte OldLightID, OldFogID, OldScatterID, OldLensFlareID;
@@ -267,7 +272,7 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int UnkB18, UnkB1C, UnkB20, UnkB24, UnkB28, UnkB30, UnkB34, UnkB38;
+            public int UnkB18, UnkB20, UnkB24, UnkB28, UnkB30, UnkB34, UnkB38;
 
             private long UnkOffset1Delta, UnkOffset2Delta;
 
@@ -323,7 +328,7 @@ namespace SoulsFormats
                 UnkB16 = 0;
                 UnkB17 = 0;
                 UnkB18 = 0;
-                UnkB1C = 0;
+                EventEntityGroup = -1;
                 UnkB20 = 0;
                 UnkB24 = 0;
                 UnkB28 = 0;
@@ -387,7 +392,7 @@ namespace SoulsFormats
                 UnkB16 = clone.UnkB16;
                 UnkB17 = clone.UnkB17;
                 UnkB18 = clone.UnkB18;
-                UnkB1C = clone.UnkB1C;
+                EventEntityGroup = clone.EventEntityGroup;
                 UnkB20 = clone.UnkB20;
                 UnkB24 = clone.UnkB24;
                 UnkB28 = clone.UnkB28;
@@ -482,7 +487,7 @@ namespace SoulsFormats
                 UnkB17 = br.ReadByte();
 
                 UnkB18 = br.ReadInt32();
-                UnkB1C = br.ReadInt32();
+                EventEntityGroup = br.ReadInt32();
                 UnkB20 = br.ReadInt32();
                 UnkB24 = br.ReadInt32();
                 UnkB28 = br.ReadInt32();
@@ -585,7 +590,7 @@ namespace SoulsFormats
                 bw.WriteByte(UnkB17);
 
                 bw.WriteInt32(UnkB18);
-                bw.WriteInt32(UnkB1C);
+                bw.WriteInt32(EventEntityGroup);
                 bw.WriteInt32(UnkB20);
                 bw.WriteInt32(UnkB24);
                 bw.WriteInt32(UnkB28);

@@ -41,9 +41,17 @@ namespace SoulsFormats
         public List<BufferLayout> BufferLayouts;
 
         /// <summary>
-        /// Creates an uninitialized FLVER. Should not be called publicly; use FLVER.Read instead.
+        /// Creates a new FLVER with a default header and empty lists.
         /// </summary>
-        public FLVER() { }
+        public FLVER()
+        {
+            Header = new FLVERHeader();
+            Dummies = new List<Dummy>();
+            Materials = new List<Material>();
+            Bones = new List<Bone>();
+            Meshes = new List<Mesh>();
+            BufferLayouts = new List<BufferLayout>();
+        }
 
         /// <summary>
         /// Returns true if the data appears to be a FLVER.
@@ -456,6 +464,22 @@ namespace SoulsFormats
             /// Unknown.
             /// </summary>
             public int Unk68;
+
+            /// <summary>
+            /// Creates a new FLVERHeader with default values.
+            /// </summary>
+            public FLVERHeader()
+            {
+                BigEndian = false;
+                BoundingBoxMin = Vector3.Zero;
+                BoundingBoxMax = Vector3.Zero;
+                Unk40 = 0;
+                Unk48 = 0;
+                Unk4A = false;
+                Unk4E = 0;
+                Unk5C = false;
+                Unk68 = 0;
+            }
         }
 
         /// <summary>
@@ -507,6 +531,24 @@ namespace SoulsFormats
             /// Unknown.
             /// </summary>
             public bool Flag1, Flag2;
+
+            /// <summary>
+            /// Creates a new dummy point with default values.
+            /// </summary>
+            public Dummy()
+            {
+                Position = Vector3.Zero;
+                Forward = Vector3.Zero;
+                Upward = Vector3.Zero;
+                ReferenceID = 0;
+                DummyBoneIndex = -1;
+                AttachBoneIndex = -1;
+                Unk0C = 0;
+                Unk0D = 0;
+                Unk0E = 0;
+                Flag1 = false;
+                Flag2 = false;
+            }
 
             internal Dummy(BinaryReaderEx br)
             {
@@ -590,6 +632,18 @@ namespace SoulsFormats
             public byte[] GXBytes;
 
             private int textureIndex, textureCount;
+
+            /// <summary>
+            /// Creates a new Material with null or default values.
+            /// </summary>
+            public Material()
+            {
+                Name = null;
+                MTD = null;
+                Flags = 0;
+                Textures = new List<Texture>();
+                GXBytes = null;
+            }
 
             /// <summary>
             /// Creates a new Material with the given values and an empty texture list.
@@ -760,6 +814,24 @@ namespace SoulsFormats
             /// </summary>
             public bool Nub;
 
+            /// <summary>
+            /// Creates a new Bone with default values.
+            /// </summary>
+            public Bone()
+            {
+                Name = "";
+                ParentIndex = -1;
+                ChildIndex = -1;
+                NextSiblingIndex = -1;
+                PreviousSiblingIndex = -1;
+                Translation = Vector3.Zero;
+                Rotation = Vector3.Zero;
+                Scale = Vector3.One;
+                BoundingBoxMin = Vector3.Zero;
+                BoundingBoxMax = Vector3.Zero;
+                Nub = false;
+            }
+
             internal Bone(BinaryReaderEx br)
             {
                 Translation = br.ReadVector3();
@@ -895,6 +967,23 @@ namespace SoulsFormats
             public int Unk1;
 
             private int[] faceSetIndices, vertexBufferIndices;
+
+            /// <summary>
+            /// Creates a new Mesh with default values.
+            /// </summary>
+            public Mesh()
+            {
+                Dynamic = false;
+                MaterialIndex = 0;
+                DefaultBoneIndex = -1;
+                BoneIndices = new List<int>();
+                FaceSets = new List<FaceSet>();
+                VertexBuffers = new List<VertexBuffer>();
+                Vertices = new List<Vertex>();
+                BoundingBoxMin = Vector3.Zero;
+                BoundingBoxMax = Vector3.Zero;
+                Unk1 = 0;
+            }
 
             internal Mesh(BinaryReaderEx br, int version)
             {
@@ -1125,6 +1214,20 @@ namespace SoulsFormats
             /// Indexes to vertices in a mesh.
             /// </summary>
             public uint[] Vertices;
+
+            /// <summary>
+            /// Creates a new FaceSet with default values and null vertices.
+            /// </summary>
+            public FaceSet()
+            {
+                Flags = FSFlags.None;
+                TriangleStrip = false;
+                CullBackfaces = true;
+                Unk06 = 0;
+                Unk07 = 0;
+                IndexSize = 16;
+                Vertices = null;
+            }
 
             /// <summary>
             /// Creates a new FaceSet with the specified values.
@@ -1633,6 +1736,22 @@ namespace SoulsFormats
             /// Unknown.
             /// </summary>
             public int Unk14, Unk18, Unk1C;
+
+            /// <summary>
+            /// Creates a new Texture with default values.
+            /// </summary>
+            public Texture()
+            {
+                Type = "";
+                Path = "";
+                ScaleX = 1;
+                ScaleY = 1;
+                Unk10 = 0;
+                Unk11 = false;
+                Unk14 = 0;
+                Unk18 = 0;
+                Unk1C = 0;
+            }
 
             /// <summary>
             /// Creates a new Texture with the specified values.
