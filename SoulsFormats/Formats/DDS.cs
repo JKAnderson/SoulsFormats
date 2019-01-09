@@ -180,7 +180,7 @@ namespace SoulsFormats
             {
                 dxgiFormat = br.ReadEnum32<DXGI_FORMAT>();
                 resourceDimension = br.ReadEnum32<DIMENSION>();
-                miscFlag = br.ReadEnum32<RESOURCE_MISC>();
+                miscFlag = (RESOURCE_MISC)br.ReadUInt32();
                 arraySize = br.ReadUInt32();
                 miscFlags2 = br.ReadEnum32<ALPHA_MODE>();
             }
