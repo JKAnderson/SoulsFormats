@@ -2158,12 +2158,12 @@ namespace SoulsFormats
                             if (member.Type == BufferLayout.MemberType.Byte4C)
                             {
                                 for (int i = 0; i < 4; i++)
-                                    bw.WriteSByte((sbyte)(BoneWeights[i] * sbyte.MaxValue));
+                                    bw.WriteSByte((sbyte)Math.Round(BoneWeights[i] * sbyte.MaxValue));
                             }
                             else if (member.Type == BufferLayout.MemberType.Short4toFloat4A)
                             {
                                 for (int i = 0; i < 4; i++)
-                                    bw.WriteInt16((short)(BoneWeights[i] * short.MaxValue));
+                                    bw.WriteInt16((short)Math.Round(BoneWeights[i] * short.MaxValue));
                             }
                             else
                                 throw new NotImplementedException();
@@ -2196,31 +2196,31 @@ namespace SoulsFormats
                             }
                             else if (member.Type == BufferLayout.MemberType.Byte4A)
                             {
-                                bw.WriteByte((byte)(Normal.X * 127 + 127));
-                                bw.WriteByte((byte)(Normal.Y * 127 + 127));
-                                bw.WriteByte((byte)(Normal.Z * 127 + 127));
-                                bw.WriteByte((byte)(Normal.W * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Normal.X * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Normal.Y * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Normal.Z * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Normal.W * 127 + 127));
                             }
                             else if (member.Type == BufferLayout.MemberType.Byte4B)
                             {
-                                bw.WriteByte((byte)(Normal.X * 127 + 127));
-                                bw.WriteByte((byte)(Normal.Y * 127 + 127));
-                                bw.WriteByte((byte)(Normal.Z * 127 + 127));
-                                bw.WriteByte((byte)(Normal.W * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Normal.X * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Normal.Y * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Normal.Z * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Normal.W * 127 + 127));
                             }
                             else if (member.Type == BufferLayout.MemberType.Byte4C)
                             {
-                                bw.WriteByte((byte)(Normal.X * 127 + 127));
-                                bw.WriteByte((byte)(Normal.Y * 127 + 127));
-                                bw.WriteByte((byte)(Normal.Z * 127 + 127));
-                                bw.WriteByte((byte)(Normal.W * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Normal.X * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Normal.Y * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Normal.Z * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Normal.W * 127 + 127));
                             }
                             else if (member.Type == BufferLayout.MemberType.Short4toFloat4B)
                             {
-                                bw.WriteInt16((short)(Normal.X * 32767 + 32767));
-                                bw.WriteInt16((short)(Normal.Y * 32767 + 32767));
-                                bw.WriteInt16((short)(Normal.Z * 32767 + 32767));
-                                bw.WriteInt16((short)(Normal.W * 32767 + 32767));
+                                bw.WriteInt16((short)Math.Round(Normal.X * 32767 + 32767));
+                                bw.WriteInt16((short)Math.Round(Normal.Y * 32767 + 32767));
+                                bw.WriteInt16((short)Math.Round(Normal.Z * 32767 + 32767));
+                                bw.WriteInt16((short)Math.Round(Normal.W * 32767 + 32767));
                             }
                             else
                                 throw new NotImplementedException();
@@ -2239,37 +2239,37 @@ namespace SoulsFormats
                             }
                             else if (member.Type == BufferLayout.MemberType.Byte4A)
                             {
-                                bw.WriteInt16((short)uv.X);
-                                bw.WriteInt16((short)uv.Y);
+                                bw.WriteInt16((short)Math.Round(uv.X));
+                                bw.WriteInt16((short)Math.Round(uv.Y));
                             }
                             else if (member.Type == BufferLayout.MemberType.Byte4B)
                             {
-                                bw.WriteInt16((short)uv.X);
-                                bw.WriteInt16((short)uv.Y);
+                                bw.WriteInt16((short)Math.Round(uv.X));
+                                bw.WriteInt16((short)Math.Round(uv.Y));
                             }
                             else if (member.Type == BufferLayout.MemberType.Short2toFloat2)
                             {
-                                bw.WriteInt16((short)uv.X);
-                                bw.WriteInt16((short)uv.Y);
+                                bw.WriteInt16((short)Math.Round(uv.X));
+                                bw.WriteInt16((short)Math.Round(uv.Y));
                             }
                             else if (member.Type == BufferLayout.MemberType.Byte4C)
                             {
-                                bw.WriteInt16((short)uv.X);
-                                bw.WriteInt16((short)uv.Y);
+                                bw.WriteInt16((short)Math.Round(uv.X));
+                                bw.WriteInt16((short)Math.Round(uv.Y));
                             }
                             else if (member.Type == BufferLayout.MemberType.UV)
                             {
-                                bw.WriteInt16((short)uv.X);
-                                bw.WriteInt16((short)uv.Y);
+                                bw.WriteInt16((short)Math.Round(uv.X));
+                                bw.WriteInt16((short)Math.Round(uv.Y));
                             }
                             else if (member.Type == BufferLayout.MemberType.UVPair)
                             {
-                                bw.WriteInt16((short)uv.X);
-                                bw.WriteInt16((short)uv.Y);
+                                bw.WriteInt16((short)Math.Round(uv.X));
+                                bw.WriteInt16((short)Math.Round(uv.Y));
 
                                 uv = uvQueue.Dequeue() * uvFactor;
-                                bw.WriteInt16((short)uv.X);
-                                bw.WriteInt16((short)uv.Y);
+                                bw.WriteInt16((short)Math.Round(uv.X));
+                                bw.WriteInt16((short)Math.Round(uv.Y));
                             }
                             else
                                 throw new NotImplementedException();
@@ -2279,24 +2279,24 @@ namespace SoulsFormats
                             Vector4 tangent = tangentQueue.Dequeue();
                             if (member.Type == BufferLayout.MemberType.Byte4A)
                             {
-                                bw.WriteByte((byte)(tangent.X * 127 + 127));
-                                bw.WriteByte((byte)(tangent.Y * 127 + 127));
-                                bw.WriteByte((byte)(tangent.Z * 127 + 127));
-                                bw.WriteByte((byte)(tangent.W * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(tangent.X * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(tangent.Y * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(tangent.Z * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(tangent.W * 127 + 127));
                             }
                             else if (member.Type == BufferLayout.MemberType.Byte4B)
                             {
-                                bw.WriteByte((byte)(tangent.X * 127 + 127));
-                                bw.WriteByte((byte)(tangent.Y * 127 + 127));
-                                bw.WriteByte((byte)(tangent.Z * 127 + 127));
-                                bw.WriteByte((byte)(tangent.W * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(tangent.X * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(tangent.Y * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(tangent.Z * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(tangent.W * 127 + 127));
                             }
                             else if (member.Type == BufferLayout.MemberType.Byte4C)
                             {
-                                bw.WriteByte((byte)(tangent.X * 127 + 127));
-                                bw.WriteByte((byte)(tangent.Y * 127 + 127));
-                                bw.WriteByte((byte)(tangent.Z * 127 + 127));
-                                bw.WriteByte((byte)(tangent.W * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(tangent.X * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(tangent.Y * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(tangent.Z * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(tangent.W * 127 + 127));
                             }
                             else
                                 throw new NotImplementedException();
@@ -2326,17 +2326,17 @@ namespace SoulsFormats
                             }
                             else if (member.Type == BufferLayout.MemberType.Byte4A)
                             {
-                                bw.WriteByte((byte)(color.A * 255));
-                                bw.WriteByte((byte)(color.R * 255));
-                                bw.WriteByte((byte)(color.G * 255));
-                                bw.WriteByte((byte)(color.B * 255));
+                                bw.WriteByte((byte)Math.Round(color.A * 255));
+                                bw.WriteByte((byte)Math.Round(color.R * 255));
+                                bw.WriteByte((byte)Math.Round(color.G * 255));
+                                bw.WriteByte((byte)Math.Round(color.B * 255));
                             }
                             else if (member.Type == BufferLayout.MemberType.Byte4C)
                             {
-                                bw.WriteByte((byte)(color.R * 255));
-                                bw.WriteByte((byte)(color.G * 255));
-                                bw.WriteByte((byte)(color.B * 255));
-                                bw.WriteByte((byte)(color.A * 255));
+                                bw.WriteByte((byte)Math.Round(color.R * 255));
+                                bw.WriteByte((byte)Math.Round(color.G * 255));
+                                bw.WriteByte((byte)Math.Round(color.B * 255));
+                                bw.WriteByte((byte)Math.Round(color.A * 255));
                             }
                             else
                                 throw new NotImplementedException();
