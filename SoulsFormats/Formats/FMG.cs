@@ -16,7 +16,7 @@ namespace SoulsFormats
         /// <summary>
         /// Indicates file format; 0 - DeS, 1 - DS1/DS2, 2 - DS3/BB.
         /// </summary>
-        public byte Version;
+        public FMGVersion Version;
 
         /// <summary>
         /// FMG file endianness. (Big = true)
@@ -24,30 +24,23 @@ namespace SoulsFormats
         public bool BigEndian;
 
         /// <summary>
-        /// Unknown; 0xFF in version 0, 0x00 in version 1/2.
-        /// </summary>
-        public byte Unk09;
-
-        /// <summary>
         /// Creates an empty FMG configured for DS1/DS2.
         /// </summary>
         public FMG()
         {
             Entries = new List<Entry>();
-            Version = 1;
+            Version = FMGVersion.DarkSouls1;
             BigEndian = false;
-            Unk09 = 0;
         }
 
         /// <summary>
         /// Creates an empty FMG configured for the specified version.
         /// </summary>
-        public FMG(byte version)
+        public FMG(FMGVersion version)
         {
             Entries = new List<Entry>();
             Version = version;
-            BigEndian = Version == 0;
-            Unk09 = (byte)(Version == 0 ? 0xFF : 0);
+            BigEndian = Version == FMGVersion.DemonsSouls;
         }
 
         internal override bool Is(BinaryReaderEx br)
@@ -59,15 +52,15 @@ namespace SoulsFormats
         {
             br.AssertByte(0);
             BigEndian = br.ReadBoolean();
-            Version = br.AssertByte(0, 1, 2);
+            Version = br.ReadEnum8<FMGVersion>();
             br.AssertByte(0);
 
             br.BigEndian = BigEndian;
-            bool wide = Version == 2;
+            bool wide = Version == FMGVersion.DarkSouls3;
 
             int fileSize = br.ReadInt32();
             br.AssertByte(1);
-            Unk09 = br.ReadByte();
+            br.AssertByte((byte)(Version == FMGVersion.DemonsSouls ? 0xFF : 0x00));
             br.AssertByte(0);
             br.AssertByte(0);
             int groupCount = br.ReadInt32();
@@ -119,16 +112,16 @@ namespace SoulsFormats
         internal override void Write(BinaryWriterEx bw)
         {
             bw.BigEndian = BigEndian;
-            bool wide = Version == 2;
+            bool wide = Version == FMGVersion.DarkSouls3;
 
             bw.WriteByte(0);
             bw.WriteBoolean(bw.BigEndian);
-            bw.WriteByte(Version);
+            bw.WriteByte((byte)Version);
             bw.WriteByte(0);
 
             bw.ReserveInt32("FileSize");
             bw.WriteByte(1);
-            bw.WriteByte(Unk09);
+            bw.WriteByte((byte)(Version == FMGVersion.DemonsSouls ? 0xFF : 0x00));
             bw.WriteByte(0);
             bw.WriteByte(0);
             bw.ReserveInt32("GroupCount");
@@ -229,6 +222,27 @@ namespace SoulsFormats
             {
                 return $"{ID}: {Text ?? "<null>"}";
             }
+        }
+
+        /// <summary>
+        /// Indicates the game this FMG is for, and thus the format it will be written in.
+        /// </summary>
+        public enum FMGVersion : byte
+        {
+            /// <summary>
+            /// Demon's Souls
+            /// </summary>
+            DemonsSouls = 0,
+
+            /// <summary>
+            /// Dark Souls 1 and Dark Souls 2
+            /// </summary>
+            DarkSouls1 = 1,
+
+            /// <summary>
+            /// Bloodborne and Dark Souls 3
+            /// </summary>
+            DarkSouls3 = 2,
         }
     }
 }

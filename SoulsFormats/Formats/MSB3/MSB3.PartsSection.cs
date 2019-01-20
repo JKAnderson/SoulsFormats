@@ -237,7 +237,7 @@ namespace SoulsFormats
             /// <summary>
             /// Used to identify multiple parts with the same ID in event scripts.
             /// </summary>
-            public int EventEntityGroup;
+            public int[] EventEntityGroups { get; private set; }
 
             /// <summary>
             /// Unknown.
@@ -272,7 +272,7 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int UnkB18, UnkB20, UnkB24, UnkB28, UnkB30, UnkB34, UnkB38;
+            public int UnkB18;
 
             private long UnkOffset1Delta, UnkOffset2Delta;
 
@@ -328,13 +328,7 @@ namespace SoulsFormats
                 UnkB16 = 0;
                 UnkB17 = 0;
                 UnkB18 = 0;
-                EventEntityGroup = -1;
-                UnkB20 = 0;
-                UnkB24 = 0;
-                UnkB28 = 0;
-                UnkB30 = 0;
-                UnkB34 = 0;
-                UnkB38 = 0;
+                EventEntityGroups = new int[8] { -1, -1, -1, -1, -1, -1, -1, -1 };
                 UnkOffset1Delta = unkOffset1Delta;
                 UnkOffset2Delta = unkOffset2Delta;
             }
@@ -392,13 +386,7 @@ namespace SoulsFormats
                 UnkB16 = clone.UnkB16;
                 UnkB17 = clone.UnkB17;
                 UnkB18 = clone.UnkB18;
-                EventEntityGroup = clone.EventEntityGroup;
-                UnkB20 = clone.UnkB20;
-                UnkB24 = clone.UnkB24;
-                UnkB28 = clone.UnkB28;
-                UnkB30 = clone.UnkB30;
-                UnkB34 = clone.UnkB34;
-                UnkB38 = clone.UnkB38;
+                EventEntityGroups = (int[])clone.EventEntityGroups.Clone();
                 UnkOffset1Delta = clone.UnkOffset1Delta;
                 UnkOffset2Delta = clone.UnkOffset2Delta;
             }
@@ -487,14 +475,7 @@ namespace SoulsFormats
                 UnkB17 = br.ReadByte();
 
                 UnkB18 = br.ReadInt32();
-                EventEntityGroup = br.ReadInt32();
-                UnkB20 = br.ReadInt32();
-                UnkB24 = br.ReadInt32();
-                UnkB28 = br.ReadInt32();
-                br.AssertInt32(-1);
-                UnkB30 = br.ReadInt32();
-                UnkB34 = br.ReadInt32();
-                UnkB38 = br.ReadInt32();
+                EventEntityGroups = br.ReadInt32s(8);
                 br.AssertInt32(0);
                 br.StepOut();
 
@@ -590,14 +571,7 @@ namespace SoulsFormats
                 bw.WriteByte(UnkB17);
 
                 bw.WriteInt32(UnkB18);
-                bw.WriteInt32(EventEntityGroup);
-                bw.WriteInt32(UnkB20);
-                bw.WriteInt32(UnkB24);
-                bw.WriteInt32(UnkB28);
-                bw.WriteInt32(-1);
-                bw.WriteInt32(UnkB30);
-                bw.WriteInt32(UnkB34);
-                bw.WriteInt32(UnkB38);
+                bw.WriteInt32s(EventEntityGroups);
                 bw.WriteInt32(0);
 
                 bw.FillInt64("TypeDataOffset", bw.Position - start);

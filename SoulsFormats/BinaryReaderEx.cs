@@ -799,14 +799,19 @@ namespace SoulsFormats
         /// <summary>
         /// Reads as many ASCII characters as are in the specified value and throws an exception if they do not match.
         /// </summary>
-        public void AssertASCII(string value)
+        public string AssertASCII(params string[] values)
         {
-            string s = ReadASCII(value.Length);
-            if (s != value)
-            {
+            string s = ReadASCII(values[0].Length);
+            bool valid = false;
+            foreach (string value in values)
+                if (s == value)
+                    valid = true;
+
+            if (!valid)
                 throw new InvalidDataException(string.Format(
-                    "Read ASCII: {0} | Expected ASCII: {1}", s, value));
-            }
+                    "Read ASCII: {0} | Expected ASCII: {1}", s, string.Join(", ", values)));
+
+            return s;
         }
 
         /// <summary>

@@ -280,7 +280,7 @@ namespace SoulsFormats
                     Type = type;
                     Name = name;
                     Size = size;
-                    Default = Type == CellType.dummy8 ? null : def;
+                    this.def = Type == CellType.dummy8 ? null : def;
                 }
 
                 internal Entry(XmlNode node)
