@@ -34,6 +34,26 @@ namespace SoulsFormats
         /// </summary>
         public Dictionary<long, Dictionary<long, State>> StateGroups;
 
+        /// <summary>
+        /// Creates a new ESD formatted for DS1 with no state groups. 
+        /// </summary>
+        public ESD() : this(false, 1) { }
+
+        /// <summary>
+        /// Creates a new ESD with the given format and no state groups.
+        /// </summary>
+        public ESD(bool longFormat, int darkSoulsCount)
+        {
+            LongFormat = longFormat;
+            DarkSoulsCount = darkSoulsCount;
+            Name = null;
+            Unk70 = 0;
+            Unk74 = 0;
+            Unk78 = 0;
+            Unk7C = 0;
+            StateGroups = new Dictionary<long, Dictionary<long, State>>();
+        }
+
         internal override bool Is(BinaryReaderEx br)
         {
             string magic = br.GetASCII(0, 4);
@@ -425,6 +445,17 @@ namespace SoulsFormats
             internal long ID;
             private long[] conditionOffsets;
 
+            /// <summary>
+            /// Creates a new State with no conditions or commands.
+            /// </summary>
+            public State()
+            {
+                Conditions = new List<Condition>();
+                EntryCommands = new List<CommandCall>();
+                ExitCommands = new List<CommandCall>();
+                WhileCommands = new List<CommandCall>();
+            }
+
             internal State(BinaryReaderEx br, bool longFormat, long dataStart)
             {
                 ID = ReadVarint(br, longFormat);
@@ -563,6 +594,17 @@ namespace SoulsFormats
             private long stateOffset;
             private long[] conditionOffsets;
 
+            /// <summary>
+            /// Creates a new Condition with no target state, commands, or subconditions, and an empty evaluator.
+            /// </summary>
+            public Condition()
+            {
+                TargetState = null;
+                PassCommands = new List<CommandCall>();
+                Subconditions = new List<Condition>();
+                Evaluator = new byte[0];
+            }
+
             internal Condition(BinaryReaderEx br, bool longFormat, long dataStart)
             {
                 stateOffset = ReadVarint(br, longFormat);
@@ -690,6 +732,16 @@ namespace SoulsFormats
             /// Bytecode expressions to evaluate and pass as arguments to the command.
             /// </summary>
             public List<byte[]> Arguments;
+
+            /// <summary>
+            /// Creates a new CommandCall with bank 1, ID 0, and no arguments.
+            /// </summary>
+            public CommandCall()
+            {
+                CommandBank = 1;
+                CommandID = 0;
+                Arguments = new List<byte[]>();
+            }
 
             internal CommandCall(BinaryReaderEx br, bool longFormat, long dataStart)
             {
