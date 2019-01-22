@@ -2049,6 +2049,11 @@ namespace SoulsFormats
 
                 public int SpEffectID;
 
+                public CreateSpEffect(float startTime, float endTime, int effectId) : base(startTime, endTime)
+                {
+                    SpEffectID = effectId;
+                }
+
                 internal CreateSpEffect(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     SpEffectID = br.ReadInt32();
