@@ -311,6 +311,11 @@ namespace SoulsFormats
                         default:
                             throw new NotImplementedException();
                     }
+
+                    if (result.Type != type)
+                    {
+                        throw new InvalidProgramException("There is a typo in TAE3.Event.cs. Please bully me.");
+                    }
                 }
                 br.StepOut();
 
@@ -452,9 +457,9 @@ namespace SoulsFormats
                 }
             }
 
-            public class Unk016 : Event
+            public class Unk016 : Event // 016
             {
-                public override EventType Type => EventType.Unk000;
+                public override EventType Type => EventType.Unk016;
 
                 internal Unk016(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime) { }
 
@@ -522,7 +527,7 @@ namespace SoulsFormats
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(0);
+                    bw.WriteInt32(SwitchState);
                     bw.WriteInt32(0);
                 }
             }
@@ -1347,9 +1352,9 @@ namespace SoulsFormats
                 }
             }
 
-            public class Unk151 : Event
+            public class Unk151 : Event // 151
             {
-                public override EventType Type => EventType.Unk000;
+                public override EventType Type => EventType.Unk151;
 
                 public int DummyPointID;
 
