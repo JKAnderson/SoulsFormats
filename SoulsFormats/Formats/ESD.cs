@@ -605,6 +605,17 @@ namespace SoulsFormats
                 Evaluator = new byte[0];
             }
 
+            /// <summary>
+            /// Creates a new Condition with the given target state and evaluator, and no commands or subconditions.
+            /// </summary>
+            public Condition(long targetState, byte[] evaluator)
+            {
+                TargetState = targetState;
+                PassCommands = new List<CommandCall>();
+                Subconditions = new List<Condition>();
+                Evaluator = evaluator;
+            }
+
             internal Condition(BinaryReaderEx br, bool longFormat, long dataStart)
             {
                 stateOffset = ReadVarint(br, longFormat);
@@ -741,6 +752,16 @@ namespace SoulsFormats
                 CommandBank = 1;
                 CommandID = 0;
                 Arguments = new List<byte[]>();
+            }
+
+            /// <summary>
+            /// Creates a new CommandCall with the given bank, ID, and arguments.
+            /// </summary>
+            public CommandCall(int commandBank, int commandID, params byte[][] arguments)
+            {
+                CommandBank = commandBank;
+                CommandID = commandID;
+                Arguments = arguments.ToList();
             }
 
             internal CommandCall(BinaryReaderEx br, bool longFormat, long dataStart)
