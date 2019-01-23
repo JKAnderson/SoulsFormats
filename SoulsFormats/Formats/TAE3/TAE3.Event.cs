@@ -3035,26 +3035,32 @@ namespace SoulsFormats
                 public override EventType Type => EventType.Toughness;
 
                 public byte ToughnessParamID;
-                // 0-3
-                public byte ConditionState;
-                public float Unk04;
+                public bool IsToughnessEffective;
+                public float ToughnessRate;
+
+                public Toughness(float startTime, float endTime, byte toughnessParamID, bool isToughnessEffective, float toughnessRate) : base(startTime, endTime)
+                {
+                    ToughnessParamID = toughnessParamID;
+                    IsToughnessEffective = isToughnessEffective;
+                    ToughnessRate = toughnessRate;
+                }
 
                 internal Toughness(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     ToughnessParamID = br.ReadByte();
-                    ConditionState = br.ReadByte();
+                    IsToughnessEffective = br.ReadBoolean();
                     br.AssertByte(0);
                     br.AssertByte(0);
-                    Unk04 = br.ReadSingle();
+                    ToughnessRate = br.ReadSingle();
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
                     bw.WriteByte(ToughnessParamID);
-                    bw.WriteByte(ConditionState);
+                    bw.WriteBoolean(IsToughnessEffective);
                     bw.WriteByte(0);
                     bw.WriteByte(0);
-                    bw.WriteSingle(Unk04);
+                    bw.WriteSingle(ToughnessRate);
                 }
             }
 
