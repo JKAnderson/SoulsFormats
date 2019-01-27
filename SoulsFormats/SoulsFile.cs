@@ -13,7 +13,7 @@ namespace SoulsFormats
         public DCX.Type Compression = DCX.Type.None;
 
         /// <summary>
-        /// Returns true if the data appears to be a BND4.
+        /// Returns true if the data appears to be a file of this type.
         /// </summary>
         // This should really be a static method, but interfaces do not allow static inheritance; hence the dummy objects below.
         internal abstract bool Is(BinaryReaderEx br);

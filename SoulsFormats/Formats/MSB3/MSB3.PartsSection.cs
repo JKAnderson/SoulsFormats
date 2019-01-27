@@ -212,22 +212,27 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public uint OldDrawGroup1, OldDrawGroup2, OldDrawGroup3, OldDrawGroup4;
+            public uint OldDrawGroup1;
+
+            /// <summary>
+            /// Unknown; related to which parts do or don't appear in different ceremonies.
+            /// </summary>
+            public int MapStudioLayer;
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public uint OldDispGroup1, OldDispGroup2, OldDispGroup3, OldDispGroup4;
+            public uint[] DrawGroups { get; private set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int UnkF64, UnkF68, UnkF8C, UnkF90, UnkF94, UnkF98, UnkF9C, UnkFA0, UnkFA4, UnkFA8;
+            public uint[] DispGroups { get; private set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public uint DrawGroup1, DrawGroup2, DrawGroup3, DrawGroup4, DrawGroup5, DrawGroup6, DrawGroup7, DrawGroup8;
+            public uint[] BackreadGroups { get; private set; }
 
             /// <summary>
             /// Used to identify the part in event scripts.
@@ -285,31 +290,13 @@ namespace SoulsFormats
                 Rotation = Vector3.Zero;
                 Scale = Vector3.One;
                 OldDrawGroup1 = 0;
-                OldDrawGroup2 = 0;
-                OldDrawGroup3 = 0;
-                OldDrawGroup4 = 0;
-                OldDispGroup1 = 0;
-                OldDispGroup2 = 0;
-                OldDispGroup3 = 0;
-                OldDispGroup4 = 0;
-                UnkF64 = 0;
-                UnkF68 = 0;
-                DrawGroup1 = 0;
-                DrawGroup2 = 0;
-                DrawGroup3 = 0;
-                DrawGroup4 = 0;
-                DrawGroup5 = 0;
-                DrawGroup6 = 0;
-                DrawGroup7 = 0;
-                DrawGroup8 = 0;
-                UnkF8C = 0;
-                UnkF90 = 0;
-                UnkF94 = 0;
-                UnkF98 = 0;
-                UnkF9C = 0;
-                UnkFA0 = 0;
-                UnkFA4 = 0;
-                UnkFA8 = 0;
+                MapStudioLayer = 0;
+                DrawGroups = new uint[8] { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+                    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
+                DispGroups = new uint[8] { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+                    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
+                BackreadGroups = new uint[8] { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+                    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
                 EventEntityID = -1;
                 OldLightID = 0;
                 OldFogID = 0;
@@ -343,31 +330,10 @@ namespace SoulsFormats
                 Rotation = clone.Rotation;
                 Scale = clone.Scale;
                 OldDrawGroup1 = clone.OldDrawGroup1;
-                OldDrawGroup2 = clone.OldDrawGroup2;
-                OldDrawGroup3 = clone.OldDrawGroup3;
-                OldDrawGroup4 = clone.OldDrawGroup4;
-                OldDispGroup1 = clone.OldDispGroup1;
-                OldDispGroup2 = clone.OldDispGroup2;
-                OldDispGroup3 = clone.OldDispGroup3;
-                OldDispGroup4 = clone.OldDispGroup4;
-                UnkF64 = clone.UnkF64;
-                UnkF68 = clone.UnkF68;
-                DrawGroup1 = clone.DrawGroup1;
-                DrawGroup2 = clone.DrawGroup2;
-                DrawGroup3 = clone.DrawGroup3;
-                DrawGroup4 = clone.DrawGroup4;
-                DrawGroup5 = clone.DrawGroup5;
-                DrawGroup6 = clone.DrawGroup6;
-                DrawGroup7 = clone.DrawGroup7;
-                DrawGroup8 = clone.DrawGroup8;
-                UnkF8C = clone.UnkF8C;
-                UnkF90 = clone.UnkF90;
-                UnkF94 = clone.UnkF94;
-                UnkF98 = clone.UnkF98;
-                UnkF9C = clone.UnkF9C;
-                UnkFA0 = clone.UnkFA0;
-                UnkFA4 = clone.UnkFA4;
-                UnkFA8 = clone.UnkFA8;
+                MapStudioLayer = clone.MapStudioLayer;
+                DrawGroups = (uint[])clone.DrawGroups.Clone();
+                DispGroups = (uint[])clone.DispGroups.Clone();
+                BackreadGroups = (uint[])clone.BackreadGroups.Clone();
                 EventEntityID = clone.EventEntityID;
                 OldLightID = clone.OldLightID;
                 OldFogID = clone.OldFogID;
@@ -406,32 +372,10 @@ namespace SoulsFormats
                 Scale = br.ReadVector3();
 
                 OldDrawGroup1 = br.ReadUInt32(); // -1
-                OldDrawGroup2 = br.ReadUInt32();
-                OldDrawGroup3 = br.ReadUInt32();
-                OldDrawGroup4 = br.ReadUInt32();
-                OldDispGroup1 = br.ReadUInt32();
-                OldDispGroup2 = br.ReadUInt32();
-                OldDispGroup3 = br.ReadUInt32();
-                OldDispGroup4 = br.ReadUInt32();
-
-                UnkF64 = br.ReadInt32();
-                UnkF68 = br.ReadInt32();
-                DrawGroup1 = br.ReadUInt32();
-                DrawGroup2 = br.ReadUInt32();
-                DrawGroup3 = br.ReadUInt32();
-                DrawGroup4 = br.ReadUInt32();
-                DrawGroup5 = br.ReadUInt32();
-                DrawGroup6 = br.ReadUInt32();
-                DrawGroup7 = br.ReadUInt32();
-                DrawGroup8 = br.ReadUInt32();
-                UnkF8C = br.ReadInt32();
-                UnkF90 = br.ReadInt32();
-                UnkF94 = br.ReadInt32();
-                UnkF98 = br.ReadInt32();
-                UnkF9C = br.ReadInt32();
-                UnkFA0 = br.ReadInt32();
-                UnkFA4 = br.ReadInt32();
-                UnkFA8 = br.ReadInt32();
+                MapStudioLayer = br.ReadInt32();
+                DrawGroups = br.ReadUInt32s(8);
+                DispGroups = br.ReadUInt32s(8);
+                BackreadGroups = br.ReadUInt32s(8);
                 br.AssertInt32(0);
 
                 long baseDataOffset = br.ReadInt64();
@@ -501,32 +445,10 @@ namespace SoulsFormats
                 bw.WriteVector3(Scale);
 
                 bw.WriteUInt32(OldDrawGroup1);
-                bw.WriteUInt32(OldDrawGroup2);
-                bw.WriteUInt32(OldDrawGroup3);
-                bw.WriteUInt32(OldDrawGroup4);
-                bw.WriteUInt32(OldDispGroup1);
-                bw.WriteUInt32(OldDispGroup2);
-                bw.WriteUInt32(OldDispGroup3);
-                bw.WriteUInt32(OldDispGroup4);
-
-                bw.WriteInt32(UnkF64);
-                bw.WriteInt32(UnkF68);
-                bw.WriteUInt32(DrawGroup1);
-                bw.WriteUInt32(DrawGroup2);
-                bw.WriteUInt32(DrawGroup3);
-                bw.WriteUInt32(DrawGroup4);
-                bw.WriteUInt32(DrawGroup5);
-                bw.WriteUInt32(DrawGroup6);
-                bw.WriteUInt32(DrawGroup7);
-                bw.WriteUInt32(DrawGroup8);
-                bw.WriteInt32(UnkF8C);
-                bw.WriteInt32(UnkF90);
-                bw.WriteInt32(UnkF94);
-                bw.WriteInt32(UnkF98);
-                bw.WriteInt32(UnkF9C);
-                bw.WriteInt32(UnkFA0);
-                bw.WriteInt32(UnkFA4);
-                bw.WriteInt32(UnkFA8);
+                bw.WriteInt32(MapStudioLayer);
+                bw.WriteUInt32s(DrawGroups);
+                bw.WriteUInt32s(DispGroups);
+                bw.WriteUInt32s(BackreadGroups);
                 bw.WriteInt32(0);
 
                 bw.ReserveInt64("BaseDataOffset");
