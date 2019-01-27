@@ -55,13 +55,12 @@ namespace SoulsFormats
         }
 
         /// <summary>
-        /// Reads length bytes and returns them in little-endian order by reversing them if big-endian reading is set.
+        /// Reads length bytes and returns them in reversed order.
         /// </summary>
-        private byte[] ReadEndian(int length)
+        private byte[] ReadReversedBytes(int length)
         {
             byte[] bytes = ReadBytes(length);
-            if (BigEndian)
-                Array.Reverse(bytes);
+            Array.Reverse(bytes);
             return bytes;
         }
 
@@ -310,7 +309,10 @@ namespace SoulsFormats
         /// </summary>
         public short ReadInt16()
         {
-            return BitConverter.ToInt16(ReadEndian(2), 0);
+            if (BigEndian)
+                return BitConverter.ToInt16(ReadReversedBytes(2), 0);
+            else
+                return br.ReadInt16();
         }
 
         /// <summary>
@@ -352,7 +354,10 @@ namespace SoulsFormats
         /// </summary>
         public ushort ReadUInt16()
         {
-            return BitConverter.ToUInt16(ReadEndian(2), 0);
+            if (BigEndian)
+                return BitConverter.ToUInt16(ReadReversedBytes(2), 0);
+            else
+                return br.ReadUInt16();
         }
 
         /// <summary>
@@ -394,7 +399,10 @@ namespace SoulsFormats
         /// </summary>
         public int ReadInt32()
         {
-            return BitConverter.ToInt32(ReadEndian(4), 0);
+            if (BigEndian)
+                return BitConverter.ToInt32(ReadReversedBytes(4), 0);
+            else
+                return br.ReadInt32();
         }
 
         /// <summary>
@@ -436,7 +444,10 @@ namespace SoulsFormats
         /// </summary>
         public uint ReadUInt32()
         {
-            return BitConverter.ToUInt32(ReadEndian(4), 0);
+            if (BigEndian)
+                return BitConverter.ToUInt32(ReadReversedBytes(4), 0);
+            else
+                return br.ReadUInt32();
         }
 
         /// <summary>
@@ -478,7 +489,10 @@ namespace SoulsFormats
         /// </summary>
         public long ReadInt64()
         {
-            return BitConverter.ToInt64(ReadEndian(8), 0);
+            if (BigEndian)
+                return BitConverter.ToInt64(ReadReversedBytes(8), 0);
+            else
+                return br.ReadInt64();
         }
 
         /// <summary>
@@ -520,7 +534,10 @@ namespace SoulsFormats
         /// </summary>
         public ulong ReadUInt64()
         {
-            return BitConverter.ToUInt64(ReadEndian(8), 0);
+            if (BigEndian)
+                return BitConverter.ToUInt64(ReadReversedBytes(8), 0);
+            else
+                return br.ReadUInt64();
         }
 
         /// <summary>
@@ -562,7 +579,10 @@ namespace SoulsFormats
         /// </summary>
         public float ReadSingle()
         {
-            return BitConverter.ToSingle(ReadEndian(4), 0);
+            if (BigEndian)
+                return BitConverter.ToSingle(ReadReversedBytes(4), 0);
+            else
+                return br.ReadSingle();
         }
 
         /// <summary>
@@ -604,7 +624,10 @@ namespace SoulsFormats
         /// </summary>
         public double ReadDouble()
         {
-            return BitConverter.ToDouble(ReadEndian(8), 0);
+            if (BigEndian)
+                return BitConverter.ToDouble(ReadReversedBytes(8), 0);
+            else
+                return br.ReadDouble();
         }
 
         /// <summary>

@@ -56,10 +56,9 @@ namespace SoulsFormats
             bw = new BinaryWriter(stream);
         }
 
-        private void WriteEndian(byte[] bytes)
+        private void WriteReversedBytes(byte[] bytes)
         {
-            if (BigEndian)
-                Array.Reverse(bytes);
+            Array.Reverse(bytes);
             bw.Write(bytes);
         }
 
@@ -257,7 +256,10 @@ namespace SoulsFormats
         /// </summary>
         public void WriteInt16(short value)
         {
-            WriteEndian(BitConverter.GetBytes(value));
+            if (BigEndian)
+                WriteReversedBytes(BitConverter.GetBytes(value));
+            else
+                bw.Write(value);
         }
 
         /// <summary>
@@ -292,7 +294,10 @@ namespace SoulsFormats
         /// </summary>
         public void WriteUInt16(ushort value)
         {
-            WriteEndian(BitConverter.GetBytes(value));
+            if (BigEndian)
+                WriteReversedBytes(BitConverter.GetBytes(value));
+            else
+                bw.Write(value);
         }
 
         /// <summary>
@@ -327,7 +332,10 @@ namespace SoulsFormats
         /// </summary>
         public void WriteInt32(int value)
         {
-            WriteEndian(BitConverter.GetBytes(value));
+            if (BigEndian)
+                WriteReversedBytes(BitConverter.GetBytes(value));
+            else
+                bw.Write(value);
         }
 
         /// <summary>
@@ -362,7 +370,10 @@ namespace SoulsFormats
         /// </summary>
         public void WriteUInt32(uint value)
         {
-            WriteEndian(BitConverter.GetBytes(value));
+            if (BigEndian)
+                WriteReversedBytes(BitConverter.GetBytes(value));
+            else
+                bw.Write(value);
         }
 
         /// <summary>
@@ -397,7 +408,10 @@ namespace SoulsFormats
         /// </summary>
         public void WriteInt64(long value)
         {
-            WriteEndian(BitConverter.GetBytes(value));
+            if (BigEndian)
+                WriteReversedBytes(BitConverter.GetBytes(value));
+            else
+                bw.Write(value);
         }
 
         /// <summary>
@@ -432,7 +446,10 @@ namespace SoulsFormats
         /// </summary>
         public void WriteUInt64(ulong value)
         {
-            WriteEndian(BitConverter.GetBytes(value));
+            if (BigEndian)
+                WriteReversedBytes(BitConverter.GetBytes(value));
+            else
+                bw.Write(value);
         }
 
         /// <summary>
@@ -467,7 +484,10 @@ namespace SoulsFormats
         /// </summary>
         public void WriteSingle(float value)
         {
-            WriteEndian(BitConverter.GetBytes(value));
+            if (BigEndian)
+                WriteReversedBytes(BitConverter.GetBytes(value));
+            else
+                bw.Write(value);
         }
 
         /// <summary>
@@ -502,7 +522,10 @@ namespace SoulsFormats
         /// </summary>
         public void WriteDouble(double value)
         {
-            WriteEndian(BitConverter.GetBytes(value));
+            if (BigEndian)
+                WriteReversedBytes(BitConverter.GetBytes(value));
+            else
+                bw.Write(value);
         }
 
         /// <summary>
