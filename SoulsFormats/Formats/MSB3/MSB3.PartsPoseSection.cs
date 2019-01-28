@@ -6,7 +6,7 @@ namespace SoulsFormats
     public partial class MSB3
     {
         /// <summary>
-        /// A section that seems to contain groups of bone transforms. Might not even be used.
+        /// A section containing fixed poses for different Parts in the map.
         /// </summary>
         public class PartsPoseSection : Section<PartsPose>
         {
@@ -51,91 +51,91 @@ namespace SoulsFormats
         }
 
         /// <summary>
-        /// Unknown; probably represents translations of bones in a model.
+        /// A set of bone transforms to pose an individual Part in the map.
         /// </summary>
         public class PartsPose
         {
             /// <summary>
-            /// Unknown.
+            /// An index into the Parts section.
             /// </summary>
-            public short Unk00;
+            public short PartsIndex;
 
             /// <summary>
-            /// Unknown; probably the transform of a single bone.
+            /// Transforms for each bone.
             /// </summary>
-            public List<Member> Members;
+            public List<Bone> Bones;
 
             /// <summary>
             /// Creates a new PartsPose with no members.
             /// </summary>
-            public PartsPose(short unk00 = 0)
+            public PartsPose(short partsIndex = 0)
             {
-                Unk00 = unk00;
-                Members = new List<Member>();
+                PartsIndex = partsIndex;
+                Bones = new List<Bone>();
             }
 
             internal PartsPose(BinaryReaderEx br)
             {
-                Unk00 = br.ReadInt16();
-                short count = br.ReadInt16();
+                PartsIndex = br.ReadInt16();
+                short boneCount = br.ReadInt16();
                 br.AssertInt32(0);
                 br.AssertInt64(0x10);
 
-                Members = new List<Member>(count);
-                for (int i = 0; i < count; i++)
-                    Members.Add(new Member(br));
+                Bones = new List<Bone>(boneCount);
+                for (int i = 0; i < boneCount; i++)
+                    Bones.Add(new Bone(br));
             }
 
             internal void Write(BinaryWriterEx bw)
             {
-                bw.WriteInt16(Unk00);
-                bw.WriteInt16((short)Members.Count);
+                bw.WriteInt16(PartsIndex);
+                bw.WriteInt16((short)Bones.Count);
                 bw.WriteInt32(0);
                 bw.WriteInt64(0x10);
 
-                foreach (var member in Members)
+                foreach (var member in Bones)
                     member.Write(bw);
             }
 
             /// <summary>
-            /// A member in a parts pose entry; probably corresponds to a bone.
+            /// A transform for one bone in a model.
             /// </summary>
-            public class Member
+            public class Bone
             {
                 /// <summary>
-                /// Unknown; seems to just count up from 0 for each member.
+                /// An index into the BoneNames section.
                 /// </summary>
-                public int ID;
+                public int BoneNamesIndex;
 
                 /// <summary>
-                /// Unknown, but probably translation.
+                /// Translation of the bone.
                 /// </summary>
                 public Vector3 Translation;
 
                 /// <summary>
-                /// Unknown, but probably rotation.
+                /// Rotation of the bone.
                 /// </summary>
                 public Vector3 Rotation;
 
                 /// <summary>
-                /// Unknown, but almost certainly scale.
+                /// Scale of the bone.
                 /// </summary>
                 public Vector3 Scale;
 
                 /// <summary>
-                /// Creates a new Member with the given ID and default transforms.
+                /// Creates a new Bone with the given bone name index and default transforms.
                 /// </summary>
-                public Member(int id)
+                public Bone(int boneNamesIndex)
                 {
-                    ID = id;
+                    BoneNamesIndex = boneNamesIndex;
                     Translation = Vector3.Zero;
                     Rotation = Vector3.Zero;
                     Scale = Vector3.One;
                 }
 
-                internal Member(BinaryReaderEx br)
+                internal Bone(BinaryReaderEx br)
                 {
-                    ID = br.ReadInt32();
+                    BoneNamesIndex = br.ReadInt32();
                     Translation = br.ReadVector3();
                     Rotation = br.ReadVector3();
                     Scale = br.ReadVector3();
@@ -143,18 +143,18 @@ namespace SoulsFormats
 
                 internal void Write(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(ID);
+                    bw.WriteInt32(BoneNamesIndex);
                     bw.WriteVector3(Translation);
                     bw.WriteVector3(Rotation);
                     bw.WriteVector3(Scale);
                 }
 
                 /// <summary>
-                /// Returns the ID and transforms of this member.
+                /// Returns the bone name index and transforms of this bone.
                 /// </summary>
                 public override string ToString()
                 {
-                    return $"{ID} : {Translation} {Rotation} {Scale}";
+                    return $"{BoneNamesIndex} : {Translation} {Rotation} {Scale}";
                 }
             }
         }
