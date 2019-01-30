@@ -263,6 +263,11 @@ namespace SoulsFormats
                 public bool IsVariableSize => Type == CellType.fixstr || Type == CellType.fixstrW || Type == CellType.dummy8;
 
                 /// <summary>
+                /// A description of this field's purpose; may be null.
+                /// </summary>
+                public string Description;
+
+                /// <summary>
                 /// Create a new entry of a fixed-width type.
                 /// </summary>
                 public Entry(CellType type, string name, object def)
@@ -293,6 +298,9 @@ namespace SoulsFormats
 
                     if (Type != CellType.dummy8)
                         Default = ParseParamValue(Type, node.SelectSingleNode("default").InnerText);
+
+                    if (node.SelectSingleNode("description") != null)
+                        Description = node.SelectSingleNode("description").InnerText;
                 }
 
                 internal void Write(XmlWriter xw)
@@ -306,6 +314,9 @@ namespace SoulsFormats
 
                     if (Type != CellType.dummy8)
                         xw.WriteElementString("default", ParamValueToString(Type, Default));
+
+                    if (Description != null)
+                        xw.WriteElementString("description", Description);
 
                     xw.WriteEndElement();
                 }

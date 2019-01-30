@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SoulsFormats
 {
@@ -189,7 +190,18 @@ namespace SoulsFormats
         /// <summary>
         /// Returns the string with the given ID, or null if not present.
         /// </summary>
-        public string this[int id] => Entries.Find(entry => entry.ID == id)?.Text;
+        public string this[int id]
+        {
+            get => Entries.Find(entry => entry.ID == id)?.Text;
+
+            set
+            {
+                if (Entries.Any(entry => entry.ID == id))
+                    Entries.Find(entry => entry.ID == id).Text = value;
+                else
+                    Entries.Add(new Entry(id, value));
+            }
+        }
 
         /// <summary>
         /// A string in an FMG identified with an ID number.

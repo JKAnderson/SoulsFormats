@@ -216,18 +216,7 @@ namespace SoulsFormats
         /// <summary>
         /// Returns the first row with the given ID, or null if not found.
         /// </summary>
-        public Row this[int id]
-        {
-            get
-            {
-                foreach (Row row in Rows)
-                {
-                    if (row.ID == id)
-                        return row;
-                }
-                return null;
-            }
-        }
+        public Row this[int id] => Rows.Find(row => row.ID == id);
 
         /// <summary>
         /// One row in a param file.
@@ -446,18 +435,7 @@ namespace SoulsFormats
             /// <summary>
             /// Returns the first cell in the row with the given name.
             /// </summary>
-            public Cell this[string name]
-            {
-                get
-                {
-                    foreach (Cell cell in Cells)
-                    {
-                        if (cell.Name == name)
-                            return cell;
-                    }
-                    return null;
-                }
-            }
+            public Cell this[string name] => Cells.Find(cell => cell.Name == name);
         }
 
         /// <summary>
@@ -484,6 +462,11 @@ namespace SoulsFormats
             /// The value of this cell.
             /// </summary>
             public object Value { get; set; }
+
+            /// <summary>
+            /// A description of this field's purpose; may be null.
+            /// </summary>
+            public string Description => Layout.Description;
 
             internal Cell(Layout.Entry layout, object value)
             {
