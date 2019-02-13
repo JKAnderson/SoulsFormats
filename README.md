@@ -110,7 +110,7 @@ Extensions: `.*bhd` (header) and `.*bdt` (data)
 * BB: Full Read and Write
 
 ### CCM
-A font layout file used in DeS, DS1, DS2, and DS3.
+A font layout file used in DeS, DS1, DS2, and DS3.  
 Extension: `.ccm`
 * DeS: Full Read and Write
 * DS1: Full Read and Write

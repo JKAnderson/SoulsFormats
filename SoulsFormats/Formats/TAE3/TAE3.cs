@@ -33,6 +33,11 @@ namespace SoulsFormats
         /// </summary>
         public List<Animation> Animations;
 
+        /// <summary>
+        /// Unknown; always 0x15 in chr tae, varies in obj tae.
+        /// </summary>
+        public long Unk30;
+
         internal override bool Is(BinaryReaderEx br)
         {
             string magic = br.ReadASCII(4);
@@ -54,7 +59,7 @@ namespace SoulsFormats
             br.AssertInt64(1);
             br.AssertInt64(0x50);
             br.AssertInt64(0x80);
-            br.AssertInt64(0x15);
+            Unk30 = br.ReadInt64();
             br.AssertInt64(0);
             Flags = br.ReadBytes(8);
             br.AssertInt64(1);
@@ -104,7 +109,7 @@ namespace SoulsFormats
             bw.WriteInt64(1);
             bw.WriteInt64(0x50);
             bw.WriteInt64(0x80);
-            bw.WriteInt64(0x15);
+            bw.WriteInt64(Unk30);
             bw.WriteInt64(0);
             bw.WriteBytes(Flags);
             bw.WriteInt64(1);
