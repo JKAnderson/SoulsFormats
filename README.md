@@ -109,6 +109,14 @@ Extensions: `.*bhd` (header) and `.*bdt` (data)
 * DS3: Full Read and Write
 * BB: Full Read and Write
 
+### CCM
+A font layout file used in DeS, DS1, DS2, and DS3.
+Extension: `.ccm`
+* DeS: Full Read and Write
+* DS1: Full Read and Write
+* DS2: Read Only
+* DS3: Read Only
+
 ### DCX
 A wrapper for a single compressed file used in every game after NB.  
 Extension: `.dcx`
@@ -178,13 +186,14 @@ Extension: `.fxr`
 
 ### GPARAM
 A graphics configuration format used in DS3 and BB.  
+Extension: `.gparam`
 * DS3: Full Read and Write
 * BB: Untested
 
 ### MSB3
 A map definition format used in DS3.  
 Extension : `.msb`
-DS3: Full Read and Write
+* DS3: Full Read and Write
 
 ### MTD
 A material definition file used throughout the series.  

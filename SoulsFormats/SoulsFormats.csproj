@@ -76,6 +76,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Formats\CCM.cs" />
     <Compile Include="Formats\DRB.cs" />
     <Compile Include="Formats\ESD.cs" />
     <Compile Include="Formats\NVM.cs" />
