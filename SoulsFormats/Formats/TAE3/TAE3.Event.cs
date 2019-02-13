@@ -10,7 +10,7 @@ namespace SoulsFormats
         public enum EventType : ulong
         {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-            Unk000 = 000,
+            JumpTable = 000,
             Unk001 = 001,
             Unk002 = 002,
             Unk005 = 005,
@@ -181,7 +181,7 @@ namespace SoulsFormats
             /// </summary>
             public override string ToString()
             {
-                return $"{StartTime:F3} - {EndTime:F3} {Type}";
+                return $"{(int)Math.Round(StartTime * 30):D3} - {(int)Math.Round(EndTime * 30):D3} {Type}";
             }
 
             internal static Event Read(BinaryReaderEx br)
@@ -199,7 +199,7 @@ namespace SoulsFormats
                     br.AssertInt64(br.Position + 8);
                     switch (type)
                     {
-                        case EventType.Unk000: result = new Unk000(startTime, endTime, br); break;
+                        case EventType.JumpTable: result = new JumpTable(startTime, endTime, br); break;
                         case EventType.Unk001: result = new Unk001(startTime, endTime, br); break;
                         case EventType.Unk002: result = new Unk002(startTime, endTime, br); break;
                         case EventType.Unk005: result = new Unk005(startTime, endTime, br); break;
@@ -326,9 +326,9 @@ namespace SoulsFormats
             /// <summary>
             /// General-purpose event that calls different functions based on the first field.
             /// </summary>
-            public class Unk000 : Event // 000
+            public class JumpTable : Event // 000
             {
-                public override EventType Type => EventType.Unk000;
+                public override EventType Type => EventType.JumpTable;
 
                 public int JumpTableID { get; set; }
                 public int Unk04 { get; set; }
@@ -337,7 +337,7 @@ namespace SoulsFormats
                 public short Unk0C { get; set; }
                 public short Unk0E { get; set; }
 
-                internal Unk000(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
+                internal JumpTable(float startTime, float endTime, BinaryReaderEx br) : base(startTime, endTime)
                 {
                     JumpTableID = br.ReadInt32();
                     Unk04 = br.ReadInt32();
@@ -353,6 +353,11 @@ namespace SoulsFormats
                     bw.WriteInt32(Unk08);
                     bw.WriteInt16(Unk0C);
                     bw.WriteInt16(Unk0E);
+                }
+
+                public override string ToString()
+                {
+                    return $"{base.ToString()} : {JumpTableID}";
                 }
             }
 
