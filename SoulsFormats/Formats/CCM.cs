@@ -42,7 +42,7 @@ namespace SoulsFormats
         /// <summary>
         /// Number of separate font textures.
         /// </summary>
-        public short TexCount { get; set; }
+        public byte TexCount { get; set; }
 
         /// <summary>
         /// Individual characters in this font.
@@ -86,7 +86,8 @@ namespace SoulsFormats
             br.AssertInt32(0x20);
             int glyphOffset = br.ReadInt32();
             Unk1C = br.ReadInt16();
-            TexCount = br.ReadInt16();
+            TexCount = br.ReadByte();
+            br.AssertByte(0);
 
             Glyphs = new List<Glyph>(glyphCount);
             if (Version == CCMVer.DemonsSouls || Version == CCMVer.DarkSouls1)
@@ -166,7 +167,8 @@ namespace SoulsFormats
             bw.WriteInt32(0x20);
             bw.ReserveInt32("GlyphOffset");
             bw.WriteInt16(Unk1C);
-            bw.WriteInt16(TexCount);
+            bw.WriteByte(TexCount);
+            bw.WriteByte(0);
 
             Glyphs.Sort();
             if (Version == CCMVer.DemonsSouls || Version == CCMVer.DarkSouls1)
@@ -249,22 +251,22 @@ namespace SoulsFormats
             public Vector2 UV2 { get; set; }
 
             /// <summary>
-            /// Unknown.
+            /// Padding before the character.
             /// </summary>
             public short PreSpace { get; set; }
 
             /// <summary>
-            /// Unknown.
+            /// Width of the character texture.
             /// </summary>
             public short Width { get; set; }
 
             /// <summary>
-            /// Unknown.
+            /// Distance to the next character.
             /// </summary>
             public short Advance { get; set; }
 
             /// <summary>
-            /// Unknown.
+            /// Index of the font texture with this character.
             /// </summary>
             public short TexIndex { get; set; }
 
