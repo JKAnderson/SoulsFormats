@@ -15,9 +15,9 @@ namespace SoulsFormats
         public CCMVer Version { get; set; }
 
         /// <summary>
-        /// Unknown.
+        /// Maximum width of a glyph; glyph widths are relative to this.
         /// </summary>
-        public short Unk08 { get; set; }
+        public short FullWidth { get; set; }
 
         /// <summary>
         /// Width of the font textures.
@@ -30,14 +30,19 @@ namespace SoulsFormats
         public short TexHeight { get; set; }
 
         /// <summary>
-        /// Unknown.
+        /// Unknown; only meaningful in DeS/DS1, always 0 or 0x20.
         /// </summary>
         public short Unk0E { get; set; }
 
         /// <summary>
-        /// Unknown.
+        /// Unknown; always 1 in DeS, either 1 or 4 in DS1, and 4 in DS2.
         /// </summary>
-        public short Unk1C { get; set; }
+        public byte Unk1C { get; set; }
+
+        /// <summary>
+        /// Unknown; always 1 in DeS and 0 in DS1/DS2.
+        /// </summary>
+        public byte Unk1D { get; set; }
 
         /// <summary>
         /// Number of separate font textures.
@@ -62,7 +67,7 @@ namespace SoulsFormats
                 br.BigEndian = true;
 
             int fileSize = br.ReadInt32();
-            Unk08 = br.ReadInt16();
+            FullWidth = br.ReadInt16();
             TexWidth = br.ReadInt16();
             TexHeight = br.ReadInt16();
 
@@ -85,7 +90,8 @@ namespace SoulsFormats
 
             br.AssertInt32(0x20);
             int glyphOffset = br.ReadInt32();
-            Unk1C = br.ReadInt16();
+            Unk1C = br.ReadByte();
+            Unk1D = br.ReadByte();
             TexCount = br.ReadByte();
             br.AssertByte(0);
 
@@ -148,7 +154,7 @@ namespace SoulsFormats
             bw.BigEndian = Version == CCMVer.DemonsSouls;
 
             bw.ReserveInt32("FileSize");
-            bw.WriteInt16(Unk08);
+            bw.WriteInt16(FullWidth);
             bw.WriteInt16(TexWidth);
             bw.WriteInt16(TexHeight);
 
@@ -167,7 +173,8 @@ namespace SoulsFormats
 
             bw.WriteInt32(0x20);
             bw.ReserveInt32("GlyphOffset");
-            bw.WriteInt16(Unk1C);
+            bw.WriteByte(Unk1C);
+            bw.WriteByte(Unk1D);
             bw.WriteByte(TexCount);
             bw.WriteByte(0);
 
@@ -241,8 +248,6 @@ namespace SoulsFormats
             }
 
             bw.FillInt32("FileSize", (int)bw.Position);
-            if (Version == CCMVer.DemonsSouls)
-                bw.Pad(0x20);
         }
 
         // This is stupid because it's really two shorts but I am lazy
