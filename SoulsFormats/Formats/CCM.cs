@@ -45,9 +45,9 @@ namespace SoulsFormats
         public byte TexCount { get; set; }
 
         /// <summary>
-        /// Individual characters in this font.
+        /// Individual characters in this font, keyed by their code.
         /// </summary>
-        public List<Glyph> Glyphs { get; set; }
+        public Dictionary<int, Glyph> Glyphs { get; set; }
 
         internal override bool Is(BinaryReaderEx br)
         {
@@ -89,13 +89,14 @@ namespace SoulsFormats
             TexCount = br.ReadByte();
             br.AssertByte(0);
 
-            Glyphs = new List<Glyph>(glyphCount);
+            Glyphs = new Dictionary<int, Glyph>(glyphCount);
             if (Version == CCMVer.DemonsSouls || Version == CCMVer.DarkSouls1)
             {
                 var codeGroups = new List<CodeGroup>(codeGroupCount);
                 for (int i = 0; i < codeGroupCount; i++)
                     codeGroups.Add(new CodeGroup(br));
 
+                var glyphs = new List<Glyph>(glyphCount);
                 for (int i = 0; i < glyphCount; i++)
                 {
                     Vector2 uv1 = br.ReadVector2();
@@ -105,14 +106,14 @@ namespace SoulsFormats
                     short advance = br.ReadInt16();
                     short texIndex = br.ReadInt16();
 
-                    Glyphs.Add(new Glyph(-1, uv1, uv2, preSpace, width, advance, texIndex));
+                    glyphs.Add(new Glyph(uv1, uv2, preSpace, width, advance, texIndex));
                 }
 
                 foreach (CodeGroup group in codeGroups)
                 {
                     int codeCount = group.EndCode - group.StartCode + 1;
                     for (int i = 0; i < codeCount; i++)
-                        Glyphs[group.GlyphIndex + i].Code = group.StartCode + i;
+                        Glyphs[group.StartCode + i] = glyphs[group.GlyphIndex + i];
                 }
             }
             else if (Version == CCMVer.DarkSouls2)
@@ -135,7 +136,7 @@ namespace SoulsFormats
                     TexRegion texRegion = texRegions[texRegionOffset];
                     Vector2 uv1 = new Vector2(texRegion.X1 / (float)TexWidth, texRegion.Y1 / (float)TexHeight);
                     Vector2 uv2 = new Vector2(texRegion.X2 / (float)TexWidth, texRegion.Y2 / (float)TexHeight);
-                    Glyphs.Add(new Glyph(code, uv1, uv2, preSpace, width, advance, texIndex));
+                    Glyphs[code] = new Glyph(uv1, uv2, preSpace, width, advance, texIndex);
                 }
             }
         }
@@ -170,16 +171,17 @@ namespace SoulsFormats
             bw.WriteByte(TexCount);
             bw.WriteByte(0);
 
-            Glyphs.Sort();
+            var codes = new List<int>(Glyphs.Keys);
+            codes.Sort();
             if (Version == CCMVer.DemonsSouls || Version == CCMVer.DarkSouls1)
             {
                 var codeGroups = new List<CodeGroup>();
                 for (int i = 0; i < Glyphs.Count;)
                 {
-                    int startCode = Glyphs[i].Code;
+                    int startCode = codes[i];
                     int glyphIndex = i;
-                    for (i++; i < Glyphs.Count && Glyphs[i].Code == Glyphs[i - 1].Code + 1; i++) ;
-                    int endCode = Glyphs[i - 1].Code;
+                    for (i++; i < Glyphs.Count && codes[i] == codes[i - 1] + 1; i++) ;
+                    int endCode = codes[i - 1];
                     codeGroups.Add(new CodeGroup(startCode, endCode, glyphIndex));
                 }
 
@@ -188,8 +190,9 @@ namespace SoulsFormats
                     group.Write(bw);
 
                 bw.FillInt32("GlyphOffset", (int)bw.Position);
-                foreach (Glyph glyph in Glyphs)
+                foreach (int code in codes)
                 {
+                    Glyph glyph = Glyphs[code];
                     bw.WriteVector2(glyph.UV1);
                     bw.WriteVector2(glyph.UV2);
                     bw.WriteInt16(glyph.PreSpace);
@@ -200,7 +203,41 @@ namespace SoulsFormats
             }
             else if (Version == CCMVer.DarkSouls2)
             {
-                throw new NotImplementedException();
+                var texRegionsByCode = new Dictionary<int, TexRegion>(Glyphs.Count);
+                var texRegions = new HashSet<TexRegion>();
+                foreach (int code in codes)
+                {
+                    Glyph glyph = Glyphs[code];
+                    short x1 = (short)Math.Round(glyph.UV1.X * TexWidth);
+                    short y1 = (short)Math.Round(glyph.UV1.Y * TexHeight);
+                    short x2 = (short)Math.Round(glyph.UV2.X * TexWidth);
+                    short y2 = (short)Math.Round(glyph.UV2.Y * TexHeight);
+                    var region = new TexRegion(x1, y1, x2, y2);
+                    texRegionsByCode[code] = region;
+                    texRegions.Add(region);
+                }
+
+                bw.FillInt16("TexRegionCount", (short)texRegions.Count);
+                var texRegionOffsets = new Dictionary<TexRegion, int>(texRegions.Count);
+                foreach (TexRegion region in texRegions)
+                {
+                    texRegionOffsets[region] = (int)bw.Position;
+                    region.Write(bw);
+                }
+
+                bw.FillInt32("GlyphOffset", (int)bw.Position);
+                foreach (int code in codes)
+                {
+                    Glyph glyph = Glyphs[code];
+                    bw.WriteInt32(code);
+                    bw.WriteInt32(texRegionOffsets[texRegionsByCode[code]]);
+                    bw.WriteInt16(glyph.TexIndex);
+                    bw.WriteInt16(glyph.PreSpace);
+                    bw.WriteInt16(glyph.Width);
+                    bw.WriteInt16(glyph.Advance);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                }
             }
 
             bw.FillInt32("FileSize", (int)bw.Position);
@@ -233,13 +270,8 @@ namespace SoulsFormats
         /// <summary>
         /// An individual character in the font.
         /// </summary>
-        public class Glyph : IComparable<Glyph>
+        public class Glyph
         {
-            /// <summary>
-            /// The character code.
-            /// </summary>
-            public int Code { get; set; }
-
             /// <summary>
             /// The UV of the top-left corner of the texture.
             /// </summary>
@@ -273,9 +305,8 @@ namespace SoulsFormats
             /// <summary>
             /// Creates a new Glyph with the given values.
             /// </summary>
-            public Glyph(int code, Vector2 uv1, Vector2 uv2, short preSpace, short width, short advance, short texIndex)
+            public Glyph(Vector2 uv1, Vector2 uv2, short preSpace, short width, short advance, short texIndex)
             {
-                Code = code;
                 UV1 = uv1;
                 UV2 = uv2;
                 PreSpace = preSpace;
@@ -283,11 +314,6 @@ namespace SoulsFormats
                 Advance = advance;
                 TexIndex = texIndex;
             }
-
-            /// <summary>
-            /// Compares this Glyph's Code to the other's.
-            /// </summary>
-            public int CompareTo(Glyph other) => Code.CompareTo(other.Code);
         }
 
         private struct CodeGroup
@@ -330,9 +356,43 @@ namespace SoulsFormats
                 Y2 = br.ReadInt16();
             }
 
+            public TexRegion(short x1, short y1, short x2, short y2)
+            {
+                X1 = x1;
+                Y1 = y1;
+                X2 = x2;
+                Y2 = y2;
+            }
+
+            public void Write(BinaryWriterEx bw)
+            {
+                bw.WriteInt16(X1);
+                bw.WriteInt16(Y1);
+                bw.WriteInt16(X2);
+                bw.WriteInt16(Y2);
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is TexRegion && Equals((TexRegion)obj);
+            }
+
             public bool Equals(TexRegion other)
             {
-                return X1 == other.X1 && Y1 == other.Y1 && X2 == other.X2 && Y2 == other.Y2;
+                return X1 == other.X1 &&
+                       Y1 == other.Y1 &&
+                       X2 == other.X2 &&
+                       Y2 == other.Y2;
+            }
+
+            public override int GetHashCode()
+            {
+                var hashCode = 268039418;
+                hashCode = hashCode * -1521134295 + X1.GetHashCode();
+                hashCode = hashCode * -1521134295 + Y1.GetHashCode();
+                hashCode = hashCode * -1521134295 + X2.GetHashCode();
+                hashCode = hashCode * -1521134295 + Y2.GetHashCode();
+                return hashCode;
             }
         }
     }
