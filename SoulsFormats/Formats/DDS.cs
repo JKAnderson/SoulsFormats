@@ -47,7 +47,7 @@ namespace SoulsFormats
             // dwMagic
             br.AssertASCII("DDS ");
             // dwSize
-            br.AssertInt32(124);
+            br.AssertInt32(0x7C);
 
             dwFlags = (DDSD)br.ReadUInt32();
             dwHeight = br.ReadInt32();
@@ -79,7 +79,7 @@ namespace SoulsFormats
         {
             BinaryWriterEx bw = new BinaryWriterEx(false);
             bw.WriteASCII("DDS ");
-            bw.WriteInt32(124);
+            bw.WriteInt32(0x7C);
 
             bw.WriteUInt32((uint)dwFlags);
             bw.WriteInt32(dwHeight);

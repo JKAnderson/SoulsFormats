@@ -284,6 +284,14 @@ namespace SoulsFormats
             }
 
             /// <summary>
+            /// Attempt to create a full DDS file from headerless console textures. Very very very poor support at the moment.
+            /// </summary>
+            public byte[] Headerize()
+            {
+                return Headerizer.Headerize(this);
+            }
+
+            /// <summary>
             /// Returns the name of this texture.
             /// </summary>
             public override string ToString()
