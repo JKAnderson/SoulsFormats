@@ -105,14 +105,22 @@ namespace SoulsFormats
                 }
                 else if (format == "DFLT")
                 {
-                    int flag = br.GetInt32(0x10);
-                    if (flag == 0x24)
+                    int unk04 = br.GetInt32(0x4);
+                    int unk10 = br.GetInt32(0x10);
+                    if (unk10 == 0x24)
                     {
                         type = Type.DarkSouls1;
                     }
-                    else if (flag == 0x44)
+                    else if (unk10 == 0x44)
                     {
-                        type = Type.DarkSouls3;
+                        if (unk04 == 0x10000)
+                        {
+                            type = Type.DarkSouls3;
+                        }
+                        else if (unk04 == 0x11000)
+                        {
+                            type = Type.DarkSouls3SL2;
+                        }
                     }
                 }
             }
@@ -124,7 +132,7 @@ namespace SoulsFormats
                 return DecompressDCPDFLT(br);
             else if (type == Type.DemonsSoulsEDGE)
                 return DecompressDCXEDGE(br);
-            else if (type == Type.DarkSouls1 || type == Type.DarkSouls3)
+            else if (type == Type.DarkSouls1 || type == Type.DarkSouls3 || type == Type.DarkSouls3SL2)
                 return DecompressDCXDFLT(br, type);
             else
                 throw new FormatException("Unknown DCX format.");
@@ -288,7 +296,16 @@ namespace SoulsFormats
         private static byte[] DecompressDCXDFLT(BinaryReaderEx br, Type type)
         {
             br.AssertASCII("DCX\0");
-            br.AssertInt32(0x10000);
+
+            if (type == Type.DarkSouls1 || type == Type.DarkSouls3)
+            {
+                br.AssertInt32(0x10000);
+            }
+            else if (type == Type.DarkSouls3SL2)
+            {
+                br.AssertInt32(0x11000);
+            }
+
             br.AssertInt32(0x18);
             br.AssertInt32(0x24);
 
@@ -310,7 +327,16 @@ namespace SoulsFormats
             br.AssertASCII("DCP\0");
             br.AssertASCII("DFLT");
             br.AssertInt32(0x20);
-            br.AssertInt32(0x9000000);
+
+            if (type == Type.DarkSouls1 || type == Type.DarkSouls3)
+            {
+                br.AssertInt32(0x9000000);
+            }
+            else if (type == Type.DarkSouls3SL2)
+            {
+                br.AssertInt32(0x8000000);
+            }
+
             br.AssertInt32(0x0);
             br.AssertInt32(0x0);
             br.AssertInt32(0x0);
@@ -474,7 +500,16 @@ namespace SoulsFormats
         private static void CompressDCXDFLT(byte[] data, BinaryWriterEx bw, Type type)
         {
             bw.WriteASCII("DCX\0");
-            bw.WriteInt32(0x10000);
+
+            if (type == Type.DarkSouls1 || type == Type.DarkSouls3)
+            {
+                bw.WriteInt32(0x10000);
+            }
+            else if (type == Type.DarkSouls3SL2)
+            {
+                bw.WriteInt32(0x11000);
+            }
+
             bw.WriteInt32(0x18);
             bw.WriteInt32(0x24);
 
@@ -495,7 +530,16 @@ namespace SoulsFormats
             bw.WriteASCII("DCP\0");
             bw.WriteASCII("DFLT");
             bw.WriteInt32(0x20);
-            bw.WriteInt32(0x9000000);
+
+            if (type == Type.DarkSouls1 || type == Type.DarkSouls3)
+            {
+                bw.WriteInt32(0x9000000);
+            }
+            else if (type == Type.DarkSouls3SL2)
+            {
+                bw.WriteInt32(0x8000000);
+            }
+
             bw.WriteInt32(0x0);
             bw.WriteInt32(0x0);
             bw.WriteInt32(0x0);
@@ -547,6 +591,11 @@ namespace SoulsFormats
             /// The standard single-block format used in DS3 and BB.
             /// </summary>
             DarkSouls3,
+
+            /// <summary>
+            /// Used for the copy of the regulation stored in DS3 save files.
+            /// </summary>
+            DarkSouls3SL2,
         }
     }
 }

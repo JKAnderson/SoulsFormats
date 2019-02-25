@@ -94,7 +94,7 @@ namespace SoulsFormats
             br.AssertInt64(0x40);
             Timestamp = br.ReadFixStr(8);
             // File header size
-            long fileHeaderSize = br.AssertInt64(0x18, 0x1C, 0x24);
+            long fileHeaderSize = br.AssertInt64(0x18, 0x1C, 0x20, 0x24);
             long dataStart = br.ReadInt64();
 
             Unicode = br.ReadBoolean();
@@ -102,6 +102,8 @@ namespace SoulsFormats
                 Format = br.AssertByte(0x0C);
             else if (fileHeaderSize == 0x1C)
                 Format = br.AssertByte(0x70);
+            else if (fileHeaderSize == 0x20)
+                Format = br.AssertByte(0x20);
             else if (fileHeaderSize == 0x24)
                 Format = br.AssertByte(0x26, 0x2A, 0x2E, 0x54, 0x74);
             Extended = br.AssertByte(0, 1, 4, 0x80);
@@ -164,6 +166,8 @@ namespace SoulsFormats
                 bw.WriteInt64(0x18);
             else if (Format == 0x70)
                 bw.WriteInt64(0x1C);
+            else if (Format == 0x20)
+                bw.WriteInt64(0x20);
             else
                 bw.WriteInt64(0x24);
             bw.ReserveInt64("DataStart");
@@ -317,7 +321,7 @@ namespace SoulsFormats
 
             internal File(BinaryReaderEx br, bool unicode, byte format)
             {
-                Flags = br.AssertByte(0x00, 0x02, 0x03, 0x0A, 0x40, 0xC0);
+                Flags = br.AssertByte(0x00, 0x02, 0x03, 0x0A, 0x40, 0x50, 0xC0);
                 br.AssertByte(0);
                 br.AssertByte(0);
                 br.AssertByte(0);
@@ -328,11 +332,13 @@ namespace SoulsFormats
                 if (format == 0x26 || format == 0x2A || format == 0x2E || format == 0x54 || format == 0x74)
                     uncompressedSize = br.ReadInt64();
                 int fileOffset = br.ReadInt32();
-                if (format == 0x0C)
+                if (format == 0x0C || format == 0x20)
                     ID = -1;
                 else
                     ID = br.ReadInt32();
                 int nameOffset = br.ReadInt32();
+                if (format == 0x20)
+                    br.AssertInt64(0);
 
                 if (unicode)
                     Name = br.GetUTF16(nameOffset);
@@ -363,9 +369,11 @@ namespace SoulsFormats
                 if (format == 0x26 || format == 0x2A || format == 0x2E || format == 0x54 || format == 0x74)
                     bw.WriteInt64(Bytes.LongLength);
                 bw.ReserveInt32($"FileData{index}");
-                if (format != 0x0C)
+                if (format != 0x0C && format != 0x20)
                     bw.WriteInt32(ID);
                 bw.ReserveInt32($"FileName{index}");
+                if (format == 0x20)
+                    bw.WriteInt64(0);
             }
 
             /// <summary>
