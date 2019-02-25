@@ -316,9 +316,9 @@ namespace SoulsFormats
             public Shape Shape;
 
             /// <summary>
-            /// Not sure if this is exactly a drawgroup, but it's what makes messages not appear in dark Firelink.
+            /// Controls whether the event is present in different ceremonies. Maybe only used for Messages?
             /// </summary>
-            public uint DrawGroup;
+            public uint MapStudioLayer;
 
             /// <summary>
             /// Center of the region.
@@ -353,7 +353,7 @@ namespace SoulsFormats
                 Unk2 = 0;
                 Unk3 = 0;
                 Unk4 = 0;
-                DrawGroup = 0;
+                MapStudioLayer = 0;
                 HasTypeData = hasTypeData;
             }
 
@@ -369,7 +369,7 @@ namespace SoulsFormats
                 Unk2 = clone.Unk2;
                 Unk3 = clone.Unk3;
                 Unk4 = clone.Unk4;
-                DrawGroup = clone.DrawGroup;
+                MapStudioLayer = clone.MapStudioLayer;
                 HasTypeData = clone.HasTypeData;
             }
 
@@ -402,7 +402,7 @@ namespace SoulsFormats
                 br.StepOut();
 
                 br.AssertInt32(-1);
-                DrawGroup = br.ReadUInt32();
+                MapStudioLayer = br.ReadUInt32();
 
                 // This will be 0 for points, but that's fine
                 long shapeDataOffset = br.ReadInt64();
@@ -469,7 +469,7 @@ namespace SoulsFormats
                 bw.ReserveInt64("BaseDataOffset2");
 
                 bw.WriteInt32(-1);
-                bw.WriteUInt32(DrawGroup);
+                bw.WriteUInt32(MapStudioLayer);
 
                 bw.ReserveInt64("ShapeDataOffset");
                 bw.ReserveInt64("BaseDataOffset3");

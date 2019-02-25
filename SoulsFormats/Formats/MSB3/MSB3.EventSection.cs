@@ -34,9 +34,9 @@ namespace SoulsFormats
             public List<Event.MapOffset> MapOffsets;
 
             /// <summary>
-            /// Invasions in the MSB.
+            /// Pseudo multiplayer events in the MSB.
             /// </summary>
-            public List<Event.Invasion> Invasions;
+            public List<Event.PseudoMultiplayer> PseudoMultiplayers;
 
             /// <summary>
             /// Walk routes in the MSB.
@@ -62,7 +62,7 @@ namespace SoulsFormats
                 Generators = new List<Event.Generator>();
                 ObjActs = new List<Event.ObjAct>();
                 MapOffsets = new List<Event.MapOffset>();
-                Invasions = new List<Event.Invasion>();
+                PseudoMultiplayers = new List<Event.PseudoMultiplayer>();
                 WalkRoutes = new List<Event.WalkRoute>();
                 GroupTours = new List<Event.GroupTour>();
                 Others = new List<Event.Other>();
@@ -74,7 +74,7 @@ namespace SoulsFormats
             public override List<Event> GetEntries()
             {
                 return SFUtil.ConcatAll<Event>(
-                    Treasures, Generators, ObjActs, MapOffsets, Invasions, WalkRoutes, GroupTours, Others);
+                    Treasures, Generators, ObjActs, MapOffsets, PseudoMultiplayers, WalkRoutes, GroupTours, Others);
             }
 
             internal override Event ReadEntry(BinaryReaderEx br)
@@ -104,8 +104,8 @@ namespace SoulsFormats
                         return mapOffset;
 
                     case EventType.PseudoMultiplayer:
-                        var invasion = new Event.Invasion(br);
-                        Invasions.Add(invasion);
+                        var invasion = new Event.PseudoMultiplayer(br);
+                        PseudoMultiplayers.Add(invasion);
                         return invasion;
 
                     case EventType.WalkRoute:
@@ -165,9 +165,10 @@ namespace SoulsFormats
             Navimesh = 0xA,
             Environment = 0xB,
             PseudoMultiplayer = 0xC,
-            // Mystery = 0xD,
+            Unk0D = 0xD,
             WalkRoute = 0xE,
             GroupTour = 0xF,
+            Unk10 = 0x10,
             Other = 0xFFFFFFFF,
         }
 
@@ -325,6 +326,11 @@ namespace SoulsFormats
                 public int ItemLot1, ItemLot2;
 
                 /// <summary>
+                /// Unknown; always -1 in vanilla.
+                /// </summary>
+                public int ActionButtonParamID;
+
+                /// <summary>
                 /// Animation to play when taking this treasure.
                 /// </summary>
                 public int PickupAnimID;
@@ -347,6 +353,7 @@ namespace SoulsFormats
                     PartName2 = null;
                     ItemLot1 = -1;
                     ItemLot2 = -1;
+                    ActionButtonParamID = -1;
                     PickupAnimID = -1;
                     InChest = false;
                     StartDisabled = false;
@@ -360,6 +367,7 @@ namespace SoulsFormats
                     PartName2 = clone.PartName2;
                     ItemLot1 = clone.ItemLot1;
                     ItemLot2 = clone.ItemLot2;
+                    ActionButtonParamID = clone.ActionButtonParamID;
                     PickupAnimID = clone.PickupAnimID;
                     InChest = clone.InChest;
                     StartDisabled = clone.StartDisabled;
@@ -383,7 +391,7 @@ namespace SoulsFormats
                     br.AssertInt32(-1);
                     br.AssertInt32(-1);
                     br.AssertInt32(-1);
-                    br.AssertInt32(-1);
+                    ActionButtonParamID = br.ReadInt32();
                     PickupAnimID = br.ReadInt32();
 
                     InChest = br.ReadBoolean();
@@ -412,7 +420,7 @@ namespace SoulsFormats
                     bw.WriteInt32(-1);
                     bw.WriteInt32(-1);
                     bw.WriteInt32(-1);
-                    bw.WriteInt32(-1);
+                    bw.WriteInt32(ActionButtonParamID);
                     bw.WriteInt32(PickupAnimID);
 
                     bw.WriteBoolean(InChest);
@@ -490,7 +498,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT10;
+                public int SessionCondition;
 
                 /// <summary>
                 /// Unknown.
@@ -508,7 +516,7 @@ namespace SoulsFormats
                     MaxGenNum = 0;
                     MinInterval = 0;
                     MaxInterval = 0;
-                    UnkT10 = 0;
+                    SessionCondition = 0;
                     UnkT14 = 0;
                     UnkT18 = 0;
                     SpawnPointNames = new string[8];
@@ -526,7 +534,7 @@ namespace SoulsFormats
                     MaxGenNum = clone.MaxGenNum;
                     MinInterval = clone.MinInterval;
                     MaxInterval = clone.MaxInterval;
-                    UnkT10 = clone.UnkT10;
+                    SessionCondition = clone.SessionCondition;
                     UnkT14 = clone.UnkT14;
                     UnkT18 = clone.UnkT18;
                     SpawnPointNames = (string[])clone.SpawnPointNames.Clone();
@@ -543,7 +551,7 @@ namespace SoulsFormats
                     MaxGenNum = br.ReadInt16();
                     MinInterval = br.ReadSingle();
                     MaxInterval = br.ReadSingle();
-                    UnkT10 = br.ReadInt32();
+                    SessionCondition = br.ReadInt32();
                     UnkT14 = br.ReadSingle();
                     UnkT18 = br.ReadSingle();
                     br.AssertInt32(0);
@@ -575,7 +583,7 @@ namespace SoulsFormats
                     bw.WriteInt16(MaxGenNum);
                     bw.WriteSingle(MinInterval);
                     bw.WriteSingle(MaxInterval);
-                    bw.WriteInt32(UnkT10);
+                    bw.WriteInt32(SessionCondition);
                     bw.WriteSingle(UnkT14);
                     bw.WriteSingle(UnkT18);
                     bw.WriteInt32(0);
@@ -629,6 +637,20 @@ namespace SoulsFormats
             /// </summary>
             public class ObjAct : Event
             {
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public enum ObjActState : byte
+                {
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+                    OneState = 0,
+                    DoorState = 1,
+                    OneLoopState = 2,
+                    OneLoopState2 = 3,
+                    DoorState2 = 4,
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
+                }
+
                 internal override EventType Type => EventType.ObjAct;
 
                 /// <summary>
@@ -645,12 +667,12 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int ParameterID;
+                public int ObjActParamID;
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT10;
+                public ObjActState ObjActStateType;
 
                 /// <summary>
                 /// Unknown.
@@ -664,8 +686,8 @@ namespace SoulsFormats
                 {
                     ObjActEntityID = -1;
                     PartName2 = null;
-                    ParameterID = 0;
-                    UnkT10 = 0;
+                    ObjActParamID = 0;
+                    ObjActStateType = ObjActState.OneState;
                     EventFlagID = 0;
                 }
 
@@ -676,8 +698,8 @@ namespace SoulsFormats
                 {
                     ObjActEntityID = clone.ObjActEntityID;
                     PartName2 = clone.PartName2;
-                    ParameterID = clone.ParameterID;
-                    UnkT10 = clone.UnkT10;
+                    ObjActParamID = clone.ObjActParamID;
+                    ObjActStateType = clone.ObjActStateType;
                     EventFlagID = clone.EventFlagID;
                 }
 
@@ -687,8 +709,13 @@ namespace SoulsFormats
                 {
                     ObjActEntityID = br.ReadInt32();
                     partIndex2 = br.ReadInt32();
-                    ParameterID = br.ReadInt32();
-                    UnkT10 = br.ReadInt32();
+                    ObjActParamID = br.ReadInt32();
+
+                    ObjActStateType = br.ReadEnum8<ObjActState>();
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+
                     EventFlagID = br.ReadInt32();
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -699,8 +726,13 @@ namespace SoulsFormats
                 {
                     bw.WriteInt32(ObjActEntityID);
                     bw.WriteInt32(partIndex2);
-                    bw.WriteInt32(ParameterID);
-                    bw.WriteInt32(UnkT10);
+                    bw.WriteInt32(ObjActParamID);
+
+                    bw.WriteByte((byte)ObjActStateType);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+
                     bw.WriteInt32(EventFlagID);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
@@ -773,7 +805,7 @@ namespace SoulsFormats
             /// <summary>
             /// A fake multiplayer interaction where the player goes to an NPC's world.
             /// </summary>
-            public class Invasion : Event
+            public class PseudoMultiplayer : Event
             {
                 internal override EventType Type => EventType.PseudoMultiplayer;
 
@@ -815,7 +847,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new Invasion with the given ID and name.
                 /// </summary>
-                public Invasion(int id, string name) : base(id, name)
+                public PseudoMultiplayer(int id, string name) : base(id, name)
                 {
                     HostEventEntityID = -1;
                     InvasionEventEntityID = -1;
@@ -829,7 +861,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new Invasion with values copied from another.
                 /// </summary>
-                public Invasion(Invasion clone) : base(clone)
+                public PseudoMultiplayer(PseudoMultiplayer clone) : base(clone)
                 {
                     HostEventEntityID = clone.HostEventEntityID;
                     InvasionEventEntityID = clone.InvasionEventEntityID;
@@ -840,7 +872,7 @@ namespace SoulsFormats
                     UnkT18 = clone.UnkT18;
                 }
 
-                internal Invasion(BinaryReaderEx br) : base(br) { }
+                internal PseudoMultiplayer(BinaryReaderEx br) : base(br) { }
 
                 internal override void Read(BinaryReaderEx br)
                 {
@@ -950,7 +982,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT00, UnkT04;
+                public int PlatoonIDScriptActivate, State;
 
                 private int[] groupPartsIndices;
                 /// <summary>
@@ -963,8 +995,8 @@ namespace SoulsFormats
                 /// </summary>
                 public GroupTour(int id, string name) : base(id, name)
                 {
-                    UnkT00 = 0;
-                    UnkT04 = 0;
+                    PlatoonIDScriptActivate = 0;
+                    State = 0;
                     GroupPartsNames = new string[32];
                 }
 
@@ -973,8 +1005,8 @@ namespace SoulsFormats
                 /// </summary>
                 public GroupTour(GroupTour clone) : base(clone)
                 {
-                    UnkT00 = clone.UnkT00;
-                    UnkT04 = clone.UnkT04;
+                    PlatoonIDScriptActivate = clone.PlatoonIDScriptActivate;
+                    State = clone.State;
                     GroupPartsNames = (string[])clone.GroupPartsNames.Clone();
                 }
 
@@ -982,8 +1014,8 @@ namespace SoulsFormats
 
                 internal override void Read(BinaryReaderEx br)
                 {
-                    UnkT00 = br.ReadInt32();
-                    UnkT04 = br.ReadInt32();
+                    PlatoonIDScriptActivate = br.ReadInt32();
+                    State = br.ReadInt32();
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     groupPartsIndices = br.ReadInt32s(32);
@@ -991,8 +1023,8 @@ namespace SoulsFormats
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(UnkT00);
-                    bw.WriteInt32(UnkT04);
+                    bw.WriteInt32(PlatoonIDScriptActivate);
+                    bw.WriteInt32(State);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32s(groupPartsIndices);

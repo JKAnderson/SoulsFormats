@@ -252,22 +252,22 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public sbyte OldLanternID, OldLodParamID, UnkB0E;
+            public sbyte LanternID, LodParamID, UnkB0E;
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public bool OldIsShadowDest;
+            public bool IsShadowDest;
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public bool OldIsShadowOnly, OldDrawByReflectCam, OldDrawOnlyReflectCam, OldUseDepthBiasFloat;
+            public bool IsShadowOnly, DrawByReflectCam, DrawOnlyReflectCam, UseDepthBiasFloat;
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public bool OldDisablePointLightEffect;
+            public bool DisablePointLightEffect;
 
             /// <summary>
             /// Unknown.
@@ -302,15 +302,15 @@ namespace SoulsFormats
                 OldFogID = 0;
                 OldScatterID = 0;
                 OldLensFlareID = 0;
-                OldLanternID = 0;
-                OldLodParamID = 0;
+                LanternID = 0;
+                LodParamID = 0;
                 UnkB0E = 0;
-                OldIsShadowDest = false;
-                OldIsShadowOnly = false;
-                OldDrawByReflectCam = false;
-                OldDrawOnlyReflectCam = false;
-                OldUseDepthBiasFloat = false;
-                OldDisablePointLightEffect = false;
+                IsShadowDest = false;
+                IsShadowOnly = false;
+                DrawByReflectCam = false;
+                DrawOnlyReflectCam = false;
+                UseDepthBiasFloat = false;
+                DisablePointLightEffect = false;
                 UnkB15 = 0;
                 UnkB16 = 0;
                 UnkB17 = 0;
@@ -339,15 +339,15 @@ namespace SoulsFormats
                 OldFogID = clone.OldFogID;
                 OldScatterID = clone.OldScatterID;
                 OldLensFlareID = clone.OldLensFlareID;
-                OldLanternID = clone.OldLanternID;
-                OldLodParamID = clone.OldLodParamID;
+                LanternID = clone.LanternID;
+                LodParamID = clone.LodParamID;
                 UnkB0E = clone.UnkB0E;
-                OldIsShadowDest = clone.OldIsShadowDest;
-                OldIsShadowOnly = clone.OldIsShadowOnly;
-                OldDrawByReflectCam = clone.OldDrawByReflectCam;
-                OldDrawOnlyReflectCam = clone.OldDrawOnlyReflectCam;
-                OldUseDepthBiasFloat = clone.OldUseDepthBiasFloat;
-                OldDisablePointLightEffect = clone.OldDisablePointLightEffect;
+                IsShadowDest = clone.IsShadowDest;
+                IsShadowOnly = clone.IsShadowOnly;
+                DrawByReflectCam = clone.DrawByReflectCam;
+                DrawOnlyReflectCam = clone.DrawOnlyReflectCam;
+                UseDepthBiasFloat = clone.UseDepthBiasFloat;
+                DisablePointLightEffect = clone.DisablePointLightEffect;
                 UnkB15 = clone.UnkB15;
                 UnkB16 = clone.UnkB16;
                 UnkB17 = clone.UnkB17;
@@ -403,17 +403,17 @@ namespace SoulsFormats
 
                 br.AssertInt32(0);
 
-                OldLanternID = br.ReadSByte();
-                OldLodParamID = br.ReadSByte();
+                LanternID = br.ReadSByte();
+                LodParamID = br.ReadSByte();
                 UnkB0E = br.ReadSByte();
-                OldIsShadowDest = br.ReadBoolean();
+                IsShadowDest = br.ReadBoolean();
 
-                OldIsShadowOnly = br.ReadBoolean();
-                OldDrawByReflectCam = br.ReadBoolean();
-                OldDrawOnlyReflectCam = br.ReadBoolean();
-                OldUseDepthBiasFloat = br.ReadBoolean();
+                IsShadowOnly = br.ReadBoolean();
+                DrawByReflectCam = br.ReadBoolean();
+                DrawOnlyReflectCam = br.ReadBoolean();
+                UseDepthBiasFloat = br.ReadBoolean();
 
-                OldDisablePointLightEffect = br.ReadBoolean();
+                DisablePointLightEffect = br.ReadBoolean();
                 UnkB15 = br.ReadByte();
                 UnkB16 = br.ReadByte();
                 UnkB17 = br.ReadByte();
@@ -477,17 +477,17 @@ namespace SoulsFormats
 
                 bw.WriteInt32(0);
 
-                bw.WriteSByte(OldLanternID);
-                bw.WriteSByte(OldLodParamID);
+                bw.WriteSByte(LanternID);
+                bw.WriteSByte(LodParamID);
                 bw.WriteSByte(UnkB0E);
-                bw.WriteBoolean(OldIsShadowDest);
+                bw.WriteBoolean(IsShadowDest);
 
-                bw.WriteBoolean(OldIsShadowOnly);
-                bw.WriteBoolean(OldDrawByReflectCam);
-                bw.WriteBoolean(OldDrawOnlyReflectCam);
-                bw.WriteBoolean(OldUseDepthBiasFloat);
+                bw.WriteBoolean(IsShadowOnly);
+                bw.WriteBoolean(DrawByReflectCam);
+                bw.WriteBoolean(DrawOnlyReflectCam);
+                bw.WriteBoolean(UseDepthBiasFloat);
 
-                bw.WriteBoolean(OldDisablePointLightEffect);
+                bw.WriteBoolean(DisablePointLightEffect);
                 bw.WriteByte(UnkB15);
                 bw.WriteByte(UnkB16);
                 bw.WriteByte(UnkB17);
@@ -621,12 +621,12 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT04, UnkT06, UnkT07, UnkT08, UnkT09, UnkT10;
+                public short UnkT0C, UnkT0E, UnkT10, UnkT12, UnkT14, UnkT16, UnkT18, UnkT1A, UnkT1C, UnkT1E;
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short UnkT02a, UnkT02b, UnkT03a, UnkT03b, UnkT05a, UnkT05b;
+                public int UnkT20, UnkT24, UnkT28, UnkT2C;
 
                 /// <summary>
                 /// Creates a new Object with the given ID and name.
@@ -634,18 +634,20 @@ namespace SoulsFormats
                 public Object(int id, string name) : base(id, name, 32, 0)
                 {
                     CollisionName = null;
-                    UnkT02a = 0;
-                    UnkT02b = 0;
-                    UnkT03a = 0;
-                    UnkT03b = 0;
-                    UnkT04 = 0;
-                    UnkT05a = 0;
-                    UnkT05b = 0;
-                    UnkT06 = 0;
-                    UnkT07 = 0;
-                    UnkT08 = 0;
-                    UnkT09 = 0;
+                    UnkT0C = 0;
+                    UnkT0E = 0;
                     UnkT10 = 0;
+                    UnkT12 = 0;
+                    UnkT14 = 0;
+                    UnkT16 = 0;
+                    UnkT18 = 0;
+                    UnkT1A = 0;
+                    UnkT1C = 0;
+                    UnkT1E = 0;
+                    UnkT20 = 0;
+                    UnkT24 = 0;
+                    UnkT28 = 0;
+                    UnkT2C = 0;
                 }
 
                 /// <summary>
@@ -654,18 +656,20 @@ namespace SoulsFormats
                 public Object(Object clone) : base(clone)
                 {
                     CollisionName = clone.CollisionName;
-                    UnkT02a = clone.UnkT02a;
-                    UnkT02b = clone.UnkT02b;
-                    UnkT03a = clone.UnkT03a;
-                    UnkT03b = clone.UnkT03b;
-                    UnkT04 = clone.UnkT04;
-                    UnkT05a = clone.UnkT05a;
-                    UnkT05b = clone.UnkT05b;
-                    UnkT06 = clone.UnkT06;
-                    UnkT07 = clone.UnkT07;
-                    UnkT08 = clone.UnkT08;
-                    UnkT09 = clone.UnkT09;
+                    UnkT0C = clone.UnkT0C;
+                    UnkT0E = clone.UnkT0E;
                     UnkT10 = clone.UnkT10;
+                    UnkT12 = clone.UnkT12;
+                    UnkT14 = clone.UnkT14;
+                    UnkT16 = clone.UnkT16;
+                    UnkT18 = clone.UnkT18;
+                    UnkT1A = clone.UnkT1A;
+                    UnkT1C = clone.UnkT1C;
+                    UnkT1E = clone.UnkT1E;
+                    UnkT20 = clone.UnkT20;
+                    UnkT24 = clone.UnkT24;
+                    UnkT28 = clone.UnkT28;
+                    UnkT2C = clone.UnkT2C;
                 }
 
                 internal Object(BinaryReaderEx br) : base(br) { }
@@ -675,18 +679,20 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     collisionPartIndex = br.ReadInt32();
-                    UnkT02a = br.ReadInt16();
-                    UnkT02b = br.ReadInt16();
-                    UnkT03a = br.ReadInt16();
-                    UnkT03b = br.ReadInt16();
-                    UnkT04 = br.ReadInt32();
-                    UnkT05a = br.ReadInt16();
-                    UnkT05b = br.ReadInt16();
-                    UnkT06 = br.ReadInt32();
-                    UnkT07 = br.ReadInt32();
-                    UnkT08 = br.ReadInt32();
-                    UnkT09 = br.ReadInt32();
-                    UnkT10 = br.ReadInt32();
+                    UnkT0C = br.ReadInt16();
+                    UnkT0E = br.ReadInt16();
+                    UnkT10 = br.ReadInt16();
+                    UnkT12 = br.ReadInt16();
+                    UnkT14 = br.ReadInt16();
+                    UnkT16 = br.ReadInt16();
+                    UnkT18 = br.ReadInt16();
+                    UnkT1A = br.ReadInt16();
+                    UnkT1C = br.ReadInt16();
+                    UnkT1E = br.ReadInt16();
+                    UnkT20 = br.ReadInt32();
+                    UnkT24 = br.ReadInt32();
+                    UnkT28 = br.ReadInt32();
+                    UnkT2C = br.ReadInt32();
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -698,18 +704,20 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(collisionPartIndex);
-                    bw.WriteInt16(UnkT02a);
-                    bw.WriteInt16(UnkT02b);
-                    bw.WriteInt16(UnkT03a);
-                    bw.WriteInt16(UnkT03b);
-                    bw.WriteInt32(UnkT04);
-                    bw.WriteInt16(UnkT05a);
-                    bw.WriteInt16(UnkT05b);
-                    bw.WriteInt32(UnkT06);
-                    bw.WriteInt32(UnkT07);
-                    bw.WriteInt32(UnkT08);
-                    bw.WriteInt32(UnkT09);
-                    bw.WriteInt32(UnkT10);
+                    bw.WriteInt16(UnkT0C);
+                    bw.WriteInt16(UnkT0E);
+                    bw.WriteInt16(UnkT10);
+                    bw.WriteInt16(UnkT12);
+                    bw.WriteInt16(UnkT14);
+                    bw.WriteInt16(UnkT16);
+                    bw.WriteInt16(UnkT18);
+                    bw.WriteInt16(UnkT1A);
+                    bw.WriteInt16(UnkT1C);
+                    bw.WriteInt16(UnkT1E);
+                    bw.WriteInt32(UnkT20);
+                    bw.WriteInt32(UnkT24);
+                    bw.WriteInt32(UnkT28);
+                    bw.WriteInt32(UnkT2C);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
@@ -763,19 +771,24 @@ namespace SoulsFormats
                 public int CharaInitID;
 
                 /// <summary>
-                /// Unknown, probably more paramIDs.
+                /// Unknown.
                 /// </summary>
-                public int UnkT04, UnkT07, UnkT08, UnkT09;
+                public short UnkT04, ChrManipulatorAllocationParameter;
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public float UnkT10;
+                public int UnkT20, BackupEventAnimID, UnkT78;
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT11, UnkT12, UnkT13, UnkT14, UnkT15, UnkT16, UnkT17, UnkT18, UnkT19;
+                public float UnkT84;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public int UnkT8C, UnkT94, UnkT9C, UnkTA4, UnkTAC, UnkTC0, UnkTC4, UnkTC8, UnkTCC;
 
                 /// <summary>
                 /// Creates a new Enemy with the given ID and name.
@@ -786,21 +799,22 @@ namespace SoulsFormats
                     NPCParamID = 0;
                     TalkID = 0;
                     UnkT04 = 0;
+                    ChrManipulatorAllocationParameter = 0;
                     CharaInitID = 0;
                     CollisionName = null;
-                    UnkT07 = 0;
-                    UnkT08 = 0;
-                    UnkT09 = 0;
-                    UnkT10 = 0;
-                    UnkT11 = 0;
-                    UnkT12 = 0;
-                    UnkT13 = 0;
-                    UnkT14 = 0;
-                    UnkT15 = 0;
-                    UnkT16 = 0;
-                    UnkT17 = 0;
-                    UnkT18 = 0;
-                    UnkT19 = 0;
+                    UnkT20 = 0;
+                    BackupEventAnimID = 0;
+                    UnkT78 = 0;
+                    UnkT84 = 0;
+                    UnkT8C = 0;
+                    UnkT94 = 0;
+                    UnkT9C = 0;
+                    UnkTA4 = 0;
+                    UnkTAC = 0;
+                    UnkTC0 = 0;
+                    UnkTC4 = 0;
+                    UnkTC8 = 0;
+                    UnkTCC = 0;
                 }
 
                 /// <summary>
@@ -812,21 +826,22 @@ namespace SoulsFormats
                     NPCParamID = clone.NPCParamID;
                     TalkID = clone.TalkID;
                     UnkT04 = clone.UnkT04;
+                    ChrManipulatorAllocationParameter = clone.ChrManipulatorAllocationParameter;
                     CharaInitID = clone.CharaInitID;
                     CollisionName = clone.CollisionName;
-                    UnkT07 = clone.UnkT07;
-                    UnkT08 = clone.UnkT08;
-                    UnkT09 = clone.UnkT09;
-                    UnkT10 = clone.UnkT10;
-                    UnkT11 = clone.UnkT11;
-                    UnkT12 = clone.UnkT12;
-                    UnkT13 = clone.UnkT13;
-                    UnkT14 = clone.UnkT14;
-                    UnkT15 = clone.UnkT15;
-                    UnkT16 = clone.UnkT16;
-                    UnkT17 = clone.UnkT17;
-                    UnkT18 = clone.UnkT18;
-                    UnkT19 = clone.UnkT19;
+                    UnkT20 = clone.UnkT20;
+                    BackupEventAnimID = clone.BackupEventAnimID;
+                    UnkT78 = clone.UnkT78;
+                    UnkT84 = clone.UnkT84;
+                    UnkT8C = clone.UnkT8C;
+                    UnkT94 = clone.UnkT94;
+                    UnkT9C = clone.UnkT9C;
+                    UnkTA4 = clone.UnkTA4;
+                    UnkTAC = clone.UnkTAC;
+                    UnkTC0 = clone.UnkTC0;
+                    UnkTC4 = clone.UnkTC4;
+                    UnkTC8 = clone.UnkTC8;
+                    UnkTCC = clone.UnkTCC;
                 }
 
                 internal Enemy(BinaryReaderEx br) : base(br) { }
@@ -838,53 +853,54 @@ namespace SoulsFormats
                     ThinkParamID = br.ReadInt32();
                     NPCParamID = br.ReadInt32();
                     TalkID = br.ReadInt32();
-                    UnkT04 = br.ReadInt32();
+                    UnkT04 = br.ReadInt16();
+                    ChrManipulatorAllocationParameter = br.ReadInt16();
                     CharaInitID = br.ReadInt32();
                     collisionPartIndex = br.ReadInt32();
-                    UnkT07 = br.ReadInt32();
+                    UnkT20 = br.ReadInt32();
                     br.AssertInt32(0);
                     br.AssertInt32(-1);
                     br.AssertInt32(-1);
                     br.AssertInt32(-1);
                     br.AssertInt32(-1);
-                    UnkT08 = br.ReadInt32();
+                    BackupEventAnimID = br.ReadInt32();
+                    br.AssertInt32(-1); // BackupThrowAnimID
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    UnkT78 = br.ReadInt32();
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    UnkT84 = br.ReadSingle();
                     br.AssertInt32(-1);
-                    br.AssertInt32(0);
-                    br.AssertInt32(0);
-                    br.AssertInt32(0);
-                    br.AssertInt32(0);
-                    br.AssertInt32(0);
-                    br.AssertInt32(0);
-                    br.AssertInt32(0);
-                    br.AssertInt32(0);
-                    br.AssertInt32(0);
-                    br.AssertInt32(0);
-                    br.AssertInt32(0);
-                    br.AssertInt32(0);
-                    br.AssertInt32(0);
-                    br.AssertInt32(0);
-                    UnkT09 = br.ReadInt32();
-                    br.AssertInt32(0);
-                    br.AssertInt32(0);
-                    UnkT10 = br.ReadSingle();
+                    UnkT8C = br.ReadInt32();
                     br.AssertInt32(-1);
-                    UnkT11 = br.ReadInt32();
+                    UnkT94 = br.ReadInt32();
                     br.AssertInt32(-1);
-                    UnkT12 = br.ReadInt32();
+                    UnkT9C = br.ReadInt32();
                     br.AssertInt32(-1);
-                    UnkT13 = br.ReadInt32();
+                    UnkTA4 = br.ReadInt32();
                     br.AssertInt32(-1);
-                    UnkT14 = br.ReadInt32();
-                    br.AssertInt32(-1);
-                    UnkT15 = br.ReadInt32();
+                    UnkTAC = br.ReadInt32();
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
-                    UnkT16 = br.ReadInt32();
-                    UnkT17 = br.ReadInt32();
-                    UnkT18 = br.ReadInt32();
-                    UnkT19 = br.ReadInt32();
+                    UnkTC0 = br.ReadInt32();
+                    UnkTC4 = br.ReadInt32();
+                    UnkTC8 = br.ReadInt32();
+                    UnkTCC = br.ReadInt32();
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -898,16 +914,17 @@ namespace SoulsFormats
                     bw.WriteInt32(ThinkParamID);
                     bw.WriteInt32(NPCParamID);
                     bw.WriteInt32(TalkID);
-                    bw.WriteInt32(UnkT04);
+                    bw.WriteInt16(UnkT04);
+                    bw.WriteInt16(ChrManipulatorAllocationParameter);
                     bw.WriteInt32(CharaInitID);
                     bw.WriteInt32(collisionPartIndex);
-                    bw.WriteInt32(UnkT07);
+                    bw.WriteInt32(UnkT20);
                     bw.WriteInt32(0);
                     bw.WriteInt32(-1);
                     bw.WriteInt32(-1);
                     bw.WriteInt32(-1);
                     bw.WriteInt32(-1);
-                    bw.WriteInt32(UnkT08);
+                    bw.WriteInt32(BackupEventAnimID);
                     bw.WriteInt32(-1);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
@@ -923,28 +940,28 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
-                    bw.WriteInt32(UnkT09);
+                    bw.WriteInt32(UnkT78);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
-                    bw.WriteSingle(UnkT10);
+                    bw.WriteSingle(UnkT84);
                     bw.WriteInt32(-1);
-                    bw.WriteInt32(UnkT11);
+                    bw.WriteInt32(UnkT8C);
                     bw.WriteInt32(-1);
-                    bw.WriteInt32(UnkT12);
+                    bw.WriteInt32(UnkT94);
                     bw.WriteInt32(-1);
-                    bw.WriteInt32(UnkT13);
+                    bw.WriteInt32(UnkT9C);
                     bw.WriteInt32(-1);
-                    bw.WriteInt32(UnkT14);
+                    bw.WriteInt32(UnkTA4);
                     bw.WriteInt32(-1);
-                    bw.WriteInt32(UnkT15);
+                    bw.WriteInt32(UnkTAC);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
-                    bw.WriteInt32(UnkT16);
-                    bw.WriteInt32(UnkT17);
-                    bw.WriteInt32(UnkT18);
-                    bw.WriteInt32(UnkT19);
+                    bw.WriteInt32(UnkTC0);
+                    bw.WriteInt32(UnkTC4);
+                    bw.WriteInt32(UnkTC8);
+                    bw.WriteInt32(UnkTCC);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
@@ -1079,12 +1096,22 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT2C, UnkT34, UnkT50, UnkT54, UnkT58, UnkT5C, UnkT74;
+                public int UnkT2C;
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public float UnkT78;
+                public byte UnkT34, UnkT35, UnkT36, EnableDarksight;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public int UnkT50, UnkT54, UnkT58, UnkT5C, UnkTC0;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public float UnkTC4;
 
                 /// <summary>
                 /// Creates a new Collision with the given ID and name.
@@ -1101,6 +1128,9 @@ namespace SoulsFormats
                     UnkT2C = 0;
                     UnkHitName = null;
                     UnkT34 = 0;
+                    UnkT35 = 0;
+                    UnkT36 = 0;
+                    EnableDarksight = 0;
                     PlayRegionID = -1;
                     LockCamID1 = 0;
                     LockCamID2 = 0;
@@ -1108,8 +1138,8 @@ namespace SoulsFormats
                     UnkT54 = 0;
                     UnkT58 = 0;
                     UnkT5C = 0;
-                    UnkT74 = 0;
-                    UnkT78 = 0;
+                    UnkTC0 = 0;
+                    UnkTC4 = 0;
                 }
 
                 /// <summary>
@@ -1127,6 +1157,9 @@ namespace SoulsFormats
                     UnkT2C = clone.UnkT2C;
                     UnkHitName = clone.UnkHitName;
                     UnkT34 = clone.UnkT34;
+                    UnkT35 = clone.UnkT35;
+                    UnkT36 = clone.UnkT36;
+                    EnableDarksight = clone.EnableDarksight;
                     PlayRegionID = clone.PlayRegionID;
                     LockCamID1 = clone.LockCamID1;
                     LockCamID2 = clone.LockCamID2;
@@ -1134,8 +1167,8 @@ namespace SoulsFormats
                     UnkT54 = clone.UnkT54;
                     UnkT58 = clone.UnkT58;
                     UnkT5C = clone.UnkT5C;
-                    UnkT74 = clone.UnkT74;
-                    UnkT78 = clone.UnkT78;
+                    UnkTC0 = clone.UnkTC0;
+                    UnkTC4 = clone.UnkTC4;
                 }
 
                 internal Collision(BinaryReaderEx br) : base(br) { }
@@ -1158,7 +1191,10 @@ namespace SoulsFormats
                     DisableBonfireEntityID = br.ReadInt32();
                     UnkT2C = br.ReadInt32();
                     UnkHitIndex = br.ReadInt32();
-                    UnkT34 = br.ReadInt32();
+                    UnkT34 = br.ReadByte();
+                    UnkT35 = br.ReadByte();
+                    UnkT36 = br.ReadByte();
+                    EnableDarksight = br.ReadByte();
                     PlayRegionID = br.ReadInt32();
                     LockCamID1 = br.ReadInt16();
                     LockCamID2 = br.ReadInt16();
@@ -1174,8 +1210,8 @@ namespace SoulsFormats
                     for (int i = 0; i < 19; i++)
                         br.AssertInt32(0);
 
-                    UnkT74 = br.ReadInt32();
-                    UnkT78 = br.ReadSingle();
+                    UnkTC0 = br.ReadInt32();
+                    UnkTC4 = br.ReadSingle();
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -1199,7 +1235,10 @@ namespace SoulsFormats
                     bw.WriteInt32(DisableBonfireEntityID);
                     bw.WriteInt32(UnkT2C);
                     bw.WriteInt32(UnkHitIndex);
-                    bw.WriteInt32(UnkT34);
+                    bw.WriteByte(UnkT34);
+                    bw.WriteByte(UnkT35);
+                    bw.WriteByte(UnkT36);
+                    bw.WriteByte(EnableDarksight);
                     bw.WriteInt32(PlayRegionID);
                     bw.WriteInt16(LockCamID1);
                     bw.WriteInt16(LockCamID2);
@@ -1215,8 +1254,8 @@ namespace SoulsFormats
                     for (int i = 0; i < 19; i++)
                         bw.WriteInt32(0);
 
-                    bw.WriteInt32(UnkT74);
-                    bw.WriteSingle(UnkT78);
+                    bw.WriteInt32(UnkTC0);
+                    bw.WriteSingle(UnkTC4);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
