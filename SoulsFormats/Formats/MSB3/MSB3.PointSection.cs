@@ -1117,17 +1117,27 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT00;
+                public float UnkT00;
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public float UnkT04;
+                public float Compare;
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short UnkT08, UnkT0A;
+                public bool UnkT08;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public byte UnkT09;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public short UnkT0A;
 
                 /// <summary>
                 /// Creates a new EnvironmentMapEffectBox with the given ID and name.
@@ -1135,8 +1145,9 @@ namespace SoulsFormats
                 public EnvironmentMapEffectBox(int id, string name) : base(id, name, true)
                 {
                     UnkT00 = 0;
-                    UnkT04 = 0;
-                    UnkT08 = 0;
+                    Compare = 0;
+                    UnkT08 = false;
+                    UnkT09 = 0;
                     UnkT0A = 0;
                 }
 
@@ -1146,8 +1157,9 @@ namespace SoulsFormats
                 public EnvironmentMapEffectBox(EnvironmentMapEffectBox clone) : base(clone)
                 {
                     UnkT00 = clone.UnkT00;
-                    UnkT04 = clone.UnkT04;
+                    Compare = clone.Compare;
                     UnkT08 = clone.UnkT08;
+                    UnkT09 = clone.UnkT09;
                     UnkT0A = clone.UnkT0A;
                 }
 
@@ -1155,11 +1167,12 @@ namespace SoulsFormats
 
                 internal override void ReadSpecific(BinaryReaderEx br)
                 {
-                    UnkT00 = br.ReadInt32();
-                    UnkT04 = br.ReadSingle();
-                    UnkT08 = br.ReadInt16();
+                    UnkT00 = br.ReadSingle();
+                    Compare = br.ReadSingle();
+                    UnkT08 = br.ReadBoolean();
+                    UnkT09 = br.ReadByte();
                     UnkT0A = br.ReadInt16();
-                    br.AssertInt32(0);
+                    br.AssertInt32(0); // float (6)
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -1172,9 +1185,10 @@ namespace SoulsFormats
                 internal override void WriteSpecific(BinaryWriterEx bw, long start)
                 {
                     bw.FillInt64("TypeDataOffset", bw.Position - start);
-                    bw.WriteInt32(UnkT00);
-                    bw.WriteSingle(UnkT04);
-                    bw.WriteInt16(UnkT08);
+                    bw.WriteSingle(UnkT00);
+                    bw.WriteSingle(Compare);
+                    bw.WriteBoolean(UnkT08);
+                    bw.WriteByte(UnkT09);
                     bw.WriteInt16(UnkT0A);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
