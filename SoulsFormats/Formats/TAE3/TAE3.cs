@@ -4,7 +4,7 @@ using System.Linq;
 namespace SoulsFormats
 {
     /// <summary>
-    /// Controls when different events happen during animations; this specific version used in DS3. Extension: .tae
+    /// Controls when different events happen during animations; this specific version is used in DS3. Extension: .tae
     /// </summary>
     public partial class TAE3 : SoulsFile<TAE3>
     {
@@ -34,13 +34,13 @@ namespace SoulsFormats
         public List<Animation> Animations;
 
         /// <summary>
-        /// Unknown; always 0x15 in chr tae, varies in obj tae.
+        /// Unknown; chr tae: 0x15; obj tae: 0x4, 0x8, 0xE, 0xF, 0x10, 0x12, 0x13, 0x14, 0x15; mov tae: 0x4.
         /// </summary>
         public long Unk30;
 
         internal override bool Is(BinaryReaderEx br)
         {
-            string magic = br.ReadASCII(4);
+            string magic = br.GetASCII(0, 4);
             return magic == "TAE ";
         }
 

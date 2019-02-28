@@ -29,11 +29,6 @@ namespace SoulsFormats
         /// </summary>
         public byte[] UnkBlock2;
 
-        /// <summary>
-        /// Creates an uninitialized GPARAM. Should not be used publicly; use GPARAM.Read instead.
-        /// </summary>
-        public GPARAM() { }
-
         internal override bool Is(BinaryReaderEx br)
         {
             string magic = br.GetASCII(0, 8);
@@ -167,18 +162,7 @@ namespace SoulsFormats
         /// <summary>
         /// Returns the first group with a matching name, or null if not found.
         /// </summary>
-        public Group this[string name1]
-        {
-            get
-            {
-                foreach (Group group in Groups)
-                {
-                    if (group.Name1 == name1)
-                        return group;
-                }
-                return null;
-            }
-        }
+        public Group this[string name1] => Groups.Find(group => group.Name1 == name1);
 
         internal struct Offsets
         {
