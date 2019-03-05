@@ -48,7 +48,7 @@ namespace SoulsFormats
         {
             br.BigEndian = false;
             br.AssertASCII("LUAI");
-            BigEndian = br.AssertInt32(1, 0x1000000) == 0x10000000;
+            BigEndian = br.AssertInt32(1, 0x1000000) == 0x1000000;
             br.BigEndian = BigEndian;
             int goalCount = br.ReadInt32();
             br.AssertInt32(0);
@@ -75,6 +75,8 @@ namespace SoulsFormats
 
             for (int i = 0; i < Goals.Count; i++)
                 Goals[i].WriteStrings(bw, LongFormat, i);
+
+            bw.Pad(0x10);
         }
 
         /// <summary>

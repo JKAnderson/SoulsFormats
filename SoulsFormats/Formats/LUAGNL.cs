@@ -47,7 +47,6 @@ namespace SoulsFormats
         {
             BigEndian = br.GetByte(0) == 0;
             br.BigEndian = BigEndian;
-            // 
             LongFormat = br.GetInt32(BigEndian ? 0 : 4) == 0;
 
             Globals = new List<string>();
@@ -90,6 +89,7 @@ namespace SoulsFormats
                     bw.WriteShiftJIS(Globals[i], true);
                 }
             }
+            bw.Pad(0x10);
         }
     }
 }
