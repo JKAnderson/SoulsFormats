@@ -72,13 +72,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Formats\BHD5.cs" />
+    <Compile Include="Formats\Binder.cs" />
     <Compile Include="Formats\CCM.cs" />
     <Compile Include="Formats\DRB.cs" />
     <Compile Include="Formats\ESD.cs" />
     <Compile Include="Formats\NVM.cs" />
     <Compile Include="Formats\Other\ACE3\BND0.cs" />
-    <Compile Include="Formats\Other\EnchantedArms\COMPBND.cs" />
     <Compile Include="Formats\FLVERD.cs" />
+    <Compile Include="Formats\Other\EnchantedArms\MDL4.cs" />
     <Compile Include="Formats\Other\KF4\DAT.cs" />
     <Compile Include="Formats\Other\Kuon\DVDBND0.cs" />
     <Compile Include="Formats\Other\Kuon\BND0.cs" />

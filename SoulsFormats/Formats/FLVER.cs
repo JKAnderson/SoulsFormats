@@ -71,13 +71,7 @@ namespace SoulsFormats
 
             Header = new FLVERHeader();
             br.AssertASCII("FLVER\0");
-            string endian = br.ReadASCII(2);
-            if (endian == "L\0")
-                Header.BigEndian = false;
-            else if (endian == "B\0")
-                Header.BigEndian = true;
-            else
-                throw new FormatException("FLVER endian character must be either L or B.");
+            Header.BigEndian = br.AssertASCII("L\0", "B\0") == "B\0";
             br.BigEndian = Header.BigEndian;
 
             // DS1: 2000C, 2000D

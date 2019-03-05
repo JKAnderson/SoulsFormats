@@ -185,7 +185,7 @@ namespace SoulsFormats
         /// <summary>
         /// Indicates the format of this BXF3.
         /// </summary>
-        public byte Format;
+        public Binder.Format Format;
 
         /// <summary>
         /// Creates an empty BXF3 formatted for DS1.
@@ -195,7 +195,7 @@ namespace SoulsFormats
             Files = new List<File>();
             BHDTimestamp = SFUtil.DateToBinderTimestamp(DateTime.Now);
             BDTTimestamp = SFUtil.DateToBinderTimestamp(DateTime.Now);
-            Format = 0x74;
+            Format = Binder.Format.x74;
         }
 
         private static bool IsBHD(BinaryReaderEx br)
@@ -234,11 +234,11 @@ namespace SoulsFormats
         {
             bhdWriter.WriteASCII("BHF3");
             bhdWriter.WriteFixStr(BHDTimestamp, 8);
-            bhdWriter.WriteByte(Format);
+            bhdWriter.WriteByte((byte)Format);
             bhdWriter.WriteByte(0);
             bhdWriter.WriteByte(0);
             bhdWriter.WriteByte(0);
-            bhdWriter.BigEndian = Format == 0xE0;
+            bhdWriter.BigEndian = Binder.ForceBigEndian(Format);
 
             bhdWriter.WriteInt32(Files.Count);
             bhdWriter.WriteInt32(0);
@@ -262,7 +262,7 @@ namespace SoulsFormats
                 bhdWriter.WriteInt32(i);
                 bhdWriter.ReserveInt32($"FileName{i}");
 
-                if (Format == 0x54 || Format == 0x74)
+                if (Binder.HasUncompressedSize(Format))
                     bhdWriter.WriteInt32(file.Bytes.Length);
 
                 bdtWriter.WriteBytes(file.Bytes);
@@ -281,17 +281,17 @@ namespace SoulsFormats
         {
             public string Timestamp;
             public List<FileHeader> FileHeaders;
-            public byte Format;
+            public Binder.Format Format;
 
             public BHD3(BinaryReaderEx br)
             {
                 br.AssertASCII("BHF3");
                 Timestamp = br.ReadFixStr(8);
-                Format = br.AssertByte(0x54, 0x74, 0xE0);
+                Format = br.ReadEnum8<Binder.Format>();
                 br.AssertByte(0);
                 br.AssertByte(0);
                 br.AssertByte(0);
-                br.BigEndian = Format == 0xE0;
+                br.BigEndian = Binder.ForceBigEndian(Format);
 
                 int fileCount = br.ReadInt32();
                 br.AssertInt32(0);
@@ -312,7 +312,7 @@ namespace SoulsFormats
                 public int Offset;
                 public int Size;
 
-                public FileHeader(BinaryReaderEx br, byte format)
+                public FileHeader(BinaryReaderEx br, Binder.Format format)
                 {
                     br.AssertByte(0x40);
                     br.AssertByte(0);
@@ -324,9 +324,10 @@ namespace SoulsFormats
                     ID = br.ReadInt32();
                     int fileNameOffset = br.ReadInt32();
 
-                    // Change this if BND internal compression ever shows up in a BXF.
-                    if (format == 0x54 || format == 0x74)
-                        br.ReadInt32();
+                    if (Binder.HasUncompressedSize(format))
+                    {
+                        int uncompressedSize = br.ReadInt32();
+                    }
 
                     Name = br.GetShiftJIS(fileNameOffset);
                 }

@@ -23,7 +23,7 @@ namespace SoulsFormats
         /// <summary>
         /// Indicates the format of the BND3.
         /// </summary>
-        public byte Format;
+        public Binder.Format Format;
 
         /// <summary>
         /// Write bytes in big-endian order for PS3.
@@ -47,7 +47,7 @@ namespace SoulsFormats
         {
             Files = new List<File>();
             Timestamp = SFUtil.DateToBinderTimestamp(DateTime.Now);
-            Format = 0x74;
+            Format = Binder.Format.x74;
             BigEndian = false;
             Unk1 = false;
             Unk2 = 0;
@@ -71,15 +71,14 @@ namespace SoulsFormats
             br.AssertASCII("BND3");
             Timestamp = br.ReadFixStr(8);
 
-            Format = br.AssertByte(0x0E, 0x2E, 0x40, 0x54, 0x60, 0x64, 0x70, 0x74, 0xE0, 0xF0);
+            Format = br.ReadEnum8<Binder.Format>();
             BigEndian = br.ReadBoolean();
             Unk1 = br.ReadBoolean();
             br.AssertByte(0);
 
-            br.BigEndian = BigEndian || Format == 0xE0 || Format == 0xF0;
+            br.BigEndian = BigEndian || Binder.ForceBigEndian(Format);
             int fileCount = br.ReadInt32();
-            // File headers end; sometimes 0, but it's redundant anyways
-            br.ReadInt32();
+            int fileHeadersEnd = br.ReadInt32();
             Unk2 = br.ReadInt32();
             br.AssertInt32(0);
 
@@ -98,12 +97,12 @@ namespace SoulsFormats
             bw.BigEndian = false;
             bw.WriteASCII("BND3");
             bw.WriteFixStr(Timestamp, 8);
-            bw.WriteByte(Format);
+            bw.WriteByte((byte)Format);
             bw.WriteBoolean(BigEndian);
             bw.WriteBoolean(Unk1);
             bw.WriteByte(0);
 
-            bw.BigEndian = BigEndian || Format == 0xE0 || Format == 0xF0;
+            bw.BigEndian = BigEndian || Binder.ForceBigEndian(Format);
             bw.WriteInt32(Files.Count);
             bw.ReserveInt32("HeaderEnd");
             bw.WriteInt32(Unk2);
@@ -112,7 +111,7 @@ namespace SoulsFormats
             for (int i = 0; i < Files.Count; i++)
                 Files[i].WriteHeader(bw, i, Format);
 
-            if (Format != 0x40)
+            if (Binder.HasName(Format))
             {
                 for (int i = 0; i < Files.Count; i++)
                     Files[i].WriteName(bw, i);
@@ -121,7 +120,7 @@ namespace SoulsFormats
             bw.FillInt32($"HeaderEnd", (int)bw.Position);
 
             for (int i = 0; i < Files.Count; i++)
-                Files[i].WriteData(bw, i, Format);
+                Files[i].WriteData(bw, i);
         }
 
         /// <summary>
@@ -140,9 +139,9 @@ namespace SoulsFormats
             public int ID { get; set; }
 
             /// <summary>
-            /// Flags indicating whether to compress the file (0x80) and other things we don't understand.
+            /// Flags indicating whether to compress the file and other things we don't understand.
             /// </summary>
-            public byte Flags;
+            public Binder.FileFlags Flags;
 
             /// <summary>
             /// The raw data of the file.
@@ -152,7 +151,7 @@ namespace SoulsFormats
             /// <summary>
             /// Creates a new File with the given information.
             /// </summary>
-            public File(int id, string name, byte flags, byte[] bytes)
+            public File(int id, string name, Binder.FileFlags flags, byte[] bytes)
             {
                 ID = id;
                 Name = name;
@@ -160,33 +159,42 @@ namespace SoulsFormats
                 Bytes = bytes;
             }
 
-            internal File(BinaryReaderEx br, byte format)
+            internal File(BinaryReaderEx br, Binder.Format format)
             {
-                Flags = br.AssertByte(0x00, 0x02, 0x40, 0xC0);
+                Flags = br.ReadEnum8<Binder.FileFlags>();
                 br.AssertByte(0);
                 br.AssertByte(0);
                 br.AssertByte(0);
 
                 int compressedSize = br.ReadInt32();
                 int fileOffset = br.ReadInt32();
-                ID = br.ReadInt32();
 
-                if (format == 0x40)
+                if (Binder.HasID(format))
                 {
-                    Name = null;
+                    ID = br.ReadInt32();
                 }
                 else
+                {
+                    ID = -1;
+                }
+
+                if (Binder.HasName(format))
                 {
                     int fileNameOffset = br.ReadInt32();
                     Name = br.GetShiftJIS(fileNameOffset);
                 }
+                else
+                {
+                    Name = null;
+                }
 
-                int uncompressedSize = compressedSize;
-                if (format == 0x2E || format == 0x54 || format == 0x64 || format == 0x74)
-                    uncompressedSize = br.ReadInt32();
+                if (Binder.HasUncompressedSize(format))
+                {
+                    int uncompressedSize = br.ReadInt32();
+                }
 
                 // Compressed
-                if (Flags == 0xC0)
+                if (Binder.IsCompressed(Flags))
                 {
                     br.StepIn(fileOffset);
                     Bytes = SFUtil.ReadZlib(br, compressedSize);
@@ -198,21 +206,23 @@ namespace SoulsFormats
                 }
             }
 
-            internal void WriteHeader(BinaryWriterEx bw, int index, byte format)
+            internal void WriteHeader(BinaryWriterEx bw, int index, Binder.Format format)
             {
-                bw.WriteByte(Flags);
+                bw.WriteByte((byte)Flags);
                 bw.WriteByte(0);
                 bw.WriteByte(0);
                 bw.WriteByte(0);
 
                 bw.ReserveInt32($"CompressedSize{index}");
                 bw.ReserveInt32($"FileData{index}");
-                bw.WriteInt32(ID);
 
-                if (format != 0x40)
+                if (Binder.HasID(format))
+                    bw.WriteInt32(ID);
+
+                if (Binder.HasName(format))
                     bw.ReserveInt32($"FileName{index}");
 
-                if (format == 0x2E || format == 0x54 || format == 0x64 || format == 0x74)
+                if (Binder.HasUncompressedSize(format))
                     bw.WriteInt32(Bytes.Length);
             }
 
@@ -222,7 +232,7 @@ namespace SoulsFormats
                 bw.WriteShiftJIS(Name, true);
             }
 
-            internal void WriteData(BinaryWriterEx bw, int index, byte format)
+            internal void WriteData(BinaryWriterEx bw, int index)
             {
                 if (Bytes.Length > 0)
                     bw.Pad(0x10);
@@ -232,7 +242,7 @@ namespace SoulsFormats
                 byte[] bytes = Bytes;
                 int compressedSize = bytes.Length;
 
-                if (Flags == 0xC0)
+                if (Binder.IsCompressed(Flags))
                 {
                     compressedSize = SFUtil.WriteZlib(bw, 0x9C, bytes);
                 }

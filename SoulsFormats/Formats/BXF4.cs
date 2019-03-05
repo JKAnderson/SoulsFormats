@@ -226,10 +226,10 @@ namespace SoulsFormats
                 bdtWriter.Pad(0x10);
 
                 byte[] bytes = file.Bytes;
-                if (file.Flags == 0x03 || file.Flags == 0xC0)
+                if (Binder.IsCompressed(file.Flags))
                     bytes = DCX.Compress(bytes, DCX.Type.DarkSouls1);
 
-                if (BHD.Format == 0x3E)
+                if (Binder.HasLongOffsets(BHD.Format))
                     bhdWriter.FillUInt64($"FileOffset{i}", (ulong)bdtWriter.Position);
                 else
                     bhdWriter.FillUInt32($"FileOffset{i}", (uint)bdtWriter.Position);
@@ -250,9 +250,9 @@ namespace SoulsFormats
             public string Name { get; set; }
 
             /// <summary>
-            /// Flags indicating compression (0x80) and possibly some other things.
+            /// Flags indicating compression and possibly some other things.
             /// </summary>
-            public byte Flags;
+            public Binder.FileFlags Flags;
 
             /// <summary>
             /// The ID number of the file.
@@ -267,7 +267,7 @@ namespace SoulsFormats
             /// <summary>
             /// Creates a new File with the specified information.
             /// </summary>
-            public File(int id, string name, byte flags, byte[] bytes)
+            public File(int id, string name, Binder.FileFlags flags, byte[] bytes)
             {
                 ID = id;
                 Name = name;
@@ -281,7 +281,7 @@ namespace SoulsFormats
                 Flags = fileHeader.Flags;
                 ID = fileHeader.ID;
                 Bytes = br.GetBytes((long)fileHeader.Offset, (int)fileHeader.CompressedSize);
-                if (Flags == 0x03 || Flags == 0xC0)
+                if (Binder.IsCompressed(Flags))
                     Bytes = DCX.Decompress(Bytes);
             }
 
@@ -307,7 +307,7 @@ namespace SoulsFormats
             /// <summary>
             /// Indicates the format of the BXF4.
             /// </summary>
-            public byte Format;
+            public Binder.Format Format;
 
             /// <summary>
             /// Unknown.
@@ -337,7 +337,7 @@ namespace SoulsFormats
                 Flag1 = false;
                 Flag2 = false;
                 Unicode = true;
-                Format = 0x74;
+                Format = Binder.Format.x74;
                 Extended = 4;
             }
 
@@ -355,20 +355,17 @@ namespace SoulsFormats
                 // File headers start
                 br.AssertInt64(0x40);
                 Timestamp = br.ReadFixStr(8);
-                // File header size
-                long fileHeaderSize = br.AssertInt64(0x18, 0x24, 0x28);
+                long fileHeaderSize = br.ReadInt64();
                 // Would be data start in BND4
                 br.AssertInt64(0);
 
                 Unicode = br.ReadBoolean();
-                if (fileHeaderSize == 0x18)
-                    Format = br.AssertByte(0x0C, 0x30);
-                else if (fileHeaderSize == 0x24)
-                    Format = br.AssertByte(0x2E, 0x74);
-                else if (fileHeaderSize == 0x28)
-                    Format = br.AssertByte(0x3E);
+                Format = br.ReadEnum8<Binder.Format>();
                 Extended = br.AssertByte(0, 4);
                 br.AssertByte(0);
+
+                if (fileHeaderSize != Binder.FileHeaderSize(Format))
+                    throw new FormatException($"File header size 0x{fileHeaderSize} unexpected for format {Format}");
 
                 br.AssertInt32(0);
                 long hashGroupsOffset = br.ReadInt64();
@@ -377,28 +374,6 @@ namespace SoulsFormats
                 for (int i = 0; i < fileCount; i++)
                 {
                     FileHeaders.Add(new FileHeader(br, Unicode, Format));
-                }
-
-                if (Extended == 4)
-                {
-                    br.Position = hashGroupsOffset;
-                    long pathHashesOffset = br.ReadInt64();
-                    int hashGroupsCount = br.ReadInt32();
-                    // Probably 4 bytes
-                    br.AssertInt32(0x00080810);
-
-                    var hashGroups = new List<HashGroup>(hashGroupsCount);
-                    for (int i = 0; i < hashGroupsCount; i++)
-                    {
-                        hashGroups.Add(new HashGroup(br));
-                    }
-
-                    br.Position = pathHashesOffset;
-                    var pathHashes = new List<PathHash>(fileCount);
-                    for (int i = 0; i < fileCount; i++)
-                    {
-                        pathHashes.Add(new PathHash(br));
-                    }
                 }
             }
 
@@ -414,16 +389,11 @@ namespace SoulsFormats
                 bw.WriteInt32(files.Count);
                 bw.WriteInt64(0x40);
                 bw.WriteFixStr(Timestamp, 8);
-                if (Format == 0x0C || Format == 0x30)
-                    bw.WriteInt64(0x18);
-                else if (Format == 0x2E || Format == 0x74)
-                    bw.WriteInt64(0x24);
-                else if (Format == 0x3E)
-                    bw.WriteInt64(0x28);
+                bw.WriteInt64(Binder.FileHeaderSize(Format));
                 bw.WriteInt64(0);
 
                 bw.WriteBoolean(Unicode);
-                bw.WriteByte(Format);
+                bw.WriteByte((byte)Format);
                 bw.WriteByte(Extended);
                 bw.WriteByte(0);
 
@@ -512,29 +482,29 @@ namespace SoulsFormats
             internal class FileHeader
             {
                 public string Name;
-                public byte Flags;
+                public Binder.FileFlags Flags;
                 public ulong Offset;
                 public long CompressedSize, UncompressedSize;
                 public int ID;
 
-                public FileHeader(BinaryReaderEx br, bool unicode, byte format)
+                public FileHeader(BinaryReaderEx br, bool unicode, Binder.Format format)
                 {
-                    Flags = br.AssertByte(0x00, 0x02, 0x03, 0x40, 0xC0);
+                    Flags = br.ReadEnum8<Binder.FileFlags>();
                     br.AssertByte(0);
                     br.AssertByte(0);
                     br.AssertByte(0);
 
                     br.AssertInt32(-1);
                     CompressedSize = br.ReadInt64();
-                    if (format == 0x2E || format == 0x3E || format == 0x74)
+                    if (Binder.HasUncompressedSize(format))
                         UncompressedSize = br.ReadInt64();
 
-                    if (format == 0x3E)
+                    if (Binder.HasLongOffsets(format))
                         Offset = br.ReadUInt64();
                     else
                         Offset = br.ReadUInt32();
 
-                    if (format == 0x2E || format == 0x3E || format == 0x74)
+                    if (Binder.HasID(format))
                         ID = br.ReadInt32();
                     else
                         ID = -1;
@@ -546,24 +516,24 @@ namespace SoulsFormats
                         Name = br.GetShiftJIS(nameOffset);
                 }
 
-                public static void Write(BinaryWriterEx bw, File file, int index, byte format)
+                public static void Write(BinaryWriterEx bw, File file, int index, Binder.Format format)
                 {
-                    bw.WriteByte(file.Flags);
+                    bw.WriteByte((byte)file.Flags);
                     bw.WriteByte(0);
                     bw.WriteByte(0);
                     bw.WriteByte(0);
 
                     bw.WriteInt32(-1);
                     bw.ReserveInt64($"FileSize{index}");
-                    if (format == 0x2E || format == 0x3E || format == 0x74)
+                    if (Binder.HasUncompressedSize(format))
                         bw.WriteInt64(file.Bytes.LongLength);
 
-                    if (format == 0x3E)
+                    if (Binder.HasLongOffsets(format))
                         bw.ReserveUInt64($"FileOffset{index}");
                     else
                         bw.ReserveUInt32($"FileOffset{index}");
 
-                    if (format == 0x2E || format == 0x3E || format == 0x74)
+                    if (Binder.HasID(format))
                         bw.WriteInt32(file.ID);
 
                     bw.ReserveInt32($"FileName{index}");
@@ -574,12 +544,6 @@ namespace SoulsFormats
             {
                 public int Index;
                 public uint Hash;
-
-                public PathHash(BinaryReaderEx br)
-                {
-                    Hash = br.ReadUInt32();
-                    Index = br.ReadInt32();
-                }
 
                 public PathHash(int index, string path)
                 {
@@ -597,12 +561,6 @@ namespace SoulsFormats
             private class HashGroup
             {
                 public int Index, Length;
-
-                public HashGroup(BinaryReaderEx br)
-                {
-                    Length = br.ReadInt32();
-                    Index = br.ReadInt32();
-                }
 
                 public HashGroup(int index, int length)
                 {

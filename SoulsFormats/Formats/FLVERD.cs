@@ -44,13 +44,7 @@ namespace SoulsFormats
         internal override void Read(BinaryReaderEx br)
         {
             br.AssertASCII("FLVER\0");
-            string endian = br.ReadASCII(2);
-            if (endian == "L\0")
-                BigEndian = false;
-            else if (endian == "B\0")
-                BigEndian = true;
-            else
-                throw new FormatException("FLVER endian character must be either L or B.");
+            BigEndian = br.AssertASCII("L\0", "B\0") == "B\0";
             br.BigEndian = BigEndian;
 
             int version = br.AssertInt32(0x0E, 0x0F, 0x10, 0x12, 0x13, 0x14, 0x15);

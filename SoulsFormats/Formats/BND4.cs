@@ -23,7 +23,7 @@ namespace SoulsFormats
         /// <summary>
         /// Indicates the format of this BND4.
         /// </summary>
-        public byte Format;
+        public Binder.Format Format;
 
         /// <summary>
         /// Unknown.
@@ -57,7 +57,7 @@ namespace SoulsFormats
         {
             Files = new List<File>();
             Timestamp = SFUtil.DateToBinderTimestamp(DateTime.Now);
-            Format = 0x74;
+            Format = Binder.Format.x74;
             BigEndian = false;
             Flag1 = false;
             Flag2 = false;
@@ -94,20 +94,16 @@ namespace SoulsFormats
             br.AssertInt64(0x40);
             Timestamp = br.ReadFixStr(8);
             // File header size
-            long fileHeaderSize = br.AssertInt64(0x18, 0x1C, 0x20, 0x24);
+            long fileHeaderSize = br.ReadInt64();
             long dataStart = br.ReadInt64();
 
             Unicode = br.ReadBoolean();
-            if (fileHeaderSize == 0x18)
-                Format = br.AssertByte(0x0C);
-            else if (fileHeaderSize == 0x1C)
-                Format = br.AssertByte(0x70);
-            else if (fileHeaderSize == 0x20)
-                Format = br.AssertByte(0x20);
-            else if (fileHeaderSize == 0x24)
-                Format = br.AssertByte(0x26, 0x2A, 0x2E, 0x54, 0x74);
+            Format = br.ReadEnum8<Binder.Format>();
             Extended = br.AssertByte(0, 1, 4, 0x80);
             br.AssertByte(0);
+
+            if (fileHeaderSize != Binder.FileHeaderSize(Format))
+                throw new FormatException($"File header size 0x{fileHeaderSize} unexpected for format {Format}");
 
             br.AssertInt32(0);
             long hashGroupsOffset = 0;
@@ -120,28 +116,6 @@ namespace SoulsFormats
             for (int i = 0; i < fileCount; i++)
             {
                 Files.Add(new File(br, Unicode, Format));
-            }
-
-            if (Extended == 4)
-            {
-                br.Position = hashGroupsOffset;
-                long pathHashesOffset = br.ReadInt64();
-                int hashGroupsCount = br.ReadInt32();
-                // Probably 4 bytes
-                br.AssertInt32(0x00080810);
-
-                var hashGroups = new List<HashGroup>(hashGroupsCount);
-                for (int i = 0; i < hashGroupsCount; i++)
-                {
-                    hashGroups.Add(new HashGroup(br));
-                }
-
-                br.Position = pathHashesOffset;
-                var pathHashes = new List<PathHash>(fileCount);
-                for (int i = 0; i < fileCount; i++)
-                {
-                    pathHashes.Add(new PathHash(br));
-                }
             }
         }
 
@@ -162,18 +136,11 @@ namespace SoulsFormats
             bw.WriteInt32(Files.Count);
             bw.WriteInt64(0x40);
             bw.WriteFixStr(Timestamp, 8);
-            if (Format == 0x0C)
-                bw.WriteInt64(0x18);
-            else if (Format == 0x70)
-                bw.WriteInt64(0x1C);
-            else if (Format == 0x20)
-                bw.WriteInt64(0x20);
-            else
-                bw.WriteInt64(0x24);
+            bw.WriteInt64(Binder.FileHeaderSize(Format));
             bw.ReserveInt64("DataStart");
 
             bw.WriteBoolean(Unicode);
-            bw.WriteByte(Format);
+            bw.WriteByte((byte)Format);
             bw.WriteByte(Extended);
             bw.WriteByte(0);
 
@@ -270,16 +237,25 @@ namespace SoulsFormats
                 byte[] bytes = file.Bytes;
                 int compressedSize = bytes.Length;
 
-                if (file.Flags == 0x03 || file.Flags == 0xC0)
+                if (Binder.IsCompressed(file.Flags))
                 {
-                    compressedSize = SFUtil.WriteZlib(bw, 0x9C, bytes);
+                    if (Format == Binder.Format.x2E)
+                    {
+                        bytes = DCX.Compress(bytes, DCX.Type.DemonsSoulsEDGE);
+                        bw.WriteBytes(bytes);
+                        compressedSize = bytes.Length;
+                    }
+                    else
+                    {
+                        compressedSize = SFUtil.WriteZlib(bw, 0x9C, bytes);
+                    }
                 }
                 else
                 {
                     bw.WriteBytes(bytes);
                 }
 
-                bw.FillInt64($"CompressedSize{i}", bytes.Length);
+                bw.FillInt64($"CompressedSize{i}", compressedSize);
             }
         }
 
@@ -301,7 +277,7 @@ namespace SoulsFormats
             /// <summary>
             /// Flags indicating whether to compress the file (0xC0) and other things we don't understand.
             /// </summary>
-            public byte Flags;
+            public Binder.FileFlags Flags;
 
             /// <summary>
             /// The raw data of the file.
@@ -311,7 +287,7 @@ namespace SoulsFormats
             /// <summary>
             /// Creates a new File with the specified information.
             /// </summary>
-            public File(int id, string name, byte flags, byte[] bytes)
+            public File(int id, string name, Binder.FileFlags flags, byte[] bytes)
             {
                 ID = id;
                 Name = name;
@@ -319,37 +295,65 @@ namespace SoulsFormats
                 Bytes = bytes;
             }
 
-            internal File(BinaryReaderEx br, bool unicode, byte format)
+            internal File(BinaryReaderEx br, bool unicode, Binder.Format format)
             {
-                Flags = br.AssertByte(0x00, 0x02, 0x03, 0x0A, 0x40, 0x50, 0xC0);
+                Flags = br.ReadEnum8<Binder.FileFlags>();
                 br.AssertByte(0);
                 br.AssertByte(0);
                 br.AssertByte(0);
 
                 br.AssertInt32(-1);
                 long compressedSize = br.ReadInt64();
-                long uncompressedSize = 0;
-                if (format == 0x26 || format == 0x2A || format == 0x2E || format == 0x54 || format == 0x74)
-                    uncompressedSize = br.ReadInt64();
-                int fileOffset = br.ReadInt32();
-                if (format == 0x0C || format == 0x20)
-                    ID = -1;
-                else
-                    ID = br.ReadInt32();
-                int nameOffset = br.ReadInt32();
-                if (format == 0x20)
-                    br.AssertInt64(0);
 
-                if (unicode)
-                    Name = br.GetUTF16(nameOffset);
-                else
-                    Name = br.GetShiftJIS(nameOffset);
-
-                if (Flags == 0x03 || Flags == 0xC0)
+                if (Binder.HasUncompressedSize(format))
                 {
-                    br.StepIn(fileOffset);
-                    Bytes = SFUtil.ReadZlib(br, (int)compressedSize);
-                    br.StepOut();
+                    long uncompressedSize = br.ReadInt64();
+                }
+
+                uint fileOffset = br.ReadUInt32();
+
+                if (Binder.HasID(format))
+                {
+                    ID = br.ReadInt32();
+                }
+                else
+                {
+                    ID = -1;
+                }
+
+                if (Binder.HasName(format))
+                {
+                    int nameOffset = br.ReadInt32();
+                    if (unicode)
+                        Name = br.GetUTF16(nameOffset);
+                    else
+                        Name = br.GetShiftJIS(nameOffset);
+                }
+                else
+                {
+                    Name = null;
+                }
+
+                if (format == Binder.Format.x20)
+                {
+                    br.AssertInt64(0);
+                }
+
+                if (Binder.IsCompressed(Flags))
+                {
+                    if (format == Binder.Format.x2E)
+                    {
+                        byte[] bytes = br.GetBytes(fileOffset, (int)compressedSize);
+                        Bytes = DCX.Decompress(bytes, out DCX.Type type);
+                        if (type != DCX.Type.DemonsSoulsEDGE)
+                            throw null;
+                    }
+                    else
+                    {
+                        br.StepIn(fileOffset);
+                        Bytes = SFUtil.ReadZlib(br, (int)compressedSize);
+                        br.StepOut();
+                    }
                 }
                 else
                 {
@@ -357,22 +361,22 @@ namespace SoulsFormats
                 }
             }
 
-            internal void Write(BinaryWriterEx bw, int index, byte format)
+            internal void Write(BinaryWriterEx bw, int index, Binder.Format format)
             {
-                bw.WriteByte(Flags);
+                bw.WriteByte((byte)Flags);
                 bw.WriteByte(0);
                 bw.WriteByte(0);
                 bw.WriteByte(0);
 
                 bw.WriteInt32(-1);
                 bw.ReserveInt64($"CompressedSize{index}");
-                if (format == 0x26 || format == 0x2A || format == 0x2E || format == 0x54 || format == 0x74)
+                if (Binder.HasUncompressedSize(format))
                     bw.WriteInt64(Bytes.LongLength);
                 bw.ReserveInt32($"FileData{index}");
-                if (format != 0x0C && format != 0x20)
+                if (Binder.HasID(format))
                     bw.WriteInt32(ID);
                 bw.ReserveInt32($"FileName{index}");
-                if (format == 0x20)
+                if (format == Binder.Format.x20)
                     bw.WriteInt64(0);
             }
 
