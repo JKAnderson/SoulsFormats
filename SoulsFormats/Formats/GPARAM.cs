@@ -337,54 +337,54 @@ namespace SoulsFormats
         public enum ParamType : byte
         {
             /// <summary>
-            /// One byte.
+            /// Unknown; only ever appears as a single value.
             /// </summary>
-            Unk1 = 0x1,
+            Byte = 0x1,
 
             /// <summary>
             /// One short.
             /// </summary>
-            Unk2 = 0x2,
+            Short = 0x2,
 
             /// <summary>
             /// One int.
             /// </summary>
-            Unk3 = 0x3,
+            IntA = 0x3,
 
             /// <summary>
             /// One bool.
             /// </summary>
-            Unk5 = 0x5,
+            BoolA = 0x5,
 
             /// <summary>
             /// One int.
             /// </summary>
-            Unk7 = 0x7,
+            IntB = 0x7,
 
             /// <summary>
             /// One float.
             /// </summary>
-            Unk9 = 0x9,
+            Float = 0x9,
 
             /// <summary>
             /// One bool.
             /// </summary>
-            UnkB = 0xB,
+            BoolB = 0xB,
 
             /// <summary>
             /// Two floats and 8 unused bytes.
             /// </summary>
-            UnkC = 0xC,
+            Float2 = 0xC,
 
             /// <summary>
             /// Four floats.
             /// </summary>
-            UnkE = 0xE,
+            Float4 = 0xE,
 
             /// <summary>
-            /// Four bytes?
+            /// Four bytes, used for BGRA.
             /// </summary>
-            UnkF = 0xF,
+            Byte4 = 0xF,
         }
 
         /// <summary>
@@ -430,6 +430,9 @@ namespace SoulsFormats
                 br.AssertByte(0);
                 br.AssertByte(0);
 
+                if (Type == ParamType.Byte && valueCount > 1)
+                    throw new Exception("Notify TKGP so he can look into this, please.");
+
                 Name1 = br.ReadUTF16();
                 Name2 = br.ReadUTF16();
 
@@ -439,46 +442,46 @@ namespace SoulsFormats
                 {
                     switch (Type)
                     {
-                        case ParamType.Unk1:
-                            Values.Add(br.ReadInt32());
+                        case ParamType.Byte:
+                            Values.Add(br.ReadByte());
                             break;
 
-                        case ParamType.Unk2:
+                        case ParamType.Short:
                             Values.Add(br.ReadInt16());
                             break;
 
-                        case ParamType.Unk3:
+                        case ParamType.IntA:
                             Values.Add(br.ReadInt32());
                             break;
 
-                        case ParamType.Unk5:
+                        case ParamType.BoolA:
                             Values.Add(br.ReadBoolean());
                             break;
 
-                        case ParamType.Unk7:
+                        case ParamType.IntB:
                             Values.Add(br.ReadInt32());
                             break;
 
-                        case ParamType.Unk9:
+                        case ParamType.Float:
                             Values.Add(br.ReadSingle());
                             break;
 
-                        case ParamType.UnkB:
+                        case ParamType.BoolB:
                             Values.Add(br.ReadBoolean());
                             break;
 
-                        case ParamType.UnkC:
+                        case ParamType.Float2:
                             Values.Add(br.ReadVector2());
                             br.AssertInt32(0);
                             br.AssertInt32(0);
                             break;
 
-                        case ParamType.UnkE:
+                        case ParamType.Float4:
                             Values.Add(br.ReadVector4());
                             break;
 
-                        case ParamType.UnkF:
-                            Values.Add(br.ReadInt32());
+                        case ParamType.Byte4:
+                            Values.Add(br.ReadBytes(4));
                             break;
                     }
                 }
@@ -518,46 +521,46 @@ namespace SoulsFormats
                     object value = Values[i];
                     switch (Type)
                     {
-                        case ParamType.Unk1:
-                            bw.WriteInt32((int)value);
+                        case ParamType.Byte:
+                            bw.WriteInt32((byte)value);
                             break;
 
-                        case ParamType.Unk2:
+                        case ParamType.Short:
                             bw.WriteInt16((short)value);
                             break;
 
-                        case ParamType.Unk3:
+                        case ParamType.IntA:
                             bw.WriteInt32((int)value);
                             break;
 
-                        case ParamType.Unk5:
+                        case ParamType.BoolA:
                             bw.WriteBoolean((bool)value);
                             break;
 
-                        case ParamType.Unk7:
+                        case ParamType.IntB:
                             bw.WriteInt32((int)value);
                             break;
 
-                        case ParamType.Unk9:
+                        case ParamType.Float:
                             bw.WriteSingle((float)value);
                             break;
 
-                        case ParamType.UnkB:
+                        case ParamType.BoolB:
                             bw.WriteBoolean((bool)value);
                             break;
 
-                        case ParamType.UnkC:
+                        case ParamType.Float2:
                             bw.WriteVector2((Vector2)value);
                             bw.WriteInt32(0);
                             bw.WriteInt32(0);
                             break;
 
-                        case ParamType.UnkE:
+                        case ParamType.Float4:
                             bw.WriteVector4((Vector4)value);
                             break;
 
-                        case ParamType.UnkF:
-                            bw.WriteInt32((int)value);
+                        case ParamType.Byte4:
+                            bw.WriteBytes((byte[])value);
                             break;
                     }
                 }
