@@ -190,6 +190,20 @@ Extension: `.gparam`
 * DS3: Full Read and Write
 * BB: Untested
 
+### LUAGNL
+A list of global variable names for Lua scripts.  
+Extension: `.luagnl`
+* DS1: Full Read, Write, and Create
+* BB: Full Read, Write, and Create
+* DS3: Full Read, Write, and Create
+
+### LUAINFO
+Information about AI goals for Lua scripts.  
+Extension: `.luainfo`
+* DS1: Full Read, Write, and Create
+* BB: Full Read, Write, and Create
+* DS3: Full Read, Write, and Create
+
 ### MSB3
 A map definition format used in DS3.  
 Extension : `.msb`
