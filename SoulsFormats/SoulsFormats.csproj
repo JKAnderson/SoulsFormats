@@ -71,8 +71,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Binder\BinderFile.cs" />
     <Compile Include="Formats\BHD5.cs" />
-    <Compile Include="Binder.cs" />
+    <Compile Include="Binder\Binder.cs" />
     <Compile Include="Formats\CCM.cs" />
     <Compile Include="Formats\DRB.cs" />
     <Compile Include="Formats\ESD.cs" />
@@ -125,7 +126,7 @@
     <Compile Include="Formats\PMDCL.cs" />
     <Compile Include="Formats\TAE3\TAE3.cs" />
     <Compile Include="Formats\TPF\Headerizer.cs" />
-    <Compile Include="IBinder.cs" />
+    <Compile Include="Binder\IBinder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Formats\TPF\TPF.cs" />
     <Compile Include="SoulsFile.cs" />

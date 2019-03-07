@@ -168,9 +168,7 @@ namespace SoulsFormats
         /// <summary>
         /// The files contained within this BXF3.
         /// </summary>
-        public List<File> Files { get; set; }
-
-        IReadOnlyList<IBinderFile> IBinder.Files => Files;
+        public List<BinderFile> Files { get; set; }
 
         /// <summary>
         ///A timestamp or version number, 8 characters maximum.
@@ -185,14 +183,14 @@ namespace SoulsFormats
         /// <summary>
         /// Indicates the format of this BXF3.
         /// </summary>
-        public Binder.Format Format;
+        public Binder.Format Format { get; set; }
 
         /// <summary>
         /// Creates an empty BXF3 formatted for DS1.
         /// </summary>
         public BXF3()
         {
-            Files = new List<File>();
+            Files = new List<BinderFile>();
             BHDTimestamp = SFUtil.DateToBinderTimestamp(DateTime.Now);
             BDTTimestamp = SFUtil.DateToBinderTimestamp(DateTime.Now);
             Format = Binder.Format.x74;
@@ -220,13 +218,13 @@ namespace SoulsFormats
             BDTTimestamp = bdtReader.ReadFixStr(8);
             bdtReader.AssertInt32(0);
 
-            Files = new List<File>(bhd.FileHeaders.Count);
+            Files = new List<BinderFile>(bhd.FileHeaders.Count);
             for (int i = 0; i < bhd.FileHeaders.Count; i++)
             {
                 BHD3.FileHeader fileHeader = bhd.FileHeaders[i];
                 byte[] data = bdtReader.GetBytes(fileHeader.Offset, fileHeader.Size);
 
-                Files.Add(new File(fileHeader.ID, fileHeader.Name, data));
+                Files.Add(new BinderFile(Binder.FileFlags.x40, fileHeader.ID, fileHeader.Name, data));
             }
         }
 
@@ -251,16 +249,16 @@ namespace SoulsFormats
 
             for (int i = 0; i < Files.Count; i++)
             {
-                File file = Files[i];
+                BinderFile file = Files[i];
                 bhdWriter.WriteByte(0x40);
                 bhdWriter.WriteByte(0);
                 bhdWriter.WriteByte(0);
                 bhdWriter.WriteByte(0);
 
                 bhdWriter.WriteInt32(file.Bytes.Length);
-                bhdWriter.WriteInt32((int)bdtWriter.Position);
+                bhdWriter.WriteUInt32((uint)bdtWriter.Position);
                 bhdWriter.WriteInt32(i);
-                bhdWriter.ReserveInt32($"FileName{i}");
+                bhdWriter.ReserveUInt32($"FileName{i}");
 
                 if (Binder.HasUncompressedSize(Format))
                     bhdWriter.WriteInt32(file.Bytes.Length);
@@ -271,8 +269,8 @@ namespace SoulsFormats
 
             for (int i = 0; i < Files.Count; i++)
             {
-                File file = Files[i];
-                bhdWriter.FillInt32($"FileName{i}", (int)bhdWriter.Position);
+                BinderFile file = Files[i];
+                bhdWriter.FillUInt32($"FileName{i}", (uint)bhdWriter.Position);
                 bhdWriter.WriteShiftJIS(file.Name, true);
             }
         }
@@ -309,7 +307,7 @@ namespace SoulsFormats
             {
                 public int ID;
                 public string Name;
-                public int Offset;
+                public uint Offset;
                 public int Size;
 
                 public FileHeader(BinaryReaderEx br, Binder.Format format)
@@ -320,9 +318,9 @@ namespace SoulsFormats
                     br.AssertByte(0);
 
                     Size = br.ReadInt32();
-                    Offset = br.ReadInt32();
+                    Offset = br.ReadUInt32();
                     ID = br.ReadInt32();
-                    int fileNameOffset = br.ReadInt32();
+                    uint fileNameOffset = br.ReadUInt32();
 
                     if (Binder.HasUncompressedSize(format))
                     {
@@ -331,37 +329,6 @@ namespace SoulsFormats
 
                     Name = br.GetShiftJIS(fileNameOffset);
                 }
-            }
-        }
-
-        /// <summary>
-        /// A generic file in a BXF3 container.
-        /// </summary>
-        public class File : IBinderFile
-        {
-            /// <summary>
-            /// The ID of this file, typically just its index in the file collection.
-            /// </summary>
-            public int ID { get; set; }
-
-            /// <summary>
-            /// The name of the file, typically a virtual path.
-            /// </summary>
-            public string Name { get; set; }
-
-            /// <summary>
-            /// The raw data of the file.
-            /// </summary>
-            public byte[] Bytes { get; set; }
-
-            /// <summary>
-            /// Create a new File with the specified information.
-            /// </summary>
-            public File(int id, string name, byte[] bytes)
-            {
-                ID = id;
-                Name = name;
-                Bytes = bytes;
             }
         }
     }

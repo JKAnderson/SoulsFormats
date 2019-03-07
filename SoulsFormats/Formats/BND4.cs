@@ -11,9 +11,7 @@ namespace SoulsFormats
         /// <summary>
         /// The files contained within this BND4.
         /// </summary>
-        public List<File> Files;
-
-        IReadOnlyList<IBinderFile> IBinder.Files => Files;
+        public List<BinderFile> Files { get; set; }
 
         /// <summary>
         /// A timestamp or version number, 8 characters maximum.
@@ -23,7 +21,7 @@ namespace SoulsFormats
         /// <summary>
         /// Indicates the format of this BND4.
         /// </summary>
-        public Binder.Format Format;
+        public Binder.Format Format { get; set; }
 
         /// <summary>
         /// Unknown.
@@ -55,7 +53,7 @@ namespace SoulsFormats
         /// </summary>
         public BND4()
         {
-            Files = new List<File>();
+            Files = new List<BinderFile>();
             Timestamp = SFUtil.DateToBinderTimestamp(DateTime.Now);
             Format = Binder.Format.x74;
             BigEndian = false;
@@ -112,10 +110,10 @@ namespace SoulsFormats
             else
                 br.AssertInt64(0);
 
-            Files = new List<File>(fileCount);
+            Files = new List<BinderFile>(fileCount);
             for (int i = 0; i < fileCount; i++)
             {
-                Files.Add(new File(br, Unicode, Format));
+                Files.Add(ReadFile(br, Unicode, Format));
             }
         }
 
@@ -152,17 +150,20 @@ namespace SoulsFormats
 
             for (int i = 0; i < Files.Count; i++)
             {
-                Files[i].Write(bw, i, Format);
+                WriteFile(Files[i], bw, i, Format);
             }
 
-            for (int i = 0; i < Files.Count; i++)
+            if (Binder.HasName(Format))
             {
-                File file = Files[i];
-                bw.FillInt32($"FileName{i}", (int)bw.Position);
-                if (Unicode)
-                    bw.WriteUTF16(file.Name, true);
-                else
-                    bw.WriteShiftJIS(file.Name, true);
+                for (int i = 0; i < Files.Count; i++)
+                {
+                    BinderFile file = Files[i];
+                    bw.FillUInt32($"FileName{i}", (uint)bw.Position);
+                    if (Unicode)
+                        bw.WriteUTF16(file.Name, true);
+                    else
+                        bw.WriteShiftJIS(file.Name, true);
+                }
             }
 
             if (Extended == 4)
@@ -228,168 +229,122 @@ namespace SoulsFormats
             bw.FillInt64("DataStart", bw.Position);
             for (int i = 0; i < Files.Count; i++)
             {
-                File file = Files[i];
+                BinderFile file = Files[i];
                 if (file.Bytes.LongLength > 0)
                     bw.Pad(0x10);
 
-                bw.FillInt32($"FileData{i}", (int)bw.Position);
+                bw.FillUInt32($"FileData{i}", (uint)bw.Position);
 
-                byte[] bytes = file.Bytes;
-                int compressedSize = bytes.Length;
+                int compressedSize = file.Bytes.Length;
 
                 if (Binder.IsCompressed(file.Flags))
                 {
                     if (Format == Binder.Format.x2E)
                     {
-                        bytes = DCX.Compress(bytes, DCX.Type.DemonsSoulsEDGE);
+                        byte[] bytes = DCX.Compress(file.Bytes, DCX.Type.DemonsSoulsEDGE);
                         bw.WriteBytes(bytes);
                         compressedSize = bytes.Length;
                     }
                     else
                     {
-                        compressedSize = SFUtil.WriteZlib(bw, 0x9C, bytes);
+                        compressedSize = SFUtil.WriteZlib(bw, 0x9C, file.Bytes);
                     }
                 }
                 else
                 {
-                    bw.WriteBytes(bytes);
+                    bw.WriteBytes(file.Bytes);
                 }
 
                 bw.FillInt64($"CompressedSize{i}", compressedSize);
             }
         }
 
-        /// <summary>
-        /// A generic file in a BND4 container.
-        /// </summary>
-        public class File : IBinderFile
+        private static BinderFile ReadFile(BinaryReaderEx br, bool unicode, Binder.Format format)
         {
-            /// <summary>
-            /// The name of the file, typically a virtual path.
-            /// </summary>
-            public string Name { get; set; }
+            Binder.FileFlags flags = br.ReadEnum8<Binder.FileFlags>();
+            br.AssertByte(0);
+            br.AssertByte(0);
+            br.AssertByte(0);
 
-            /// <summary>
-            /// The ID number of the file, or -1 for formats without IDs.
-            /// </summary>
-            public int ID { get; set; }
+            br.AssertInt32(-1);
+            long compressedSize = br.ReadInt64();
 
-            /// <summary>
-            /// Flags indicating whether to compress the file (0xC0) and other things we don't understand.
-            /// </summary>
-            public Binder.FileFlags Flags;
-
-            /// <summary>
-            /// The raw data of the file.
-            /// </summary>
-            public byte[] Bytes { get; set; }
-
-            /// <summary>
-            /// Creates a new File with the specified information.
-            /// </summary>
-            public File(int id, string name, Binder.FileFlags flags, byte[] bytes)
+            if (Binder.HasUncompressedSize(format))
             {
-                ID = id;
-                Name = name;
-                Flags = flags;
-                Bytes = bytes;
+                long uncompressedSize = br.ReadInt64();
             }
 
-            internal File(BinaryReaderEx br, bool unicode, Binder.Format format)
+            uint fileOffset = br.ReadUInt32();
+
+            int id = -1;
+            if (Binder.HasID(format))
             {
-                Flags = br.ReadEnum8<Binder.FileFlags>();
-                br.AssertByte(0);
-                br.AssertByte(0);
-                br.AssertByte(0);
+                id = br.ReadInt32();
+            }
 
-                br.AssertInt32(-1);
-                long compressedSize = br.ReadInt64();
+            string name = null;
+            if (Binder.HasName(format))
+            {
+                uint nameOffset = br.ReadUInt32();
+                if (unicode)
+                    name = br.GetUTF16(nameOffset);
+                else
+                    name = br.GetShiftJIS(nameOffset);
+            }
 
-                if (Binder.HasUncompressedSize(format))
+            if (format == Binder.Format.x20)
+            {
+                br.AssertInt64(0);
+            }
+
+            byte[] bytes;
+            if (Binder.IsCompressed(flags))
+            {
+                if (format == Binder.Format.x2E)
                 {
-                    long uncompressedSize = br.ReadInt64();
-                }
-
-                uint fileOffset = br.ReadUInt32();
-
-                if (Binder.HasID(format))
-                {
-                    ID = br.ReadInt32();
+                    bytes = br.GetBytes(fileOffset, (int)compressedSize);
+                    bytes = DCX.Decompress(bytes, out DCX.Type type);
+                    if (type != DCX.Type.DemonsSoulsEDGE)
+                        throw null;
                 }
                 else
                 {
-                    ID = -1;
-                }
-
-                if (Binder.HasName(format))
-                {
-                    int nameOffset = br.ReadInt32();
-                    if (unicode)
-                        Name = br.GetUTF16(nameOffset);
-                    else
-                        Name = br.GetShiftJIS(nameOffset);
-                }
-                else
-                {
-                    Name = null;
-                }
-
-                if (format == Binder.Format.x20)
-                {
-                    br.AssertInt64(0);
-                }
-
-                if (Binder.IsCompressed(Flags))
-                {
-                    if (format == Binder.Format.x2E)
-                    {
-                        byte[] bytes = br.GetBytes(fileOffset, (int)compressedSize);
-                        Bytes = DCX.Decompress(bytes, out DCX.Type type);
-                        if (type != DCX.Type.DemonsSoulsEDGE)
-                            throw null;
-                    }
-                    else
-                    {
-                        br.StepIn(fileOffset);
-                        Bytes = SFUtil.ReadZlib(br, (int)compressedSize);
-                        br.StepOut();
-                    }
-                }
-                else
-                {
-                    Bytes = br.GetBytes(fileOffset, (int)compressedSize);
+                    br.StepIn(fileOffset);
+                    bytes = SFUtil.ReadZlib(br, (int)compressedSize);
+                    br.StepOut();
                 }
             }
-
-            internal void Write(BinaryWriterEx bw, int index, Binder.Format format)
+            else
             {
-                bw.WriteByte((byte)Flags);
-                bw.WriteByte(0);
-                bw.WriteByte(0);
-                bw.WriteByte(0);
-
-                bw.WriteInt32(-1);
-                bw.ReserveInt64($"CompressedSize{index}");
-                if (Binder.HasUncompressedSize(format))
-                    bw.WriteInt64(Bytes.LongLength);
-                bw.ReserveInt32($"FileData{index}");
-                if (Binder.HasID(format))
-                    bw.WriteInt32(ID);
-                bw.ReserveInt32($"FileName{index}");
-                if (format == Binder.Format.x20)
-                    bw.WriteInt64(0);
+                bytes = br.GetBytes(fileOffset, (int)compressedSize);
             }
 
-            /// <summary>
-            /// Returns a string containing the ID and name of this file.
-            /// </summary>
-            public override string ToString()
-            {
-                if (ID == -1)
-                    return $"{Name ?? "<null>"}";
-                else
-                    return $"{ID} {Name ?? "<null>"}";
-            }
+            return new BinderFile(flags, id, name, bytes);
+        }
+
+        private static void WriteFile(BinderFile file, BinaryWriterEx bw, int index, Binder.Format format)
+        {
+            bw.WriteByte((byte)file.Flags);
+            bw.WriteByte(0);
+            bw.WriteByte(0);
+            bw.WriteByte(0);
+
+            bw.WriteInt32(-1);
+            bw.ReserveInt64($"CompressedSize{index}");
+
+            if (Binder.HasUncompressedSize(format))
+                bw.WriteInt64(file.Bytes.LongLength);
+
+            bw.ReserveUInt32($"FileData{index}");
+
+            if (Binder.HasID(format))
+                bw.WriteInt32(file.ID);
+
+            if (Binder.HasName(format))
+                bw.ReserveUInt32($"FileName{index}");
+
+            if (format == Binder.Format.x20)
+                bw.WriteInt64(0);
         }
 
         private class PathHash

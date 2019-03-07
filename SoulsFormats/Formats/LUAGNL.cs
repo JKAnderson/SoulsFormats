@@ -19,7 +19,7 @@ namespace SoulsFormats
         public bool LongFormat { get; set; }
 
         /// <summary>
-        /// Global variables names.
+        /// Global variable names.
         /// </summary>
         public List<string> Globals { get; set; }
 

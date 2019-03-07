@@ -29,6 +29,17 @@ namespace SoulsFormats
         /// </summary>
         public byte[] UnkBlock2;
 
+        /// <summary>
+        /// Creates a new empty GPARAM.
+        /// </summary>
+        public GPARAM()
+        {
+            Groups = new List<Group>();
+            Unk1 = 0;
+            Unk3s = new List<Unk3>();
+            UnkBlock2 = new byte[0];
+        }
+
         internal override bool Is(BinaryReaderEx br)
         {
             string magic = br.GetASCII(0, 8);
@@ -204,6 +215,17 @@ namespace SoulsFormats
             /// </summary>
             public List<string> Comments;
 
+            /// <summary>
+            /// Creates a new Group with no params or comments.
+            /// </summary>
+            public Group(string name1, string name2)
+            {
+                Name1 = name1;
+                Name2 = name2;
+                Params = new List<Param>();
+                Comments = new List<string>();
+            }
+
             internal Group(BinaryReaderEx br, int index, Offsets offsets)
             {
                 int groupHeaderOffset = br.ReadInt32();
@@ -309,18 +331,7 @@ namespace SoulsFormats
             /// <summary>
             /// Returns the first param with a matching name, or null if not found.
             /// </summary>
-            public Param this[string name1]
-            {
-                get
-                {
-                    foreach (Param param in Params)
-                    {
-                        if (param.Name1 == name1)
-                            return param;
-                    }
-                    return null;
-                }
-            }
+            public Param this[string name1] => Params.Find(param => param.Name1 == name1);
 
             /// <summary>
             /// Returns the long and short names of the group.
@@ -416,6 +427,18 @@ namespace SoulsFormats
             /// Unknown.
             /// </summary>
             public List<int> Unk1Values;
+
+            /// <summary>
+            /// Creates a new Param with no values or unk1s.
+            /// </summary>
+            public Param(string name1, string name2, ParamType type)
+            {
+                Name1 = name1;
+                Name2 = name2;
+                Type = type;
+                Values = new List<object>();
+                Unk1Values = new List<int>();
+            }
 
             internal Param(BinaryReaderEx br, Offsets offsets)
             {
@@ -578,14 +601,8 @@ namespace SoulsFormats
             /// </summary>
             public object this[int index]
             {
-                get
-                {
-                    return Values[index];
-                }
-                set
-                {
-                    Values[index] = value;
-                }
+                get => Values[index];
+                set => Values[index] = value;
             }
 
             /// <summary>
@@ -611,6 +628,15 @@ namespace SoulsFormats
             /// Unknown.
             /// </summary>
             public List<int> Values;
+
+            /// <summary>
+            /// Creates a new Unk3 with no values.
+            /// </summary>
+            public Unk3(int id)
+            {
+                ID = id;
+                Values = new List<int>();
+            }
 
             internal Unk3(BinaryReaderEx br, Offsets offsets)
             {

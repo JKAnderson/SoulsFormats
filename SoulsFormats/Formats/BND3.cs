@@ -11,9 +11,7 @@ namespace SoulsFormats
         /// <summary>
         /// The files contained within this BND3.
         /// </summary>
-        public List<File> Files;
-
-        IReadOnlyList<IBinderFile> IBinder.Files => Files;
+        public List<BinderFile> Files { get; set; }
 
         /// <summary>
         /// A timestamp or version number, 8 characters maximum.
@@ -23,7 +21,7 @@ namespace SoulsFormats
         /// <summary>
         /// Indicates the format of the BND3.
         /// </summary>
-        public Binder.Format Format;
+        public Binder.Format Format { get; set; }
 
         /// <summary>
         /// Write bytes in big-endian order for PS3.
@@ -45,7 +43,7 @@ namespace SoulsFormats
         /// </summary>
         public BND3()
         {
-            Files = new List<File>();
+            Files = new List<BinderFile>();
             Timestamp = SFUtil.DateToBinderTimestamp(DateTime.Now);
             Format = Binder.Format.x74;
             BigEndian = false;
@@ -58,6 +56,8 @@ namespace SoulsFormats
         /// </summary>
         internal override bool Is(BinaryReaderEx br)
         {
+            if (br.Stream.Length < 4)
+                return false;
             string magic = br.GetASCII(0, 4);
             return magic == "BND3";
         }
@@ -82,10 +82,10 @@ namespace SoulsFormats
             Unk2 = br.ReadInt32();
             br.AssertInt32(0);
 
-            Files = new List<File>(fileCount);
+            Files = new List<BinderFile>(fileCount);
             for (int i = 0; i < fileCount; i++)
             {
-                Files.Add(new File(br, Format));
+                Files.Add(ReadFile(br, Format));
             }
         }
 
@@ -109,158 +109,107 @@ namespace SoulsFormats
             bw.WriteInt32(0);
 
             for (int i = 0; i < Files.Count; i++)
-                Files[i].WriteHeader(bw, i, Format);
+                WriteFileHeader(Files[i], bw, i, Format);
 
             if (Binder.HasName(Format))
             {
                 for (int i = 0; i < Files.Count; i++)
-                    Files[i].WriteName(bw, i);
+                    WriteFileName(Files[i], bw, i);
             }
 
             bw.FillInt32($"HeaderEnd", (int)bw.Position);
 
             for (int i = 0; i < Files.Count; i++)
-                Files[i].WriteData(bw, i);
+                WriteFileData(Files[i], bw, i);
         }
 
-        /// <summary>
-        /// A generic file in a BND3 container.
-        /// </summary>
-        public class File : IBinderFile
+        private static BinderFile ReadFile(BinaryReaderEx br, Binder.Format format)
         {
-            /// <summary>
-            /// The name of the file, typically a virtual path.
-            /// </summary>
-            public string Name { get; set; }
+            Binder.FileFlags flags = br.ReadEnum8<Binder.FileFlags>();
+            br.AssertByte(0);
+            br.AssertByte(0);
+            br.AssertByte(0);
 
-            /// <summary>
-            /// The ID number of the file.
-            /// </summary>
-            public int ID { get; set; }
+            int compressedSize = br.ReadInt32();
+            uint fileOffset = br.ReadUInt32();
 
-            /// <summary>
-            /// Flags indicating whether to compress the file and other things we don't understand.
-            /// </summary>
-            public Binder.FileFlags Flags;
-
-            /// <summary>
-            /// The raw data of the file.
-            /// </summary>
-            public byte[] Bytes { get; set; }
-
-            /// <summary>
-            /// Creates a new File with the given information.
-            /// </summary>
-            public File(int id, string name, Binder.FileFlags flags, byte[] bytes)
+            int id = -1;
+            if (Binder.HasID(format))
             {
-                ID = id;
-                Name = name;
-                Flags = flags;
-                Bytes = bytes;
+                id = br.ReadInt32();
             }
 
-            internal File(BinaryReaderEx br, Binder.Format format)
+            string name = null;
+            if (Binder.HasName(format))
             {
-                Flags = br.ReadEnum8<Binder.FileFlags>();
-                br.AssertByte(0);
-                br.AssertByte(0);
-                br.AssertByte(0);
-
-                int compressedSize = br.ReadInt32();
-                int fileOffset = br.ReadInt32();
-
-                if (Binder.HasID(format))
-                {
-                    ID = br.ReadInt32();
-                }
-                else
-                {
-                    ID = -1;
-                }
-
-                if (Binder.HasName(format))
-                {
-                    int fileNameOffset = br.ReadInt32();
-                    Name = br.GetShiftJIS(fileNameOffset);
-                }
-                else
-                {
-                    Name = null;
-                }
-
-                if (Binder.HasUncompressedSize(format))
-                {
-                    int uncompressedSize = br.ReadInt32();
-                }
-
-                // Compressed
-                if (Binder.IsCompressed(Flags))
-                {
-                    br.StepIn(fileOffset);
-                    Bytes = SFUtil.ReadZlib(br, compressedSize);
-                    br.StepOut();
-                }
-                else
-                {
-                    Bytes = br.GetBytes(fileOffset, compressedSize);
-                }
+                uint fileNameOffset = br.ReadUInt32();
+                name = br.GetShiftJIS(fileNameOffset);
             }
 
-            internal void WriteHeader(BinaryWriterEx bw, int index, Binder.Format format)
+            if (Binder.HasUncompressedSize(format))
             {
-                bw.WriteByte((byte)Flags);
-                bw.WriteByte(0);
-                bw.WriteByte(0);
-                bw.WriteByte(0);
-
-                bw.ReserveInt32($"CompressedSize{index}");
-                bw.ReserveInt32($"FileData{index}");
-
-                if (Binder.HasID(format))
-                    bw.WriteInt32(ID);
-
-                if (Binder.HasName(format))
-                    bw.ReserveInt32($"FileName{index}");
-
-                if (Binder.HasUncompressedSize(format))
-                    bw.WriteInt32(Bytes.Length);
+                int uncompressedSize = br.ReadInt32();
             }
 
-            internal void WriteName(BinaryWriterEx bw, int index)
+            byte[] bytes;
+            if (Binder.IsCompressed(flags))
             {
-                bw.FillInt32($"FileName{index}", (int)bw.Position);
-                bw.WriteShiftJIS(Name, true);
+                br.StepIn(fileOffset);
+                bytes = SFUtil.ReadZlib(br, compressedSize);
+                br.StepOut();
+            }
+            else
+            {
+                bytes = br.GetBytes(fileOffset, compressedSize);
             }
 
-            internal void WriteData(BinaryWriterEx bw, int index)
+            return new BinderFile(flags, id, name, bytes);
+        }
+
+        private static void WriteFileHeader(BinderFile file, BinaryWriterEx bw, int index, Binder.Format format)
+        {
+            bw.WriteByte((byte)file.Flags);
+            bw.WriteByte(0);
+            bw.WriteByte(0);
+            bw.WriteByte(0);
+
+            bw.ReserveInt32($"CompressedSize{index}");
+            bw.ReserveUInt32($"FileData{index}");
+
+            if (Binder.HasID(format))
+                bw.WriteInt32(file.ID);
+
+            if (Binder.HasName(format))
+                bw.ReserveUInt32($"FileName{index}");
+
+            if (Binder.HasUncompressedSize(format))
+                bw.WriteInt32(file.Bytes.Length);
+        }
+
+        private static void WriteFileName(BinderFile file, BinaryWriterEx bw, int index)
+        {
+            bw.FillUInt32($"FileName{index}", (uint)bw.Position);
+            bw.WriteShiftJIS(file.Name, true);
+        }
+
+        private static void WriteFileData(BinderFile file, BinaryWriterEx bw, int index)
+        {
+            if (file.Bytes.Length > 0)
+                bw.Pad(0x10);
+
+            bw.FillUInt32($"FileData{index}", (uint)bw.Position);
+
+            int compressedSize = file.Bytes.Length;
+            if (Binder.IsCompressed(file.Flags))
             {
-                if (Bytes.Length > 0)
-                    bw.Pad(0x10);
-
-                bw.FillInt32($"FileData{index}", (int)bw.Position);
-
-                byte[] bytes = Bytes;
-                int compressedSize = bytes.Length;
-
-                if (Binder.IsCompressed(Flags))
-                {
-                    compressedSize = SFUtil.WriteZlib(bw, 0x9C, bytes);
-                }
-                else
-                {
-                    bw.WriteBytes(bytes);
-                }
-
-                bw.FillInt32($"CompressedSize{index}", bytes.Length);
+                compressedSize = SFUtil.WriteZlib(bw, 0x9C, file.Bytes);
+            }
+            else
+            {
+                bw.WriteBytes(file.Bytes);
             }
 
-            /// <summary>
-            /// Returns a string containing the ID and name of this file.
-            /// </summary>
-            public override string ToString()
-            {
-                return $"{ID} {Name ?? "<null>"}";
-            }
+            bw.FillInt32($"CompressedSize{index}", compressedSize);
         }
     }
 }

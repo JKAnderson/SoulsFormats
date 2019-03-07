@@ -168,9 +168,16 @@ namespace SoulsFormats
         /// <summary>
         /// The files contained within this BXF4.
         /// </summary>
-        public List<File> Files;
+        public List<BinderFile> Files { get; set; }
 
-        IReadOnlyList<IBinderFile> IBinder.Files => Files;
+        /// <summary>
+        /// Indicates the format of the BXF4.
+        /// </summary>
+        public Binder.Format Format
+        {
+            get => BHD.Format;
+            set => BHD.Format = value;
+        }
 
         /// <summary>
         /// Information about this BXF4's header file.
@@ -187,7 +194,7 @@ namespace SoulsFormats
         /// </summary>
         public BXF4()
         {
-            Files = new List<File>();
+            Files = new List<BinderFile>();
             BHD = new BHF4();
             BDT = new BDF4();
         }
@@ -209,10 +216,13 @@ namespace SoulsFormats
             BHD = new BHF4(bhdReader);
             BDT = new BDF4(bdtReader);
 
-            Files = new List<File>(BHD.FileHeaders.Count);
+            Files = new List<BinderFile>(BHD.FileHeaders.Count);
             foreach (BHF4.FileHeader fileHeader in BHD.FileHeaders)
             {
-                Files.Add(new File(bdtReader, fileHeader));
+                byte[] bytes = bdtReader.GetBytes(fileHeader.Offset, (int)fileHeader.CompressedSize);
+                if (Binder.IsCompressed(fileHeader.Flags))
+                    bytes = DCX.Decompress(bytes);
+                Files.Add(new BinderFile(fileHeader.Flags, fileHeader.ID, fileHeader.Name, bytes));
             }
         }
 
@@ -222,7 +232,7 @@ namespace SoulsFormats
 
             for (int i = 0; i < Files.Count; i++)
             {
-                File file = Files[i];
+                BinderFile file = Files[i];
                 bdtWriter.Pad(0x10);
 
                 byte[] bytes = file.Bytes;
@@ -230,67 +240,12 @@ namespace SoulsFormats
                     bytes = DCX.Compress(bytes, DCX.Type.DarkSouls1);
 
                 if (Binder.HasLongOffsets(BHD.Format))
-                    bhdWriter.FillUInt64($"FileOffset{i}", (ulong)bdtWriter.Position);
+                    bhdWriter.FillInt64($"FileOffset{i}", bdtWriter.Position);
                 else
                     bhdWriter.FillUInt32($"FileOffset{i}", (uint)bdtWriter.Position);
 
                 bhdWriter.FillInt64($"FileSize{i}", bytes.LongLength);
                 bdtWriter.WriteBytes(bytes);
-            }
-        }
-
-        /// <summary>
-        /// A generic file in a BXF4 container.
-        /// </summary>
-        public class File : IBinderFile
-        {
-            /// <summary>
-            /// The name of the file, typically a virtual path.
-            /// </summary>
-            public string Name { get; set; }
-
-            /// <summary>
-            /// Flags indicating compression and possibly some other things.
-            /// </summary>
-            public Binder.FileFlags Flags;
-
-            /// <summary>
-            /// The ID number of the file.
-            /// </summary>
-            public int ID { get; set; }
-
-            /// <summary>
-            /// The raw data of the file.
-            /// </summary>
-            public byte[] Bytes { get; set; }
-
-            /// <summary>
-            /// Creates a new File with the specified information.
-            /// </summary>
-            public File(int id, string name, Binder.FileFlags flags, byte[] bytes)
-            {
-                ID = id;
-                Name = name;
-                Flags = flags;
-                Bytes = bytes;
-            }
-
-            internal File(BinaryReaderEx br, BHF4.FileHeader fileHeader)
-            {
-                Name = fileHeader.Name;
-                Flags = fileHeader.Flags;
-                ID = fileHeader.ID;
-                Bytes = br.GetBytes((long)fileHeader.Offset, (int)fileHeader.CompressedSize);
-                if (Binder.IsCompressed(Flags))
-                    Bytes = DCX.Decompress(Bytes);
-            }
-
-            /// <summary>
-            /// Returns a string containing the ID and name of this file.
-            /// </summary>
-            public override string ToString()
-            {
-                return $"{ID} {Name ?? "<null>"}";
             }
         }
 
@@ -377,7 +332,7 @@ namespace SoulsFormats
                 }
             }
 
-            internal void Write(BinaryWriterEx bw, List<File> files)
+            internal void Write(BinaryWriterEx bw, List<BinderFile> files)
             {
                 bw.BigEndian = BigEndian;
                 bw.WriteASCII("BHF4");
@@ -410,8 +365,8 @@ namespace SoulsFormats
 
                 for (int i = 0; i < files.Count; i++)
                 {
-                    File file = files[i];
-                    bw.FillInt32($"FileName{i}", (int)bw.Position);
+                    BinderFile file = files[i];
+                    bw.FillUInt32($"FileName{i}", (uint)bw.Position);
                     if (Unicode)
                         bw.WriteUTF16(file.Name, true);
                     else
@@ -483,7 +438,7 @@ namespace SoulsFormats
             {
                 public string Name;
                 public Binder.FileFlags Flags;
-                public ulong Offset;
+                public long Offset;
                 public long CompressedSize, UncompressedSize;
                 public int ID;
 
@@ -500,7 +455,7 @@ namespace SoulsFormats
                         UncompressedSize = br.ReadInt64();
 
                     if (Binder.HasLongOffsets(format))
-                        Offset = br.ReadUInt64();
+                        Offset = br.ReadInt64();
                     else
                         Offset = br.ReadUInt32();
 
@@ -509,14 +464,14 @@ namespace SoulsFormats
                     else
                         ID = -1;
 
-                    int nameOffset = br.ReadInt32();
+                    uint nameOffset = br.ReadUInt32();
                     if (unicode)
                         Name = br.GetUTF16(nameOffset);
                     else
                         Name = br.GetShiftJIS(nameOffset);
                 }
 
-                public static void Write(BinaryWriterEx bw, File file, int index, Binder.Format format)
+                public static void Write(BinaryWriterEx bw, BinderFile file, int index, Binder.Format format)
                 {
                     bw.WriteByte((byte)file.Flags);
                     bw.WriteByte(0);
@@ -529,14 +484,14 @@ namespace SoulsFormats
                         bw.WriteInt64(file.Bytes.LongLength);
 
                     if (Binder.HasLongOffsets(format))
-                        bw.ReserveUInt64($"FileOffset{index}");
+                        bw.ReserveInt64($"FileOffset{index}");
                     else
                         bw.ReserveUInt32($"FileOffset{index}");
 
                     if (Binder.HasID(format))
                         bw.WriteInt32(file.ID);
 
-                    bw.ReserveInt32($"FileName{index}");
+                    bw.ReserveUInt32($"FileName{index}");
                 }
             }
 
