@@ -53,9 +53,16 @@ namespace SoulsFormats
             int goalCount = br.ReadInt32();
             br.AssertInt32(0);
 
-            if (goalCount <= 2)
-                throw new NotSupportedException("LUAINFO with less than 2 goals will ruin my long format heuristic.");
-            LongFormat = br.GetInt32(0x24) == 0;
+            if (goalCount == 0)
+                throw new NotSupportedException("LUAINFO format cannot be detected on files with 0 goals.");
+            else if (goalCount >= 2)
+                LongFormat = br.GetInt32(0x24) == 0;
+            else if (br.GetInt32(0x18) == 0x10 + 0x18 * goalCount)
+                LongFormat = true;
+            else if (br.GetInt32(0x14) == 0x10 + 0x10 * goalCount)
+                LongFormat = false;
+            else
+                throw new NotSupportedException("Could not detect LUAINFO format.");
 
             Goals = new List<Goal>(goalCount);
             for (int i = 0; i < goalCount; i++)
