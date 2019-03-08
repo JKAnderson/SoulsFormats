@@ -94,7 +94,7 @@ namespace SoulsFormats
             for (int i = 0; i < Textures.Count; i++)
             {
                 Texture texture = Textures[i];
-                bw.FillInt32($"FileName{i}", (int)bw.Position);
+                bw.FillUInt32($"FileName{i}", (uint)bw.Position);
                 if (Encoding == 1)
                     bw.WriteUTF16(texture.Name, true);
                 else if (Encoding == 0 || Encoding == 2)
@@ -108,7 +108,7 @@ namespace SoulsFormats
                 if (texture.Bytes.Length > 0)
                     bw.Pad(0x10);
 
-                bw.FillInt32($"FileData{i}", (int)bw.Position);
+                bw.FillUInt32($"FileData{i}", (uint)bw.Position);
 
                 byte[] bytes = texture.Bytes;
                 if (texture.Flags1 == 2 || texture.Flags2 == 3)
@@ -183,7 +183,7 @@ namespace SoulsFormats
 
             internal Texture(BinaryReaderEx br, TPFPlatform platform, byte encoding)
             {
-                int fileOffset = br.ReadInt32();
+                uint fileOffset = br.ReadUInt32();
                 int fileSize = br.ReadInt32();
 
                 Format = br.ReadByte();
@@ -191,38 +191,40 @@ namespace SoulsFormats
                 Mipmaps = br.ReadByte();
                 Flags1 = br.AssertByte(0, 1, 2, 3);
 
-                int nameOffset = 0;
+                uint nameOffset = uint.MaxValue;
                 if (platform == TPFPlatform.PC)
                 {
                     Header = null;
-                    nameOffset = br.ReadInt32();
+                    nameOffset = br.ReadUInt32();
                     Flags2 = br.AssertInt32(0, 1);
                 }
-                else if (platform == TPFPlatform.PS3)
-                {
-                    Header = new TexHeader();
-                    Header.Width = br.ReadInt16();
-                    Header.Height = br.ReadInt16();
-                    Header.Unk1 = br.ReadInt32();
-                    Header.Unk2 = br.AssertInt32(0, 0xAAE4);
-                    nameOffset = br.ReadInt32();
-                    Flags2 = br.AssertInt32(0, 1);
-                }
-                else if (platform == TPFPlatform.PS4 || platform == TPFPlatform.Xbone)
+                else
                 {
                     Header = new TexHeader();
                     Header.Width = br.ReadInt16();
                     Header.Height = br.ReadInt16();
 
-                    Header.TextureCount = br.AssertByte(1, 6);
-                    br.AssertByte(0);
-                    br.AssertByte(0);
-                    br.AssertByte(0);
-
-                    Header.Unk2 = br.AssertInt32(0xD);
-                    nameOffset = br.ReadInt32();
-                    Flags2 = br.AssertInt32(0, 1);
-                    Header.DXGIFormat = br.ReadInt32();
+                    if (platform == TPFPlatform.Xbox360)
+                    {
+                        br.AssertInt32(0);
+                        nameOffset = br.ReadUInt32();
+                        br.AssertInt32(0);
+                    }
+                    else if (platform == TPFPlatform.PS3)
+                    {
+                        Header.Unk1 = br.ReadInt32();
+                        Header.Unk2 = br.AssertInt32(0, 0xAAE4);
+                        nameOffset = br.ReadUInt32();
+                        Flags2 = br.AssertInt32(0, 1);
+                    }
+                    else if (platform == TPFPlatform.PS4 || platform == TPFPlatform.Xbone)
+                    {
+                        Header.TextureCount = br.AssertInt32(1, 6);
+                        Header.Unk2 = br.AssertInt32(0xD);
+                        nameOffset = br.ReadUInt32();
+                        Flags2 = br.AssertInt32(0, 1);
+                        Header.DXGIFormat = br.ReadInt32();
+                    }
                 }
 
                 Bytes = br.GetBytes(fileOffset, fileSize);
@@ -244,7 +246,7 @@ namespace SoulsFormats
                     Mipmaps = (byte)dds.dwMipMapCount;
                 }
 
-                bw.ReserveInt32($"FileData{index}");
+                bw.ReserveUInt32($"FileData{index}");
                 bw.ReserveInt32($"FileSize{index}");
 
                 bw.WriteByte(Format);
@@ -257,29 +259,32 @@ namespace SoulsFormats
                     bw.ReserveInt32($"FileName{index}");
                     bw.WriteInt32(Flags2);
                 }
-                else if (platform == TPFPlatform.PS3)
-                {
-                    bw.WriteInt16(Header.Width);
-                    bw.WriteInt16(Header.Height);
-                    bw.WriteInt32(Header.Unk1);
-                    bw.WriteInt32(Header.Unk2);
-                    bw.ReserveInt32($"FileName{index}");
-                    bw.WriteInt32(Flags2);
-                }
-                else if (platform == TPFPlatform.PS4 || platform == TPFPlatform.Xbone)
+                else
                 {
                     bw.WriteInt16(Header.Width);
                     bw.WriteInt16(Header.Height);
 
-                    bw.WriteByte(Header.TextureCount);
-                    bw.WriteByte(0);
-                    bw.WriteByte(0);
-                    bw.WriteByte(0);
-
-                    bw.WriteInt32(Header.Unk2);
-                    bw.ReserveInt32($"FileName{index}");
-                    bw.WriteInt32(Flags2);
-                    bw.WriteInt32(Header.DXGIFormat);
+                    if (platform == TPFPlatform.Xbox360)
+                    {
+                        bw.WriteInt32(0);
+                        bw.ReserveUInt32($"FileName{index}");
+                        bw.WriteInt32(0);
+                    }
+                    else if (platform == TPFPlatform.PS3)
+                    {
+                        bw.WriteInt32(Header.Unk1);
+                        bw.WriteInt32(Header.Unk2);
+                        bw.ReserveUInt32($"FileName{index}");
+                        bw.WriteInt32(Flags2);
+                    }
+                    else if (platform == TPFPlatform.PS4 || platform == TPFPlatform.Xbone)
+                    {
+                        bw.WriteInt32(Header.TextureCount);
+                        bw.WriteInt32(Header.Unk2);
+                        bw.ReserveUInt32($"FileName{index}");
+                        bw.WriteInt32(Flags2);
+                        bw.WriteInt32(Header.DXGIFormat);
+                    }
                 }
             }
 
@@ -317,7 +322,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Number of textures in the array, either 1 for normal textures or 6 for cubemaps.
                 /// </summary>
-                public byte TextureCount;
+                public int TextureCount;
 
                 /// <summary>
                 /// Unknown; PS3 only.
@@ -345,6 +350,11 @@ namespace SoulsFormats
             /// Headered DDS with minimal metadata.
             /// </summary>
             PC = 0,
+
+            /// <summary>
+            /// Headerless DDS with pre-DX10 metadata.
+            /// </summary>
+            Xbox360 = 1,
 
             /// <summary>
             /// Headerless DDS with pre-DX10 metadata.

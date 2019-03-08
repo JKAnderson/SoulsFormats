@@ -57,5 +57,13 @@ namespace SoulsFormats
             Name = name;
             Bytes = bytes;
         }
+
+        /// <summary>
+        /// Returns the file flags, ID, name, and byte length as a string.
+        /// </summary>
+        public override string ToString()
+        {
+            return $"Flags: 0x{(byte)Flags:X2} | ID: {ID} | Name: {Name} | Length: {Bytes.Length}";
+        }
     }
 }

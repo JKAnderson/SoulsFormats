@@ -41,6 +41,8 @@ namespace SoulsFormats
 
         internal override bool Is(BinaryReaderEx br)
         {
+            if (br.Stream.Length < 0x30)
+                return false;
             string magic = br.GetASCII(0x2C, 4);
             return magic == "MTD ";
         }
