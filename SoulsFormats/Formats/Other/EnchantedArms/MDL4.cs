@@ -14,6 +14,9 @@ namespace SoulsFormats.EnchantedArms
         public List<Material> Materials;
         public List<Bone> Bones;
         public List<Mesh> Meshes;
+
+        public int Version;
+        public int Unk20;
         public Vector3 BoundingBoxMin, BoundingBoxMax;
         public int Unk3C, Unk40;
 
@@ -27,15 +30,14 @@ namespace SoulsFormats.EnchantedArms
         {
             br.BigEndian = true;
             br.AssertASCII("MDL4");
-            br.AssertInt32(0x40001);
+            Version = br.AssertInt32(0x40001, 0x40002);
             int dataStart = br.ReadInt32();
             int dataSize = br.ReadInt32();
             int dummyCount = br.ReadInt32();
             int materialCount = br.ReadInt32();
             int boneCount = br.ReadInt32();
             int meshCount = br.ReadInt32();
-            br.ReadInt32();
-            //br.AssertInt32(meshCount);
+            Unk20 = br.ReadInt32();
             BoundingBoxMin = br.ReadVector3();
             BoundingBoxMax = br.ReadVector3();
             Unk3C = br.ReadInt32();
@@ -58,7 +60,7 @@ namespace SoulsFormats.EnchantedArms
 
             Meshes = new List<Mesh>(meshCount);
             for (int i = 0; i < meshCount; i++)
-                Meshes.Add(new Mesh(br, dataStart));
+                Meshes.Add(new Mesh(br, dataStart, Version));
         }
 
         internal override void Write(BinaryWriterEx bw)
@@ -189,7 +191,7 @@ namespace SoulsFormats.EnchantedArms
             public List<Vertex> Vertices;
             public int[] UnkFormat2;
 
-            internal Mesh(BinaryReaderEx br, int dataStart)
+            internal Mesh(BinaryReaderEx br, int dataStart, int version)
             {
                 VertexFormat = br.AssertByte(0, 1, 2);
                 MaterialIndex = br.ReadByte();
@@ -210,10 +212,25 @@ namespace SoulsFormats.EnchantedArms
 
                 br.StepIn(dataStart + bufferOffset);
                 {
-                    int vertexCount = bufferSize / (VertexFormat == 0 ? 0x40 : (VertexFormat == 1 ? 0x54 : 0x3C));
+                    int vertexSize = 0;
+                    if (version == 0x40001)
+                    {
+                        if (VertexFormat == 0)
+                            vertexSize = 0x40;
+                        else if (VertexFormat == 1)
+                            vertexSize = 0x54;
+                        else if (VertexFormat == 2)
+                            vertexSize = 0x3C;
+                    }
+                    else if (version == 0x40002)
+                    {
+                        if (VertexFormat == 0)
+                            vertexSize = 0x28;
+                    }
+                    int vertexCount = bufferSize / vertexSize;
                     Vertices = new List<Vertex>(vertexCount);
                     for (int i = 0; i < vertexCount; i++)
-                        Vertices.Add(new Vertex(br, VertexFormat));
+                        Vertices.Add(new Vertex(br, version, VertexFormat));
                 }
                 br.StepOut();
             }
@@ -252,8 +269,6 @@ namespace SoulsFormats.EnchantedArms
                     {
                         if (vi1 != vi2 && vi1 != vi3 && vi2 != vi3)
                         {
-                            
-
                             if (!flip)
                             {
                                 converted.Add(vi1);
@@ -277,57 +292,92 @@ namespace SoulsFormats.EnchantedArms
         public class Vertex
         {
             public Vector3 Position;
-            public Vector3 Normal;
+            public Vector4 Normal;
             public int Unk0C;
             public int Unk10;
             public int Unk14;
             public byte[] Color;
-            public Vector2[] UVs;
+            public List<Vector2> UVs;
             public short[] BoneIndices;
             public float[] BoneWeights;
             public int Unk3C;
 
-            internal Vertex(BinaryReaderEx br, byte format)
+            internal Vertex(BinaryReaderEx br, int version, byte format)
             {
-                UVs = new Vector2[4];
-                if (format == 0)
+                UVs = new List<Vector2>();
+                if (version == 0x40001)
                 {
-                    Position = br.ReadVector3();
-                    Unk0C = br.ReadInt32();
-                    Unk10 = br.ReadInt32();
-                    Unk14 = br.ReadInt32();
-                    Color = br.ReadBytes(4);
-                    UVs[0] = br.ReadVector2();
-                    UVs[1] = br.ReadVector2();
-                    UVs[2] = br.ReadVector2();
-                    UVs[3] = br.ReadVector2();
-                    Unk3C = br.ReadInt32();
+                    if (format == 0)
+                    {
+                        Position = br.ReadVector3();
+                        Unk0C = br.ReadInt32();
+                        Unk10 = br.ReadInt32();
+                        Unk14 = br.ReadInt32();
+                        Color = br.ReadBytes(4);
+                        UVs.Add(br.ReadVector2());
+                        UVs.Add(br.ReadVector2());
+                        UVs.Add(br.ReadVector2());
+                        UVs.Add(br.ReadVector2());
+                        Unk3C = br.ReadInt32();
+                    }
+                    else if (format == 1)
+                    {
+                        Position = br.ReadVector3();
+                        Unk0C = br.ReadInt32();
+                        Unk10 = br.ReadInt32();
+                        Unk14 = br.ReadInt32();
+                        Color = br.ReadBytes(4);
+                        UVs.Add(br.ReadVector2());
+                        UVs.Add(br.ReadVector2());
+                        UVs.Add(br.ReadVector2());
+                        UVs.Add(br.ReadVector2());
+                        BoneIndices = br.ReadInt16s(4);
+                        BoneWeights = br.ReadSingles(4);
+                    }
+                    else if (format == 2)
+                    {
+                        Color = br.ReadBytes(4);
+                        UVs.Add(br.ReadVector2());
+                        UVs.Add(br.ReadVector2());
+                        UVs.Add(br.ReadVector2());
+                        UVs.Add(br.ReadVector2());
+                        BoneIndices = br.ReadInt16s(4);
+                        BoneWeights = br.ReadSingles(4);
+                    }
                 }
-                if (format == 1)
+                else if (version == 0x40002)
                 {
-                    Position = br.ReadVector3();
-                    Normal = br.ReadVector3();
-                    //Unk0C = br.ReadInt32();
-                    //Unk10 = br.ReadInt32();
-                    //Unk14 = br.ReadInt32();
-                    Color = br.ReadBytes(4);
-                    UVs[0] = br.ReadVector2();
-                    UVs[1] = br.ReadVector2();
-                    UVs[2] = br.ReadVector2();
-                    UVs[3] = br.ReadVector2();
-                    BoneIndices = br.ReadInt16s(4);
-                    BoneWeights = br.ReadSingles(4);
+                    if (format == 0)
+                    {
+                        Position = br.ReadVector3();
+                        Normal = ReadSByteVector4(br);
+                        Unk10 = br.ReadInt32();
+                        Color = br.ReadBytes(4);
+                        UVs.Add(ReadShortUV(br));
+                        UVs.Add(ReadShortUV(br));
+                        UVs.Add(ReadShortUV(br));
+                        UVs.Add(ReadShortUV(br));
+                    }
                 }
-                else if (format == 2)
-                {
-                    Color = br.ReadBytes(4);
-                    UVs[0] = br.ReadVector2();
-                    UVs[1] = br.ReadVector2();
-                    UVs[2] = br.ReadVector2();
-                    UVs[3] = br.ReadVector2();
-                    BoneIndices = br.ReadInt16s(4);
-                    BoneWeights = br.ReadSingles(4);
-                }
+            }
+
+            private Vector4 ReadByteVector4(BinaryReaderEx br)
+            {
+                byte[] bytes = br.ReadBytes(4);
+                return new Vector4((bytes[3] - 127) / 127f, (bytes[2] - 127) / 127f, (bytes[1] - 127) / 127f, (bytes[0] - 127) / 127f);
+            }
+
+            private Vector4 ReadSByteVector4(BinaryReaderEx br)
+            {
+                sbyte[] bytes = br.ReadSBytes(4);
+                return new Vector4(bytes[3] / 127f, bytes[2] / 127f, bytes[1] / 127f, bytes[0] / 127f);
+            }
+
+            private Vector2 ReadShortUV(BinaryReaderEx br)
+            {
+                short u = br.ReadInt16();
+                short v = br.ReadInt16();
+                return new Vector2(u / 2048f, v / 2048f);
             }
         }
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member

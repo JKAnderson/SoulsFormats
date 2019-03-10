@@ -45,7 +45,7 @@ namespace SoulsFormats
 
         internal override void Read(BinaryReaderEx br)
         {
-            BigEndian = br.GetByte(0) == 0;
+            BigEndian = br.GetInt16(0) == 0;
             br.BigEndian = BigEndian;
             LongFormat = br.GetInt32(BigEndian ? 0 : 4) == 0;
 

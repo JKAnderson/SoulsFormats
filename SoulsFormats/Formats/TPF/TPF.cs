@@ -60,14 +60,14 @@ namespace SoulsFormats
             int fileCount = br.ReadInt32();
 
             Platform = br.ReadEnum8<TPFPlatform>();
-            Flag2 = br.AssertByte(1, 2, 3);
+            Flag2 = br.AssertByte(0, 1, 2, 3);
             Encoding = br.AssertByte(0, 1, 2);
             br.AssertByte(0);
 
             Textures = new List<Texture>(fileCount);
             for (int i = 0; i < fileCount; i++)
             {
-                Textures.Add(new Texture(br, Platform, Encoding));
+                Textures.Add(new Texture(br, Platform, Flag2, Encoding));
             }
         }
 
@@ -87,7 +87,7 @@ namespace SoulsFormats
 
             for (int i = 0; i < Textures.Count; i++)
             {
-                Textures[i].Write(bw, i, Platform);
+                Textures[i].Write(bw, i, Platform, Flag2);
             }
             bw.Pad(0x10);
 
@@ -181,7 +181,7 @@ namespace SoulsFormats
                 Mipmaps = (byte)dds.dwMipMapCount;
             }
 
-            internal Texture(BinaryReaderEx br, TPFPlatform platform, byte encoding)
+            internal Texture(BinaryReaderEx br, TPFPlatform platform, byte flag2, byte encoding)
             {
                 uint fileOffset = br.ReadUInt32();
                 int fileSize = br.ReadInt32();
@@ -213,7 +213,8 @@ namespace SoulsFormats
                     else if (platform == TPFPlatform.PS3)
                     {
                         Header.Unk1 = br.ReadInt32();
-                        Header.Unk2 = br.AssertInt32(0, 0xAAE4);
+                        if (flag2 != 0)
+                            Header.Unk2 = br.AssertInt32(0, 0xAAE4);
                         nameOffset = br.ReadUInt32();
                         Flags2 = br.AssertInt32(0, 1);
                     }
@@ -237,7 +238,7 @@ namespace SoulsFormats
                     Name = br.GetShiftJIS(nameOffset);
             }
 
-            internal void Write(BinaryWriterEx bw, int index, TPFPlatform platform)
+            internal void Write(BinaryWriterEx bw, int index, TPFPlatform platform, byte flag2)
             {
                 if (platform == TPFPlatform.PC)
                 {
@@ -273,7 +274,8 @@ namespace SoulsFormats
                     else if (platform == TPFPlatform.PS3)
                     {
                         bw.WriteInt32(Header.Unk1);
-                        bw.WriteInt32(Header.Unk2);
+                        if (flag2 != 0)
+                            bw.WriteInt32(Header.Unk2);
                         bw.ReserveUInt32($"FileName{index}");
                         bw.WriteInt32(Flags2);
                     }

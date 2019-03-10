@@ -80,6 +80,7 @@
     <Compile Include="Formats\LUAGNL.cs" />
     <Compile Include="Formats\LUAINFO.cs" />
     <Compile Include="Formats\NVM.cs" />
+    <Compile Include="Formats\Other\AC4\Zero3.cs" />
     <Compile Include="Formats\Other\ACE3\BND0.cs" />
     <Compile Include="Formats\FLVERD.cs" />
     <Compile Include="Formats\Other\EnchantedArms\MDL4.cs" />
