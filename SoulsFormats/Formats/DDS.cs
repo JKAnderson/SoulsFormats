@@ -133,7 +133,7 @@ namespace SoulsFormats
             {
                 // dwSize
                 br.AssertInt32(32);
-                dwFlags = br.ReadEnum32<DDPF>();
+                dwFlags = (DDPF)br.ReadUInt32();
                 dwFourCC = br.ReadASCII(4);
                 dwRGBBitCount = br.ReadInt32();
                 dwRBitMask = br.ReadUInt32();

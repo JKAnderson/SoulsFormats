@@ -257,7 +257,7 @@ namespace SoulsFormats
 
                 if (platform == TPFPlatform.PC)
                 {
-                    bw.ReserveInt32($"FileName{index}");
+                    bw.ReserveUInt32($"FileName{index}");
                     bw.WriteInt32(Flags2);
                 }
                 else
