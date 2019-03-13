@@ -257,22 +257,8 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public bool IsShadowDest;
-
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public bool IsShadowOnly, DrawByReflectCam, DrawOnlyReflectCam, UseDepthBiasFloat;
-
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public bool DisablePointLightEffect;
-
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public byte UnkB15, UnkB16, UnkB17;
+            public bool PointLightShadowSource, ShadowSource, ShadowDest, IsShadowOnly, DrawByReflectCam,
+                DrawOnlyReflectCam, UseDepthBiasFloat, DisablePointLightEffect, UnkB17;
 
             /// <summary>
             /// Unknown.
@@ -305,15 +291,15 @@ namespace SoulsFormats
                 LanternID = 0;
                 LodParamID = 0;
                 UnkB0E = 0;
-                IsShadowDest = false;
+                PointLightShadowSource = false;
+                ShadowSource = false;
+                ShadowDest = false;
                 IsShadowOnly = false;
                 DrawByReflectCam = false;
                 DrawOnlyReflectCam = false;
                 UseDepthBiasFloat = false;
                 DisablePointLightEffect = false;
-                UnkB15 = 0;
-                UnkB16 = 0;
-                UnkB17 = 0;
+                UnkB17 = false;
                 UnkB18 = 0;
                 EventEntityGroups = new int[8] { -1, -1, -1, -1, -1, -1, -1, -1 };
                 UnkOffset1Delta = unkOffset1Delta;
@@ -342,14 +328,14 @@ namespace SoulsFormats
                 LanternID = clone.LanternID;
                 LodParamID = clone.LodParamID;
                 UnkB0E = clone.UnkB0E;
-                IsShadowDest = clone.IsShadowDest;
+                PointLightShadowSource = clone.PointLightShadowSource;
+                ShadowSource = clone.ShadowSource;
+                ShadowDest = clone.ShadowDest;
                 IsShadowOnly = clone.IsShadowOnly;
                 DrawByReflectCam = clone.DrawByReflectCam;
                 DrawOnlyReflectCam = clone.DrawOnlyReflectCam;
                 UseDepthBiasFloat = clone.UseDepthBiasFloat;
                 DisablePointLightEffect = clone.DisablePointLightEffect;
-                UnkB15 = clone.UnkB15;
-                UnkB16 = clone.UnkB16;
                 UnkB17 = clone.UnkB17;
                 UnkB18 = clone.UnkB18;
                 EventEntityGroups = (int[])clone.EventEntityGroups.Clone();
@@ -406,17 +392,17 @@ namespace SoulsFormats
                 LanternID = br.ReadSByte();
                 LodParamID = br.ReadSByte();
                 UnkB0E = br.ReadSByte();
-                IsShadowDest = br.ReadBoolean();
+                PointLightShadowSource = br.ReadBoolean();
 
+                ShadowSource = br.ReadBoolean();
+                ShadowDest = br.ReadBoolean();
                 IsShadowOnly = br.ReadBoolean();
                 DrawByReflectCam = br.ReadBoolean();
+
                 DrawOnlyReflectCam = br.ReadBoolean();
                 UseDepthBiasFloat = br.ReadBoolean();
-
                 DisablePointLightEffect = br.ReadBoolean();
-                UnkB15 = br.ReadByte();
-                UnkB16 = br.ReadByte();
-                UnkB17 = br.ReadByte();
+                UnkB17 = br.ReadBoolean();
 
                 UnkB18 = br.ReadInt32();
                 EventEntityGroups = br.ReadInt32s(8);
@@ -480,17 +466,17 @@ namespace SoulsFormats
                 bw.WriteSByte(LanternID);
                 bw.WriteSByte(LodParamID);
                 bw.WriteSByte(UnkB0E);
-                bw.WriteBoolean(IsShadowDest);
+                bw.WriteBoolean(PointLightShadowSource);
 
+                bw.WriteBoolean(ShadowSource);
+                bw.WriteBoolean(ShadowDest);
                 bw.WriteBoolean(IsShadowOnly);
                 bw.WriteBoolean(DrawByReflectCam);
+
                 bw.WriteBoolean(DrawOnlyReflectCam);
                 bw.WriteBoolean(UseDepthBiasFloat);
-
                 bw.WriteBoolean(DisablePointLightEffect);
-                bw.WriteByte(UnkB15);
-                bw.WriteByte(UnkB16);
-                bw.WriteByte(UnkB17);
+                bw.WriteBoolean(UnkB17);
 
                 bw.WriteInt32(UnkB18);
                 bw.WriteInt32s(EventEntityGroups);
@@ -1040,6 +1026,18 @@ namespace SoulsFormats
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
                 }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public enum MapVisiblity : byte
+                {
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+                    Good = 0,
+                    Dark = 1,
+                    PitchDark = 2,
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
+                }
+
                 internal override PartsType Type => PartsType.Collision;
 
                 /// <summary>
@@ -1101,7 +1099,12 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public byte UnkT34, UnkT35, UnkT36, EnableDarksight;
+                public byte UnkT34, UnkT35, UnkT36;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public MapVisiblity MapVisType;
 
                 /// <summary>
                 /// Unknown.
@@ -1130,7 +1133,7 @@ namespace SoulsFormats
                     UnkT34 = 0;
                     UnkT35 = 0;
                     UnkT36 = 0;
-                    EnableDarksight = 0;
+                    MapVisType = MapVisiblity.Good;
                     PlayRegionID = -1;
                     LockCamID1 = 0;
                     LockCamID2 = 0;
@@ -1159,7 +1162,7 @@ namespace SoulsFormats
                     UnkT34 = clone.UnkT34;
                     UnkT35 = clone.UnkT35;
                     UnkT36 = clone.UnkT36;
-                    EnableDarksight = clone.EnableDarksight;
+                    MapVisType = clone.MapVisType;
                     PlayRegionID = clone.PlayRegionID;
                     LockCamID1 = clone.LockCamID1;
                     LockCamID2 = clone.LockCamID2;
@@ -1194,7 +1197,7 @@ namespace SoulsFormats
                     UnkT34 = br.ReadByte();
                     UnkT35 = br.ReadByte();
                     UnkT36 = br.ReadByte();
-                    EnableDarksight = br.ReadByte();
+                    MapVisType = br.ReadEnum8<MapVisiblity>();
                     PlayRegionID = br.ReadInt32();
                     LockCamID1 = br.ReadInt16();
                     LockCamID2 = br.ReadInt16();
@@ -1238,7 +1241,7 @@ namespace SoulsFormats
                     bw.WriteByte(UnkT34);
                     bw.WriteByte(UnkT35);
                     bw.WriteByte(UnkT36);
-                    bw.WriteByte(EnableDarksight);
+                    bw.WriteByte((byte)MapVisType);
                     bw.WriteInt32(PlayRegionID);
                     bw.WriteInt16(LockCamID1);
                     bw.WriteInt16(LockCamID2);
