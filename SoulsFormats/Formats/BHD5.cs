@@ -42,7 +42,7 @@ namespace SoulsFormats
             int bucketsOffset = br.ReadInt32();
 
             Salt = null;
-            if (game == Game.DarkSouls2 || game == Game.DarkSouls3)
+            if (game == Game.DarkSouls2 || game == Game.DarkSouls3 || game == Game.Sekiro)
             {
                 int saltLength = br.ReadInt32();
                 Salt = br.ReadASCII(saltLength);
@@ -72,6 +72,11 @@ namespace SoulsFormats
             /// Dark Souls 3 on PC.
             /// </summary>
             DarkSouls3,
+
+            /// <summary>
+            /// Sekiro on PC.
+            /// </summary>
+            Sekiro,
         }
 
         /// <summary>
@@ -136,7 +141,7 @@ namespace SoulsFormats
 
                 SHAHash = null;
                 AESKey = null;
-                if (game == Game.DarkSouls2 || game == Game.DarkSouls3)
+                if (game == Game.DarkSouls2 || game == Game.DarkSouls3 || game == Game.Sekiro)
                 {
                     long shaHashOffset = br.ReadInt64();
                     long aesKeyOffset = br.ReadInt64();
@@ -161,7 +166,7 @@ namespace SoulsFormats
                 }
 
                 UnpaddedFileSize = -1;
-                if (game == Game.DarkSouls3)
+                if (game == Game.DarkSouls3 || game == Game.Sekiro)
                 {
                     UnpaddedFileSize = br.ReadInt64();
                 }
