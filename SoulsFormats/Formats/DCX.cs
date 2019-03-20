@@ -107,6 +107,7 @@ namespace SoulsFormats
                 {
                     int unk04 = br.GetInt32(0x4);
                     int unk10 = br.GetInt32(0x10);
+                    int unk30 = br.GetInt32(0x30);
                     if (unk10 == 0x24)
                     {
                         type = Type.DarkSouls1;
@@ -119,9 +120,20 @@ namespace SoulsFormats
                         }
                         else if (unk04 == 0x11000)
                         {
-                            type = Type.DarkSouls3SL2;
+                            if (unk30 == 0x8000000)
+                            {
+                                type = Type.DarkSouls3SL2;
+                            }
+                            else if (unk30 == 0x9000000)
+                            {
+                                type = Type.SekiroDFLT;
+                            }
                         }
                     }
+                }
+                else if (format == "KRAK")
+                {
+                    type = Type.SekiroKRAK;
                 }
             }
 
@@ -132,8 +144,10 @@ namespace SoulsFormats
                 return DecompressDCPDFLT(br);
             else if (type == Type.DemonsSoulsEDGE)
                 return DecompressDCXEDGE(br);
-            else if (type == Type.DarkSouls1 || type == Type.DarkSouls3 || type == Type.DarkSouls3SL2)
+            else if (type == Type.DarkSouls1 || type == Type.DarkSouls3 || type == Type.DarkSouls3SL2 || type == Type.SekiroDFLT)
                 return DecompressDCXDFLT(br, type);
+            else if (type == Type.SekiroKRAK)
+                return DecompressDCXKRAK(br);
             else
                 throw new FormatException("Unknown DCX format.");
         }
@@ -301,7 +315,7 @@ namespace SoulsFormats
             {
                 br.AssertInt32(0x10000);
             }
-            else if (type == Type.DarkSouls3SL2)
+            else if (type == Type.DarkSouls3SL2 || type == Type.SekiroDFLT)
             {
                 br.AssertInt32(0x11000);
             }
@@ -314,7 +328,7 @@ namespace SoulsFormats
                 br.AssertInt32(0x24);
                 br.AssertInt32(0x2C);
             }
-            else if (type == Type.DarkSouls3)
+            else if (type == Type.DarkSouls3 || type == Type.DarkSouls3SL2 || type == Type.SekiroDFLT)
             {
                 br.AssertInt32(0x44);
                 br.AssertInt32(0x4C);
@@ -328,7 +342,7 @@ namespace SoulsFormats
             br.AssertASCII("DFLT");
             br.AssertInt32(0x20);
 
-            if (type == Type.DarkSouls1 || type == Type.DarkSouls3)
+            if (type == Type.DarkSouls1 || type == Type.DarkSouls3 || type == Type.SekiroDFLT)
             {
                 br.AssertInt32(0x9000000);
             }
@@ -347,6 +361,32 @@ namespace SoulsFormats
             int compressedHeaderLength = br.ReadInt32();
 
             return SFUtil.ReadZlib(br, compressedSize);
+        }
+
+        private static byte[] DecompressDCXKRAK(BinaryReaderEx br)
+        {
+            br.AssertASCII("DCX\0");
+            br.AssertInt32(0x11000);
+            br.AssertInt32(0x18);
+            br.AssertInt32(0x24);
+            br.AssertInt32(0x44);
+            br.AssertInt32(0x4C);
+            br.AssertASCII("DCS\0");
+            uint uncompressedSize = br.ReadUInt32();
+            uint compressedSize = br.ReadUInt32();
+            br.AssertASCII("DCP\0");
+            br.AssertASCII("KRAK");
+            br.AssertInt32(0x20);
+            br.AssertInt32(0x6000000);
+            br.AssertInt32(0);
+            br.AssertInt32(0);
+            br.AssertInt32(0);
+            br.AssertInt32(0x10100);
+            br.AssertASCII("DCA\0");
+            br.AssertInt32(8);
+
+            byte[] compressed = br.ReadBytes((int)compressedSize);
+            return Oodle26.Decompress(compressed, uncompressedSize);
         }
 
         #region Public Compress
@@ -381,8 +421,10 @@ namespace SoulsFormats
                 CompressDCPDFLT(data, bw);
             else if (type == Type.DemonsSoulsEDGE)
                 CompressDCXEDGE(data, bw);
-            else if (type == Type.DarkSouls1 || type == Type.DarkSouls3)
+            else if (type == Type.DarkSouls1 || type == Type.DarkSouls3 || type == Type.DarkSouls3SL2 || type == Type.SekiroDFLT)
                 CompressDCXDFLT(data, bw, type);
+            else if (type == Type.SekiroKRAK)
+                CompressDCXKRAK(data, bw);
             else if (type == Type.Unknown)
                 throw new ArgumentException("You cannot compress a DCX with an unknown type.");
             else
@@ -505,7 +547,7 @@ namespace SoulsFormats
             {
                 bw.WriteInt32(0x10000);
             }
-            else if (type == Type.DarkSouls3SL2)
+            else if (type == Type.DarkSouls3SL2 || type == Type.SekiroDFLT)
             {
                 bw.WriteInt32(0x11000);
             }
@@ -518,7 +560,7 @@ namespace SoulsFormats
                 bw.WriteInt32(0x24);
                 bw.WriteInt32(0x2C);
             }
-            else if (type == Type.DarkSouls3)
+            else if (type == Type.DarkSouls3 || type == Type.DarkSouls3SL2 || type == Type.SekiroDFLT)
             {
                 bw.WriteInt32(0x44);
                 bw.WriteInt32(0x4C);
@@ -531,7 +573,7 @@ namespace SoulsFormats
             bw.WriteASCII("DFLT");
             bw.WriteInt32(0x20);
 
-            if (type == Type.DarkSouls1 || type == Type.DarkSouls3)
+            if (type == Type.DarkSouls1 || type == Type.DarkSouls3 || type == Type.SekiroDFLT)
             {
                 bw.WriteInt32(0x9000000);
             }
@@ -550,6 +592,32 @@ namespace SoulsFormats
             long compressedStart = bw.Position;
             SFUtil.WriteZlib(bw, 0xDA, data);
             bw.FillInt32("CompressedSize", (int)(bw.Position - compressedStart));
+        }
+
+        private static void CompressDCXKRAK(byte[] data, BinaryWriterEx bw)
+        {
+            byte[] compressed = Oodle26.Compress(data, Oodle26.Codec.Kraken, Oodle26.Level.Optimal1);
+
+            bw.WriteASCII("DCX\0");
+            bw.WriteInt32(0x11000);
+            bw.WriteInt32(0x18);
+            bw.WriteInt32(0x24);
+            bw.WriteInt32(0x44);
+            bw.WriteInt32(0x4C);
+            bw.WriteASCII("DCS\0");
+            bw.WriteUInt32((uint)data.Length);
+            bw.WriteUInt32((uint)compressed.Length);
+            bw.WriteASCII("DCP\0");
+            bw.WriteASCII("KRAK");
+            bw.WriteInt32(0x20);
+            bw.WriteInt32(0x6000000);
+            bw.WriteInt32(0);
+            bw.WriteInt32(0);
+            bw.WriteInt32(0);
+            bw.WriteInt32(0x10100);
+            bw.WriteASCII("DCA\0");
+            bw.WriteInt32(8);
+            bw.WriteBytes(compressed);
         }
 
         /// <summary>
@@ -596,6 +664,16 @@ namespace SoulsFormats
             /// Used for the copy of the regulation stored in DS3 save files.
             /// </summary>
             DarkSouls3SL2,
+
+            /// <summary>
+            /// Deflate format used in Sekiro.
+            /// </summary>
+            SekiroDFLT,
+
+            /// <summary>
+            /// Oodle compression used in Sekiro.
+            /// </summary>
+            SekiroKRAK,
         }
     }
 }

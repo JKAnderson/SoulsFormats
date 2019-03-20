@@ -129,6 +129,7 @@
     <Compile Include="Formats\TAE3\TAE3.cs" />
     <Compile Include="Formats\TPF\Headerizer.cs" />
     <Compile Include="Binder\IBinder.cs" />
+    <Compile Include="Oodle26.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Formats\TPF\TPF.cs" />
     <Compile Include="SoulsFile.cs" />
