@@ -386,6 +386,11 @@ namespace SoulsFormats
             public int Unk04 { get; set; }
 
             /// <summary>
+            /// Whether the texture has extended information for Sekiro.
+            /// </summary>
+            public bool Extended { get; set; }
+
+            /// <summary>
             /// Indicates the order of UVs in FLVER vertex data.
             /// </summary>
             public int UVNumber { get; set; }
@@ -395,17 +400,40 @@ namespace SoulsFormats
             /// </summary>
             public int ShaderDataIndex { get; set; }
 
+            /// <summary>
+            /// A fixed texture path for this material, only used in Sekiro.
+            /// </summary>
+            public string Path { get; set; }
+
+            /// <summary>
+            /// Floats for an unknown purpose, only used in Sekiro.
+            /// </summary>
+            public float[] UnkFloats { get; set; }
+
             internal Texture(BinaryReaderEx br)
             {
                 br.AssertInt32(0);
                 Unk04 = br.ReadInt32();
                 br.AssertInt32(0x2000);
-                br.AssertInt32(3);
+                Extended = br.AssertInt32(3, 5) == 5;
                 AssertMarker(br, 0xA3);
                 Type = br.ReadShiftJISLengthPrefixed(0x35);
                 UVNumber = br.ReadInt32();
                 AssertMarker(br, 0x35);
                 ShaderDataIndex = br.ReadInt32();
+
+                if (Extended)
+                {
+                    br.AssertInt32(0xA3);
+                    Path = br.ReadShiftJISLengthPrefixed(0xBA);
+                    int floatCount = br.ReadInt32();
+                    UnkFloats = br.ReadSingles(floatCount);
+                }
+                else
+                {
+                    Path = null;
+                    UnkFloats = null;
+                }
             }
 
             internal void Write(BinaryWriterEx bw)
@@ -413,12 +441,20 @@ namespace SoulsFormats
                 bw.WriteInt32(0);
                 bw.WriteInt32(Unk04);
                 bw.WriteInt32(0x2000);
-                bw.WriteInt32(3);
+                bw.WriteInt32(Extended ? 5 : 3);
                 WriteMarker(bw, 0xA3);
                 bw.WriteShiftJISLengthPrefixed(Type, 0x35);
                 bw.WriteInt32(UVNumber);
                 WriteMarker(bw, 0x35);
                 bw.WriteInt32(ShaderDataIndex);
+
+                if (Extended)
+                {
+                    bw.WriteInt32(0xA3);
+                    bw.WriteShiftJISLengthPrefixed(Path, 0xBA);
+                    bw.WriteInt32(UnkFloats.Length);
+                    bw.WriteSingles(UnkFloats);
+                }
             }
 
             /// <summary>
