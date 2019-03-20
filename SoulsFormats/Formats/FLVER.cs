@@ -41,6 +41,11 @@ namespace SoulsFormats
         public List<BufferLayout> BufferLayouts;
 
         /// <summary>
+        /// Unknown; only present in Sekiro.
+        /// </summary>
+        public SekiroUnkStruct SekiroUnk;
+
+        /// <summary>
         /// Creates a new FLVER with a default header and empty lists.
         /// </summary>
         public FLVER()
@@ -77,9 +82,10 @@ namespace SoulsFormats
             // DS1: 2000C, 2000D
             // DS2: 20009, 20010
             // SFS: 20010
-            // DS3: 20013, 20014
             // BB:  20013, 20014
-            Header.Version = br.AssertInt32(0x20009, 0x2000C, 0x2000D, 0x20010, 0x20013, 0x20014);
+            // DS3: 20013, 20014
+            // SDT: 2001A
+            Header.Version = br.AssertInt32(0x20009, 0x2000C, 0x2000D, 0x20010, 0x20013, 0x20014, 0x2001A);
 
             int dataOffset = br.ReadInt32();
             int dataSize = br.ReadInt32();
@@ -107,11 +113,7 @@ namespace SoulsFormats
             int bufferLayoutCount = br.ReadInt32();
             int textureCount = br.ReadInt32();
 
-            Header.Unk5C = br.ReadBoolean();
-            br.AssertByte(0);
-            br.AssertByte(0);
-            br.AssertByte(0);
-
+            Header.Unk5C = br.ReadInt32();
             br.AssertInt32(0);
             br.AssertInt32(0);
             Header.Unk68 = br.AssertInt32(0, 1, 2, 3, 4);
@@ -152,6 +154,9 @@ namespace SoulsFormats
             var textures = new List<Texture>(textureCount);
             for (int i = 0; i < textureCount; i++)
                 textures.Add(new Texture(br));
+
+            if (Header.Version >= 0x2001A)
+                SekiroUnk = new SekiroUnkStruct(br);
 
             Dictionary<int, Texture> textureDict = Dictionize(textures);
             foreach (Material material in Materials)
@@ -242,12 +247,7 @@ namespace SoulsFormats
             foreach (Material material in Materials)
                 textureCount += material.Textures.Count;
             bw.WriteInt32(textureCount);
-
-            bw.WriteBoolean(Header.Unk5C);
-            bw.WriteByte(0);
-            bw.WriteByte(0);
-            bw.WriteByte(0);
-
+            bw.WriteInt32(Header.Unk5C);
             bw.WriteInt32(0);
             bw.WriteInt32(0);
             bw.WriteInt32(Header.Unk68);
@@ -295,6 +295,9 @@ namespace SoulsFormats
                 textureIndex += Materials[i].Textures.Count;
             }
 
+            if (Header.Version >= 0x2001A)
+                SekiroUnk.Write(bw);
+
             bw.Pad(0x10);
             for (int i = 0; i < BufferLayouts.Count; i++)
             {
@@ -306,7 +309,7 @@ namespace SoulsFormats
                 bw.Pad(0x10);
                 for (int i = 0; i < Meshes.Count; i++)
                 {
-                    Meshes[i].WriteBoundingBox(bw, i);
+                    Meshes[i].WriteBoundingBox(bw, i, Header.Version);
                 }
             }
 
@@ -452,7 +455,7 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public bool Unk5C;
+            public int Unk5C;
 
             /// <summary>
             /// Unknown.
@@ -471,7 +474,7 @@ namespace SoulsFormats
                 Unk48 = 0;
                 Unk4A = false;
                 Unk4E = 0;
-                Unk5C = false;
+                Unk5C = 0;
                 Unk68 = 0;
             }
         }
@@ -527,6 +530,11 @@ namespace SoulsFormats
             public bool Flag1, Flag2;
 
             /// <summary>
+            /// Unknown; only used in Sekiro.
+            /// </summary>
+            public int Unk30, Unk34;
+
+            /// <summary>
             /// Creates a new dummy point with default values.
             /// </summary>
             public Dummy()
@@ -542,6 +550,8 @@ namespace SoulsFormats
                 Unk0E = 0;
                 Flag1 = false;
                 Flag2 = false;
+                Unk30 = 0;
+                Unk34 = 0;
             }
 
             internal Dummy(BinaryReaderEx br)
@@ -563,8 +573,8 @@ namespace SoulsFormats
                 Flag1 = br.ReadBoolean();
                 Flag2 = br.ReadBoolean();
 
-                br.AssertInt32(0);
-                br.AssertInt32(0);
+                Unk30 = br.ReadInt32();
+                Unk34 = br.ReadInt32();
                 br.AssertInt32(0);
                 br.AssertInt32(0);
             }
@@ -588,10 +598,18 @@ namespace SoulsFormats
                 bw.WriteBoolean(Flag1);
                 bw.WriteBoolean(Flag2);
 
+                bw.WriteInt32(Unk30);
+                bw.WriteInt32(Unk34);
                 bw.WriteInt32(0);
                 bw.WriteInt32(0);
-                bw.WriteInt32(0);
-                bw.WriteInt32(0);
+            }
+
+            /// <summary>
+            /// Returns the dummy point's reference ID.
+            /// </summary>
+            public override string ToString()
+            {
+                return $"{ReferenceID}";
             }
         }
 
@@ -625,6 +643,11 @@ namespace SoulsFormats
             /// </summary>
             public byte[] GXBytes;
 
+            /// <summary>
+            /// Unknown; only used in Sekiro.
+            /// </summary>
+            public int Unk18;
+
             private int textureIndex, textureCount;
 
             /// <summary>
@@ -637,6 +660,7 @@ namespace SoulsFormats
                 Flags = 0;
                 Textures = new List<Texture>();
                 GXBytes = null;
+                Unk18 = 0;
             }
 
             /// <summary>
@@ -649,6 +673,7 @@ namespace SoulsFormats
                 Flags = flags;
                 Textures = new List<Texture>();
                 GXBytes = gxBytes;
+                Unk18 = 0;
             }
 
             internal Material(BinaryReaderEx br)
@@ -659,8 +684,7 @@ namespace SoulsFormats
                 textureIndex = br.ReadInt32();
                 Flags = br.ReadInt32();
                 int gxOffset = br.ReadInt32();
-
-                br.AssertInt32(0);
+                Unk18 = br.ReadInt32();
                 br.AssertInt32(0);
 
                 Name = br.GetUTF16(nameOffset);
@@ -712,8 +736,7 @@ namespace SoulsFormats
                 bw.ReserveInt32($"TextureIndex{index}");
                 bw.WriteInt32(Flags);
                 bw.ReserveInt32($"MaterialUnk{index}");
-
-                bw.WriteInt32(0);
+                bw.WriteInt32(Unk18);
                 bw.WriteInt32(0);
             }
 
@@ -804,9 +827,9 @@ namespace SoulsFormats
             public Vector3 BoundingBoxMax;
 
             /// <summary>
-            /// Unknown.
+            /// Unknown; only 0 or 1 before Sekiro.
             /// </summary>
-            public bool Nub;
+            public int Unk3C;
 
             /// <summary>
             /// Creates a new Bone with default values.
@@ -823,7 +846,7 @@ namespace SoulsFormats
                 Scale = Vector3.One;
                 BoundingBoxMin = Vector3.Zero;
                 BoundingBoxMax = Vector3.Zero;
-                Nub = false;
+                Unk3C = 0;
             }
 
             internal Bone(BinaryReaderEx br)
@@ -837,12 +860,7 @@ namespace SoulsFormats
                 NextSiblingIndex = br.ReadInt16();
                 PreviousSiblingIndex = br.ReadInt16();
                 BoundingBoxMin = br.ReadVector3();
-
-                Nub = br.ReadBoolean();
-                br.AssertByte(0);
-                br.AssertByte(0);
-                br.AssertByte(0);
-
+                Unk3C = br.ReadInt32();
                 BoundingBoxMax = br.ReadVector3();
 
                 br.AssertInt32(0);
@@ -873,12 +891,7 @@ namespace SoulsFormats
                 bw.WriteInt16(NextSiblingIndex);
                 bw.WriteInt16(PreviousSiblingIndex);
                 bw.WriteVector3(BoundingBoxMin);
-
-                bw.WriteBoolean(Nub);
-                bw.WriteByte(0);
-                bw.WriteByte(0);
-                bw.WriteByte(0);
-
+                bw.WriteInt32(Unk3C);
                 bw.WriteVector3(BoundingBoxMax);
 
                 bw.WriteInt32(0);
@@ -956,6 +969,11 @@ namespace SoulsFormats
             public Vector3 BoundingBoxMax;
 
             /// <summary>
+            /// Unknown; only present in Sekiro.
+            /// </summary>
+            public Vector3 BoundingBoxUnk;
+
+            /// <summary>
             /// Unknown.
             /// </summary>
             public int Unk1;
@@ -976,6 +994,7 @@ namespace SoulsFormats
                 Vertices = new List<Vertex>();
                 BoundingBoxMin = Vector3.Zero;
                 BoundingBoxMax = Vector3.Zero;
+                BoundingBoxUnk = Vector3.Zero;
                 Unk1 = 0;
             }
 
@@ -1001,6 +1020,8 @@ namespace SoulsFormats
                     {
                         BoundingBoxMin = br.ReadVector3();
                         BoundingBoxMax = br.ReadVector3();
+                        if (version >= 0x2001A)
+                            BoundingBoxUnk = br.ReadVector3();
                     }
                     br.StepOut();
                 }
@@ -1113,11 +1134,13 @@ namespace SoulsFormats
                 bw.ReserveInt32($"MeshVertexBufferIndices{index}");
             }
 
-            internal void WriteBoundingBox(BinaryWriterEx bw, int index)
+            internal void WriteBoundingBox(BinaryWriterEx bw, int index, int version)
             {
                 bw.FillInt32($"MeshBoundingBox{index}", (int)bw.Position);
                 bw.WriteVector3(BoundingBoxMin);
                 bw.WriteVector3(BoundingBoxMax);
+                if (version >= 0x2001A)
+                    bw.WriteVector3(BoundingBoxUnk);
             }
 
             internal void WriteBoneIndices(BinaryWriterEx bw, int index)
@@ -1806,6 +1829,97 @@ namespace SoulsFormats
             public override string ToString()
             {
                 return $"{Type} = {Path}";
+            }
+        }
+
+        /// <summary>
+        /// Unknown; only present in Sekiro.
+        /// </summary>
+        public class SekiroUnkStruct
+        {
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public List<Member> Members1, Members2;
+
+            internal SekiroUnkStruct(BinaryReaderEx br)
+            {
+                short count1 = br.ReadInt16();
+                short count2 = br.ReadInt16();
+                uint offset1 = br.ReadUInt32();
+                uint offset2 = br.ReadUInt32();
+                br.AssertInt32(0);
+                br.AssertInt32(0);
+                br.AssertInt32(0);
+                br.AssertInt32(0);
+                br.AssertInt32(0);
+
+                br.StepIn(offset1);
+                {
+                    Members1 = new List<Member>(count1);
+                    for (int i = 0; i < count1; i++)
+                        Members1.Add(new Member(br));
+                }
+                br.StepOut();
+
+                br.StepIn(offset2);
+                {
+                    Members2 = new List<Member>(count2);
+                    for (int i = 0; i < count2; i++)
+                        Members2.Add(new Member(br));
+                }
+                br.StepOut();
+            }
+
+            internal void Write(BinaryWriterEx bw)
+            {
+                bw.WriteInt16((short)Members1.Count);
+                bw.WriteInt16((short)Members2.Count);
+                bw.ReserveUInt32("SekiroUnkOffset1");
+                bw.ReserveUInt32("SekiroUnkOffset2");
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
+
+                bw.FillUInt32("SekiroUnkOffset1", (uint)bw.Position);
+                foreach (Member member in Members1)
+                    member.Write(bw);
+
+                bw.FillUInt32("SekiroUnkOffset2", (uint)bw.Position);
+                foreach (Member member in Members2)
+                    member.Write(bw);
+            }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public class Member
+            {
+                /// <summary>
+                /// Unknown; maybe bone indices?
+                /// </summary>
+                public short[] Unk00;
+
+                /// <summary>
+                /// Unknown; seems to just count up from 0.
+                /// </summary>
+                public int Index;
+
+                internal Member(BinaryReaderEx br)
+                {
+                    Unk00 = br.ReadInt16s(4);
+                    Index = br.ReadInt32();
+                    br.AssertInt32(0);
+                }
+
+                internal void Write(BinaryWriterEx bw)
+                {
+                    bw.WriteInt16s(Unk00);
+                    bw.WriteInt32(Index);
+                    bw.WriteInt32(0);
+                }
             }
         }
 
