@@ -596,7 +596,7 @@ namespace SoulsFormats
 
         private static void CompressDCXKRAK(byte[] data, BinaryWriterEx bw)
         {
-            byte[] compressed = Oodle26.Compress(data, Oodle26.Codec.Kraken, Oodle26.Level.Optimal1);
+            byte[] compressed = Oodle26.Compress(data, Oodle26.Codec.Kraken, Oodle26.Level.Optimal2);
 
             bw.WriteASCII("DCX\0");
             bw.WriteInt32(0x11000);
@@ -618,6 +618,7 @@ namespace SoulsFormats
             bw.WriteASCII("DCA\0");
             bw.WriteInt32(8);
             bw.WriteBytes(compressed);
+            bw.Pad(0x10);
         }
 
         /// <summary>
