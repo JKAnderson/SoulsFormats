@@ -133,6 +133,7 @@ namespace SoulsFormats
         /// </summary>
         public void Write(string path, DCX.Type compression)
         {
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
             using (FileStream stream = File.Create(path))
             {
                 BinaryWriterEx bw = new BinaryWriterEx(false, stream);
