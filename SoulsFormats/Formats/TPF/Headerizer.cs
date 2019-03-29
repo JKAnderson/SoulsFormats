@@ -77,14 +77,16 @@ namespace SoulsFormats
                 }
 
                 DDSCAPS dwCaps = DDSCAPS.TEXTURE;
-                if (texture.Cubemap)
+                if (texture.Type == TPF.TexType.Cubemap)
                     dwCaps |= DDSCAPS.COMPLEX;
                 if (texture.Mipmaps > 1)
                     dwCaps |= DDSCAPS.COMPLEX | DDSCAPS.MIPMAP;
                 dds.dwCaps = dwCaps;
 
-                if (texture.Cubemap)
+                if (texture.Type == TPF.TexType.Cubemap)
                     dds.dwCaps2 = CUBEMAP_ALLFACES;
+                else if (texture.Type == TPF.TexType.Volume)
+                    dds.dwCaps2 = DDSCAPS2.VOLUME;
             }
             else
             {

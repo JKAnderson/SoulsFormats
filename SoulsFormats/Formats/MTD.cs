@@ -175,22 +175,33 @@ namespace SoulsFormats
             /// <summary>
             /// The name of the param.
             /// </summary>
-            public string Name;
+            public string Name { get; set; }
 
             /// <summary>
             /// The type of this value.
             /// </summary>
-            public ParamType Type;
+            public ParamType Type { get; set; }
 
             /// <summary>
             /// The value itself.
             /// </summary>
-            public object Value;
+            public object Value { get; set; }
 
             /// <summary>
             /// Unknown; often seems like the size of this struct, but varies.
             /// </summary>
-            public int Unk04;
+            public int Unk04 { get; set; }
+
+            /// <summary>
+            /// Creates a new Param with the specified values.
+            /// </summary>
+            public Param(string name, ParamType type, object value, int unk04 = 0)
+            {
+                Name = name;
+                Type = type;
+                Value = value;
+                Unk04 = unk04;
+            }
 
             internal Param(BinaryReaderEx br)
             {

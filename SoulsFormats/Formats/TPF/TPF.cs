@@ -137,7 +137,7 @@ namespace SoulsFormats
             /// <summary>
             /// Whether this texture is a cubemap.
             /// </summary>
-            public bool Cubemap;
+            public TexType Type;
 
             /// <summary>
             /// Number of mipmap levels in this texture.
@@ -177,7 +177,12 @@ namespace SoulsFormats
                 Header = null;
 
                 DDS dds = new DDS(bytes);
-                Cubemap = dds.dwCaps2.HasFlag(DDS.DDSCAPS2.CUBEMAP);
+                if (dds.dwCaps2.HasFlag(DDS.DDSCAPS2.CUBEMAP))
+                    Type = TexType.Cubemap;
+                else if (dds.dwCaps2.HasFlag(DDS.DDSCAPS2.VOLUME))
+                    Type = TexType.Volume;
+                else
+                    Type = TexType.Texture;
                 Mipmaps = (byte)dds.dwMipMapCount;
             }
 
@@ -187,7 +192,7 @@ namespace SoulsFormats
                 int fileSize = br.ReadInt32();
 
                 Format = br.ReadByte();
-                Cubemap = br.ReadBoolean();
+                Type = br.ReadEnum8<TexType>();
                 Mipmaps = br.ReadByte();
                 Flags1 = br.AssertByte(0, 1, 2, 3);
 
@@ -243,7 +248,12 @@ namespace SoulsFormats
                 if (platform == TPFPlatform.PC)
                 {
                     DDS dds = new DDS(Bytes);
-                    Cubemap = dds.dwCaps2.HasFlag(DDS.DDSCAPS2.CUBEMAP);
+                    if (dds.dwCaps2.HasFlag(DDS.DDSCAPS2.CUBEMAP))
+                        Type = TexType.Cubemap;
+                    else if (dds.dwCaps2.HasFlag(DDS.DDSCAPS2.VOLUME))
+                        Type = TexType.Volume;
+                    else
+                        Type = TexType.Texture;
                     Mipmaps = (byte)dds.dwMipMapCount;
                 }
 
@@ -251,7 +261,7 @@ namespace SoulsFormats
                 bw.ReserveInt32($"FileSize{index}");
 
                 bw.WriteByte(Format);
-                bw.WriteBoolean(Cubemap);
+                bw.WriteByte((byte)Type);
                 bw.WriteByte(Mipmaps);
                 bw.WriteByte(Flags1);
 
@@ -305,42 +315,6 @@ namespace SoulsFormats
             {
                 return Name;
             }
-
-            /// <summary>
-            /// Metadata for headerless textures used in console versions.
-            /// </summary>
-            public class TexHeader
-            {
-                /// <summary>
-                /// Width of the texture, in pixels.
-                /// </summary>
-                public short Width;
-
-                /// <summary>
-                /// Height of the texture, in pixels.
-                /// </summary>
-                public short Height;
-
-                /// <summary>
-                /// Number of textures in the array, either 1 for normal textures or 6 for cubemaps.
-                /// </summary>
-                public int TextureCount;
-
-                /// <summary>
-                /// Unknown; PS3 only.
-                /// </summary>
-                public int Unk1;
-
-                /// <summary>
-                /// Unknown; 0x0 or 0xAAE4 in DeS, 0xD in DS3.
-                /// </summary>
-                public int Unk2;
-
-                /// <summary>
-                /// Microsoft DXGI_FORMAT.
-                /// </summary>
-                public int DXGIFormat;
-            }
         }
 
         /// <summary>
@@ -372,6 +346,63 @@ namespace SoulsFormats
             /// Headerless DDS with DX10 metadata.
             /// </summary>
             Xbone = 5,
+        }
+
+        /// <summary>
+        /// Type of texture in a TPF.
+        /// </summary>
+        public enum TexType : byte
+        {
+            /// <summary>
+            /// One 2D texture.
+            /// </summary>
+            Texture = 0,
+
+            /// <summary>
+            /// Six 2D textures.
+            /// </summary>
+            Cubemap = 1,
+
+            /// <summary>
+            /// One 3D texture.
+            /// </summary>
+            Volume = 2,
+        }
+
+        /// <summary>
+        /// Extra metadata for headerless textures used in console versions.
+        /// </summary>
+        public class TexHeader
+        {
+            /// <summary>
+            /// Width of the texture, in pixels.
+            /// </summary>
+            public short Width;
+
+            /// <summary>
+            /// Height of the texture, in pixels.
+            /// </summary>
+            public short Height;
+
+            /// <summary>
+            /// Number of textures in the array, either 1 for normal textures or 6 for cubemaps.
+            /// </summary>
+            public int TextureCount;
+
+            /// <summary>
+            /// Unknown; PS3 only.
+            /// </summary>
+            public int Unk1;
+
+            /// <summary>
+            /// Unknown; 0x0 or 0xAAE4 in DeS, 0xD in DS3.
+            /// </summary>
+            public int Unk2;
+
+            /// <summary>
+            /// Microsoft DXGI_FORMAT.
+            /// </summary>
+            public int DXGIFormat;
         }
     }
 }
