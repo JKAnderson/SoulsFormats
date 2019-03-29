@@ -416,6 +416,10 @@ namespace SoulsFormats
 
         internal static void Compress(byte[] data, BinaryWriterEx bw, Type type)
         {
+            // Some day I hope to get Oodle compression working, but not today
+            if (type == Type.SekiroKRAK)
+                type = Type.SekiroDFLT;
+
             bw.BigEndian = true;
             if (type == Type.DemonsSoulsDFLT)
                 CompressDCPDFLT(data, bw);

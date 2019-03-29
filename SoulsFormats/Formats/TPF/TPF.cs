@@ -313,7 +313,7 @@ namespace SoulsFormats
             /// </summary>
             public override string ToString()
             {
-                return Name;
+                return $"[{Format} {Type}] {Name}";
             }
         }
 
