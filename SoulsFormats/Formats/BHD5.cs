@@ -247,9 +247,7 @@ namespace SoulsFormats
                     {
                         int start = (int)range.StartOffset;
                         int count = (int)(range.EndOffset - range.StartOffset);
-                        //byte[] buffer = new byte[count];
                         decryptor.TransformBlock(bytes, start, count, bytes, start);
-                        //Buffer.BlockCopy(buffer, 0, bytes, start, count);
                     }
                 }
             }

@@ -75,6 +75,7 @@
     <Compile Include="Formats\BHD5.cs" />
     <Compile Include="Binder\Binder.cs" />
     <Compile Include="Formats\CCM.cs" />
+    <Compile Include="Formats\CLM2.cs" />
     <Compile Include="Formats\DRB.cs" />
     <Compile Include="Formats\ESD.cs" />
     <Compile Include="Formats\LUAGNL.cs" />
