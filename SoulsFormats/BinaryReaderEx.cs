@@ -991,6 +991,20 @@ namespace SoulsFormats
             float w = ReadSingle();
             return new Vector4(x, y, z, w);
         }
+
+        /// <summary>
+        /// Read length number of bytes and assert that each is 0, or 0xFF if ff is true.
+        /// </summary>
+        public void AssertNull(int length, bool ff)
+        {
+            byte test = (byte)(ff ? 0xFF : 0);
+            byte[] bytes = ReadBytes(length);
+            for (int i = 0; i < length; i++)
+            {
+                if (bytes[i] != test)
+                    throw new InvalidDataException($"Expected {length} 0x{test:X2}, got {bytes[i]:X2} at position {i}");
+            }
+        }
         #endregion
     }
 }

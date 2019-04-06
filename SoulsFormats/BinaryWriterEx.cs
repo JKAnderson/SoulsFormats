@@ -666,6 +666,20 @@ namespace SoulsFormats
             WriteSingle(vector.Z);
             WriteSingle(vector.W);
         }
+
+        /// <summary>
+        /// Write length number of 0 bytes, or 0xFF bytes if ff is true.
+        /// </summary>
+        public void WriteNull(int length, bool ff)
+        {
+            byte[] bytes = new byte[length];
+            if (ff)
+            {
+                for (int i = 0; i < length; i++)
+                    bytes[i] = 0xFF;
+            }
+            WriteBytes(bytes);
+        }
         #endregion
     }
 }

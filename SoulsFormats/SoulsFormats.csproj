@@ -80,6 +80,13 @@
     <Compile Include="Formats\ESD.cs" />
     <Compile Include="Formats\LUAGNL.cs" />
     <Compile Include="Formats\LUAINFO.cs" />
+    <Compile Include="Formats\MSBS\EventParam.cs" />
+    <Compile Include="Formats\MSBS\ModelParam.cs" />
+    <Compile Include="Formats\MSBS\MSBS.cs" />
+    <Compile Include="Formats\MSBS\PartsParam.cs" />
+    <Compile Include="Formats\MSBS\PointParam.cs" />
+    <Compile Include="Formats\MSBS\RouteParam.cs" />
+    <Compile Include="Formats\MSBS\Shape.cs" />
     <Compile Include="Formats\NVM.cs" />
     <Compile Include="Formats\Other\AC4\Zero3.cs" />
     <Compile Include="Formats\Other\ACE3\BND0.cs" />
