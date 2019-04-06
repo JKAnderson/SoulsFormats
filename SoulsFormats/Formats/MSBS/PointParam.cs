@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SoulsFormats
 {
@@ -359,7 +356,7 @@ namespace SoulsFormats
                 bw.FillInt64("BaseDataOffset3", bw.Position - start);
                 bw.WriteInt32(UnkC00);
                 bw.WriteInt32(UnkC04);
-                
+
                 if (HasTypeData)
                 {
                     if (Type == RegionType.Region23 || Type == RegionType.PartsGroup || Type == RegionType.AutoDrawGroup)
@@ -379,6 +376,10 @@ namespace SoulsFormats
             {
                 throw new InvalidOperationException("Type data should not be written for regions with no type data.");
             }
+
+            internal virtual void GetNames(Entries entries) { }
+
+            internal virtual void GetIndices(Entries entries) { }
 
             public override string ToString()
             {
@@ -484,7 +485,8 @@ namespace SoulsFormats
 
                 public int SoundID { get; set; }
 
-                public int[] ChildRegionIndices { get; set; }
+                public string[] ChildRegionNames { get; private set; }
+                private int[] ChildRegionIndices;
 
                 public int UnkT48 { get; set; }
 
@@ -502,6 +504,22 @@ namespace SoulsFormats
                     bw.WriteInt32(SoundID);
                     bw.WriteInt32s(ChildRegionIndices);
                     bw.WriteInt32(UnkT48);
+                }
+
+                internal override void GetNames(Entries entries)
+                {
+                    base.GetNames(entries);
+                    ChildRegionNames = new string[ChildRegionIndices.Length];
+                    for (int i = 0; i < ChildRegionIndices.Length; i++)
+                        ChildRegionNames[i] = GetName(entries.Regions, ChildRegionIndices[i]);
+                }
+
+                internal override void GetIndices(Entries entries)
+                {
+                    base.GetIndices(entries);
+                    ChildRegionIndices = new int[ChildRegionNames.Length];
+                    for (int i = 0; i < ChildRegionNames.Length; i++)
+                        ChildRegionIndices[i] = GetIndex(entries.Regions, ChildRegionNames[i]);
                 }
             }
 
@@ -546,7 +564,8 @@ namespace SoulsFormats
 
                 public int FFXID { get; set; }
 
-                public int WindAreaIndex { get; set; }
+                public string WindAreaName;
+                private int WindAreaIndex;
 
                 public float UnkT18 { get; set; }
 
@@ -566,6 +585,18 @@ namespace SoulsFormats
                     bw.WriteInt32(WindAreaIndex);
                     bw.WriteSingle(UnkT18);
                     bw.WriteInt32(0);
+                }
+
+                internal override void GetNames(Entries entries)
+                {
+                    base.GetNames(entries);
+                    WindAreaName = GetName(entries.Regions, WindAreaIndex);
+                }
+
+                internal override void GetIndices(Entries entries)
+                {
+                    base.GetIndices(entries);
+                    WindAreaIndex = GetIndex(entries.Regions, WindAreaName);
                 }
             }
 

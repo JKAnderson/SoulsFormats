@@ -37,18 +37,19 @@ namespace SoulsFormats
             br.AssertByte(1);
             br.AssertByte(0xFF);
 
+            Entries entries;
             Models = new ModelParam();
-            List<Model> models = Models.Read(br);
+            entries.Models = Models.Read(br);
             Events = new EventParam();
             List<Event> events = Events.Read(br);
             Regions = new PointParam();
-            List<Region> regions = Regions.Read(br);
+            entries.Regions = Regions.Read(br);
             Routes = new RouteParam();
-            List<Route> routes = Routes.Read(br);
+            Routes.Read(br);
             Layers = new EmptyParam("LAYER_PARAM_ST");
             Layers.Read(br);
             Parts = new PartsParam();
-            List<Part> parts = Parts.Read(br);
+            entries.Parts = Parts.Read(br);
             PartsPoses = new EmptyParam("MAPSTUDIO_PARTS_POSE_ST");
             PartsPoses.Read(br);
             BoneNames = new EmptyParam("MAPSTUDIO_BONE_NAME_STRING");
@@ -56,10 +57,35 @@ namespace SoulsFormats
 
             if (br.Position != 0)
                 throw new InvalidDataException("The next param offset of the final param should be 0, but it wasn't.");
+
+            DisambiguateNames(entries.Models);
+            DisambiguateNames(entries.Regions);
+            DisambiguateNames(entries.Parts);
+
+            foreach (Event evt in events)
+                evt.GetNames(entries);
+            foreach (Region region in entries.Regions)
+                region.GetNames(entries);
+            foreach (Part part in entries.Parts)
+                part.GetNames(this, entries);
         }
 
         internal override void Write(BinaryWriterEx bw)
         {
+            Entries entries;
+            entries.Models = Models.GetEntries();
+            List<Event> events = Events.GetEntries();
+            entries.Regions = Regions.GetEntries();
+            List<Route> routes = Routes.GetEntries();
+            entries.Parts = Parts.GetEntries();
+
+            foreach (Event evt in events)
+                evt.GetIndices(entries);
+            foreach (Region region in entries.Regions)
+                region.GetIndices(entries);
+            foreach (Part part in entries.Parts)
+                part.GetIndices(this, entries);
+
             bw.WriteASCII("MSB ");
             bw.WriteInt32(1);
             bw.WriteInt32(0x10);
@@ -68,22 +94,29 @@ namespace SoulsFormats
             bw.WriteByte(1);
             bw.WriteByte(0xFF);
 
-            Models.Write(bw);
+            Models.Write(bw, entries.Models);
             bw.FillInt64("NextParamOffset", bw.Position);
-            Events.Write(bw);
+            Events.Write(bw, events);
             bw.FillInt64("NextParamOffset", bw.Position);
-            Regions.Write(bw);
+            Regions.Write(bw, entries.Regions);
             bw.FillInt64("NextParamOffset", bw.Position);
-            Routes.Write(bw);
+            Routes.Write(bw, routes);
             bw.FillInt64("NextParamOffset", bw.Position);
-            Layers.Write(bw);
+            Layers.Write(bw, Layers.GetEntries());
             bw.FillInt64("NextParamOffset", bw.Position);
-            Parts.Write(bw);
+            Parts.Write(bw, entries.Parts);
             bw.FillInt64("NextParamOffset", bw.Position);
-            PartsPoses.Write(bw);
+            PartsPoses.Write(bw, Layers.GetEntries());
             bw.FillInt64("NextParamOffset", bw.Position);
-            BoneNames.Write(bw);
+            BoneNames.Write(bw, Layers.GetEntries());
             bw.FillInt64("NextParamOffset", 0);
+        }
+
+        internal struct Entries
+        {
+            public List<Model> Models;
+            public List<Region> Regions;
+            public List<Part> Parts;
         }
 
         public abstract class Param<T> where T : Entry
@@ -121,10 +154,8 @@ namespace SoulsFormats
 
             internal abstract T ReadEntry(BinaryReaderEx br);
 
-            internal void Write(BinaryWriterEx bw)
+            internal void Write(BinaryWriterEx bw, List<T> entries)
             {
-                List<T> entries = GetEntries();
-
                 bw.WriteInt32(Unk00);
                 bw.WriteInt32(entries.Count + 1);
                 bw.ReserveInt64("ParamNameOffset");
@@ -165,6 +196,52 @@ namespace SoulsFormats
             public override List<Model> GetEntries()
             {
                 return new List<Model>();
+            }
+        }
+
+        private static void DisambiguateNames<T>(List<T> entries) where T : Entry
+        {
+            bool ambiguous;
+            do
+            {
+                ambiguous = false;
+                var nameCounts = new Dictionary<string, int>();
+                foreach (Entry entry in entries)
+                {
+                    string name = entry.Name;
+                    if (!nameCounts.ContainsKey(name))
+                    {
+                        nameCounts[name] = 1;
+                    }
+                    else
+                    {
+                        ambiguous = true;
+                        nameCounts[name]++;
+                        entry.Name = $"{name} ({nameCounts[name]})";
+                    }
+                }
+            }
+            while (ambiguous);
+        }
+
+        private static string GetName<T>(List<T> list, int index) where T : Entry
+        {
+            if (index == -1)
+                return null;
+            else
+                return list[index].Name;
+        }
+
+        private static int GetIndex<T>(List<T> list, string name) where T : Entry
+        {
+            if (name == null)
+                return -1;
+            else
+            {
+                int result = list.FindIndex(entry => entry.Name == name);
+                if (result == -1)
+                    throw new KeyNotFoundException("No items found in list.");
+                return result;
             }
         }
     }

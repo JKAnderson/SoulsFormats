@@ -123,7 +123,8 @@ namespace SoulsFormats
 
             public int ID { get; set; }
 
-            public int ModelIndex { get; set; }
+            public string ModelName { get; set; }
+            private int ModelIndex;
 
             public string Placeholder { get; set; }
 
@@ -187,7 +188,7 @@ namespace SoulsFormats
             {
                 Name = clone.Name;
                 ID = clone.ID;
-                ModelIndex = clone.ModelIndex;
+                ModelName = clone.ModelName;
                 Placeholder = clone.Placeholder;
                 Position = clone.Position;
                 Rotation = clone.Rotation;
@@ -469,6 +470,16 @@ namespace SoulsFormats
             internal virtual void WriteUnk7(BinaryWriterEx bw)
             {
                 throw new InvalidOperationException("Unk struct 7 should not be written for parts with no unk struct 7.");
+            }
+
+            internal virtual void GetNames(MSBS msb, Entries entries)
+            {
+                ModelName = GetName(entries.Models, ModelIndex);
+            }
+
+            internal virtual void GetIndices(MSBS msb, Entries entries)
+            {
+                ModelIndex = GetIndex(entries.Models, ModelName);
             }
 
             public class UnkStruct1
@@ -969,7 +980,8 @@ namespace SoulsFormats
 
                 public UnkStruct5 Unk5 { get; set; }
 
-                public int CollisionPartIndex { get; set; }
+                public string CollisionPartName { get; set; }
+                private int CollisionPartIndex;
 
                 public byte UnkT0C { get; set; }
 
@@ -992,7 +1004,7 @@ namespace SoulsFormats
                 public DummyObject(DummyObject clone) : base(clone)
                 {
                     Unk5 = new UnkStruct5(clone.Unk5);
-                    CollisionPartIndex = clone.CollisionPartIndex;
+                    CollisionPartName = clone.CollisionPartName;
                     UnkT0C = clone.UnkT0C;
                     EnableObjAnimNetSyncStructure = clone.EnableObjAnimNetSyncStructure;
                     UnkT0E = clone.UnkT0E;
@@ -1051,6 +1063,18 @@ namespace SoulsFormats
                 {
                     Unk5.Write(bw);
                 }
+
+                internal override void GetNames(MSBS msb, Entries entries)
+                {
+                    base.GetNames(msb, entries);
+                    CollisionPartName = GetName(entries.Parts, CollisionPartIndex);
+                }
+
+                internal override void GetIndices(MSBS msb, Entries entries)
+                {
+                    base.GetIndices(msb, entries);
+                    CollisionPartIndex = GetIndex(entries.Parts, CollisionPartName);
+                }
             }
 
             public class DummyEnemy : Part
@@ -1075,7 +1099,8 @@ namespace SoulsFormats
 
                 public int CharaInitID { get; set; }
 
-                public int CollisionPartIndex { get; set; }
+                public string CollisionPartName { get; set; }
+                private int CollisionPartIndex;
 
                 public short UnkT20 { get; set; }
 
@@ -1107,7 +1132,7 @@ namespace SoulsFormats
                     TalkParamID = clone.TalkParamID;
                     ChrManipulatorAllocationParameter = clone.ChrManipulatorAllocationParameter;
                     CharaInitID = clone.CharaInitID;
-                    CollisionPartIndex = clone.CollisionPartIndex;
+                    CollisionPartName = clone.CollisionPartName;
                     UnkT20 = clone.UnkT20;
                     UnkT22 = clone.UnkT22;
                     UnkT24 = clone.UnkT24;
@@ -1208,6 +1233,18 @@ namespace SoulsFormats
                 {
                     Unk5.Write(bw);
                 }
+
+                internal override void GetNames(MSBS msb, Entries entries)
+                {
+                    base.GetNames(msb, entries);
+                    CollisionPartName = GetName(entries.Parts, CollisionPartIndex);
+                }
+
+                internal override void GetIndices(MSBS msb, Entries entries)
+                {
+                    base.GetIndices(msb, entries);
+                    CollisionPartIndex = GetIndex(entries.Parts, CollisionPartName);
+                }
             }
 
             public class ConnectCollision : Part
@@ -1222,7 +1259,8 @@ namespace SoulsFormats
 
                 public UnkStruct2 Unk2 { get; set; }
 
-                public int CollisionIndex { get; set; }
+                public string CollisionName { get; set; }
+                private int CollisionIndex;
 
                 public byte[] MapID { get; set; }
 
@@ -1250,6 +1288,18 @@ namespace SoulsFormats
                 internal override void WriteUnk2(BinaryWriterEx bw)
                 {
                     Unk2.Write(bw);
+                }
+
+                internal override void GetNames(MSBS msb, Entries entries)
+                {
+                    base.GetNames(msb, entries);
+                    CollisionName = GetName(msb.Parts.Collisions, CollisionIndex);
+                }
+
+                internal override void GetIndices(MSBS msb, Entries entries)
+                {
+                    base.GetIndices(msb, entries);
+                    CollisionIndex = GetIndex(msb.Parts.Collisions, CollisionName);
                 }
             }
         }
