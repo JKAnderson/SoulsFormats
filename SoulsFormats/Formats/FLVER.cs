@@ -2145,6 +2145,11 @@ namespace SoulsFormats
                                 UVs.Add(new Vector3(br.ReadInt16() / uvFactor, br.ReadInt16() / uvFactor, 0));
                                 UVs.Add(new Vector3(br.ReadInt16() / uvFactor, br.ReadInt16() / uvFactor, 0));
                             }
+                            else if (member.Type == BufferLayout.MemberType.Short4toFloat4B)
+                            {
+                                UVs.Add(new Vector3(br.ReadInt16() / uvFactor, br.ReadInt16() / uvFactor, br.ReadInt16() / uvFactor));
+                                br.AssertInt16(0);
+                            }
                             else
                                 throw new NotImplementedException();
                             break;
@@ -2383,6 +2388,13 @@ namespace SoulsFormats
                                 uv = uvQueue.Dequeue() * uvFactor;
                                 bw.WriteInt16((short)Math.Round(uv.X));
                                 bw.WriteInt16((short)Math.Round(uv.Y));
+                            }
+                            else if (member.Type == BufferLayout.MemberType.Short4toFloat4B)
+                            {
+                                bw.WriteInt16((short)Math.Round(uv.X));
+                                bw.WriteInt16((short)Math.Round(uv.Y));
+                                bw.WriteInt16((short)Math.Round(uv.Z));
+                                bw.WriteInt16(0);
                             }
                             else
                                 throw new NotImplementedException();
