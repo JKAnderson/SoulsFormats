@@ -410,7 +410,7 @@ namespace SoulsFormats
 
                     SpawnPartIndices = new int[SpawnPartNames.Length];
                     for (int i = 0; i < SpawnPartNames.Length; i++)
-                        SpawnPartIndices[i] = GetIndex(entries.Regions, SpawnPartNames[i]);
+                        SpawnPartIndices[i] = GetIndex(entries.Parts, SpawnPartNames[i]);
                 }
             }
 

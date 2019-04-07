@@ -482,6 +482,11 @@ namespace SoulsFormats
                 ModelIndex = GetIndex(entries.Models, ModelName);
             }
 
+            public override string ToString()
+            {
+                return $"{Type} {Name}";
+            }
+
             public class UnkStruct1
             {
                 public uint[] CollisionMask { get; set; }
@@ -980,8 +985,8 @@ namespace SoulsFormats
 
                 public UnkStruct5 Unk5 { get; set; }
 
-                public string CollisionPartName { get; set; }
-                private int CollisionPartIndex;
+                public string CollisionPartName1 { get; set; }
+                private int CollisionPartIndex1;
 
                 public byte UnkT0C { get; set; }
 
@@ -999,12 +1004,13 @@ namespace SoulsFormats
 
                 public int UnkT20 { get; set; }
 
-                public int UnkT24 { get; set; }
+                public string CollisionPartName2 { get; set; }
+                private int CollisionPartIndex2;
 
                 public DummyObject(DummyObject clone) : base(clone)
                 {
                     Unk5 = new UnkStruct5(clone.Unk5);
-                    CollisionPartName = clone.CollisionPartName;
+                    CollisionPartName1 = clone.CollisionPartName1;
                     UnkT0C = clone.UnkT0C;
                     EnableObjAnimNetSyncStructure = clone.EnableObjAnimNetSyncStructure;
                     UnkT0E = clone.UnkT0E;
@@ -1013,14 +1019,14 @@ namespace SoulsFormats
                     UnkT18 = clone.UnkT18;
                     UnkT1A = clone.UnkT1A;
                     UnkT20 = clone.UnkT20;
-                    UnkT24 = clone.UnkT24;
+                    CollisionPartName2 = clone.CollisionPartName2;
                 }
 
                 internal DummyObject(BinaryReaderEx br) : base(br)
                 {
                     br.AssertInt32(0);
                     br.AssertInt32(0);
-                    CollisionPartIndex = br.ReadInt32();
+                    CollisionPartIndex1 = br.ReadInt32();
                     UnkT0C = br.ReadByte();
                     EnableObjAnimNetSyncStructure = br.ReadBoolean();
                     UnkT0E = br.ReadByte();
@@ -1032,7 +1038,7 @@ namespace SoulsFormats
                     UnkT1A = br.ReadInt16();
                     br.AssertInt32(-1);
                     UnkT20 = br.ReadInt32();
-                    UnkT24 = br.ReadInt32();
+                    CollisionPartIndex2 = br.ReadInt32();
                 }
 
                 internal override void ReadUnk5(BinaryReaderEx br)
@@ -1044,7 +1050,7 @@ namespace SoulsFormats
                 {
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
-                    bw.WriteInt32(CollisionPartIndex);
+                    bw.WriteInt32(CollisionPartIndex1);
                     bw.WriteByte(UnkT0C);
                     bw.WriteBoolean(EnableObjAnimNetSyncStructure);
                     bw.WriteByte(UnkT0E);
@@ -1056,7 +1062,7 @@ namespace SoulsFormats
                     bw.WriteInt16(UnkT1A);
                     bw.WriteInt32(-1);
                     bw.WriteInt32(UnkT20);
-                    bw.WriteInt32(UnkT24);
+                    bw.WriteInt32(CollisionPartIndex2);
                 }
 
                 internal override void WriteUnk5(BinaryWriterEx bw)
@@ -1067,13 +1073,15 @@ namespace SoulsFormats
                 internal override void GetNames(MSBS msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    CollisionPartName = GetName(entries.Parts, CollisionPartIndex);
+                    CollisionPartName1 = GetName(entries.Parts, CollisionPartIndex1);
+                    CollisionPartName2 = GetName(entries.Parts, CollisionPartIndex2);
                 }
 
                 internal override void GetIndices(MSBS msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    CollisionPartIndex = GetIndex(entries.Parts, CollisionPartName);
+                    CollisionPartIndex1 = GetIndex(entries.Parts, CollisionPartName1);
+                    CollisionPartIndex2 = GetIndex(entries.Parts, CollisionPartName2);
                 }
             }
 
