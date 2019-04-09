@@ -77,6 +77,7 @@
     <Compile Include="Formats\CCM.cs" />
     <Compile Include="Formats\CLM2.cs" />
     <Compile Include="Formats\DRB.cs" />
+    <Compile Include="Formats\EDGE.cs" />
     <Compile Include="Formats\ESD.cs" />
     <Compile Include="Formats\LUAGNL.cs" />
     <Compile Include="Formats\LUAINFO.cs" />

@@ -103,6 +103,7 @@ namespace SoulsFormats
                 br.AssertInt32(0);
 
                 ID = br.GetASCII(idOffset);
+                nameOffset = idOffset;
             }
 
             br.AssertByte(0);
