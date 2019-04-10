@@ -236,13 +236,22 @@ namespace SoulsFormats
 
             public int MapStudioLayer { get; set; }
 
-            public short[] UnkA { get; set; }
+            public List<short> UnkA { get; set; }
 
-            public short[] UnkB { get; set; }
+            public List<short> UnkB { get; set; }
 
             public int UnkC00 { get; set; }
 
             public int UnkC04 { get; set; }
+
+            public Region()
+            {
+                Name = "";
+                Shape = new Shape.Point();
+                MapStudioLayer = -1;
+                UnkA = new List<short>();
+                UnkB = new List<short>();
+            }
 
             internal Region(BinaryReaderEx br)
             {
@@ -265,10 +274,10 @@ namespace SoulsFormats
                 Name = br.GetUTF16(start + nameOffset);
                 br.Position = start + baseDataOffset1;
                 short countA = br.ReadInt16();
-                UnkA = br.ReadInt16s(countA);
+                UnkA = new List<short>(br.ReadInt16s(countA));
                 br.Position = start + baseDataOffset2;
                 short countB = br.ReadInt16();
-                UnkB = br.ReadInt16s(countB);
+                UnkB = new List<short>(br.ReadInt16s(countB));
 
                 br.Position = start + shapeDataOffset;
                 switch (shapeType)
@@ -334,12 +343,12 @@ namespace SoulsFormats
                 bw.Pad(4);
 
                 bw.FillInt64("BaseDataOffset1", bw.Position - start);
-                bw.WriteInt16((short)UnkA.Length);
+                bw.WriteInt16((short)UnkA.Count);
                 bw.WriteInt16s(UnkA);
                 bw.Pad(4);
 
                 bw.FillInt64("BaseDataOffset2", bw.Position - start);
-                bw.WriteInt16((short)UnkB.Length);
+                bw.WriteInt16((short)UnkB.Count);
                 bw.WriteInt16s(UnkB);
                 bw.Pad(8);
 
@@ -377,9 +386,23 @@ namespace SoulsFormats
                 throw new InvalidOperationException("Type data should not be written for regions with no type data.");
             }
 
-            internal virtual void GetNames(Entries entries) { }
+            internal virtual void GetNames(Entries entries)
+            {
+                if (Shape is Shape.Composite composite)
+                {
+                    foreach (Shape.Composite.Child child in composite.Children)
+                        child.GetNames(entries);
+                }
+            }
 
-            internal virtual void GetIndices(Entries entries) { }
+            internal virtual void GetIndices(Entries entries)
+            {
+                if (Shape is Shape.Composite composite)
+                {
+                    foreach (Shape.Composite.Child child in composite.Children)
+                        child.GetIndices(entries);
+                }
+            }
 
             public override string ToString()
             {
@@ -392,6 +415,8 @@ namespace SoulsFormats
 
                 internal override bool HasTypeData => false;
 
+                public Region0() : base() { }
+
                 internal Region0(BinaryReaderEx br) : base(br) { }
             }
 
@@ -402,6 +427,8 @@ namespace SoulsFormats
                 internal override bool HasTypeData => true;
 
                 public int UnkT00 { get; set; }
+
+                public InvasionPoint() : base() { }
 
                 internal InvasionPoint(BinaryReaderEx br) : base(br)
                 {
@@ -439,6 +466,8 @@ namespace SoulsFormats
                 public int UnkT24 { get; set; }
 
                 public int UnkT28 { get; set; }
+
+                public EnvironmentMapPoint() : base() { }
 
                 internal EnvironmentMapPoint(BinaryReaderEx br) : base(br)
                 {
@@ -490,6 +519,11 @@ namespace SoulsFormats
 
                 public int UnkT48 { get; set; }
 
+                public Sound() : base()
+                {
+                    ChildRegionNames = new string[16];
+                }
+
                 internal Sound(BinaryReaderEx br) : base(br)
                 {
                     SoundType = br.ReadInt32();
@@ -535,6 +569,8 @@ namespace SoulsFormats
 
                 public int StartDisabled { get; set; }
 
+                public SFX() : base() { }
+
                 internal SFX(BinaryReaderEx br) : base(br)
                 {
                     FFXID = br.ReadInt32();
@@ -568,6 +604,8 @@ namespace SoulsFormats
                 private int WindAreaIndex;
 
                 public float UnkT18 { get; set; }
+
+                public WindSFX() : base() { }
 
                 internal WindSFX(BinaryReaderEx br) : base(br)
                 {
@@ -606,6 +644,8 @@ namespace SoulsFormats
 
                 internal override bool HasTypeData => true;
 
+                public SpawnPoint() : base() { }
+
                 internal SpawnPoint(BinaryReaderEx br) : base(br)
                 {
                     br.AssertInt32(-1);
@@ -629,6 +669,8 @@ namespace SoulsFormats
 
                 internal override bool HasTypeData => false;
 
+                public WalkRoute() : base() { }
+
                 internal WalkRoute(BinaryReaderEx br) : base(br) { }
             }
 
@@ -637,6 +679,8 @@ namespace SoulsFormats
                 public override RegionType Type => RegionType.WarpPoint;
 
                 internal override bool HasTypeData => false;
+
+                public WarpPoint() : base() { }
 
                 internal WarpPoint(BinaryReaderEx br) : base(br) { }
             }
@@ -647,6 +691,8 @@ namespace SoulsFormats
 
                 internal override bool HasTypeData => false;
 
+                public ActivationArea() : base() { }
+
                 internal ActivationArea(BinaryReaderEx br) : base(br) { }
             }
 
@@ -655,6 +701,8 @@ namespace SoulsFormats
                 public override RegionType Type => RegionType.Event;
 
                 internal override bool HasTypeData => false;
+
+                public Event() : base() { }
 
                 internal Event(BinaryReaderEx br) : base(br) { }
             }
@@ -680,6 +728,8 @@ namespace SoulsFormats
                 public float UnkT28 { get; set; }
 
                 public float UnkT2C { get; set; }
+
+                public EnvironmentMapEffectBox() : base() { }
 
                 internal EnvironmentMapEffectBox(BinaryReaderEx br) : base(br)
                 {
@@ -716,6 +766,8 @@ namespace SoulsFormats
 
                 internal override bool HasTypeData => false;
 
+                public WindArea() : base() { }
+
                 internal WindArea(BinaryReaderEx br) : base(br) { }
             }
 
@@ -726,6 +778,8 @@ namespace SoulsFormats
                 internal override bool HasTypeData => true;
 
                 public int UnkT00 { get; set; }
+
+                public MufflingBox() : base() { }
 
                 internal MufflingBox(BinaryReaderEx br) : base(br)
                 {
@@ -745,6 +799,8 @@ namespace SoulsFormats
                 internal override bool HasTypeData => true;
 
                 public int UnkT00 { get; set; }
+
+                public MufflingPortal() : base() { }
 
                 internal MufflingPortal(BinaryReaderEx br) : base(br)
                 {
@@ -767,6 +823,8 @@ namespace SoulsFormats
 
                 public long UnkT00 { get; set; }
 
+                public Region23() : base() { }
+
                 internal Region23(BinaryReaderEx br) : base(br)
                 {
                     UnkT00 = br.ReadInt64();
@@ -786,6 +844,8 @@ namespace SoulsFormats
 
                 internal override bool HasTypeData => false;
 
+                public Region24() : base() { }
+
                 internal Region24(BinaryReaderEx br) : base(br) { }
             }
 
@@ -796,6 +856,8 @@ namespace SoulsFormats
                 internal override bool HasTypeData => true;
 
                 public long UnkT00 { get; set; }
+
+                public PartsGroup() : base() { }
 
                 internal PartsGroup(BinaryReaderEx br) : base(br)
                 {
@@ -816,6 +878,8 @@ namespace SoulsFormats
 
                 public long UnkT00 { get; set; }
 
+                public AutoDrawGroup() : base() { }
+
                 internal AutoDrawGroup(BinaryReaderEx br) : base(br)
                 {
                     UnkT00 = br.ReadInt64();
@@ -834,6 +898,8 @@ namespace SoulsFormats
                 public override RegionType Type => RegionType.Other;
 
                 internal override bool HasTypeData => false;
+
+                public Other() : base() { }
 
                 internal Other(BinaryReaderEx br) : base(br) { }
             }

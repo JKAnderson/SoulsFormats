@@ -2,6 +2,8 @@
 
 namespace SoulsFormats
 {
+    public partial class MSBS
+    { 
     public enum ShapeType : uint
     {
         Point = 0,
@@ -39,6 +41,8 @@ namespace SoulsFormats
 
             public float Radius { get; set; }
 
+            public Circle() { }
+
             internal Circle(BinaryReaderEx br)
             {
                 Radius = br.ReadSingle();
@@ -57,6 +61,8 @@ namespace SoulsFormats
             internal override bool HasShapeData => true;
 
             public float Radius { get; set; }
+
+            public Sphere() { }
 
             internal Sphere(BinaryReaderEx br)
             {
@@ -78,6 +84,8 @@ namespace SoulsFormats
             public float Radius { get; set; }
 
             public float Height { get; set; }
+
+            public Cylinder() { }
 
             internal Cylinder(BinaryReaderEx br)
             {
@@ -101,6 +109,8 @@ namespace SoulsFormats
             public float Width { get; set; }
 
             public float Depth { get; set; }
+
+            public Rect() { }
 
             internal Rect(BinaryReaderEx br)
             {
@@ -127,6 +137,8 @@ namespace SoulsFormats
 
             public float Height { get; set; }
 
+            public Box() { }
+
             internal Box(BinaryReaderEx br)
             {
                 Width = br.ReadSingle();
@@ -142,43 +154,64 @@ namespace SoulsFormats
             }
         }
 
-        public class Composite : Shape
-        {
-            internal override ShapeType Type => ShapeType.Composite;
-
-            internal override bool HasShapeData => true;
-
-            public Child[] Children { get; set; }
-
-            internal Composite(BinaryReaderEx br)
+            public class Composite : Shape
             {
-                Children = new Child[8];
-                for (int i = 0; i < 8; i++)
-                    Children[i] = new Child(br);
-            }
+                internal override ShapeType Type => ShapeType.Composite;
 
-            internal override void WriteShapeData(BinaryWriterEx bw)
-            {
-                for (int i = 0; i < 8; i++)
-                    Children[i].Write(bw);
-            }
+                internal override bool HasShapeData => true;
 
-            public class Child
-            {
-                public int RegionIndex { get; set; }
+                public Child[] Children { get; private set; }
 
-                public int Unk04 { get; set; }
-
-                internal Child(BinaryReaderEx br)
+                public Composite()
                 {
-                    RegionIndex = br.ReadInt32();
-                    Unk04 = br.ReadInt32();
+                    Children = new Child[8];
+                    for (int i = 0; i < 8; i++)
+                        Children[i] = new Child();
                 }
 
-                internal void Write(BinaryWriterEx bw)
+                internal Composite(BinaryReaderEx br)
                 {
-                    bw.WriteInt32(RegionIndex);
-                    bw.WriteInt32(Unk04);
+                    Children = new Child[8];
+                    for (int i = 0; i < 8; i++)
+                        Children[i] = new Child(br);
+                }
+
+                internal override void WriteShapeData(BinaryWriterEx bw)
+                {
+                    for (int i = 0; i < 8; i++)
+                        Children[i].Write(bw);
+                }
+
+                public class Child
+                {
+                    public string RegionName { get; set; }
+                    private int RegionIndex;
+
+                    public int Unk04 { get; set; }
+
+                    public Child() { }
+
+                    internal Child(BinaryReaderEx br)
+                    {
+                        RegionIndex = br.ReadInt32();
+                        Unk04 = br.ReadInt32();
+                    }
+
+                    internal void Write(BinaryWriterEx bw)
+                    {
+                        bw.WriteInt32(RegionIndex);
+                        bw.WriteInt32(Unk04);
+                    }
+
+                    internal void GetNames(Entries entries)
+                    {
+                        RegionName = GetName(entries.Regions, RegionIndex);
+                    }
+
+                    internal void GetIndices(Entries entries)
+                    {
+                        RegionIndex = GetIndex(entries.Regions, RegionName);
+                    }
                 }
             }
         }

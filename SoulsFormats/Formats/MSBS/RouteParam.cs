@@ -62,6 +62,11 @@ namespace SoulsFormats
 
             public int Unk0C { get; set; }
 
+            public Route()
+            {
+                Name = "";
+            }
+
             internal Route(BinaryReaderEx br)
             {
                 long start = br.Position;
@@ -102,12 +107,16 @@ namespace SoulsFormats
             {
                 public override RouteType Type => RouteType.MufflingPortalLink;
 
+                public MufflingPortalLink() : base() { }
+
                 internal MufflingPortalLink(BinaryReaderEx br) : base(br) { }
             }
 
             public class MufflingBoxLink : Route
             {
                 public override RouteType Type => RouteType.MufflingBoxLink;
+
+                public MufflingBoxLink() : base() { }
 
                 internal MufflingBoxLink(BinaryReaderEx br) : base(br) { }
             }

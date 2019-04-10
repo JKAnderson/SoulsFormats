@@ -178,11 +178,22 @@ namespace SoulsFormats
 
             public int UnkE18 { get; set; }
 
-            public int[] EntityGroupIDs { get; set; }
+            public int[] EntityGroupIDs { get; private set; }
 
             public int UnkE3C { get; set; }
 
             public int UnkE40 { get; set; }
+
+            public Part()
+            {
+                Name = "";
+                Placeholder = "";
+                Scale = Vector3.One;
+                EntityID = -1;
+                EntityGroupIDs = new int[8];
+                for (int i = 0; i < 8; i++)
+                    EntityGroupIDs[i] = -1;
+            }
 
             public Part(Part clone)
             {
@@ -488,7 +499,7 @@ namespace SoulsFormats
 
             public class UnkStruct1
             {
-                public uint[] CollisionMask { get; set; }
+                public uint[] CollisionMask { get; private set; }
 
                 public byte Condition1 { get; set; }
 
@@ -531,11 +542,16 @@ namespace SoulsFormats
             {
                 public int Condition { get; set; }
 
-                public int[] DispGroups { get; set; }
+                public int[] DispGroups { get; private set; }
 
                 public short Unk24 { get; set; }
 
                 public short Unk26 { get; set; }
+
+                public UnkStruct2()
+                {
+                    DispGroups = new int[8];
+                }
 
                 internal UnkStruct2(BinaryReaderEx br)
                 {
@@ -565,6 +581,8 @@ namespace SoulsFormats
                 public int Unk08 { get; set; }
 
                 public int Unk0C { get; set; }
+
+                public UnkStruct5() { }
 
                 public UnkStruct5(UnkStruct5 clone)
                 {
@@ -598,6 +616,8 @@ namespace SoulsFormats
                 public int Unk3C { get; set; }
 
                 public float Unk40 { get; set; }
+
+                public UnkStruct6() { }
 
                 internal UnkStruct6(BinaryReaderEx br)
                 {
@@ -633,6 +653,8 @@ namespace SoulsFormats
                 public int Unk10 { get; set; }
 
                 public int Unk14 { get; set; }
+
+                public UnkStruct7() { }
 
                 internal UnkStruct7(BinaryReaderEx br)
                 {
@@ -674,6 +696,13 @@ namespace SoulsFormats
                 public UnkStruct5 Unk5 { get; set; }
 
                 public UnkStruct7 Unk7 { get; set; }
+
+                public MapPiece() : base()
+                {
+                    Unk1 = new UnkStruct1();
+                    Unk5 = new UnkStruct5();
+                    Unk7 = new UnkStruct7();
+                }
 
                 internal MapPiece(BinaryReaderEx br) : base(br)
                 {
@@ -726,6 +755,11 @@ namespace SoulsFormats
 
                 public UnkStruct1 Unk1 { get; set; }
 
+                public Object() : base()
+                {
+                    Unk1 = new UnkStruct1();
+                }
+
                 public Object(Object clone) : base(clone)
                 {
                     Unk1 = new UnkStruct1(clone.Unk1);
@@ -756,6 +790,11 @@ namespace SoulsFormats
                 internal override bool HasUnk1 => true;
 
                 public UnkStruct1 Unk1 { get; set; }
+
+                public Enemy() : base()
+                {
+                    Unk1 = new UnkStruct1();
+                }
 
                 public Enemy(Enemy clone) : base(clone)
                 {
@@ -789,6 +828,8 @@ namespace SoulsFormats
                 internal override bool HasUnk5 => false;
                 internal override bool HasUnk6 => false;
                 internal override bool HasUnk7 => false;
+
+                public Player() : base() { }
 
                 internal Player(BinaryReaderEx br) : base(br)
                 {
@@ -858,6 +899,15 @@ namespace SoulsFormats
                 public float UnkT50 { get; set; }
 
                 public float UnkT54 { get; set; }
+
+                public Collision() : base()
+                {
+                    Unk1 = new UnkStruct1();
+                    Unk2 = new UnkStruct2();
+                    Unk5 = new UnkStruct5();
+                    Unk6 = new UnkStruct6();
+                    DisableBonfireEntityID = -1;
+                }
 
                 internal Collision(BinaryReaderEx br) : base(br)
                 {
@@ -1006,6 +1056,11 @@ namespace SoulsFormats
                 public string CollisionPartName2 { get; set; }
                 private int CollisionPartIndex2;
 
+                public DummyObject() : base()
+                {
+                    Unk5 = new UnkStruct5();
+                }
+
                 public DummyObject(DummyObject clone) : base(clone)
                 {
                     Unk5 = new UnkStruct5(clone.Unk5);
@@ -1130,6 +1185,17 @@ namespace SoulsFormats
                 public int UnkT78 { get; set; }
 
                 public float UnkT84 { get; set; }
+
+                public DummyEnemy() : base()
+                {
+                    Unk5 = new UnkStruct5();
+                    ThinkParamID = -1;
+                    NPCParamID = -1;
+                    TalkParamID = -1;
+                    CharaInitID = -1;
+                    BackupEventAnimID = -1;
+                    EventFlagID = -1;
+                }
 
                 public DummyEnemy(DummyEnemy clone) : base(clone)
                 {
@@ -1269,7 +1335,13 @@ namespace SoulsFormats
                 public string CollisionName { get; set; }
                 private int CollisionIndex;
 
-                public byte[] MapID { get; set; }
+                public byte[] MapID { get; private set; }
+
+                public ConnectCollision() : base()
+                {
+                    Unk2 = new UnkStruct2();
+                    MapID = new byte[4];
+                }
 
                 internal ConnectCollision(BinaryReaderEx br) : base(br)
                 {

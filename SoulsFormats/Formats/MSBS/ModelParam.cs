@@ -94,6 +94,12 @@ namespace SoulsFormats
 
             public int Unk1C { get; set; }
 
+            public Model()
+            {
+                Name = "";
+                Placeholder = "";
+            }
+
             internal Model(BinaryReaderEx br)
             {
                 long start = br.Position;
@@ -173,6 +179,8 @@ namespace SoulsFormats
 
                 public float UnkT18 { get; set; }
 
+                public MapPiece() : base() { }
+
                 internal MapPiece(BinaryReaderEx br) : base(br)
                 {
                     UnkT00 = br.ReadInt32();
@@ -204,6 +212,8 @@ namespace SoulsFormats
 
                 internal override bool HasTypeData => false;
 
+                public Object() : base() { }
+
                 internal Object(BinaryReaderEx br) : base(br) { }
             }
 
@@ -212,6 +222,8 @@ namespace SoulsFormats
                 public override ModelType Type => ModelType.Enemy;
 
                 internal override bool HasTypeData => false;
+
+                public Enemy() : base() { }
 
                 internal Enemy(BinaryReaderEx br) : base(br) { }
             }
@@ -222,6 +234,8 @@ namespace SoulsFormats
 
                 internal override bool HasTypeData => false;
 
+                public Player() : base() { }
+
                 internal Player(BinaryReaderEx br) : base(br) { }
             }
 
@@ -230,6 +244,8 @@ namespace SoulsFormats
                 public override ModelType Type => ModelType.Collision;
 
                 internal override bool HasTypeData => false;
+
+                public Collision() : base() { }
 
                 internal Collision(BinaryReaderEx br) : base(br) { }
             }

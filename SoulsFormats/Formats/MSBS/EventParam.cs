@@ -181,6 +181,13 @@ namespace SoulsFormats
 
             public int EntityID { get; set; }
 
+            public Event()
+            {
+                Name = "";
+                EventIndex = -1;
+                EntityID = -1;
+            }
+
             internal Event(BinaryReaderEx br)
             {
                 long start = br.Position;
@@ -274,6 +281,13 @@ namespace SoulsFormats
 
                 public bool StartDisabled { get; set; }
 
+                public Treasure() : base()
+                {
+                    ItemLotID = -1;
+                    ActionButtonID = -1;
+                    PickupAnimID = -1;
+                }
+
                 internal Treasure(BinaryReaderEx br) : base(br)
                 {
                     br.AssertInt32(0);
@@ -353,6 +367,12 @@ namespace SoulsFormats
                 public string[] SpawnPartNames { get; private set; }
                 private int[] SpawnPartIndices;
 
+                public Generator() : base()
+                {
+                    SpawnRegionNames = new string[8];
+                    SpawnPartNames = new string[32];
+                }
+
                 internal Generator(BinaryReaderEx br) : base(br)
                 {
                     MaxNum = br.ReadInt16();
@@ -431,6 +451,13 @@ namespace SoulsFormats
 
                 public int EventFlagID { get; set; }
 
+                public ObjAct() : base()
+                {
+                    ObjActEntityID = -1;
+                    ObjActID = -1;
+                    EventFlagID = -1;
+                }
+
                 internal ObjAct(BinaryReaderEx br) : base(br)
                 {
                     ObjActEntityID = br.ReadInt32();
@@ -482,6 +509,8 @@ namespace SoulsFormats
 
                 public float Degree { get; set; }
 
+                public MapOffset() : base() { }
+
                 internal MapOffset(BinaryReaderEx br) : base(br)
                 {
                     Position = br.ReadVector3();
@@ -507,6 +536,14 @@ namespace SoulsFormats
                 private short[] WalkRegionIndices;
 
                 public WREntry[] WREntries { get; set; }
+
+                public WalkRoute() : base()
+                {
+                    WalkRegionNames = new string[32];
+                    WREntries = new WREntry[5];
+                    for (int i = 0; i < 5; i++)
+                        WREntries[i] = new WREntry();
+                }
 
                 internal WalkRoute(BinaryReaderEx br) : base(br)
                 {
@@ -564,6 +601,8 @@ namespace SoulsFormats
 
                     public int Unk08 { get; set; }
 
+                    public WREntry() { }
+
                     internal WREntry(BinaryReaderEx br)
                     {
                         RegionIndex = br.ReadInt16();
@@ -604,6 +643,11 @@ namespace SoulsFormats
 
                 public string[] GroupPartNames { get; private set; }
                 private int[] GroupPartIndices;
+
+                public GroupTour() : base()
+                {
+                    GroupPartNames = new string[32];
+                }
 
                 internal GroupTour(BinaryReaderEx br) : base(br)
                 {
@@ -648,6 +692,8 @@ namespace SoulsFormats
 
                 public int UnkT00 { get; set; }
 
+                public Event17() : base() { }
+
                 internal Event17(BinaryReaderEx br) : base(br)
                 {
                     UnkT00 = br.ReadInt32();
@@ -668,6 +714,8 @@ namespace SoulsFormats
                 internal override bool HasTypeData => true;
 
                 public int UnkT00 { get; set; }
+
+                public Event18() : base() { }
 
                 internal Event18(BinaryReaderEx br) : base(br)
                 {
@@ -694,6 +742,8 @@ namespace SoulsFormats
 
                 public short UnkT06 { get; set; }
 
+                public Event20() : base() { }
+
                 internal Event20(BinaryReaderEx br) : base(br)
                 {
                     UnkT00 = br.ReadInt32();
@@ -719,6 +769,11 @@ namespace SoulsFormats
 
                 public string[] Event21PartNames { get; private set; }
                 private int[] Event21PartIndices;
+
+                public Event21() : base()
+                {
+                    Event21PartNames = new string[32];
+                }
 
                 internal Event21(BinaryReaderEx br) : base(br)
                 {
@@ -753,6 +808,8 @@ namespace SoulsFormats
 
                 internal override bool HasTypeData => false;
 
+                public PartsGroup() : base() { }
+
                 internal PartsGroup(BinaryReaderEx br) : base(br) { }
             }
 
@@ -764,15 +821,21 @@ namespace SoulsFormats
 
                 public int UnkT00 { get; set; }
 
-                public int[] UnkT04 { get; set; }
+                public int[] UnkT04 { get; private set; }
 
-                public int[] UnkT24 { get; set; }
+                public int[] UnkT24 { get; private set; }
 
                 public short UnkT44 { get; set; }
 
                 public short UnkT46 { get; set; }
 
                 public int UnkT48 { get; set; }
+
+                public Event23() : base()
+                {
+                    UnkT04 = new int[8];
+                    UnkT24 = new int[8];
+                }
 
                 internal Event23(BinaryReaderEx br) : base(br)
                 {
@@ -807,6 +870,8 @@ namespace SoulsFormats
 
                 public int UnkT04 { get; set; }
 
+                public AutoDrawGroup() : base() { }
+
                 internal AutoDrawGroup(BinaryReaderEx br) : base(br)
                 {
                     UnkT00 = br.ReadInt32();
@@ -827,6 +892,8 @@ namespace SoulsFormats
                 public override EventType Type => EventType.Other;
 
                 internal override bool HasTypeData => false;
+
+                public Other() : base() { }
 
                 internal Other(BinaryReaderEx br) : base(br) { }
             }
