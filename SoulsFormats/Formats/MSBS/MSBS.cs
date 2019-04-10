@@ -9,17 +9,33 @@ namespace SoulsFormats
 {
     public partial class MSBS : SoulsFile<MSBS>
     {
-        public ModelParam Models;
+        public ModelParam Models { get; set; }
 
-        public EventParam Events;
+        public EventParam Events { get; set; }
 
-        public PointParam Regions;
+        public PointParam Regions { get; set; }
 
-        public RouteParam Routes;
+        public RouteParam Routes { get; set; }
 
-        public PartsParam Parts;
+        public PartsParam Parts { get; set; }
 
-        private EmptyParam Layers, PartsPoses, BoneNames;
+        public EmptyParam Layers { get; set; }
+        
+        public EmptyParam PartsPoses { get; set; }
+        
+        public EmptyParam BoneNames { get; set; }
+
+        public MSBS()
+        {
+            Models = new ModelParam();
+            Events = new EventParam();
+            Regions = new PointParam();
+            Routes = new RouteParam();
+            Parts = new PartsParam();
+            Layers = new EmptyParam(0x23, "LAYER_PARAM_ST");
+            PartsPoses = new EmptyParam(0, "MAPSTUDIO_PARTS_POSE_ST");
+            BoneNames = new EmptyParam(0, "MAPSTUDIO_BONE_NAME_STRING");
+        }
 
         internal override bool Is(BinaryReaderEx br)
         {
@@ -46,13 +62,13 @@ namespace SoulsFormats
             entries.Regions = Regions.Read(br);
             Routes = new RouteParam();
             Routes.Read(br);
-            Layers = new EmptyParam("LAYER_PARAM_ST");
+            Layers = new EmptyParam(0x23, "LAYER_PARAM_ST");
             Layers.Read(br);
             Parts = new PartsParam();
             entries.Parts = Parts.Read(br);
-            PartsPoses = new EmptyParam("MAPSTUDIO_PARTS_POSE_ST");
+            PartsPoses = new EmptyParam(0, "MAPSTUDIO_PARTS_POSE_ST");
             PartsPoses.Read(br);
-            BoneNames = new EmptyParam("MAPSTUDIO_BONE_NAME_STRING");
+            BoneNames = new EmptyParam(0, "MAPSTUDIO_BONE_NAME_STRING");
             BoneNames.Read(br);
 
             if (br.Position != 0)
@@ -79,6 +95,8 @@ namespace SoulsFormats
             List<Route> routes = Routes.GetEntries();
             entries.Parts = Parts.GetEntries();
 
+            foreach (Model model in entries.Models)
+                model.CountInstances(entries.Parts);
             foreach (Event evt in events)
                 evt.GetIndices(entries);
             foreach (Region region in entries.Regions)
@@ -121,12 +139,13 @@ namespace SoulsFormats
 
         public abstract class Param<T> where T : Entry
         {
-            public string Name { get; }
-
             public int Unk00 { get; set; }
 
-            internal Param(string name)
+            public string Name { get; }
+
+            internal Param(int unk00, string name)
             {
+                Unk00 = unk00;
                 Name = name;
             }
 
@@ -154,7 +173,7 @@ namespace SoulsFormats
 
             internal abstract T ReadEntry(BinaryReaderEx br);
 
-            internal void Write(BinaryWriterEx bw, List<T> entries)
+            internal virtual void Write(BinaryWriterEx bw, List<T> entries)
             {
                 bw.WriteInt32(Unk00);
                 bw.WriteInt32(entries.Count + 1);
@@ -167,10 +186,19 @@ namespace SoulsFormats
                 bw.WriteUTF16(Name, true);
                 bw.Pad(8);
 
+                int id = 0;
+                Type type = null;
                 for (int i = 0; i < entries.Count; i++)
                 {
+                    if (type != entries[i].GetType())
+                    {
+                        type = entries[i].GetType();
+                        id = 0;
+                    }
+
                     bw.FillInt64($"EntryOffset{i}", bw.Position);
-                    entries[i].Write(bw);
+                    entries[i].Write(bw, id);
+                    id++;
                 }
             }
 
@@ -181,12 +209,12 @@ namespace SoulsFormats
         {
             public abstract string Name { get; set; }
 
-            internal abstract void Write(BinaryWriterEx bw);
+            internal abstract void Write(BinaryWriterEx bw, int id);
         }
 
-        private class EmptyParam : Param<Model>
+        public class EmptyParam : Param<Model>
         {
-            public EmptyParam(string name) : base(name) { }
+            public EmptyParam(int unk00, string name) : base(unk00, name) { }
 
             internal override Model ReadEntry(BinaryReaderEx br)
             {

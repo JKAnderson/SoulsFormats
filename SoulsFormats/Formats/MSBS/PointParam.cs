@@ -72,7 +72,9 @@ namespace SoulsFormats
 
             public List<Region.Other> Others { get; set; }
 
-            internal PointParam() : base("POINT_PARAM_ST")
+            public PointParam() : this(0x23) { }
+
+            public PointParam(int unk00) : base(unk00, "POINT_PARAM_ST")
             {
                 Region0s = new List<Region.Region0>();
                 InvasionPoints = new List<Region.InvasionPoint>();
@@ -218,13 +220,11 @@ namespace SoulsFormats
 
         public abstract class Region : Entry
         {
-            internal abstract RegionType Type { get; }
+            public abstract RegionType Type { get; }
 
             internal abstract bool HasTypeData { get; }
 
             public override string Name { get; set; }
-
-            public int ID { get; set; }
 
             public Shape Shape { get; set; }
 
@@ -249,7 +249,7 @@ namespace SoulsFormats
                 long start = br.Position;
                 long nameOffset = br.ReadInt64();
                 br.AssertUInt32((uint)Type);
-                ID = br.ReadInt32();
+                br.ReadInt32(); // ID
                 ShapeType shapeType = br.ReadEnum32<ShapeType>();
                 Position = br.ReadVector3();
                 Rotation = br.ReadVector3();
@@ -311,12 +311,12 @@ namespace SoulsFormats
                 br.Position = start + typeDataOffset;
             }
 
-            internal override void Write(BinaryWriterEx bw)
+            internal override void Write(BinaryWriterEx bw, int id)
             {
                 long start = bw.Position;
                 bw.ReserveInt64("NameOffset");
                 bw.WriteUInt32((uint)Type);
-                bw.WriteInt32(ID);
+                bw.WriteInt32(id);
                 bw.WriteUInt32((uint)Shape.Type);
                 bw.WriteVector3(Position);
                 bw.WriteVector3(Rotation);
@@ -388,7 +388,7 @@ namespace SoulsFormats
 
             public class Region0 : Region
             {
-                internal override RegionType Type => RegionType.Region0;
+                public override RegionType Type => RegionType.Region0;
 
                 internal override bool HasTypeData => false;
 
@@ -397,7 +397,7 @@ namespace SoulsFormats
 
             public class InvasionPoint : Region
             {
-                internal override RegionType Type => RegionType.InvasionPoint;
+                public override RegionType Type => RegionType.InvasionPoint;
 
                 internal override bool HasTypeData => true;
 
@@ -416,7 +416,7 @@ namespace SoulsFormats
 
             public class EnvironmentMapPoint : Region
             {
-                internal override RegionType Type => RegionType.EnvironmentMapPoint;
+                public override RegionType Type => RegionType.EnvironmentMapPoint;
 
                 internal override bool HasTypeData => true;
 
@@ -477,7 +477,7 @@ namespace SoulsFormats
 
             public class Sound : Region
             {
-                internal override RegionType Type => RegionType.Sound;
+                public override RegionType Type => RegionType.Sound;
 
                 internal override bool HasTypeData => true;
 
@@ -525,7 +525,7 @@ namespace SoulsFormats
 
             public class SFX : Region
             {
-                internal override RegionType Type => RegionType.SFX;
+                public override RegionType Type => RegionType.SFX;
 
                 internal override bool HasTypeData => true;
 
@@ -558,7 +558,7 @@ namespace SoulsFormats
 
             public class WindSFX : Region
             {
-                internal override RegionType Type => RegionType.WindSFX;
+                public override RegionType Type => RegionType.WindSFX;
 
                 internal override bool HasTypeData => true;
 
@@ -602,7 +602,7 @@ namespace SoulsFormats
 
             public class SpawnPoint : Region
             {
-                internal override RegionType Type => RegionType.SpawnPoint;
+                public override RegionType Type => RegionType.SpawnPoint;
 
                 internal override bool HasTypeData => true;
 
@@ -625,7 +625,7 @@ namespace SoulsFormats
 
             public class WalkRoute : Region
             {
-                internal override RegionType Type => RegionType.WalkRoute;
+                public override RegionType Type => RegionType.WalkRoute;
 
                 internal override bool HasTypeData => false;
 
@@ -634,7 +634,7 @@ namespace SoulsFormats
 
             public class WarpPoint : Region
             {
-                internal override RegionType Type => RegionType.WarpPoint;
+                public override RegionType Type => RegionType.WarpPoint;
 
                 internal override bool HasTypeData => false;
 
@@ -643,7 +643,7 @@ namespace SoulsFormats
 
             public class ActivationArea : Region
             {
-                internal override RegionType Type => RegionType.ActivationArea;
+                public override RegionType Type => RegionType.ActivationArea;
 
                 internal override bool HasTypeData => false;
 
@@ -652,7 +652,7 @@ namespace SoulsFormats
 
             public class Event : Region
             {
-                internal override RegionType Type => RegionType.Event;
+                public override RegionType Type => RegionType.Event;
 
                 internal override bool HasTypeData => false;
 
@@ -661,7 +661,7 @@ namespace SoulsFormats
 
             public class EnvironmentMapEffectBox : Region
             {
-                internal override RegionType Type => RegionType.EnvironmentMapEffectBox;
+                public override RegionType Type => RegionType.EnvironmentMapEffectBox;
 
                 internal override bool HasTypeData => true;
 
@@ -712,7 +712,7 @@ namespace SoulsFormats
 
             public class WindArea : Region
             {
-                internal override RegionType Type => RegionType.WindArea;
+                public override RegionType Type => RegionType.WindArea;
 
                 internal override bool HasTypeData => false;
 
@@ -721,7 +721,7 @@ namespace SoulsFormats
 
             public class MufflingBox : Region
             {
-                internal override RegionType Type => RegionType.MufflingBox;
+                public override RegionType Type => RegionType.MufflingBox;
 
                 internal override bool HasTypeData => true;
 
@@ -740,7 +740,7 @@ namespace SoulsFormats
 
             public class MufflingPortal : Region
             {
-                internal override RegionType Type => RegionType.MufflingPortal;
+                public override RegionType Type => RegionType.MufflingPortal;
 
                 internal override bool HasTypeData => true;
 
@@ -761,7 +761,7 @@ namespace SoulsFormats
 
             public class Region23 : Region
             {
-                internal override RegionType Type => RegionType.Region23;
+                public override RegionType Type => RegionType.Region23;
 
                 internal override bool HasTypeData => true;
 
@@ -782,7 +782,7 @@ namespace SoulsFormats
 
             public class Region24 : Region
             {
-                internal override RegionType Type => RegionType.Region24;
+                public override RegionType Type => RegionType.Region24;
 
                 internal override bool HasTypeData => false;
 
@@ -791,7 +791,7 @@ namespace SoulsFormats
 
             public class PartsGroup : Region
             {
-                internal override RegionType Type => RegionType.PartsGroup;
+                public override RegionType Type => RegionType.PartsGroup;
 
                 internal override bool HasTypeData => true;
 
@@ -810,7 +810,7 @@ namespace SoulsFormats
 
             public class AutoDrawGroup : Region
             {
-                internal override RegionType Type => RegionType.AutoDrawGroup;
+                public override RegionType Type => RegionType.AutoDrawGroup;
 
                 internal override bool HasTypeData => true;
 
@@ -831,7 +831,7 @@ namespace SoulsFormats
 
             public class Other : Region
             {
-                internal override RegionType Type => RegionType.Other;
+                public override RegionType Type => RegionType.Other;
 
                 internal override bool HasTypeData => false;
 

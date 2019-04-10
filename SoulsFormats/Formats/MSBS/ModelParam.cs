@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SoulsFormats
 {
@@ -26,7 +27,9 @@ namespace SoulsFormats
 
             public List<Model.Collision> Collisions { get; set; }
 
-            internal ModelParam() : base("MODEL_PARAM_ST")
+            public ModelParam() : this(0x23) { }
+
+            public ModelParam(int unk00) : base(unk00, "MODEL_PARAM_ST")
             {
                 MapPieces = new List<Model.MapPiece>();
                 Objects = new List<Model.Object>();
@@ -79,17 +82,15 @@ namespace SoulsFormats
 
         public abstract class Model : Entry
         {
-            internal abstract ModelType Type { get; }
+            public abstract ModelType Type { get; }
 
             internal abstract bool HasTypeData { get; }
 
             public override string Name { get; set; }
 
-            public int ID { get; set; }
-
             public string Placeholder { get; set; }
 
-            public int InstanceCount { get; set; }
+            internal int InstanceCount;
 
             public int Unk1C { get; set; }
 
@@ -98,7 +99,7 @@ namespace SoulsFormats
                 long start = br.Position;
                 long nameOffset = br.ReadInt64();
                 br.AssertUInt32((uint)Type);
-                ID = br.ReadInt32();
+                br.ReadInt32(); // ID
                 long sibOffset = br.ReadInt64();
                 InstanceCount = br.ReadInt32();
                 Unk1C = br.ReadInt32();
@@ -109,12 +110,12 @@ namespace SoulsFormats
                 br.Position = start + typeDataOffset;
             }
 
-            internal override void Write(BinaryWriterEx bw)
+            internal override void Write(BinaryWriterEx bw, int id)
             {
                 long start = bw.Position;
                 bw.ReserveInt64("NameOffset");
                 bw.WriteUInt32((uint)Type);
-                bw.WriteInt32(ID);
+                bw.WriteInt32(id);
                 bw.ReserveInt64("SibOffset");
                 bw.WriteInt32(InstanceCount);
                 bw.WriteInt32(Unk1C);
@@ -142,6 +143,11 @@ namespace SoulsFormats
                 throw new InvalidOperationException("Type data should not be written for models with no type data.");
             }
 
+            internal void CountInstances(List<Part> parts)
+            {
+                InstanceCount = parts.Count(p => p.ModelName == Name);
+            }
+
             public override string ToString()
             {
                 return $"{Type} {Name}";
@@ -149,7 +155,7 @@ namespace SoulsFormats
 
             public class MapPiece : Model
             {
-                internal override ModelType Type => ModelType.MapPiece;
+                public override ModelType Type => ModelType.MapPiece;
 
                 internal override bool HasTypeData => true;
 
@@ -194,7 +200,7 @@ namespace SoulsFormats
 
             public class Object : Model
             {
-                internal override ModelType Type => ModelType.Object;
+                public override ModelType Type => ModelType.Object;
 
                 internal override bool HasTypeData => false;
 
@@ -203,7 +209,7 @@ namespace SoulsFormats
 
             public class Enemy : Model
             {
-                internal override ModelType Type => ModelType.Enemy;
+                public override ModelType Type => ModelType.Enemy;
 
                 internal override bool HasTypeData => false;
 
@@ -212,7 +218,7 @@ namespace SoulsFormats
 
             public class Player : Model
             {
-                internal override ModelType Type => ModelType.Player;
+                public override ModelType Type => ModelType.Player;
 
                 internal override bool HasTypeData => false;
 
@@ -221,7 +227,7 @@ namespace SoulsFormats
 
             public class Collision : Model
             {
-                internal override ModelType Type => ModelType.Collision;
+                public override ModelType Type => ModelType.Collision;
 
                 internal override bool HasTypeData => false;
 

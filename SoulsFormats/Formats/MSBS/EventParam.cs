@@ -54,7 +54,9 @@ namespace SoulsFormats
 
             public List<Event.Other> Others { get; set; }
 
-            internal EventParam() : base("EVENT_PARAM_ST")
+            public EventParam() : this(0x23) { }
+
+            public EventParam(int unk00) : base(unk00, "EVENT_PARAM_ST")
             {
                 Treasures = new List<Event.Treasure>();
                 Generators = new List<Event.Generator>();
@@ -163,15 +165,13 @@ namespace SoulsFormats
 
         public abstract class Event : Entry
         {
-            internal abstract EventType Type { get; }
+            public abstract EventType Type { get; }
 
             internal abstract bool HasTypeData { get; }
 
             public override string Name { get; set; }
 
             public int EventIndex { get; set; }
-
-            public int ID { get; set; }
 
             public string PartName { get; set; }
             private int PartIndex;
@@ -187,7 +187,7 @@ namespace SoulsFormats
                 long nameOffset = br.ReadInt64();
                 EventIndex = br.ReadInt32();
                 br.AssertUInt32((uint)Type);
-                ID = br.ReadInt32();
+                br.ReadInt32(); // ID
                 br.AssertInt32(0);
                 long baseDataOffset = br.ReadInt64();
                 long typeDataOffset = br.ReadInt64();
@@ -201,13 +201,13 @@ namespace SoulsFormats
                 br.Position = start + typeDataOffset;
             }
 
-            internal override void Write(BinaryWriterEx bw)
+            internal override void Write(BinaryWriterEx bw, int id)
             {
                 long start = bw.Position;
                 bw.ReserveInt64("NameOffset");
                 bw.WriteInt32(EventIndex);
                 bw.WriteUInt32((uint)Type);
-                bw.WriteInt32(ID);
+                bw.WriteInt32(id);
                 bw.WriteInt32(0);
                 bw.ReserveInt64("BaseDataOffset");
                 bw.ReserveInt64("TypeDataOffset");
@@ -257,7 +257,7 @@ namespace SoulsFormats
 
             public class Treasure : Event
             {
-                internal override EventType Type => EventType.Treasure;
+                public override EventType Type => EventType.Treasure;
 
                 internal override bool HasTypeData => true;
 
@@ -325,7 +325,7 @@ namespace SoulsFormats
 
             public class Generator : Event
             {
-                internal override EventType Type => EventType.Generator;
+                public override EventType Type => EventType.Generator;
 
                 internal override bool HasTypeData => true;
 
@@ -416,7 +416,7 @@ namespace SoulsFormats
 
             public class ObjAct : Event
             {
-                internal override EventType Type => EventType.ObjAct;
+                public override EventType Type => EventType.ObjAct;
 
                 internal override bool HasTypeData => true;
 
@@ -474,7 +474,7 @@ namespace SoulsFormats
 
             public class MapOffset : Event
             {
-                internal override EventType Type => EventType.MapOffset;
+                public override EventType Type => EventType.MapOffset;
 
                 internal override bool HasTypeData => true;
 
@@ -497,7 +497,7 @@ namespace SoulsFormats
 
             public class WalkRoute : Event
             {
-                internal override EventType Type => EventType.WalkRoute;
+                public override EventType Type => EventType.WalkRoute;
 
                 internal override bool HasTypeData => true;
 
@@ -594,7 +594,7 @@ namespace SoulsFormats
 
             public class GroupTour : Event
             {
-                internal override EventType Type => EventType.GroupTour;
+                public override EventType Type => EventType.GroupTour;
 
                 internal override bool HasTypeData => true;
 
@@ -642,7 +642,7 @@ namespace SoulsFormats
 
             public class Event17 : Event
             {
-                internal override EventType Type => EventType.Event17;
+                public override EventType Type => EventType.Event17;
 
                 internal override bool HasTypeData => true;
 
@@ -663,7 +663,7 @@ namespace SoulsFormats
 
             public class Event18 : Event
             {
-                internal override EventType Type => EventType.Event18;
+                public override EventType Type => EventType.Event18;
 
                 internal override bool HasTypeData => true;
 
@@ -684,7 +684,7 @@ namespace SoulsFormats
 
             public class Event20 : Event
             {
-                internal override EventType Type => EventType.Event20;
+                public override EventType Type => EventType.Event20;
 
                 internal override bool HasTypeData => true;
 
@@ -713,7 +713,7 @@ namespace SoulsFormats
 
             public class Event21 : Event
             {
-                internal override EventType Type => EventType.Event21;
+                public override EventType Type => EventType.Event21;
 
                 internal override bool HasTypeData => true;
 
@@ -749,7 +749,7 @@ namespace SoulsFormats
 
             public class PartsGroup : Event
             {
-                internal override EventType Type => EventType.PartsGroup;
+                public override EventType Type => EventType.PartsGroup;
 
                 internal override bool HasTypeData => false;
 
@@ -758,7 +758,7 @@ namespace SoulsFormats
 
             public class Event23 : Event
             {
-                internal override EventType Type => EventType.Event23;
+                public override EventType Type => EventType.Event23;
 
                 internal override bool HasTypeData => true;
 
@@ -799,7 +799,7 @@ namespace SoulsFormats
 
             public class AutoDrawGroup : Event
             {
-                internal override EventType Type => EventType.AutoDrawGroup;
+                public override EventType Type => EventType.AutoDrawGroup;
 
                 internal override bool HasTypeData => true;
 
@@ -824,7 +824,7 @@ namespace SoulsFormats
 
             public class Other : Event
             {
-                internal override EventType Type => EventType.Other;
+                public override EventType Type => EventType.Other;
 
                 internal override bool HasTypeData => false;
 

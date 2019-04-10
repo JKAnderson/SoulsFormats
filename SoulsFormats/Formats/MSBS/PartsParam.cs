@@ -39,7 +39,9 @@ namespace SoulsFormats
 
             public List<Part.ConnectCollision> ConnectCollisions { get; set; }
 
-            internal PartsParam() : base("PARTS_PARAM_ST")
+            public PartsParam() : this(0x23) { }
+
+            public PartsParam(int unk00) : base(unk00, "PARTS_PARAM_ST")
             {
                 MapPieces = new List<Part.MapPiece>();
                 Objects = new List<Part.Object>();
@@ -111,7 +113,7 @@ namespace SoulsFormats
 
         public abstract class Part : Entry
         {
-            internal abstract PartType Type { get; }
+            public abstract PartType Type { get; }
 
             internal abstract bool HasUnk1 { get; }
             internal abstract bool HasUnk2 { get; }
@@ -120,8 +122,6 @@ namespace SoulsFormats
             internal abstract bool HasUnk7 { get; }
 
             public override string Name { get; set; }
-
-            public int ID { get; set; }
 
             public string ModelName { get; set; }
             private int ModelIndex;
@@ -187,7 +187,6 @@ namespace SoulsFormats
             public Part(Part clone)
             {
                 Name = clone.Name;
-                ID = clone.ID;
                 ModelName = clone.ModelName;
                 Placeholder = clone.Placeholder;
                 Position = clone.Position;
@@ -225,7 +224,7 @@ namespace SoulsFormats
                 long start = br.Position;
                 long nameOffset = br.ReadInt64();
                 br.AssertUInt32((uint)Type);
-                ID = br.ReadInt32();
+                br.ReadInt32(); // ID
                 ModelIndex = br.ReadInt32();
                 br.AssertInt32(0);
                 long sibOffset = br.ReadInt64();
@@ -330,12 +329,12 @@ namespace SoulsFormats
                 throw new InvalidOperationException("Unk struct 7 should not be read for parts with no unk struct 7.");
             }
 
-            internal override void Write(BinaryWriterEx bw)
+            internal override void Write(BinaryWriterEx bw, int id)
             {
                 long start = bw.Position;
                 bw.ReserveInt64("NameOffset");
                 bw.WriteUInt32((uint)Type);
-                bw.WriteInt32(ID);
+                bw.WriteInt32(id);
                 bw.WriteInt32(ModelIndex);
                 bw.WriteInt32(0);
                 bw.ReserveInt64("SibOffset");
@@ -662,7 +661,7 @@ namespace SoulsFormats
 
             public class MapPiece : Part
             {
-                internal override PartType Type => PartType.MapPiece;
+                public override PartType Type => PartType.MapPiece;
 
                 internal override bool HasUnk1 => true;
                 internal override bool HasUnk2 => false;
@@ -721,7 +720,7 @@ namespace SoulsFormats
 
             public class Object : DummyObject
             {
-                internal override PartType Type => PartType.Object;
+                public override PartType Type => PartType.Object;
 
                 internal override bool HasUnk1 => true;
 
@@ -752,7 +751,7 @@ namespace SoulsFormats
 
             public class Enemy : DummyEnemy
             {
-                internal override PartType Type => PartType.Enemy;
+                public override PartType Type => PartType.Enemy;
 
                 internal override bool HasUnk1 => true;
 
@@ -783,7 +782,7 @@ namespace SoulsFormats
 
             public class Player : Part
             {
-                internal override PartType Type => PartType.Player;
+                public override PartType Type => PartType.Player;
 
                 internal override bool HasUnk1 => false;
                 internal override bool HasUnk2 => false;
@@ -804,7 +803,7 @@ namespace SoulsFormats
 
             public class Collision : Part
             {
-                internal override PartType Type => PartType.Collision;
+                public override PartType Type => PartType.Collision;
 
                 internal override bool HasUnk1 => true;
                 internal override bool HasUnk2 => true;
@@ -975,7 +974,7 @@ namespace SoulsFormats
 
             public class DummyObject : Part
             {
-                internal override PartType Type => PartType.DummyObject;
+                public override PartType Type => PartType.DummyObject;
 
                 internal override bool HasUnk1 => false;
                 internal override bool HasUnk2 => false;
@@ -1087,7 +1086,7 @@ namespace SoulsFormats
 
             public class DummyEnemy : Part
             {
-                internal override PartType Type => PartType.DummyEnemy;
+                public override PartType Type => PartType.DummyEnemy;
 
                 internal override bool HasUnk1 => false;
                 internal override bool HasUnk2 => false;
@@ -1257,7 +1256,7 @@ namespace SoulsFormats
 
             public class ConnectCollision : Part
             {
-                internal override PartType Type => PartType.ConnectCollision;
+                public override PartType Type => PartType.ConnectCollision;
 
                 internal override bool HasUnk1 => false;
                 internal override bool HasUnk2 => true;
