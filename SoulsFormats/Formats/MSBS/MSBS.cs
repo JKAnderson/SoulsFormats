@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SoulsFormats
 {
@@ -20,9 +17,9 @@ namespace SoulsFormats
         public PartsParam Parts { get; set; }
 
         public EmptyParam Layers { get; set; }
-        
+
         public EmptyParam PartsPoses { get; set; }
-        
+
         public EmptyParam BoneNames { get; set; }
 
         public MSBS()

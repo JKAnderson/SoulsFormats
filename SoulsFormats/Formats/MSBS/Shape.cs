@@ -3,156 +3,156 @@
 namespace SoulsFormats
 {
     public partial class MSBS
-    { 
-    public enum ShapeType : uint
     {
-        Point = 0,
-        Circle = 1,
-        Sphere = 2,
-        Cylinder = 3,
-        Rect = 4,
-        Box = 5,
-        Composite = 6,
-    }
-
-    public abstract class Shape
-    {
-        internal abstract ShapeType Type { get; }
-
-        internal abstract bool HasShapeData { get; }
-
-        internal virtual void WriteShapeData(BinaryWriterEx bw)
+        public enum ShapeType : uint
         {
-            throw new InvalidOperationException("Shape data should not be written for shapes with no shape data.");
+            Point = 0,
+            Circle = 1,
+            Sphere = 2,
+            Cylinder = 3,
+            Rect = 4,
+            Box = 5,
+            Composite = 6,
         }
 
-        public class Point : Shape
+        public abstract class Shape
         {
-            internal override ShapeType Type => ShapeType.Point;
+            internal abstract ShapeType Type { get; }
 
-            internal override bool HasShapeData => false;
-        }
+            internal abstract bool HasShapeData { get; }
 
-        public class Circle : Shape
-        {
-            internal override ShapeType Type => ShapeType.Circle;
-
-            internal override bool HasShapeData => true;
-
-            public float Radius { get; set; }
-
-            public Circle() { }
-
-            internal Circle(BinaryReaderEx br)
+            internal virtual void WriteShapeData(BinaryWriterEx bw)
             {
-                Radius = br.ReadSingle();
+                throw new InvalidOperationException("Shape data should not be written for shapes with no shape data.");
             }
 
-            internal override void WriteShapeData(BinaryWriterEx bw)
+            public class Point : Shape
             {
-                bw.WriteSingle(Radius);
-            }
-        }
+                internal override ShapeType Type => ShapeType.Point;
 
-        public class Sphere : Shape
-        {
-            internal override ShapeType Type => ShapeType.Sphere;
-
-            internal override bool HasShapeData => true;
-
-            public float Radius { get; set; }
-
-            public Sphere() { }
-
-            internal Sphere(BinaryReaderEx br)
-            {
-                Radius = br.ReadSingle();
+                internal override bool HasShapeData => false;
             }
 
-            internal override void WriteShapeData(BinaryWriterEx bw)
+            public class Circle : Shape
             {
-                bw.WriteSingle(Radius);
-            }
-        }
+                internal override ShapeType Type => ShapeType.Circle;
 
-        public class Cylinder : Shape
-        {
-            internal override ShapeType Type => ShapeType.Cylinder;
+                internal override bool HasShapeData => true;
 
-            internal override bool HasShapeData => true;
+                public float Radius { get; set; }
 
-            public float Radius { get; set; }
+                public Circle() { }
 
-            public float Height { get; set; }
+                internal Circle(BinaryReaderEx br)
+                {
+                    Radius = br.ReadSingle();
+                }
 
-            public Cylinder() { }
-
-            internal Cylinder(BinaryReaderEx br)
-            {
-                Radius = br.ReadSingle();
-                Height = br.ReadSingle();
+                internal override void WriteShapeData(BinaryWriterEx bw)
+                {
+                    bw.WriteSingle(Radius);
+                }
             }
 
-            internal override void WriteShapeData(BinaryWriterEx bw)
+            public class Sphere : Shape
             {
-                bw.WriteSingle(Radius);
-                bw.WriteSingle(Height);
-            }
-        }
+                internal override ShapeType Type => ShapeType.Sphere;
 
-        public class Rect : Shape
-        {
-            internal override ShapeType Type => ShapeType.Rect;
+                internal override bool HasShapeData => true;
 
-            internal override bool HasShapeData => true;
+                public float Radius { get; set; }
 
-            public float Width { get; set; }
+                public Sphere() { }
 
-            public float Depth { get; set; }
+                internal Sphere(BinaryReaderEx br)
+                {
+                    Radius = br.ReadSingle();
+                }
 
-            public Rect() { }
-
-            internal Rect(BinaryReaderEx br)
-            {
-                Width = br.ReadSingle();
-                Depth = br.ReadSingle();
+                internal override void WriteShapeData(BinaryWriterEx bw)
+                {
+                    bw.WriteSingle(Radius);
+                }
             }
 
-            internal override void WriteShapeData(BinaryWriterEx bw)
+            public class Cylinder : Shape
             {
-                bw.WriteSingle(Width);
-                bw.WriteSingle(Depth);
-            }
-        }
+                internal override ShapeType Type => ShapeType.Cylinder;
 
-        public class Box : Shape
-        {
-            internal override ShapeType Type => ShapeType.Box;
+                internal override bool HasShapeData => true;
 
-            internal override bool HasShapeData => true;
+                public float Radius { get; set; }
 
-            public float Width { get; set; }
+                public float Height { get; set; }
 
-            public float Depth { get; set; }
+                public Cylinder() { }
 
-            public float Height { get; set; }
+                internal Cylinder(BinaryReaderEx br)
+                {
+                    Radius = br.ReadSingle();
+                    Height = br.ReadSingle();
+                }
 
-            public Box() { }
-
-            internal Box(BinaryReaderEx br)
-            {
-                Width = br.ReadSingle();
-                Depth = br.ReadSingle();
-                Height = br.ReadSingle();
+                internal override void WriteShapeData(BinaryWriterEx bw)
+                {
+                    bw.WriteSingle(Radius);
+                    bw.WriteSingle(Height);
+                }
             }
 
-            internal override void WriteShapeData(BinaryWriterEx bw)
+            public class Rect : Shape
             {
-                bw.WriteSingle(Width);
-                bw.WriteSingle(Depth);
-                bw.WriteSingle(Height);
+                internal override ShapeType Type => ShapeType.Rect;
+
+                internal override bool HasShapeData => true;
+
+                public float Width { get; set; }
+
+                public float Depth { get; set; }
+
+                public Rect() { }
+
+                internal Rect(BinaryReaderEx br)
+                {
+                    Width = br.ReadSingle();
+                    Depth = br.ReadSingle();
+                }
+
+                internal override void WriteShapeData(BinaryWriterEx bw)
+                {
+                    bw.WriteSingle(Width);
+                    bw.WriteSingle(Depth);
+                }
             }
-        }
+
+            public class Box : Shape
+            {
+                internal override ShapeType Type => ShapeType.Box;
+
+                internal override bool HasShapeData => true;
+
+                public float Width { get; set; }
+
+                public float Depth { get; set; }
+
+                public float Height { get; set; }
+
+                public Box() { }
+
+                internal Box(BinaryReaderEx br)
+                {
+                    Width = br.ReadSingle();
+                    Depth = br.ReadSingle();
+                    Height = br.ReadSingle();
+                }
+
+                internal override void WriteShapeData(BinaryWriterEx bw)
+                {
+                    bw.WriteSingle(Width);
+                    bw.WriteSingle(Depth);
+                    bw.WriteSingle(Height);
+                }
+            }
 
             public class Composite : Shape
             {
