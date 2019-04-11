@@ -6,6 +6,7 @@ namespace SoulsFormats
 {
     public partial class MSBS
     {
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         public enum PartType : uint
         {
             MapPiece = 0,
@@ -17,6 +18,7 @@ namespace SoulsFormats
             DummyEnemy = 10,
             ConnectCollision = 11,
         }
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 
         public class PartsParam : Param<Part>
         {
@@ -118,8 +120,6 @@ namespace SoulsFormats
             internal abstract bool HasUnk6 { get; }
             internal abstract bool HasUnk7 { get; }
 
-            public override string Name { get; set; }
-
             public string ModelName { get; set; }
             private int ModelIndex;
 
@@ -181,7 +181,7 @@ namespace SoulsFormats
 
             public int UnkE40 { get; set; }
 
-            public Part()
+            internal Part()
             {
                 Name = "";
                 Placeholder = "";

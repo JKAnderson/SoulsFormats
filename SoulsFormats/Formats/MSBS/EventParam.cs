@@ -6,6 +6,7 @@ namespace SoulsFormats
 {
     public partial class MSBS
     {
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         public enum EventType : uint
         {
             Treasure = 4,
@@ -23,6 +24,7 @@ namespace SoulsFormats
             AutoDrawGroup = 24,
             Other = 0xFFFFFFFF,
         }
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 
         public class EventParam : Param<Event>
         {
@@ -169,8 +171,6 @@ namespace SoulsFormats
 
             internal abstract bool HasTypeData { get; }
 
-            public override string Name { get; set; }
-
             public int EventIndex { get; set; }
 
             public string PartName { get; set; }
@@ -181,7 +181,7 @@ namespace SoulsFormats
 
             public int EntityID { get; set; }
 
-            public Event()
+            internal Event()
             {
                 Name = "";
                 EventIndex = -1;

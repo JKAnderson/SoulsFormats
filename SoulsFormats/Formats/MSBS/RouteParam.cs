@@ -5,20 +5,37 @@ namespace SoulsFormats
 {
     public partial class MSBS
     {
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         public enum RouteType : uint
         {
             MufflingPortalLink = 3,
             MufflingBoxLink = 4,
         }
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 
+        /// <summary>
+        /// Unknown, but related to muffling regions somehow.
+        /// </summary>
         public class RouteParam : Param<Route>
         {
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Route.MufflingPortalLink> MufflingPortalLinks { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Route.MufflingBoxLink> MufflingBoxLinks { get; set; }
 
+            /// <summary>
+            /// Creates an empty RouteParam.
+            /// </summary>
             public RouteParam() : this(0x23) { }
 
+            /// <summary>
+            /// Creates an empty RouteParam with the given version.
+            /// </summary>
             public RouteParam(int unk00) : base(unk00, "ROUTE_PARAM_ST")
             {
                 MufflingPortalLinks = new List<Route.MufflingPortalLink>();
@@ -45,6 +62,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Returns every Route in the order they will be written.
+            /// </summary>
             public override List<Route> GetEntries()
             {
                 return SFUtil.ConcatAll<Route>(
@@ -52,17 +72,27 @@ namespace SoulsFormats
             }
         }
 
+        /// <summary>
+        /// Unknown.
+        /// </summary>
         public abstract class Route : Entry
         {
+            /// <summary>
+            /// The type of this Route.
+            /// </summary>
             public abstract RouteType Type { get; }
 
-            public override string Name { get; set; }
-
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public int Unk08 { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public int Unk0C { get; set; }
 
-            public Route()
+            internal Route()
             {
                 Name = "";
             }
@@ -103,19 +133,37 @@ namespace SoulsFormats
                 return $"\"{Name}\" {Unk08} {Unk0C}";
             }
 
+            /// <summary>
+            /// Unknown; has something to do with muffling portals.
+            /// </summary>
             public class MufflingPortalLink : Route
             {
+                /// <summary>
+                /// RouteType.MufflingPortalLink
+                /// </summary>
                 public override RouteType Type => RouteType.MufflingPortalLink;
 
+                /// <summary>
+                /// Creates a MufflingPortalLink with default values.
+                /// </summary>
                 public MufflingPortalLink() : base() { }
 
                 internal MufflingPortalLink(BinaryReaderEx br) : base(br) { }
             }
 
+            /// <summary>
+            /// Unknown; has something to do with muffling boxes.
+            /// </summary>
             public class MufflingBoxLink : Route
             {
+                /// <summary>
+                /// RouteType.MufflingBoxLink
+                /// </summary>
                 public override RouteType Type => RouteType.MufflingBoxLink;
 
+                /// <summary>
+                /// Creates a MufflingBoxLink with default values.
+                /// </summary>
                 public MufflingBoxLink() : base() { }
 
                 internal MufflingBoxLink(BinaryReaderEx br) : base(br) { }

@@ -4,24 +4,54 @@ using System.IO;
 
 namespace SoulsFormats
 {
+    /// <summary>
+    /// A map layout file used in Sekiro. Extension: .msb
+    /// </summary>
     public partial class MSBS : SoulsFile<MSBS>
     {
+        /// <summary>
+        /// Model files that are available for parts to use.
+        /// </summary>
         public ModelParam Models { get; set; }
 
+        /// <summary>
+        /// Dynamic or interactive systems such as item pickups, levers, enemy spawners, etc.
+        /// </summary>
         public EventParam Events { get; set; }
 
+        /// <summary>
+        /// Points or areas of space that trigger some sort of behavior.
+        /// </summary>
         public PointParam Regions { get; set; }
 
+        /// <summary>
+        /// Unknown, but related to muffling regions somehow.
+        /// </summary>
         public RouteParam Routes { get; set; }
 
+        /// <summary>
+        /// Instances of actual things in the map.
+        /// </summary>
         public PartsParam Parts { get; set; }
 
+        /// <summary>
+        /// Unknown and unused.
+        /// </summary>
         public EmptyParam Layers { get; set; }
 
+        /// <summary>
+        /// Sets bone positions for fixed objects; not used in Sekiro.
+        /// </summary>
         public EmptyParam PartsPoses { get; set; }
 
+        /// <summary>
+        /// Bone names for the parts pose param; not used in Sekiro.
+        /// </summary>
         public EmptyParam BoneNames { get; set; }
 
+        /// <summary>
+        /// Creates an MSBS with nothing in it.
+        /// </summary>
         public MSBS()
         {
             Models = new ModelParam();
@@ -134,10 +164,19 @@ namespace SoulsFormats
             public List<Part> Parts;
         }
 
+        /// <summary>
+        /// A generic group of entries in an MSB.
+        /// </summary>
         public abstract class Param<T> where T : Entry
         {
+            /// <summary>
+            /// Unknown; probably some kind of version number.
+            /// </summary>
             public int Unk00 { get; set; }
 
+            /// <summary>
+            /// A string identifying the type of entries in the param.
+            /// </summary>
             public string Name { get; }
 
             internal Param(int unk00, string name)
@@ -199,28 +238,54 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Returns all of the entries in this param, in the order they will be written to the file.
+            /// </summary>
             public abstract List<T> GetEntries();
+
+            /// <summary>
+            /// Returns the version number and name of the param as a string.
+            /// </summary>
+            public override string ToString()
+            {
+                return $"0x{Unk00:X2} {Name}";
+            }
         }
 
+        /// <summary>
+        /// A generic entry in an MSB param.
+        /// </summary>
         public abstract class Entry
         {
-            public abstract string Name { get; set; }
+            /// <summary>
+            /// The name of this entry.
+            /// </summary>
+            public string Name { get; set; }
 
             internal abstract void Write(BinaryWriterEx bw, int id);
         }
 
-        public class EmptyParam : Param<Model>
+        /// <summary>
+        /// Used to represent unused params that should never have any entries in them.
+        /// </summary>
+        public class EmptyParam : Param<Entry>
         {
+            /// <summary>
+            /// Creates an EmptyParam with the given values.
+            /// </summary>
             public EmptyParam(int unk00, string name) : base(unk00, name) { }
 
-            internal override Model ReadEntry(BinaryReaderEx br)
+            internal override Entry ReadEntry(BinaryReaderEx br)
             {
                 throw new InvalidDataException($"Expected param \"{Name}\" to be empty, but it wasn't.");
             }
 
-            public override List<Model> GetEntries()
+            /// <summary>
+            /// Returns an empty list.
+            /// </summary>
+            public override List<Entry> GetEntries()
             {
-                return new List<Model>();
+                return new List<Entry>();
             }
         }
 

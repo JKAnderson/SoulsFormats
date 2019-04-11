@@ -6,6 +6,7 @@ namespace SoulsFormats
 {
     public partial class MSBS
     {
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         public enum ModelType : uint
         {
             MapPiece = 0,
@@ -14,21 +15,46 @@ namespace SoulsFormats
             Player = 4,
             Collision = 5,
         }
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 
+        /// <summary>
+        /// Model files that are available for parts to use.
+        /// </summary>
         public class ModelParam : Param<Model>
         {
+            /// <summary>
+            /// Models for fixed terrain and scenery.
+            /// </summary>
             public List<Model.MapPiece> MapPieces { get; set; }
 
+            /// <summary>
+            /// Models for dynamic props.
+            /// </summary>
             public List<Model.Object> Objects { get; set; }
 
+            /// <summary>
+            /// Models for non-player entities.
+            /// </summary>
             public List<Model.Enemy> Enemies { get; set; }
 
+            /// <summary>
+            /// Models for player spawn points, I think.
+            /// </summary>
             public List<Model.Player> Players { get; set; }
 
+            /// <summary>
+            /// Models for physics collision.
+            /// </summary>
             public List<Model.Collision> Collisions { get; set; }
 
+            /// <summary>
+            /// Creates an empty ModelParam.
+            /// </summary>
             public ModelParam() : this(0x23) { }
 
+            /// <summary>
+            /// Creates an empty ModelParam with the given version.
+            /// </summary>
             public ModelParam(int unk00) : base(unk00, "MODEL_PARAM_ST")
             {
                 MapPieces = new List<Model.MapPiece>();
@@ -73,6 +99,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Returns every Model in the order they will be written.
+            /// </summary>
             public override List<Model> GetEntries()
             {
                 return SFUtil.ConcatAll<Model>(
@@ -80,21 +109,31 @@ namespace SoulsFormats
             }
         }
 
+        /// <summary>
+        /// A model file available for parts to reference.
+        /// </summary>
         public abstract class Model : Entry
         {
+            /// <summary>
+            /// The type of this Model.
+            /// </summary>
             public abstract ModelType Type { get; }
 
             internal abstract bool HasTypeData { get; }
 
-            public override string Name { get; set; }
-
+            /// <summary>
+            /// A path to a .sib file, presumed to be some kind of editor placeholder.
+            /// </summary>
             public string Placeholder { get; set; }
 
             internal int InstanceCount;
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public int Unk1C { get; set; }
 
-            public Model()
+            internal Model()
             {
                 Name = "";
                 Placeholder = "";
@@ -154,31 +193,65 @@ namespace SoulsFormats
                 InstanceCount = parts.Count(p => p.ModelName == Name);
             }
 
+            /// <summary>
+            /// Returns the type and name of the model as a string.
+            /// </summary>
+            /// <returns></returns>
             public override string ToString()
             {
                 return $"{Type} {Name}";
             }
 
+            /// <summary>
+            /// A model for fixed terrain or scenery.
+            /// </summary>
             public class MapPiece : Model
             {
+                /// <summary>
+                /// ModelType.MapPiece
+                /// </summary>
                 public override ModelType Type => ModelType.MapPiece;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT04 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT08 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT0C { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT10 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT14 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT18 { get; set; }
 
+                /// <summary>
+                /// Creates a MapPiece with default values.
+                /// </summary>
                 public MapPiece() : base() { }
 
                 internal MapPiece(BinaryReaderEx br) : base(br)
@@ -206,45 +279,81 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// A model for a dynamic prop.
+            /// </summary>
             public class Object : Model
             {
+                /// <summary>
+                /// ModelType.Object
+                /// </summary>
                 public override ModelType Type => ModelType.Object;
 
                 internal override bool HasTypeData => false;
 
+                /// <summary>
+                /// Creates an Object with default values.
+                /// </summary>
                 public Object() : base() { }
 
                 internal Object(BinaryReaderEx br) : base(br) { }
             }
 
+            /// <summary>
+            /// A model for a non-player entity.
+            /// </summary>
             public class Enemy : Model
             {
+                /// <summary>
+                /// ModelType.Enemy
+                /// </summary>
                 public override ModelType Type => ModelType.Enemy;
 
                 internal override bool HasTypeData => false;
 
+                /// <summary>
+                /// Creates an Enemy with default values.
+                /// </summary>
                 public Enemy() : base() { }
 
                 internal Enemy(BinaryReaderEx br) : base(br) { }
             }
 
+            /// <summary>
+            /// A model for a player spawn point?
+            /// </summary>
             public class Player : Model
             {
+                /// <summary>
+                /// ModelType.Player
+                /// </summary>
                 public override ModelType Type => ModelType.Player;
 
                 internal override bool HasTypeData => false;
 
+                /// <summary>
+                /// Creates a Player with default values.
+                /// </summary>
                 public Player() : base() { }
 
                 internal Player(BinaryReaderEx br) : base(br) { }
             }
 
+            /// <summary>
+            /// A model for collision physics.
+            /// </summary>
             public class Collision : Model
             {
+                /// <summary>
+                /// ModelType.Collision
+                /// </summary>
                 public override ModelType Type => ModelType.Collision;
 
                 internal override bool HasTypeData => false;
 
+                /// <summary>
+                /// Creates a Collision with default values.
+                /// </summary>
                 public Collision() : base() { }
 
                 internal Collision(BinaryReaderEx br) : base(br) { }

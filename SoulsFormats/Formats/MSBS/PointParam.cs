@@ -6,6 +6,7 @@ namespace SoulsFormats
 {
     public partial class MSBS
     {
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         public enum RegionType : uint
         {
             Region0 = 0,
@@ -29,6 +30,7 @@ namespace SoulsFormats
             AutoDrawGroup = 26,
             Other = 0xFFFFFFFF,
         }
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 
         public class PointParam : Param<Region>
         {
@@ -224,8 +226,6 @@ namespace SoulsFormats
 
             internal abstract bool HasTypeData { get; }
 
-            public override string Name { get; set; }
-
             public Shape Shape { get; set; }
 
             public Vector3 Position { get; set; }
@@ -244,7 +244,7 @@ namespace SoulsFormats
 
             public int UnkC04 { get; set; }
 
-            public Region()
+            internal Region()
             {
                 Name = "";
                 Shape = new Shape.Point();
