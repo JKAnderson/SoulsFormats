@@ -6,19 +6,28 @@ using System.Numerics;
 namespace SoulsFormats
 {
     /// <summary>
-    /// Point light sources in a map, used in DS3 and BB.
+    /// Point light sources in a map, used in BB, DS3, and Sekiro.
     /// </summary>
     public class BTL : SoulsFile<BTL>
     {
         /// <summary>
-        /// Unknown.
+        /// Indicates the version, probably.
         /// </summary>
-        public int Unk04;
+        public int Version { get; set; }
         
         /// <summary>
         /// Light sources in this BTL.
         /// </summary>
-        public List<Light> Lights;
+        public List<Light> Lights { get; set; }
+
+        /// <summary>
+        /// Creates a BTL with Sekiro's version and no lights.
+        /// </summary>
+        public BTL()
+        {
+            Version = 16;
+            Lights = new List<Light>();
+        }
 
         internal override bool Is(BinaryReaderEx br)
         {
@@ -30,12 +39,11 @@ namespace SoulsFormats
             br.BigEndian = false;
 
             br.AssertInt32(2);
-            Unk04 = br.AssertInt32(1, 2, 5, 6);
-            int entryCount = br.ReadInt32();
-            int nameSize = br.ReadInt32();
+            Version = br.AssertInt32(1, 2, 5, 6, 16);
+            int lightCount = br.ReadInt32();
+            int namesLength = br.ReadInt32();
             br.AssertInt32(0);
-            // Entry size
-            br.AssertInt32(0xC8);
+            br.AssertInt32(Version < 16 ? 0xC8 : 0xE8); // Light size
             br.AssertInt32(0);
             br.AssertInt32(0);
             br.AssertInt32(0);
@@ -46,11 +54,11 @@ namespace SoulsFormats
             br.AssertInt32(0);
             br.AssertInt32(0);
 
-            long nameStart = br.Position;
-            br.Position = nameStart + nameSize;
-            Lights = new List<Light>(entryCount);
-            for (int i = 0; i < entryCount; i++)
-                Lights.Add(new Light(br, nameStart));
+            long namesStart = br.Position;
+            br.Skip(namesLength);
+            Lights = new List<Light>(lightCount);
+            for (int i = 0; i < lightCount; i++)
+                Lights.Add(new Light(br, namesStart, Version));
         }
 
         internal override void Write(BinaryWriterEx bw)
@@ -58,11 +66,11 @@ namespace SoulsFormats
             bw.BigEndian = false;
 
             bw.WriteInt32(2);
-            bw.WriteInt32(Unk04);
+            bw.WriteInt32(Version);
             bw.WriteInt32(Lights.Count);
-            bw.ReserveInt32("NameSize");
+            bw.ReserveInt32("NamesLength");
             bw.WriteInt32(0);
-            bw.WriteInt32(0xC8);
+            bw.WriteInt32(Version < 16 ? 0xC8 : 0xE8);
             bw.WriteInt32(0);
             bw.WriteInt32(0);
             bw.WriteInt32(0);
@@ -73,23 +81,20 @@ namespace SoulsFormats
             bw.WriteInt32(0);
             bw.WriteInt32(0);
 
-            long nameStart = bw.Position;
+            long namesStart = bw.Position;
             var nameOffsets = new List<int>(Lights.Count);
             foreach (Light entry in Lights)
             {
-                int nameOffset = (int)(bw.Position - nameStart);
+                int nameOffset = (int)(bw.Position - namesStart);
                 nameOffsets.Add(nameOffset);
                 bw.WriteUTF16(entry.Name, true);
                 if (nameOffset % 0x10 != 0)
-                {
-                    for (int i = 0; i < 0x10 - (nameOffset % 0x10); i++)
-                        bw.WriteByte(0);
-                }
+                    bw.WriteNull(0x10 - (nameOffset % 0x10), false);
             }
 
-            bw.FillInt32("NameSize", (int)(bw.Position - nameStart));
+            bw.FillInt32("NamesLength", (int)(bw.Position - namesStart));
             for (int i = 0; i < Lights.Count; i++)
-                Lights[i].Write(bw, nameOffsets[i]);
+                Lights[i].Write(bw, nameOffsets[i], Version);
         }
 
         /// <summary>
@@ -98,80 +103,243 @@ namespace SoulsFormats
         public class Light
         {
             /// <summary>
-            /// Name of this light.
+            /// Unknown.
             /// </summary>
-            public string Name;
-            
-            /// <summary>
-            /// Center of the light.
-            /// </summary>
-            public Vector3 Position;
+            public int Unk00 { get; set; }
 
             /// <summary>
-            /// Rotation of a spot light.
+            /// Unknown.
             /// </summary>
-            public Vector3 Rotation;
+            public int Unk04 { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public int Unk08 { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public int Unk0C { get; set; }
+
+            /// <summary>
+            /// Name of this light.
+            /// </summary>
+            public string Name { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public int Unk18 { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public bool Unk1C { get; set; }
 
             /// <summary>
             /// Color of the light on diffuse surfaces.
             /// </summary>
-            public Color DiffuseColor;
+            public Color DiffuseColor { get; set; }
 
             /// <summary>
             /// Intensity of diffuse lighting.
             /// </summary>
-            public float DiffuseBrightness;
+            public float DiffusePower { get; set; }
 
             /// <summary>
             /// Color of the light on reflective surfaces.
             /// </summary>
-            public Color SpecularColor;
+            public Color SpecularColor { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public bool Unk27 { get; set; }
 
             /// <summary>
             /// Intensity of specular lighting.
             /// </summary>
-            public float SpecularBrightness;
-
-            /// <summary>
-            /// Distance the light shines.
-            /// </summary>
-            public float Radius;
+            public float SpecularPower { get; set; }
 
             /// <summary>
             /// Tightness of the spot light beam.
             /// </summary>
-            public float ConeAngle;
+            public float ConeAngle { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public float Unk30 { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public float Unk34 { get; set; }
+
+            /// <summary>
+            /// Center of the light.
+            /// </summary>
+            public Vector3 Position { get; set; }
+
+            /// <summary>
+            /// Rotation of a spot light.
+            /// </summary>
+            public Vector3 Rotation { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public int Unk50 { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public float Unk54 { get; set; }
+
+            /// <summary>
+            /// Distance the light shines.
+            /// </summary>
+            public float Radius { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public int Unk5C { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public int Unk64 { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public float Unk68 { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public float Unk6C { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public float Unk70 { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public float Unk74 { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public float Unk78 { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public float Unk7C { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public float Unk98 { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public float Unk9C { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public int UnkA0 { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public float UnkA4 { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public float UnkAC { get; set; }
 
             /// <summary>
             /// Stretches the spot light beam.
             /// </summary>
-            public float Width;
+            public float Width { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public bool Unk1C, Unk27;
+            public float UnkBC { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk00, Unk04, Unk08, Unk18, Unk0C, Unk50, Unk5C, Unk64, UnkA0;
+            public int UnkC0 { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public float Unk30, Unk34, Unk54, Unk68, Unk6C, Unk70, Unk74, Unk78, Unk7C, Unk98, Unk9C, UnkA4, UnkC4;
+            public float UnkC4 { get; set; }
 
-            internal Light(BinaryReaderEx br, long nameStart)
+            /// <summary>
+            /// Unknown; only in Sekiro.
+            /// </summary>
+            public float UnkC8 { get; set; }
+
+            /// <summary>
+            /// Unknown; only in Sekiro.
+            /// </summary>
+            public float UnkCC { get; set; }
+
+            /// <summary>
+            /// Unknown; only in Sekiro.
+            /// </summary>
+            public float UnkD0 { get; set; }
+
+            /// <summary>
+            /// Unknown; only in Sekiro.
+            /// </summary>
+            public float UnkD4 { get; set; }
+
+            /// <summary>
+            /// Unknown; only in Sekiro.
+            /// </summary>
+            public float UnkD8 { get; set; }
+
+            /// <summary>
+            /// Unknown; only in Sekiro.
+            /// </summary>
+            public int UnkDC { get; set; }
+
+            /// <summary>
+            /// Unknown; only in Sekiro.
+            /// </summary>
+            public float UnkE0 { get; set; }
+
+            /// <summary>
+            /// Creates a Light with default values.
+            /// </summary>
+            public Light()
+            {
+                Name = "";
+                DiffuseColor = Color.White;
+                SpecularColor = Color.White;
+            }
+
+            internal Light(BinaryReaderEx br, long namesStart, int version)
             {
                 Unk00 = br.ReadInt32();
                 Unk04 = br.ReadInt32();
                 Unk08 = br.ReadInt32();
                 Unk0C = br.ReadInt32();
-
                 int nameOffset = br.ReadInt32();
-                Name = br.GetUTF16(nameStart + nameOffset);
-
+                Name = br.GetUTF16(namesStart + nameOffset);
                 br.AssertInt32(0);
                 Unk18 = br.ReadInt32();
 
@@ -180,14 +348,14 @@ namespace SoulsFormats
                 byte g = br.ReadByte();
                 byte b = br.ReadByte();
                 DiffuseColor = Color.FromArgb(255, r, g, b);
-                DiffuseBrightness = br.ReadSingle();
+                DiffusePower = br.ReadSingle();
 
                 r = br.ReadByte();
                 g = br.ReadByte();
                 b = br.ReadByte();
                 Unk27 = br.ReadBoolean();
                 SpecularColor = Color.FromArgb(255, r, g, b);
-                SpecularBrightness = br.ReadSingle();
+                SpecularPower = br.ReadSingle();
 
                 ConeAngle = br.ReadSingle();
                 Unk30 = br.ReadSingle();
@@ -217,16 +385,28 @@ namespace SoulsFormats
                 UnkA0 = br.ReadInt32();
                 UnkA4 = br.ReadSingle();
                 br.AssertInt32(0);
-                br.AssertInt32(0);
+                UnkAC = br.ReadSingle();
                 br.AssertInt32(0);
                 br.AssertInt32(0);
                 Width = br.ReadSingle();
-                br.AssertInt32(0);
-                br.AssertInt32(0);
+                UnkBC = br.ReadSingle();
+                UnkC0 = br.ReadInt32();
                 UnkC4 = br.ReadSingle();
+
+                if (version >= 16)
+                {
+                    UnkC8 = br.ReadSingle();
+                    UnkCC = br.ReadSingle();
+                    UnkD0 = br.ReadSingle();
+                    UnkD4 = br.ReadSingle();
+                    UnkD8 = br.ReadSingle();
+                    UnkDC = br.ReadInt32();
+                    UnkE0 = br.ReadSingle();
+                    br.AssertInt32(0);
+                }
             }
 
-            internal void Write(BinaryWriterEx bw, int nameOffset)
+            internal void Write(BinaryWriterEx bw, int nameOffset, int version)
             {
                 bw.WriteInt32(Unk00);
                 bw.WriteInt32(Unk04);
@@ -240,13 +420,13 @@ namespace SoulsFormats
                 bw.WriteByte(DiffuseColor.R);
                 bw.WriteByte(DiffuseColor.G);
                 bw.WriteByte(DiffuseColor.B);
-                bw.WriteSingle(DiffuseBrightness);
+                bw.WriteSingle(DiffusePower);
 
                 bw.WriteByte(SpecularColor.R);
                 bw.WriteByte(SpecularColor.G);
                 bw.WriteByte(SpecularColor.B);
                 bw.WriteBoolean(Unk27);
-                bw.WriteSingle(SpecularBrightness);
+                bw.WriteSingle(SpecularPower);
 
                 bw.WriteSingle(ConeAngle);
                 bw.WriteSingle(Unk30);
@@ -274,15 +454,27 @@ namespace SoulsFormats
                 bw.WriteSingle(Unk98);
                 bw.WriteSingle(Unk9C);
                 bw.WriteInt32(UnkA0);
-                bw.WriteSingle(Unk74);
+                bw.WriteSingle(UnkA4);
                 bw.WriteInt32(0);
-                bw.WriteInt32(0);
+                bw.WriteSingle(UnkAC);
                 bw.WriteInt32(0);
                 bw.WriteInt32(0);
                 bw.WriteSingle(Width);
-                bw.WriteInt32(0);
-                bw.WriteInt32(0);
+                bw.WriteSingle(UnkBC);
+                bw.WriteInt32(UnkC0);
                 bw.WriteSingle(UnkC4);
+
+                if (version >= 16)
+                {
+                    bw.WriteSingle(UnkC8);
+                    bw.WriteSingle(UnkCC);
+                    bw.WriteSingle(UnkD0);
+                    bw.WriteSingle(UnkD4);
+                    bw.WriteSingle(UnkD8);
+                    bw.WriteInt32(UnkDC);
+                    bw.WriteSingle(UnkE0);
+                    bw.WriteInt32(0);
+                }
             }
 
             /// <summary>
