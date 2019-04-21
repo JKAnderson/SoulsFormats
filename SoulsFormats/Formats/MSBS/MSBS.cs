@@ -106,7 +106,7 @@ namespace SoulsFormats
             DisambiguateNames(entries.Parts);
 
             foreach (Event evt in events)
-                evt.GetNames(entries);
+                evt.GetNames(this, entries);
             foreach (Region region in entries.Regions)
                 region.GetNames(entries);
             foreach (Part part in entries.Parts)
@@ -125,7 +125,7 @@ namespace SoulsFormats
             foreach (Model model in entries.Models)
                 model.CountInstances(entries.Parts);
             foreach (Event evt in events)
-                evt.GetIndices(entries);
+                evt.GetIndices(this, entries);
             foreach (Region region in entries.Regions)
                 region.GetIndices(entries);
             foreach (Part part in entries.Parts)

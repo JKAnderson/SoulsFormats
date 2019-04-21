@@ -20,7 +20,7 @@ namespace SoulsFormats
             Event20 = 20,
             Event21 = 21,
             PartsGroup = 22,
-            Event23 = 23,
+            Talk = 23,
             AutoDrawGroup = 24,
             Other = 0xFFFFFFFF,
         }
@@ -50,7 +50,7 @@ namespace SoulsFormats
 
             public List<Event.PartsGroup> PartsGroups { get; set; }
 
-            public List<Event.Event23> Event23s { get; set; }
+            public List<Event.Talk> Talks { get; set; }
 
             public List<Event.AutoDrawGroup> AutoDrawGroups { get; set; }
 
@@ -71,7 +71,7 @@ namespace SoulsFormats
                 Event20s = new List<Event.Event20>();
                 Event21s = new List<Event.Event21>();
                 PartsGroups = new List<Event.PartsGroup>();
-                Event23s = new List<Event.Event23>();
+                Talks = new List<Event.Talk>();
                 AutoDrawGroups = new List<Event.AutoDrawGroup>();
                 Others = new List<Event.Other>();
             }
@@ -136,10 +136,10 @@ namespace SoulsFormats
                         PartsGroups.Add(partsGroup);
                         return partsGroup;
 
-                    case EventType.Event23:
-                        var event23 = new Event.Event23(br);
-                        Event23s.Add(event23);
-                        return event23;
+                    case EventType.Talk:
+                        var talk = new Event.Talk(br);
+                        Talks.Add(talk);
+                        return talk;
 
                     case EventType.AutoDrawGroup:
                         var autoDrawGroup = new Event.AutoDrawGroup(br);
@@ -161,7 +161,7 @@ namespace SoulsFormats
                 return SFUtil.ConcatAll<Event>(
                     Treasures, Generators, ObjActs, MapOffsets, WalkRoutes,
                     GroupTours, Event17s, Event18s, Event20s, Event21s,
-                    PartsGroups, Event23s, AutoDrawGroups, Others);
+                    PartsGroups, Talks, AutoDrawGroups, Others);
             }
         }
 
@@ -245,13 +245,13 @@ namespace SoulsFormats
                 throw new InvalidOperationException("Type data should not be written for events with no type data.");
             }
 
-            internal virtual void GetNames(Entries entries)
+            internal virtual void GetNames(MSBS msb, Entries entries)
             {
                 PartName = GetName(entries.Parts, PartIndex);
                 RegionName = GetName(entries.Regions, RegionIndex);
             }
 
-            internal virtual void GetIndices(Entries entries)
+            internal virtual void GetIndices(MSBS msb, Entries entries)
             {
                 PartIndex = GetIndex(entries.Parts, PartName);
                 RegionIndex = GetIndex(entries.Regions, RegionName);
@@ -324,15 +324,15 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                 }
 
-                internal override void GetNames(Entries entries)
+                internal override void GetNames(MSBS msb, Entries entries)
                 {
-                    base.GetNames(entries);
+                    base.GetNames(msb, entries);
                     TreasurePartName = GetName(entries.Parts, TreasurePartIndex);
                 }
 
-                internal override void GetIndices(Entries entries)
+                internal override void GetIndices(MSBS msb, Entries entries)
                 {
-                    base.GetIndices(entries);
+                    base.GetIndices(msb, entries);
                     TreasurePartIndex = GetIndex(entries.Parts, TreasurePartName);
                 }
             }
@@ -409,9 +409,9 @@ namespace SoulsFormats
                     bw.WriteNull(0x20, false);
                 }
 
-                internal override void GetNames(Entries entries)
+                internal override void GetNames(MSBS msb, Entries entries)
                 {
-                    base.GetNames(entries);
+                    base.GetNames(msb, entries);
                     SpawnRegionNames = new string[SpawnRegionIndices.Length];
                     for (int i = 0; i < SpawnRegionIndices.Length; i++)
                         SpawnRegionNames[i] = GetName(entries.Regions, SpawnRegionIndices[i]);
@@ -421,9 +421,9 @@ namespace SoulsFormats
                         SpawnPartNames[i] = GetName(entries.Parts, SpawnPartIndices[i]);
                 }
 
-                internal override void GetIndices(Entries entries)
+                internal override void GetIndices(MSBS msb, Entries entries)
                 {
-                    base.GetIndices(entries);
+                    base.GetIndices(msb, entries);
                     SpawnRegionIndices = new int[SpawnRegionNames.Length];
                     for (int i = 0; i < SpawnRegionNames.Length; i++)
                         SpawnRegionIndices[i] = GetIndex(entries.Regions, SpawnRegionNames[i]);
@@ -486,15 +486,15 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                 }
 
-                internal override void GetNames(Entries entries)
+                internal override void GetNames(MSBS msb, Entries entries)
                 {
-                    base.GetNames(entries);
+                    base.GetNames(msb, entries);
                     ObjActPartName = GetName(entries.Parts, ObjActPartIndex);
                 }
 
-                internal override void GetIndices(Entries entries)
+                internal override void GetIndices(MSBS msb, Entries entries)
                 {
-                    base.GetIndices(entries);
+                    base.GetIndices(msb, entries);
                     ObjActPartIndex = GetIndex(entries.Parts, ObjActPartName);
                 }
             }
@@ -570,9 +570,9 @@ namespace SoulsFormats
                     bw.WriteNull(0x14, false);
                 }
 
-                internal override void GetNames(Entries entries)
+                internal override void GetNames(MSBS msb, Entries entries)
                 {
-                    base.GetNames(entries);
+                    base.GetNames(msb, entries);
                     WalkRegionNames = new string[WalkRegionIndices.Length];
                     for (int i = 0; i < WalkRegionIndices.Length; i++)
                         WalkRegionNames[i] = GetName(entries.Regions, WalkRegionIndices[i]);
@@ -581,9 +581,9 @@ namespace SoulsFormats
                         wrEntry.GetNames(entries);
                 }
 
-                internal override void GetIndices(Entries entries)
+                internal override void GetIndices(MSBS msb, Entries entries)
                 {
-                    base.GetIndices(entries);
+                    base.GetIndices(msb, entries);
                     WalkRegionIndices = new short[WalkRegionNames.Length];
                     for (int i = 0; i < WalkRegionNames.Length; i++)
                         WalkRegionIndices[i] = (short)GetIndex(entries.Regions, WalkRegionNames[i]);
@@ -667,17 +667,17 @@ namespace SoulsFormats
                     bw.WriteInt32s(GroupPartIndices);
                 }
 
-                internal override void GetNames(Entries entries)
+                internal override void GetNames(MSBS msb, Entries entries)
                 {
-                    base.GetNames(entries);
+                    base.GetNames(msb, entries);
                     GroupPartNames = new string[GroupPartIndices.Length];
                     for (int i = 0; i < GroupPartIndices.Length; i++)
                         GroupPartNames[i] = GetName(entries.Parts, GroupPartIndices[i]);
                 }
 
-                internal override void GetIndices(Entries entries)
+                internal override void GetIndices(MSBS msb, Entries entries)
                 {
-                    base.GetIndices(entries);
+                    base.GetIndices(msb, entries);
                     GroupPartIndices = new int[GroupPartNames.Length];
                     for (int i = 0; i < GroupPartNames.Length; i++)
                         GroupPartIndices[i] = GetIndex(entries.Parts, GroupPartNames[i]);
@@ -785,17 +785,17 @@ namespace SoulsFormats
                     bw.WriteInt32s(Event21PartIndices);
                 }
 
-                internal override void GetNames(Entries entries)
+                internal override void GetNames(MSBS msb, Entries entries)
                 {
-                    base.GetNames(entries);
+                    base.GetNames(msb, entries);
                     Event21PartNames = new string[Event21PartIndices.Length];
                     for (int i = 0; i < Event21PartIndices.Length; i++)
                         Event21PartNames[i] = GetName(entries.Parts, Event21PartIndices[i]);
                 }
 
-                internal override void GetIndices(Entries entries)
+                internal override void GetIndices(MSBS msb, Entries entries)
                 {
-                    base.GetIndices(entries);
+                    base.GetIndices(msb, entries);
                     Event21PartIndices = new int[Event21PartNames.Length];
                     for (int i = 0; i < Event21PartNames.Length; i++)
                         Event21PartIndices[i] = GetIndex(entries.Parts, Event21PartNames[i]);
@@ -813,17 +813,18 @@ namespace SoulsFormats
                 internal PartsGroup(BinaryReaderEx br) : base(br) { }
             }
 
-            public class Event23 : Event
+            public class Talk : Event
             {
-                public override EventType Type => EventType.Event23;
+                public override EventType Type => EventType.Talk;
 
                 internal override bool HasTypeData => true;
 
                 public int UnkT00 { get; set; }
 
-                public int[] UnkT04 { get; private set; }
+                public string[] EnemyNames { get; private set; }
+                private int[] EnemyIndices;
 
-                public int[] UnkT24 { get; private set; }
+                public int[] TalkIDs { get; private set; }
 
                 public short UnkT44 { get; set; }
 
@@ -831,17 +832,17 @@ namespace SoulsFormats
 
                 public int UnkT48 { get; set; }
 
-                public Event23() : base()
+                public Talk() : base()
                 {
-                    UnkT04 = new int[8];
-                    UnkT24 = new int[8];
+                    EnemyNames = new string[8];
+                    TalkIDs = new int[8];
                 }
 
-                internal Event23(BinaryReaderEx br) : base(br)
+                internal Talk(BinaryReaderEx br) : base(br)
                 {
                     UnkT00 = br.ReadInt32();
-                    UnkT04 = br.ReadInt32s(8);
-                    UnkT24 = br.ReadInt32s(8);
+                    EnemyIndices = br.ReadInt32s(8);
+                    TalkIDs = br.ReadInt32s(8);
                     UnkT44 = br.ReadInt16();
                     UnkT46 = br.ReadInt16();
                     UnkT48 = br.ReadInt32();
@@ -851,12 +852,28 @@ namespace SoulsFormats
                 internal override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(UnkT00);
-                    bw.WriteInt32s(UnkT04);
-                    bw.WriteInt32s(UnkT24);
+                    bw.WriteInt32s(EnemyIndices);
+                    bw.WriteInt32s(TalkIDs);
                     bw.WriteInt16(UnkT44);
                     bw.WriteInt16(UnkT46);
                     bw.WriteInt32(UnkT48);
                     bw.WriteNull(0x34, false);
+                }
+
+                internal override void GetNames(MSBS msb, Entries entries)
+                {
+                    base.GetNames(msb, entries);
+                    EnemyNames = new string[EnemyIndices.Length];
+                    for (int i = 0; i < EnemyIndices.Length; i++)
+                        EnemyNames[i] = GetName(msb.Parts.Enemies, EnemyIndices[i]);
+                }
+
+                internal override void GetIndices(MSBS msb, Entries entries)
+                {
+                    base.GetIndices(msb, entries);
+                    EnemyIndices = new int[EnemyNames.Length];
+                    for (int i = 0; i < EnemyNames.Length; i++)
+                        EnemyIndices[i] = GetIndex(msb.Parts.Enemies, EnemyNames[i]);
                 }
             }
 

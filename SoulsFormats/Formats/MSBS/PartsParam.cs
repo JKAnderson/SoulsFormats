@@ -1152,7 +1152,10 @@ namespace SoulsFormats
 
                 public int NPCParamID { get; set; }
 
-                public int TalkParamID { get; set; }
+                /// <summary>
+                /// Unknown; previously talk ID, now always 0 or 1 except for the Memorial Mob in Senpou.
+                /// </summary>
+                public int UnkT10 { get; set; }
 
                 public short ChrManipulatorAllocationParameter { get; set; }
 
@@ -1188,7 +1191,7 @@ namespace SoulsFormats
                     Unk5 = new UnkStruct5();
                     ThinkParamID = -1;
                     NPCParamID = -1;
-                    TalkParamID = -1;
+                    UnkT10 = -1;
                     CharaInitID = -1;
                     BackupEventAnimID = -1;
                     EventFlagID = -1;
@@ -1199,7 +1202,7 @@ namespace SoulsFormats
                     Unk5 = new UnkStruct5(clone.Unk5);
                     ThinkParamID = clone.ThinkParamID;
                     NPCParamID = clone.NPCParamID;
-                    TalkParamID = clone.TalkParamID;
+                    UnkT10 = clone.UnkT10;
                     ChrManipulatorAllocationParameter = clone.ChrManipulatorAllocationParameter;
                     CharaInitID = clone.CharaInitID;
                     CollisionPartName = clone.CollisionPartName;
@@ -1222,7 +1225,7 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                     ThinkParamID = br.ReadInt32();
                     NPCParamID = br.ReadInt32();
-                    TalkParamID = br.ReadInt32();
+                    UnkT10 = br.ReadInt32();
                     br.AssertInt16(0);
                     ChrManipulatorAllocationParameter = br.ReadInt16();
                     CharaInitID = br.ReadInt32();
@@ -1266,7 +1269,7 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                     bw.WriteInt32(ThinkParamID);
                     bw.WriteInt32(NPCParamID);
-                    bw.WriteInt32(TalkParamID);
+                    bw.WriteInt32(UnkT10);
                     bw.WriteInt16(0);
                     bw.WriteInt16(ChrManipulatorAllocationParameter);
                     bw.WriteInt32(CharaInitID);
