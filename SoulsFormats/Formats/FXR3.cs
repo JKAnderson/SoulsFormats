@@ -20,6 +20,15 @@ namespace SoulsFormats
 
         public List<int> Section13s { get; set; }
 
+        public FXR3()
+        {
+            Version = FXRVersion.Sekiro;
+            Section1Tree = new Section1();
+            Section4Tree = new Section4();
+            Section12s = new List<int>();
+            Section13s = new List<int>();
+        }
+
         internal override bool Is(BinaryReaderEx br)
         {
             string magic = br.GetASCII(0, 4);
@@ -237,7 +246,12 @@ namespace SoulsFormats
 
         public class Section1
         {
-            public List<Section2> Section2s;
+            public List<Section2> Section2s { get; set; }
+
+            public Section1()
+            {
+                Section2s = new List<Section2>();
+            }
 
             internal Section1(BinaryReaderEx br)
             {
@@ -273,7 +287,12 @@ namespace SoulsFormats
 
         public class Section2
         {
-            public List<Section3> Section3s;
+            public List<Section3> Section3s { get; set; }
+
+            public Section2()
+            {
+                Section3s = new List<Section3>();
+            }
 
             internal Section2(BinaryReaderEx br)
             {
@@ -309,9 +328,20 @@ namespace SoulsFormats
 
         public class Section3
         {
-            public int Unk08, Unk10, Unk38;
+            public int Unk08 { get; set; }
 
-            public int Section11Data1, Section11Data2;
+            public int Unk10 { get; set; }
+
+            public int Unk38 { get; set; }
+
+            public int Section11Data1 { get; set; }
+
+            public int Section11Data2 { get; set; }
+
+            public Section3()
+            {
+
+            }
 
             internal Section3(BinaryReaderEx br)
             {
@@ -397,6 +427,13 @@ namespace SoulsFormats
             public List<Section5> Section5s { get; set; }
 
             public List<Section6> Section6s { get; set; }
+
+            public Section4()
+            {
+                Section4s = new List<Section4>();
+                Section5s = new List<Section5>();
+                Section6s = new List<Section6>();
+            }
 
             internal Section4(BinaryReaderEx br)
             {
@@ -511,6 +548,11 @@ namespace SoulsFormats
 
             public List<Section6> Section6s { get; set; }
 
+            public Section5()
+            {
+                Section6s = new List<Section6>();
+            }
+
             internal Section5(BinaryReaderEx br)
             {
                 Unk00 = br.ReadInt16();
@@ -574,6 +616,15 @@ namespace SoulsFormats
             public List<int> Section11s1 { get; set; }
 
             public List<int> Section11s2 { get; set; }
+
+            public Section6()
+            {
+                Section7s1 = new List<Section7>();
+                Section7s2 = new List<Section7>();
+                Section10s = new List<Section10>();
+                Section11s1 = new List<int>();
+                Section11s2 = new List<int>();
+            }
 
             internal Section6(BinaryReaderEx br)
             {
@@ -690,6 +741,12 @@ namespace SoulsFormats
 
             public List<int> Section11s { get; set; }
 
+            public Section7()
+            {
+                Section8s = new List<Section8>();
+                Section11s = new List<int>();
+            }
+
             internal Section7(BinaryReaderEx br)
             {
                 Unk00 = br.ReadInt16();
@@ -766,6 +823,12 @@ namespace SoulsFormats
 
             public List<int> Section11s { get; set; }
 
+            public Section8()
+            {
+                Section9s = new List<Section9>();
+                Section11s = new List<int>();
+            }
+
             internal Section8(BinaryReaderEx br)
             {
                 Unk00 = br.ReadInt16();
@@ -827,6 +890,11 @@ namespace SoulsFormats
 
             public List<int> Section11s { get; set; }
 
+            public Section9()
+            {
+                Section11s = new List<int>();
+            }
+
             internal Section9(BinaryReaderEx br)
             {
                 br.AssertInt16(48);
@@ -866,6 +934,11 @@ namespace SoulsFormats
         public class Section10
         {
             public List<int> Section11s { get; set; }
+
+            public Section10()
+            {
+                Section11s = new List<int>();
+            }
 
             internal Section10(BinaryReaderEx br)
             {
