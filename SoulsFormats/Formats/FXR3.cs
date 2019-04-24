@@ -1,31 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 
 namespace SoulsFormats
 {
     /// <summary>
-    /// An SFX definition file used in DS3. Extension: .fxr
+    /// An SFX definition file used in DS3 and Sekiro. Extension: .fxr
     /// </summary>
     public class FXR3 : SoulsFile<FXR3>
     {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-        public FXRVersion Version;
+        public FXRVersion Version { get; set; }
 
-        public int ID;
+        public int ID { get; set; }
 
-        public Section1 Section1Tree;
+        public Section1 Section1Tree { get; set; }
 
-        public Section4 Section4Tree;
+        public Section4 Section4Tree { get; set; }
 
-        public List<int> Section12s;
+        public List<int> Section12s { get; set; }
 
-        public List<int> Section13s;
+        public List<int> Section13s { get; set; }
 
         internal override bool Is(BinaryReaderEx br)
         {
             string magic = br.GetASCII(0, 4);
-            return magic == "FXR\0";
+            short version = br.GetInt16(6);
+            return magic == "FXR\0" && (version == 4 || version == 5);
         }
 
         internal override void Read(BinaryReaderEx br)
@@ -75,6 +74,11 @@ namespace SoulsFormats
 
                 Section12s = new List<int>(br.GetInt32s(section12Offset, section12Count));
                 Section13s = new List<int>(br.GetInt32s(section13Offset, section13Count));
+            }
+            else
+            {
+                Section12s = new List<int>();
+                Section13s = new List<int>();
             }
 
             br.Position = section1Offset;
@@ -386,21 +390,19 @@ namespace SoulsFormats
 
         public class Section4
         {
-            public short Unk00;
+            public short Unk00 { get; set; }
 
-            public byte Unk02, Unk03;
+            public List<Section4> Section4s { get; set; }
 
-            public List<Section4> Section4s;
+            public List<Section5> Section5s { get; set; }
 
-            public List<Section5> Section5s;
-
-            public List<Section6> Section6s;
+            public List<Section6> Section6s { get; set; }
 
             internal Section4(BinaryReaderEx br)
             {
                 Unk00 = br.ReadInt16();
-                Unk02 = br.ReadByte();
-                Unk03 = br.ReadByte();
+                br.AssertByte(0);
+                br.AssertByte(1);
                 br.AssertInt32(0);
                 int section5Count = br.ReadInt32();
                 int section6Count = br.ReadInt32();
@@ -442,8 +444,8 @@ namespace SoulsFormats
             {
                 int index = section4s.Count;
                 bw.WriteInt16(Unk00);
-                bw.WriteByte(Unk02);
-                bw.WriteByte(Unk03);
+                bw.WriteByte(0);
+                bw.WriteByte(1);
                 bw.WriteInt32(0);
                 bw.WriteInt32(Section5s.Count);
                 bw.WriteInt32(Section6s.Count);
@@ -505,17 +507,15 @@ namespace SoulsFormats
 
         public class Section5
         {
-            public short Unk00;
+            public short Unk00 { get; set; }
 
-            public byte Unk02, Unk03;
-
-            public List<Section6> Section6s;
+            public List<Section6> Section6s { get; set; }
 
             internal Section5(BinaryReaderEx br)
             {
                 Unk00 = br.ReadInt16();
-                Unk02 = br.ReadByte();
-                Unk03 = br.ReadByte();
+                br.AssertByte(0);
+                br.AssertByte(1);
                 br.AssertInt32(0);
                 br.AssertInt32(0);
                 int section6Count = br.ReadInt32();
@@ -536,8 +536,8 @@ namespace SoulsFormats
             internal void Write(BinaryWriterEx bw, int index)
             {
                 bw.WriteInt16(Unk00);
-                bw.WriteByte(Unk02);
-                bw.WriteByte(Unk03);
+                bw.WriteByte(0);
+                bw.WriteByte(1);
                 bw.WriteInt32(0);
                 bw.WriteInt32(0);
                 bw.WriteInt32(Section6s.Count);
@@ -557,23 +557,29 @@ namespace SoulsFormats
 
         public class Section6
         {
-            public short Unk00;
+            public short Unk00 { get; set; }
 
-            public byte Unk02, Unk03;
+            public bool Unk02 { get; set; }
 
-            public int Unk04;
+            public bool Unk03 { get; set; }
 
-            public List<Section7> Section7s1, Section7s2;
+            public int Unk04 { get; set; }
 
-            public List<Section10> Section10s;
+            public List<Section7> Section7s1 { get; set; }
 
-            public List<int> Section11s1, Section11s2;
+            public List<Section7> Section7s2 { get; set; }
+
+            public List<Section10> Section10s { get; set; }
+
+            public List<int> Section11s1 { get; set; }
+
+            public List<int> Section11s2 { get; set; }
 
             internal Section6(BinaryReaderEx br)
             {
                 Unk00 = br.ReadInt16();
-                Unk02 = br.ReadByte();
-                Unk03 = br.ReadByte();
+                Unk02 = br.ReadBoolean();
+                Unk03 = br.ReadBoolean();
                 Unk04 = br.ReadInt32();
                 int section11Count1 = br.ReadInt32();
                 int section10Count = br.ReadInt32();
@@ -622,8 +628,8 @@ namespace SoulsFormats
             {
                 int index = section6s.Count;
                 bw.WriteInt16(Unk00);
-                bw.WriteByte(Unk02);
-                bw.WriteByte(Unk03);
+                bw.WriteBoolean(Unk02);
+                bw.WriteBoolean(Unk03);
                 bw.WriteInt32(Unk04);
                 bw.WriteInt32(Section11s1.Count);
                 bw.WriteInt32(Section10s.Count);
@@ -676,15 +682,19 @@ namespace SoulsFormats
 
         public class Section7
         {
-            public int Unk00, Unk04;
+            public short Unk00 { get; set; }
 
-            public List<Section8> Section8s;
+            public int Unk04 { get; set; }
 
-            public List<int> Section11s;
+            public List<Section8> Section8s { get; set; }
+
+            public List<int> Section11s { get; set; }
 
             internal Section7(BinaryReaderEx br)
             {
-                Unk00 = br.ReadInt32();
+                Unk00 = br.ReadInt16();
+                br.AssertByte(0);
+                br.AssertByte(1);
                 Unk04 = br.ReadInt32();
                 int section11Count = br.ReadInt32();
                 br.AssertInt32(0);
@@ -709,7 +719,9 @@ namespace SoulsFormats
             internal void Write(BinaryWriterEx bw, List<Section7> section7s)
             {
                 int index = section7s.Count;
-                bw.WriteInt32(Unk00);
+                bw.WriteInt16(Unk00);
+                bw.WriteByte(0);
+                bw.WriteByte(1);
                 bw.WriteInt32(Unk04);
                 bw.WriteInt32(Section11s.Count);
                 bw.WriteInt32(0);
@@ -746,20 +758,19 @@ namespace SoulsFormats
 
         public class Section8
         {
-            public byte Unk00, Unk01, Unk02, Unk03;
+            public short Unk00 { get; set; }
 
-            public int Unk04;
+            public int Unk04 { get; set; }
 
-            public List<Section9> Section9s;
+            public List<Section9> Section9s { get; set; }
 
-            public List<int> Section11s;
+            public List<int> Section11s { get; set; }
 
             internal Section8(BinaryReaderEx br)
             {
-                Unk00 = br.ReadByte();
-                Unk01 = br.ReadByte();
-                Unk02 = br.ReadByte();
-                Unk03 = br.ReadByte();
+                Unk00 = br.ReadInt16();
+                br.AssertByte(0);
+                br.AssertByte(1);
                 Unk04 = br.ReadInt32();
                 int section11Count = br.ReadInt32();
                 int section9Count = br.ReadInt32();
@@ -782,10 +793,9 @@ namespace SoulsFormats
             internal void Write(BinaryWriterEx bw, List<Section8> section8s)
             {
                 int index = section8s.Count;
-                bw.WriteByte(Unk00);
-                bw.WriteByte(Unk01);
-                bw.WriteByte(Unk02);
-                bw.WriteByte(Unk03);
+                bw.WriteInt16(Unk00);
+                bw.WriteByte(0);
+                bw.WriteByte(1);
                 bw.WriteInt32(Unk04);
                 bw.WriteInt32(Section11s.Count);
                 bw.WriteInt32(Section9s.Count);
@@ -813,13 +823,15 @@ namespace SoulsFormats
 
         public class Section9
         {
-            public int Unk00, Unk04;
+            public int Unk04 { get; set; }
 
-            public List<int> Section11s;
+            public List<int> Section11s { get; set; }
 
             internal Section9(BinaryReaderEx br)
             {
-                Unk00 = br.ReadInt32();
+                br.AssertInt16(48);
+                br.AssertByte(0);
+                br.AssertByte(1);
                 Unk04 = br.ReadInt32();
                 int section11Count = br.ReadInt32();
                 br.AssertInt32(0);
@@ -832,7 +844,9 @@ namespace SoulsFormats
             internal void Write(BinaryWriterEx bw, List<Section9> section9s)
             {
                 int index = section9s.Count;
-                bw.WriteInt32(Unk00);
+                bw.WriteInt16(48);
+                bw.WriteByte(0);
+                bw.WriteByte(1);
                 bw.WriteInt32(Unk04);
                 bw.WriteInt32(Section11s.Count);
                 bw.WriteInt32(0);
@@ -851,7 +865,7 @@ namespace SoulsFormats
 
         public class Section10
         {
-            public List<int> Section11s;
+            public List<int> Section11s { get; set; }
 
             internal Section10(BinaryReaderEx br)
             {
