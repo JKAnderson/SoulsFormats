@@ -217,7 +217,17 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT00 { get; set; }
+                public bool UnkT00 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public bool UnkT01 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public bool UnkT02 { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -256,7 +266,10 @@ namespace SoulsFormats
 
                 internal MapPiece(BinaryReaderEx br) : base(br)
                 {
-                    UnkT00 = br.ReadInt32();
+                    UnkT00 = br.ReadBoolean();
+                    UnkT01 = br.ReadBoolean();
+                    UnkT02 = br.ReadBoolean();
+                    br.AssertByte(0);
                     UnkT04 = br.ReadSingle();
                     UnkT08 = br.ReadSingle();
                     UnkT0C = br.ReadSingle();
@@ -268,7 +281,10 @@ namespace SoulsFormats
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(UnkT00);
+                    bw.WriteBoolean(UnkT00);
+                    bw.WriteBoolean(UnkT01);
+                    bw.WriteBoolean(UnkT02);
+                    bw.WriteByte(0);
                     bw.WriteSingle(UnkT04);
                     bw.WriteSingle(UnkT08);
                     bw.WriteSingle(UnkT0C);

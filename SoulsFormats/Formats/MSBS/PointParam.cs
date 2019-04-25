@@ -240,9 +240,10 @@ namespace SoulsFormats
 
             public List<short> UnkB { get; set; }
 
-            public int UnkC00 { get; set; }
+            public string ActivationPartName { get; set; }
+            private int ActivationPartIndex;
 
-            public int UnkC04 { get; set; }
+            public int EntityID { get; set; }
 
             internal Region()
             {
@@ -251,6 +252,7 @@ namespace SoulsFormats
                 MapStudioLayer = -1;
                 UnkA = new List<short>();
                 UnkB = new List<short>();
+                EntityID = -1;
             }
 
             internal Region(BinaryReaderEx br)
@@ -315,8 +317,8 @@ namespace SoulsFormats
                 }
 
                 br.Position = start + baseDataOffset3;
-                UnkC00 = br.ReadInt32();
-                UnkC04 = br.ReadInt32();
+                ActivationPartIndex = br.ReadInt32();
+                EntityID = br.ReadInt32();
                 br.Position = start + typeDataOffset;
             }
 
@@ -363,8 +365,8 @@ namespace SoulsFormats
                 }
 
                 bw.FillInt64("BaseDataOffset3", bw.Position - start);
-                bw.WriteInt32(UnkC00);
-                bw.WriteInt32(UnkC04);
+                bw.WriteInt32(ActivationPartIndex);
+                bw.WriteInt32(EntityID);
 
                 if (HasTypeData)
                 {
@@ -388,6 +390,7 @@ namespace SoulsFormats
 
             internal virtual void GetNames(Entries entries)
             {
+                ActivationPartName = GetName(entries.Parts, ActivationPartIndex);
                 if (Shape is Shape.Composite composite)
                 {
                     foreach (Shape.Composite.Child child in composite.Children)
@@ -397,6 +400,7 @@ namespace SoulsFormats
 
             internal virtual void GetIndices(Entries entries)
             {
+                ActivationPartIndex = GetIndex(entries.Parts, ActivationPartName);
                 if (Shape is Shape.Composite composite)
                 {
                     foreach (Shape.Composite.Child child in composite.Children)
