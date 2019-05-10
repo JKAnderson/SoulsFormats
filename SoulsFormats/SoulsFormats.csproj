@@ -84,7 +84,6 @@
     <Compile Include="Formats\ENFL.cs" />
     <Compile Include="Formats\FLVER.cs" />
     <Compile Include="Formats\FMG.cs" />
-    <Compile Include="Formats\FLTPARAM.cs" />
     <Compile Include="Formats\FXR3.cs" />
     <Compile Include="Formats\GPARAM.cs" />
     <Compile Include="Formats\Other\MSBD\MSBD.cs" />
@@ -106,6 +105,7 @@
     <Compile Include="Formats\Other\MSBN\MSBN.ModelSection.cs" />
     <Compile Include="Formats\Other\MSBN\MSBN.PartsSection.cs" />
     <Compile Include="Formats\MTD.cs" />
+    <Compile Include="Formats\Other\Otogi\MDL.cs" />
     <Compile Include="Formats\PARAM64\PARAM64.cs" />
     <Compile Include="Formats\PARAM64\PARAM64.Layout.cs" />
     <Compile Include="Formats\DDS.cs" />
