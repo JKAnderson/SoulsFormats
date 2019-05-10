@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace SoulsFormats
 {
@@ -307,11 +308,16 @@ namespace SoulsFormats
                     {
                         ambiguous = true;
                         nameCounts[name]++;
-                        entry.Name = $"{name} ({nameCounts[name]})";
+                        entry.Name = $"{name} {{{nameCounts[name]}}}";
                     }
                 }
             }
             while (ambiguous);
+        }
+
+        private static string ReambiguateName(string name)
+        {
+            return Regex.Replace(name, @" \{\d+\}", "");
         }
 
         private static string GetName<T>(List<T> list, int index) where T : Entry
@@ -325,7 +331,9 @@ namespace SoulsFormats
         private static int GetIndex<T>(List<T> list, string name) where T : Entry
         {
             if (name == null)
+            {
                 return -1;
+            }
             else
             {
                 int result = list.FindIndex(entry => entry.Name == name);

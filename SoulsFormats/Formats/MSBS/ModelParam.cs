@@ -126,7 +126,7 @@ namespace SoulsFormats
             /// </summary>
             public string Placeholder { get; set; }
 
-            internal int InstanceCount;
+            private int InstanceCount;
 
             /// <summary>
             /// Unknown.
@@ -167,7 +167,7 @@ namespace SoulsFormats
                 bw.ReserveInt64("TypeDataOffset");
 
                 bw.FillInt64("NameOffset", bw.Position - start);
-                bw.WriteUTF16(Name, true);
+                bw.WriteUTF16(ReambiguateName(Name), true);
                 bw.FillInt64("SibOffset", bw.Position - start);
                 bw.WriteUTF16(Placeholder, true);
                 bw.Pad(8);
