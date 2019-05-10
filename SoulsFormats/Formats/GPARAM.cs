@@ -5,7 +5,7 @@ using System.Numerics;
 namespace SoulsFormats
 {
     /// <summary>
-    /// A graphics config file used in BB and DS3.
+    /// A graphics config file used since DS2. Extensions: .fltparam, .gparam
     /// </summary>
     public class GPARAM : SoulsFile<GPARAM>
     {
@@ -17,10 +17,10 @@ namespace SoulsFormats
         /// <summary>
         /// Unknown.
         /// </summary>
-        public int Unk0C;
+        public bool Unk0D;
 
         /// <summary>
-        /// Unknown.
+        /// Unknown; in DS2, number of entries in UnkBlock2.
         /// </summary>
         public int Unk14;
 
@@ -50,8 +50,6 @@ namespace SoulsFormats
         public GPARAM()
         {
             Game = GPGame.Sekiro;
-            Unk14 = 0;
-            Unk50 = 0;
             Groups = new List<Group>();
             UnkBlock2 = new byte[0];
             Unk3s = new List<Unk3>();
@@ -59,8 +57,8 @@ namespace SoulsFormats
 
         internal override bool Is(BinaryReaderEx br)
         {
-            string magic = br.GetASCII(0, 8);
-            return magic == "f\0i\0l\0t\0";
+            string magic = br.GetASCII(0, 4);
+            return magic == "filt" || magic == "f\0i\0";
         }
 
         internal override void Read(BinaryReaderEx br)
@@ -68,15 +66,18 @@ namespace SoulsFormats
             br.BigEndian = false;
 
             // Don't @ me.
-            br.AssertASCII("f\0i\0l\0t\0");
+            if (br.AssertASCII("filt", "f\0i\0") == "f\0i\0")
+                br.AssertASCII("l\0t\0");
             Game = br.ReadEnum32<GPGame>();
-            Unk0C = br.ReadInt32();
+            br.AssertByte(0);
+            Unk0D = br.ReadBoolean();
+            br.AssertInt16(0);
             int groupCount = br.ReadInt32();
             Unk14 = br.ReadInt32();
             // Header size or group header headers offset, you decide
-            br.AssertInt32(Game == GPGame.DarkSouls3 ? 0x50 : 0x54);
+            br.AssertInt32(0x40, 0x50, 0x54);
 
-            Offsets offsets;
+            Offsets offsets = default;
             offsets.GroupHeaders = br.ReadInt32();
             offsets.ParamHeaderOffsets = br.ReadInt32();
             offsets.ParamHeaders = br.ReadInt32();
@@ -89,12 +90,17 @@ namespace SoulsFormats
             offsets.Unk3ValueIDs = br.ReadInt32();
             br.AssertInt32(0);
 
-            offsets.CommentOffsetsOffsets = br.ReadInt32();
-            offsets.CommentOffsets = br.ReadInt32();
-            offsets.Comments = br.ReadInt32();
+            if (Game == GPGame.DarkSouls3 || Game == GPGame.Sekiro)
+            {
+                offsets.CommentOffsetsOffsets = br.ReadInt32();
+                offsets.CommentOffsets = br.ReadInt32();
+                offsets.Comments = br.ReadInt32();
+            }
 
             if (Game == GPGame.Sekiro)
+            {
                 Unk50 = br.ReadSingle();
+            }
 
             Groups = new List<Group>(groupCount);
             for (int i = 0; i < groupCount; i++)
@@ -106,18 +112,45 @@ namespace SoulsFormats
             Unk3s = new List<Unk3>(unk3Count);
             for (int i = 0; i < unk3Count; i++)
                 Unk3s.Add(new Unk3(br, Game, offsets));
+
+            if (Game == GPGame.DarkSouls3 || Game == GPGame.Sekiro)
+            {
+                int[] commentOffsetsOffsets = br.GetInt32s(offsets.CommentOffsetsOffsets, groupCount);
+                int commentOffsetsLength = offsets.Comments - offsets.CommentOffsets;
+                for (int i = 0; i < groupCount; i++)
+                {
+                    int commentCount;
+                    if (i == groupCount - 1)
+                        commentCount = (commentOffsetsLength - commentOffsetsOffsets[i]) / 4;
+                    else
+                        commentCount = (commentOffsetsOffsets[i + 1] - commentOffsetsOffsets[i]) / 4;
+
+                    br.Position = offsets.CommentOffsets + commentOffsetsOffsets[i];
+                    for (int j = 0; j < commentCount; j++)
+                    {
+                        int commentOffset = br.ReadInt32();
+                        string comment = br.GetUTF16(offsets.Comments + commentOffset);
+                        Groups[i].Comments.Add(comment);
+                    }
+                }
+            }
         }
 
         internal override void Write(BinaryWriterEx bw)
         {
             bw.BigEndian = false;
 
-            bw.WriteUTF16("filt");
+            if (Game == GPGame.DarkSouls2)
+                bw.WriteASCII("filt");
+            else
+                bw.WriteUTF16("filt");
             bw.WriteUInt32((uint)Game);
-            bw.WriteInt32(Unk0C);
+            bw.WriteByte(0);
+            bw.WriteBoolean(Unk0D);
+            bw.WriteInt16(0);
             bw.WriteInt32(Groups.Count);
             bw.WriteInt32(Unk14);
-            bw.WriteInt32(Game == GPGame.DarkSouls3 ? 0x50 : 0x54);
+            bw.ReserveInt32("HeaderSize");
 
             bw.ReserveInt32("GroupHeadersOffset");
             bw.ReserveInt32("ParamHeaderOffsetsOffset");
@@ -131,12 +164,19 @@ namespace SoulsFormats
             bw.ReserveInt32("Unk3ValuesOffset");
             bw.WriteInt32(0);
 
-            bw.ReserveInt32("CommentOffsetsOffsetsOffset");
-            bw.ReserveInt32("CommentOffsetsOffset");
-            bw.ReserveInt32("CommentsOffset");
+            if (Game == GPGame.DarkSouls3 || Game == GPGame.Sekiro)
+            {
+                bw.ReserveInt32("CommentOffsetsOffsetsOffset");
+                bw.ReserveInt32("CommentOffsetsOffset");
+                bw.ReserveInt32("CommentsOffset");
+            }
 
             if (Game == GPGame.Sekiro)
+            {
                 bw.WriteSingle(Unk50);
+            }
+
+            bw.FillInt32("HeaderSize", (int)bw.Position);
 
             for (int i = 0; i < Groups.Count; i++)
                 Groups[i].WriteHeaderOffset(bw, i);
@@ -144,7 +184,7 @@ namespace SoulsFormats
             int groupHeadersOffset = (int)bw.Position;
             bw.FillInt32("GroupHeadersOffset", groupHeadersOffset);
             for (int i = 0; i < Groups.Count; i++)
-                Groups[i].WriteHeader(bw, i, groupHeadersOffset);
+                Groups[i].WriteHeader(bw, Game, i, groupHeadersOffset);
 
             int paramHeaderOffsetsOffset = (int)bw.Position;
             bw.FillInt32("ParamHeaderOffsetsOffset", paramHeaderOffsetsOffset);
@@ -154,7 +194,7 @@ namespace SoulsFormats
             int paramHeadersOffset = (int)bw.Position;
             bw.FillInt32("ParamHeadersOffset", paramHeadersOffset);
             for (int i = 0; i < Groups.Count; i++)
-                Groups[i].WriteParamHeaders(bw, i, paramHeadersOffset);
+                Groups[i].WriteParamHeaders(bw, Game, i, paramHeadersOffset);
 
             int valuesOffset = (int)bw.Position;
             bw.FillInt32("ValuesOffset", valuesOffset);
@@ -178,19 +218,22 @@ namespace SoulsFormats
             for (int i = 0; i < Unk3s.Count; i++)
                 Unk3s[i].WriteValues(bw, Game, i, unk3ValuesOffset);
 
-            bw.FillInt32("CommentOffsetsOffsetsOffset", (int)bw.Position);
-            for (int i = 0; i < Groups.Count; i++)
-                Groups[i].WriteCommentOffsetsOffset(bw, i);
+            if (Game == GPGame.DarkSouls3 || Game == GPGame.Sekiro)
+            {
+                bw.FillInt32("CommentOffsetsOffsetsOffset", (int)bw.Position);
+                for (int i = 0; i < Groups.Count; i++)
+                    Groups[i].WriteCommentOffsetsOffset(bw, i);
 
-            int commentOffsetsOffset = (int)bw.Position;
-            bw.FillInt32("CommentOffsetsOffset", commentOffsetsOffset);
-            for (int i = 0; i < Groups.Count; i++)
-                Groups[i].WriteCommentOffsets(bw, i, commentOffsetsOffset);
+                int commentOffsetsOffset = (int)bw.Position;
+                bw.FillInt32("CommentOffsetsOffset", commentOffsetsOffset);
+                for (int i = 0; i < Groups.Count; i++)
+                    Groups[i].WriteCommentOffsets(bw, i, commentOffsetsOffset);
 
-            int commentsOffset = (int)bw.Position;
-            bw.FillInt32("CommentsOffset", commentsOffset);
-            for (int i = 0; i < Groups.Count; i++)
-                Groups[i].WriteComments(bw, i, commentsOffset);
+                int commentsOffset = (int)bw.Position;
+                bw.FillInt32("CommentsOffset", commentsOffset);
+                for (int i = 0; i < Groups.Count; i++)
+                    Groups[i].WriteComments(bw, i, commentsOffset);
+            }
         }
 
         /// <summary>
@@ -203,6 +246,11 @@ namespace SoulsFormats
         /// </summary>
         public enum GPGame : uint
         {
+            /// <summary>
+            /// Dark Souls 2
+            /// </summary>
+            DarkSouls2 = 2,
+
             /// <summary>
             /// Dark Souls 3 and Bloodborne
             /// </summary>
@@ -240,7 +288,7 @@ namespace SoulsFormats
             public string Name1;
 
             /// <summary>
-            /// Identifies the group, but shorter?
+            /// Identifies the group, but shorter? Not present in DS2.
             /// </summary>
             public string Name2;
 
@@ -250,7 +298,7 @@ namespace SoulsFormats
             public List<Param> Params;
 
             /// <summary>
-            /// Comments indicating the purpose of each entry in param values.
+            /// Comments indicating the purpose of each entry in param values. Not present in DS2.
             /// </summary>
             public List<string> Comments;
 
@@ -269,41 +317,29 @@ namespace SoulsFormats
             {
                 int groupHeaderOffset = br.ReadInt32();
                 br.StepIn(offsets.GroupHeaders + groupHeaderOffset);
-
-                int paramCount = br.ReadInt32();
-                int paramHeaderOffsetsOffset = br.ReadInt32();
-                Name1 = br.ReadUTF16();
-                Name2 = br.ReadUTF16();
-
-                br.StepIn(offsets.ParamHeaderOffsets + paramHeaderOffsetsOffset);
                 {
-                    Params = new List<Param>(paramCount);
-                    for (int i = 0; i < paramCount; i++)
-                        Params.Add(new Param(br, game, offsets));
-                }
-                br.StepOut();
-
-                if (Params.Count > 0)
-                {
-                    int commentCount = Params[0].Values.Count;
-                    Comments = new List<string>(commentCount);
-                    int commentOffsetsOffset = br.GetInt32(offsets.CommentOffsetsOffsets + index * 4);
-                    br.StepIn(offsets.CommentOffsets + commentOffsetsOffset);
+                    int paramCount = br.ReadInt32();
+                    int paramHeaderOffsetsOffset = br.ReadInt32();
+                    if (game == GPGame.DarkSouls2)
                     {
-                        for (int i = 0; i < commentCount; i++)
-                        {
-                            int commentOffset = br.ReadInt32();
-                            Comments.Add(br.GetUTF16(offsets.Comments + commentOffset));
-                        }
+                        Name1 = br.ReadShiftJIS();
+                    }
+                    else
+                    {
+                        Name1 = br.ReadUTF16();
+                        Name2 = br.ReadUTF16();
+                    }
+
+                    br.StepIn(offsets.ParamHeaderOffsets + paramHeaderOffsetsOffset);
+                    {
+                        Params = new List<Param>(paramCount);
+                        for (int i = 0; i < paramCount; i++)
+                            Params.Add(new Param(br, game, offsets));
                     }
                     br.StepOut();
                 }
-                else
-                {
-                    Comments = new List<string>();
-                }
-
                 br.StepOut();
+                Comments = new List<string>();
             }
 
             internal void WriteHeaderOffset(BinaryWriterEx bw, int groupIndex)
@@ -311,13 +347,21 @@ namespace SoulsFormats
                 bw.ReserveInt32($"GroupHeaderOffset{groupIndex}");
             }
 
-            internal void WriteHeader(BinaryWriterEx bw, int groupIndex, int groupHeadersOffset)
+            internal void WriteHeader(BinaryWriterEx bw, GPGame game, int groupIndex, int groupHeadersOffset)
             {
                 bw.FillInt32($"GroupHeaderOffset{groupIndex}", (int)bw.Position - groupHeadersOffset);
                 bw.WriteInt32(Params.Count);
                 bw.ReserveInt32($"ParamHeaderOffsetsOffset{groupIndex}");
-                bw.WriteUTF16(Name1, true);
-                bw.WriteUTF16(Name2, true);
+
+                if (game == GPGame.DarkSouls2)
+                {
+                    bw.WriteShiftJIS(Name1, true);
+                }
+                else
+                {
+                    bw.WriteUTF16(Name1, true);
+                    bw.WriteUTF16(Name2, true);
+                }
                 bw.Pad(4);
             }
 
@@ -328,10 +372,10 @@ namespace SoulsFormats
                     Params[i].WriteParamHeaderOffset(bw, groupIndex, i);
             }
 
-            internal void WriteParamHeaders(BinaryWriterEx bw, int groupindex, int paramHeadersOffset)
+            internal void WriteParamHeaders(BinaryWriterEx bw, GPGame game, int groupindex, int paramHeadersOffset)
             {
                 for (int i = 0; i < Params.Count; i++)
-                    Params[i].WriteParamHeader(bw, groupindex, i, paramHeadersOffset);
+                    Params[i].WriteParamHeader(bw, game, groupindex, i, paramHeadersOffset);
             }
 
             internal void WriteValues(BinaryWriterEx bw, int groupindex, int valuesOffset)
@@ -364,6 +408,7 @@ namespace SoulsFormats
                 {
                     bw.FillInt32($"CommentOffset{index}:{i}", (int)bw.Position - commentsOffset);
                     bw.WriteUTF16(Comments[i], true);
+                    bw.Pad(4);
                 }
             }
 
@@ -377,7 +422,10 @@ namespace SoulsFormats
             /// </summary>
             public override string ToString()
             {
-                return $"{Name1} | {Name2}";
+                if (Name2 == null)
+                    return Name1;
+                else
+                    return $"{Name1} | {Name2}";
             }
         }
 
@@ -443,7 +491,7 @@ namespace SoulsFormats
         }
 
         /// <summary>
-        /// 
+        /// A collection of values controlling the same parameter in different circumstances.
         /// </summary>
         public class Param
         {
@@ -453,7 +501,7 @@ namespace SoulsFormats
             public string Name1;
 
             /// <summary>
-            /// Identifies the param generically.
+            /// Identifies the param generically. Not present in DS2.
             /// </summary>
             public string Name2;
 
@@ -506,8 +554,15 @@ namespace SoulsFormats
                     if (Type == ParamType.Byte && valueCount > 1)
                         throw new Exception("Notify TKGP so he can look into this, please.");
 
-                    Name1 = br.ReadUTF16();
-                    Name2 = br.ReadUTF16();
+                    if (game == GPGame.DarkSouls2)
+                    {
+                        Name1 = br.ReadShiftJIS();
+                    }
+                    else
+                    {
+                        Name1 = br.ReadUTF16();
+                        Name2 = br.ReadUTF16();
+                    }
 
                     br.StepIn(offsets.Values + valuesOffset);
                     {
@@ -592,7 +647,7 @@ namespace SoulsFormats
                 bw.ReserveInt32($"ParamHeaderOffset{groupIndex}:{paramIndex}");
             }
 
-            internal void WriteParamHeader(BinaryWriterEx bw, int groupIndex, int paramIndex, int paramHeadersOffset)
+            internal void WriteParamHeader(BinaryWriterEx bw, GPGame game, int groupIndex, int paramIndex, int paramHeadersOffset)
             {
                 bw.FillInt32($"ParamHeaderOffset{groupIndex}:{paramIndex}", (int)bw.Position - paramHeadersOffset);
                 bw.ReserveInt32($"ValuesOffset{groupIndex}:{paramIndex}");
@@ -603,8 +658,15 @@ namespace SoulsFormats
                 bw.WriteByte(0);
                 bw.WriteByte(0);
 
-                bw.WriteUTF16(Name1, true);
-                bw.WriteUTF16(Name2, true);
+                if (game == GPGame.DarkSouls2)
+                {
+                    bw.WriteShiftJIS(Name1, true);
+                }
+                else
+                {
+                    bw.WriteUTF16(Name1, true);
+                    bw.WriteUTF16(Name2, true);
+                }
                 bw.Pad(4);
             }
 
@@ -692,7 +754,10 @@ namespace SoulsFormats
             /// </summary>
             public override string ToString()
             {
-                return $"{Name1} | {Name2}";
+                if (Name2 == null)
+                    return Name1;
+                else
+                    return $"{Name1} | {Name2}";
             }
         }
 
@@ -747,8 +812,15 @@ namespace SoulsFormats
 
             internal void WriteValues(BinaryWriterEx bw, GPGame game, int index, int unk3ValueIDsOffset)
             {
-                bw.FillInt32($"Unk3ValueIDsOffset{index}", (int)bw.Position - unk3ValueIDsOffset);
-                bw.WriteInt32s(ValueIDs);
+                if (ValueIDs.Count == 0)
+                {
+                    bw.FillInt32($"Unk3ValueIDsOffset{index}", 0);
+                }
+                else
+                {
+                    bw.FillInt32($"Unk3ValueIDsOffset{index}", (int)bw.Position - unk3ValueIDsOffset);
+                    bw.WriteInt32s(ValueIDs);
+                }
             }
         }
     }
