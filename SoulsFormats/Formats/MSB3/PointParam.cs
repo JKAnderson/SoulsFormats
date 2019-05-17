@@ -9,7 +9,7 @@ namespace SoulsFormats
         /// <summary>
         /// A section containing points and volumes for various purposes.
         /// </summary>
-        public class PointSection : Section<Region>
+        public class PointParam : Param<Region>
         {
             internal override string Type => "POINT_PARAM_ST";
 
@@ -104,9 +104,9 @@ namespace SoulsFormats
             public List<Region.MufflingPortal> MufflingPortals;
 
             /// <summary>
-            /// Creates a new PointSection with no regions.
+            /// Creates a new PointParam with no regions.
             /// </summary>
-            public PointSection(int unk1 = 3) : base(unk1)
+            public PointParam(int unk1 = 3) : base(unk1)
             {
                 General = new List<Region.General>();
                 Unk00s = new List<Region.Unk00>();
@@ -476,7 +476,7 @@ namespace SoulsFormats
                 bw.ReserveInt64("TypeDataOffset");
 
                 bw.FillInt64("NameOffset", bw.Position - start);
-                bw.WriteUTF16(Name, true);
+                bw.WriteUTF16(ReambiguateName(Name), true);
                 bw.Pad(8);
 
                 bw.FillInt64("BaseDataOffset1", bw.Position - start);

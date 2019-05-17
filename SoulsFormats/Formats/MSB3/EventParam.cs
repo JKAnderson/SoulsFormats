@@ -9,7 +9,7 @@ namespace SoulsFormats
         /// <summary>
         /// Events controlling various interactive or dynamic features in the map.
         /// </summary>
-        public class EventSection : Section<Event>
+        public class EventParam : Param<Event>
         {
             internal override string Type => "EVENT_PARAM_ST";
 
@@ -54,9 +54,9 @@ namespace SoulsFormats
             public List<Event.Other> Others;
 
             /// <summary>
-            /// Creates a new EventSection with no events.
+            /// Creates a new EventParam with no events.
             /// </summary>
-            public EventSection(int unk1 = 3) : base(unk1)
+            public EventParam(int unk1 = 3) : base(unk1)
             {
                 Treasures = new List<Event.Treasure>();
                 Generators = new List<Event.Generator>();

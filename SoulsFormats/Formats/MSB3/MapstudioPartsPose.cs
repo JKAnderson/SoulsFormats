@@ -8,7 +8,7 @@ namespace SoulsFormats
         /// <summary>
         /// A section containing fixed poses for different Parts in the map.
         /// </summary>
-        public class PartsPoseSection : Section<PartsPose>
+        public class MapstudioPartsPose : Param<PartsPose>
         {
             internal override string Type => "MAPSTUDIO_PARTS_POSE_ST";
 
@@ -20,7 +20,7 @@ namespace SoulsFormats
             /// <summary>
             /// Creates a new PartsPoseSection with no entries.
             /// </summary>
-            public PartsPoseSection(int unk1 = 0) : base(unk1)
+            public MapstudioPartsPose(int unk1 = 0) : base(unk1)
             {
                 Poses = new List<PartsPose>();
             }

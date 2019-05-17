@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace SoulsFormats
 {
@@ -11,56 +12,56 @@ namespace SoulsFormats
         /// <summary>
         /// Models in this MSB.
         /// </summary>
-        public ModelSection Models;
+        public ModelParam Models;
 
         /// <summary>
         /// Events in this MSB.
         /// </summary>
-        public EventSection Events;
+        public EventParam Events;
 
         /// <summary>
         /// Regions in this MSB.
         /// </summary>
-        public PointSection Regions;
+        public PointParam Regions;
 
         /// <summary>
         /// Routes in this MSB.
         /// </summary>
-        public RouteSection Routes;
+        public RouteParam Routes;
 
         /// <summary>
         /// Layers in this MSB.
         /// </summary>
-        public LayerSection Layers;
+        public LayerParam Layers;
 
         /// <summary>
         /// Parts in this MSB.
         /// </summary>
-        public PartsSection Parts;
+        public PartsParam Parts;
 
         /// <summary>
         /// PartsPose data in this MSB.
         /// </summary>
-        public PartsPoseSection PartsPoses;
+        public MapstudioPartsPose PartsPoses;
 
         /// <summary>
         /// Bone names in this MSB.
         /// </summary>
-        public BoneNameSection BoneNames;
+        public MapstudioBoneName BoneNames;
 
         /// <summary>
         /// Creates a new MSB3 with all sections empty.
         /// </summary>
         public MSB3()
         {
-            Models = new ModelSection();
-            Events = new EventSection();
-            Regions = new PointSection();
-            Routes = new RouteSection();
-            Layers = new LayerSection();
-            Parts = new PartsSection();
-            PartsPoses = new PartsPoseSection();
-            BoneNames = new BoneNameSection();
+            Models = new ModelParam();
+            Events = new EventParam();
+            Regions = new PointParam();
+            Routes = new RouteParam();
+            Layers = new LayerParam();
+            Parts = new PartsParam();
+            PartsPoses = new MapstudioPartsPose();
+            BoneNames = new MapstudioBoneName();
         }
 
         internal override bool Is(BinaryReaderEx br)
@@ -111,42 +112,42 @@ namespace SoulsFormats
                 switch (type)
                 {
                     case "MODEL_PARAM_ST":
-                        Models = new ModelSection(unk1);
+                        Models = new ModelParam(unk1);
                         entries.Models = Models.Read(br, offsets);
                         break;
 
                     case "EVENT_PARAM_ST":
-                        Events = new EventSection(unk1);
+                        Events = new EventParam(unk1);
                         entries.Events = Events.Read(br, offsets);
                         break;
 
                     case "POINT_PARAM_ST":
-                        Regions = new PointSection(unk1);
+                        Regions = new PointParam(unk1);
                         entries.Regions = Regions.Read(br, offsets);
                         break;
 
                     case "ROUTE_PARAM_ST":
-                        Routes = new RouteSection(unk1);
+                        Routes = new RouteParam(unk1);
                         entries.Routes = Routes.Read(br, offsets);
                         break;
 
                     case "LAYER_PARAM_ST":
-                        Layers = new LayerSection(unk1);
+                        Layers = new LayerParam(unk1);
                         entries.Layers = Layers.Read(br, offsets);
                         break;
 
                     case "PARTS_PARAM_ST":
-                        Parts = new PartsSection(unk1);
+                        Parts = new PartsParam(unk1);
                         entries.Parts = Parts.Read(br, offsets);
                         break;
 
                     case "MAPSTUDIO_PARTS_POSE_ST":
-                        PartsPoses = new PartsPoseSection(unk1);
+                        PartsPoses = new MapstudioPartsPose(unk1);
                         entries.PartsPoses = PartsPoses.Read(br, offsets);
                         break;
 
                     case "MAPSTUDIO_BONE_NAME_STRING":
-                        BoneNames = new BoneNameSection(unk1);
+                        BoneNames = new MapstudioBoneName(unk1);
                         entries.BoneNames = BoneNames.Read(br, offsets);
                         break;
 
@@ -157,7 +158,6 @@ namespace SoulsFormats
                 nextSectionOffset = br.ReadInt64();
             }
 
-            DisambiguateNames(entries.Events);
             DisambiguateNames(entries.Models);
             DisambiguateNames(entries.Parts);
             DisambiguateNames(entries.Regions);
@@ -245,11 +245,16 @@ namespace SoulsFormats
                     {
                         ambiguous = true;
                         nameCounts[name]++;
-                        entry.Name = $"{name} ({nameCounts[name]})";
+                        entry.Name = $"{name} {{{nameCounts[name]}}}";
                     }
                 }
             }
             while (ambiguous);
+        }
+
+        private static string ReambiguateName(string name)
+        {
+            return Regex.Replace(name, @" \{\d+\}", "");
         }
 
         private static string GetName<T>(List<T> list, int index) where T : Entry
@@ -276,7 +281,7 @@ namespace SoulsFormats
         /// <summary>
         /// A generic MSB section containing a list of entries.
         /// </summary>
-        public abstract class Section<T>
+        public abstract class Param<T>
         {
             /// <summary>
             /// Unknown.
@@ -285,7 +290,7 @@ namespace SoulsFormats
 
             internal abstract string Type { get; }
 
-            internal Section(int unk1)
+            internal Param(int unk1)
             {
                 Unk1 = unk1;
             }

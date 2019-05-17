@@ -7,7 +7,7 @@ namespace SoulsFormats
         /// <summary>
         /// A section containing bone name strings. Purpose unknown.
         /// </summary>
-        public class BoneNameSection : Section<string>
+        public class MapstudioBoneName : Param<string>
         {
             internal override string Type => "MAPSTUDIO_BONE_NAME_STRING";
 
@@ -19,7 +19,7 @@ namespace SoulsFormats
             /// <summary>
             /// Creates a new BoneNameSection with no bone names.
             /// </summary>
-            public BoneNameSection(int unk1 = 0) : base(unk1)
+            public MapstudioBoneName(int unk1 = 0) : base(unk1)
             {
                 Names = new List<string>();
             }

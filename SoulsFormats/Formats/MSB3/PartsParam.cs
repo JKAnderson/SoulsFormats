@@ -9,7 +9,7 @@ namespace SoulsFormats
         /// <summary>
         /// Instances of various "things" in this MSB.
         /// </summary>
-        public class PartsSection : Section<Part>
+        public class PartsParam : Param<Part>
         {
             internal override string Type => "PARTS_PARAM_ST";
 
@@ -54,9 +54,9 @@ namespace SoulsFormats
             public List<Part.ConnectCollision> ConnectCollisions;
 
             /// <summary>
-            /// Creates a new PartsSection with no parts.
+            /// Creates a new PartsParam with no parts.
             /// </summary>
-            public PartsSection(int unk1 = 3) : base(unk1)
+            public PartsParam(int unk1 = 3) : base(unk1)
             {
                 MapPieces = new List<Part.MapPiece>();
                 Objects = new List<Part.Object>();
@@ -374,10 +374,7 @@ namespace SoulsFormats
                     UnkOffset2Delta -= typeDataOffset;
 
                 Name = br.GetUTF16(start + nameOffset);
-                if (placeholderOffset == 0)
-                    Placeholder = null;
-                else
-                    Placeholder = br.GetUTF16(start + placeholderOffset);
+                Placeholder = br.GetUTF16(start + placeholderOffset);
 
                 br.StepIn(start + baseDataOffset);
                 EventEntityID = br.ReadInt32();
@@ -443,14 +440,9 @@ namespace SoulsFormats
                 bw.ReserveInt64("UnkOffset2");
 
                 bw.FillInt64("NameOffset", bw.Position - start);
-                bw.WriteUTF16(Name, true);
-                if (Placeholder == null)
-                    bw.FillInt64("PlaceholderOffset", 0);
-                else
-                {
-                    bw.FillInt64("PlaceholderOffset", bw.Position - start);
-                    bw.WriteUTF16(Placeholder, true);
-                }
+                bw.WriteUTF16(ReambiguateName(Name), true);
+                bw.FillInt64("PlaceholderOffset", bw.Position - start);
+                bw.WriteUTF16(Placeholder, true);
                 bw.Pad(8);
 
                 bw.FillInt64("BaseDataOffset", bw.Position - start);

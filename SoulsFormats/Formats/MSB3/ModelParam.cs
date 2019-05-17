@@ -8,7 +8,7 @@ namespace SoulsFormats
         /// <summary>
         /// A section containing all the models available to parts in this map.
         /// </summary>
-        public class ModelSection : Section<Model>
+        public class ModelParam : Param<Model>
         {
             internal override string Type => "MODEL_PARAM_ST";
 
@@ -43,9 +43,9 @@ namespace SoulsFormats
             public List<Model.Other> Others;
 
             /// <summary>
-            /// Creates a new ModelSection with no models.
+            /// Creates a new ModelParam with no models.
             /// </summary>
-            public ModelSection(int unk1 = 3) : base(unk1)
+            public ModelParam(int unk1 = 3) : base(unk1)
             {
                 MapPieces = new List<Model.MapPiece>();
                 Objects = new List<Model.Object>();
@@ -220,7 +220,7 @@ namespace SoulsFormats
                 bw.ReserveInt64("UnkOffset");
 
                 bw.FillInt64("NameOffset", bw.Position - start);
-                bw.WriteUTF16(Name, true);
+                bw.WriteUTF16(ReambiguateName(Name), true);
                 bw.FillInt64("PlaceholderOffset", bw.Position - start);
                 bw.WriteUTF16(Placeholder, true);
                 bw.Pad(8);

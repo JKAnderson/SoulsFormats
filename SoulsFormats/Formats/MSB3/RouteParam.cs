@@ -5,41 +5,41 @@ namespace SoulsFormats
     public partial class MSB3
     {
         /// <summary>
-        /// A section containing layers, which probably don't actually do anything.
+        /// A section containing routes. Purpose unknown.
         /// </summary>
-        public class LayerSection : Section<Layer>
+        public class RouteParam : Param<Route>
         {
-            internal override string Type => "LAYER_PARAM_ST";
+            internal override string Type => "ROUTE_PARAM_ST";
 
             /// <summary>
-            /// The layers in this section.
+            /// The routes in this section.
             /// </summary>
-            public List<Layer> Layers;
+            public List<Route> Routes;
 
             /// <summary>
-            /// Creates a new LayerSection with no layers.
+            /// Creates a new RouteParam with no routes.
             /// </summary>
-            public LayerSection(int unk1 = 3) : base(unk1)
+            public RouteParam(int unk1 = 3) : base(unk1)
             {
-                Layers = new List<Layer>();
+                Routes = new List<Route>();
             }
 
             /// <summary>
-            /// Returns every layer in the order they will be written.
+            /// Returns every route in the order they will be written.
             /// </summary>
-            public override List<Layer> GetEntries()
+            public override List<Route> GetEntries()
             {
-                return Layers;
+                return Routes;
             }
 
-            internal override Layer ReadEntry(BinaryReaderEx br)
+            internal override Route ReadEntry(BinaryReaderEx br)
             {
-                var layer = new Layer(br);
-                Layers.Add(layer);
-                return layer;
+                var route = new Route(br);
+                Routes.Add(route);
+                return route;
             }
 
-            internal override void WriteEntries(BinaryWriterEx bw, List<Layer> entries)
+            internal override void WriteEntries(BinaryWriterEx bw, List<Route> entries)
             {
                 for (int i = 0; i < entries.Count; i++)
                 {
@@ -50,37 +50,43 @@ namespace SoulsFormats
         }
 
         /// <summary>
-        /// Unknown; seems to have been related to ceremonies but probably unused in release.
+        /// Unknown.
         /// </summary>
-        public class Layer
+        public class Route
         {
             /// <summary>
-            /// The name of this layer.
+            /// The name of this route.
             /// </summary>
             public string Name;
 
             /// <summary>
-            /// Unknown; usually just counts up from 0.
+            /// Unknown.
             /// </summary>
             public int Unk08, Unk0C;
 
             /// <summary>
-            /// Unknown; seems to always be 0.
+            /// Unknown; seems to always be 4.
             /// </summary>
             public int Unk10;
 
             /// <summary>
-            /// Creates a new Layer with default values.
+            /// Unknown; seems to just count up from 0.
             /// </summary>
-            public Layer()
+            public int Unk14;
+
+            /// <summary>
+            /// Creates a new Route with default values.
+            /// </summary>
+            public Route()
             {
                 Name = "";
                 Unk08 = 0;
                 Unk0C = 0;
-                Unk10 = 0;
+                Unk10 = 4;
+                Unk14 = 0;
             }
 
-            internal Layer(BinaryReaderEx br)
+            internal Route(BinaryReaderEx br)
             {
                 long start = br.Position;
 
@@ -88,6 +94,10 @@ namespace SoulsFormats
                 Unk08 = br.ReadInt32();
                 Unk0C = br.ReadInt32();
                 Unk10 = br.ReadInt32();
+                Unk14 = br.ReadInt32();
+
+                for (int i = 0; i < 26; i++)
+                    br.AssertInt32(0);
 
                 Name = br.GetUTF16(start + nameOffset);
             }
@@ -100,6 +110,10 @@ namespace SoulsFormats
                 bw.WriteInt32(Unk08);
                 bw.WriteInt32(Unk0C);
                 bw.WriteInt32(Unk10);
+                bw.WriteInt32(Unk14);
+
+                for (int i = 0; i < 26; i++)
+                    bw.WriteInt32(0);
 
                 bw.FillInt64("NameOffset", bw.Position - start);
                 bw.WriteUTF16(Name, true);
@@ -107,11 +121,11 @@ namespace SoulsFormats
             }
 
             /// <summary>
-            /// Returns the name and three values of this layer.
+            /// Returns the name and four values of this route.
             /// </summary>
             public override string ToString()
             {
-                return $"{Name} ({Unk08}, {Unk0C}, {Unk10})";
+                return $"{Name} ({Unk08}, {Unk0C}, {Unk10}, {Unk14})";
             }
         }
     }
