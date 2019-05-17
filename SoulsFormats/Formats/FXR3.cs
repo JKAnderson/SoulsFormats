@@ -173,14 +173,14 @@ namespace SoulsFormats
 
             bw.FillInt32("Section6Offset", (int)bw.Position);
             section5Count = 0;
-            var section6s = new List<Section6>();
+            var section6s = new List<FFXDrawEntityHost>();
             for (int i = 0; i < section4s.Count; i++)
                 section4s[i].WriteSection6s(bw, i, ref section5Count, section6s);
             bw.FillInt32("Section6Count", section6s.Count);
             bw.Pad(0x10);
 
             bw.FillInt32("Section7Offset", (int)bw.Position);
-            var section7s = new List<Section7>();
+            var section7s = new List<FFXProperty>();
             for (int i = 0; i < section6s.Count; i++)
                 section6s[i].WriteSection7s(bw, i, section7s);
             bw.FillInt32("Section7Count", section7s.Count);
@@ -426,13 +426,13 @@ namespace SoulsFormats
 
             public List<Section5> Section5s { get; set; }
 
-            public List<Section6> Section6s { get; set; }
+            public List<FFXDrawEntityHost> Section6s { get; set; }
 
             public Section4()
             {
                 Section4s = new List<Section4>();
                 Section5s = new List<Section5>();
-                Section6s = new List<Section6>();
+                Section6s = new List<FFXDrawEntityHost>();
             }
 
             internal Section4(BinaryReaderEx br)
@@ -470,9 +470,9 @@ namespace SoulsFormats
 
                 br.StepIn(section6Offset);
                 {
-                    Section6s = new List<Section6>(section6Count);
+                    Section6s = new List<FFXDrawEntityHost>(section6Count);
                     for (int i = 0; i < section6Count; i++)
-                        Section6s.Add(new Section6(br));
+                        Section6s.Add(new FFXDrawEntityHost(br));
                 }
                 br.StepOut();
             }
@@ -530,10 +530,10 @@ namespace SoulsFormats
                 }
             }
 
-            internal void WriteSection6s(BinaryWriterEx bw, int index, ref int section5Count, List<Section6> section6s)
+            internal void WriteSection6s(BinaryWriterEx bw, int index, ref int section5Count, List<FFXDrawEntityHost> section6s)
             {
                 bw.FillInt32($"Section4Section6sOffset[{index}]", (int)bw.Position);
-                foreach (Section6 section6 in Section6s)
+                foreach (FFXDrawEntityHost section6 in Section6s)
                     section6.Write(bw, section6s);
 
                 for (int i = 0; i < Section5s.Count; i++)
@@ -546,11 +546,11 @@ namespace SoulsFormats
         {
             public short Unk00 { get; set; }
 
-            public List<Section6> Section6s { get; set; }
+            public List<FFXDrawEntityHost> Section6s { get; set; }
 
             public Section5()
             {
-                Section6s = new List<Section6>();
+                Section6s = new List<FFXDrawEntityHost>();
             }
 
             internal Section5(BinaryReaderEx br)
@@ -568,9 +568,9 @@ namespace SoulsFormats
 
                 br.StepIn(section6Offset);
                 {
-                    Section6s = new List<Section6>(section6Count);
+                    Section6s = new List<FFXDrawEntityHost>(section6Count);
                     for (int i = 0; i < section6Count; i++)
-                        Section6s.Add(new Section6(br));
+                        Section6s.Add(new FFXDrawEntityHost(br));
                 }
                 br.StepOut();
             }
@@ -589,15 +589,15 @@ namespace SoulsFormats
                 bw.WriteInt32(0);
             }
 
-            internal void WriteSection6s(BinaryWriterEx bw, int index, List<Section6> section6s)
+            internal void WriteSection6s(BinaryWriterEx bw, int index, List<FFXDrawEntityHost> section6s)
             {
                 bw.FillInt32($"Section5Section6sOffset[{index}]", (int)bw.Position);
-                foreach (Section6 section6 in Section6s)
+                foreach (FFXDrawEntityHost section6 in Section6s)
                     section6.Write(bw, section6s);
             }
         }
 
-        public class Section6
+        public class FFXDrawEntityHost
         {
             public short Unk00 { get; set; }
 
@@ -607,9 +607,9 @@ namespace SoulsFormats
 
             public int Unk04 { get; set; }
 
-            public List<Section7> Section7s1 { get; set; }
+            public List<FFXProperty> Properties1 { get; set; }
 
-            public List<Section7> Section7s2 { get; set; }
+            public List<FFXProperty> Properties2 { get; set; }
 
             public List<Section10> Section10s { get; set; }
 
@@ -617,16 +617,16 @@ namespace SoulsFormats
 
             public List<int> Section11s2 { get; set; }
 
-            public Section6()
+            public FFXDrawEntityHost()
             {
-                Section7s1 = new List<Section7>();
-                Section7s2 = new List<Section7>();
+                Properties1 = new List<FFXProperty>();
+                Properties2 = new List<FFXProperty>();
                 Section10s = new List<Section10>();
                 Section11s1 = new List<int>();
                 Section11s2 = new List<int>();
             }
 
-            internal Section6(BinaryReaderEx br)
+            internal FFXDrawEntityHost(BinaryReaderEx br)
             {
                 Unk00 = br.ReadInt16();
                 Unk02 = br.ReadBoolean();
@@ -649,13 +649,13 @@ namespace SoulsFormats
 
                 br.StepIn(section7Offset);
                 {
-                    Section7s1 = new List<Section7>(section7Count1);
+                    Properties1 = new List<FFXProperty>(section7Count1);
                     for (int i = 0; i < section7Count1; i++)
-                        Section7s1.Add(new Section7(br));
+                        Properties1.Add(new FFXProperty(br));
 
-                    Section7s2 = new List<Section7>(section7Count2);
+                    Properties2 = new List<FFXProperty>(section7Count2);
                     for (int i = 0; i < section7Count2; i++)
-                        Section7s2.Add(new Section7(br));
+                        Properties2.Add(new FFXProperty(br));
                 }
                 br.StepOut();
 
@@ -675,7 +675,7 @@ namespace SoulsFormats
                 br.StepOut();
             }
 
-            internal void Write(BinaryWriterEx bw, List<Section6> section6s)
+            internal void Write(BinaryWriterEx bw, List<FFXDrawEntityHost> section6s)
             {
                 int index = section6s.Count;
                 bw.WriteInt16(Unk00);
@@ -684,10 +684,10 @@ namespace SoulsFormats
                 bw.WriteInt32(Unk04);
                 bw.WriteInt32(Section11s1.Count);
                 bw.WriteInt32(Section10s.Count);
-                bw.WriteInt32(Section7s1.Count);
+                bw.WriteInt32(Properties1.Count);
                 bw.WriteInt32(Section11s2.Count);
                 bw.WriteInt32(0);
-                bw.WriteInt32(Section7s2.Count);
+                bw.WriteInt32(Properties2.Count);
                 bw.ReserveInt32($"Section6Section11sOffset[{index}]");
                 bw.WriteInt32(0);
                 bw.ReserveInt32($"Section6Section10sOffset[{index}]");
@@ -699,12 +699,12 @@ namespace SoulsFormats
                 section6s.Add(this);
             }
 
-            internal void WriteSection7s(BinaryWriterEx bw, int index, List<Section7> section7s)
+            internal void WriteSection7s(BinaryWriterEx bw, int index, List<FFXProperty> section7s)
             {
                 bw.FillInt32($"Section6Section7sOffset[{index}]", (int)bw.Position);
-                foreach (Section7 section7 in Section7s1)
+                foreach (FFXProperty section7 in Properties1)
                     section7.Write(bw, section7s);
-                foreach (Section7 section7 in Section7s2)
+                foreach (FFXProperty section7 in Properties2)
                     section7.Write(bw, section7s);
             }
 
@@ -731,7 +731,7 @@ namespace SoulsFormats
             }
         }
 
-        public class Section7
+        public class FFXProperty
         {
             public short Unk00 { get; set; }
 
@@ -741,13 +741,13 @@ namespace SoulsFormats
 
             public List<int> Section11s { get; set; }
 
-            public Section7()
+            public FFXProperty()
             {
                 Section8s = new List<Section8>();
                 Section11s = new List<int>();
             }
 
-            internal Section7(BinaryReaderEx br)
+            internal FFXProperty(BinaryReaderEx br)
             {
                 Unk00 = br.ReadInt16();
                 br.AssertByte(0);
@@ -773,7 +773,7 @@ namespace SoulsFormats
                 Section11s = new List<int>(br.GetInt32s(section11Offset, section11Count));
             }
 
-            internal void Write(BinaryWriterEx bw, List<Section7> section7s)
+            internal void Write(BinaryWriterEx bw, List<FFXProperty> section7s)
             {
                 int index = section7s.Count;
                 bw.WriteInt16(Unk00);
