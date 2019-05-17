@@ -26,39 +26,85 @@ namespace SoulsFormats
         }
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 
+        /// <summary>
+        /// Dynamic or interactive systems such as item pickups, levers, enemy spawners, etc.
+        /// </summary>
         public class EventParam : Param<Event>
         {
+            /// <summary>
+            /// Item pickups out in the open or inside containers.
+            /// </summary>
             public List<Event.Treasure> Treasures { get; set; }
 
+            /// <summary>
+            /// Enemy spawners.
+            /// </summary>
             public List<Event.Generator> Generators { get; set; }
 
+            /// <summary>
+            /// Interactive objects like levers and doors.
+            /// </summary>
             public List<Event.ObjAct> ObjActs { get; set; }
 
+            /// <summary>
+            /// Shift the entire map by a certain amount.
+            /// </summary>
             public List<Event.MapOffset> MapOffsets { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Event.WalkRoute> WalkRoutes { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Event.GroupTour> GroupTours { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Event.Event17> Event17s { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Event.Event18> Event18s { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Event.Event20> Event20s { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Event.Event21> Event21s { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Event.PartsGroup> PartsGroups { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Event.Talk> Talks { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Event.AutoDrawGroup> AutoDrawGroups { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Event.Other> Others { get; set; }
 
-            public EventParam() : this(0x23) { }
-
-            public EventParam(int unk00) : base(unk00, "EVENT_PARAM_ST")
+            /// <summary>
+            /// Creates an empty EventParam with the given version.
+            /// </summary>
+            public EventParam(int unk00 = 0x23) : base(unk00, "EVENT_PARAM_ST")
             {
                 Treasures = new List<Event.Treasure>();
                 Generators = new List<Event.Generator>();
@@ -156,6 +202,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Returns every Event in the order they'll be written.
+            /// </summary>
             public override List<Event> GetEntries()
             {
                 return SFUtil.ConcatAll<Event>(
@@ -165,20 +214,38 @@ namespace SoulsFormats
             }
         }
 
+        /// <summary>
+        /// A dynamic or interactive system.
+        /// </summary>
         public abstract class Event : Entry
         {
+            /// <summary>
+            /// The specific type of this Event.
+            /// </summary>
             public abstract EventType Type { get; }
 
             internal abstract bool HasTypeData { get; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public int EventIndex { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public string PartName { get; set; }
             private int PartIndex;
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public string RegionName { get; set; }
             private int RegionIndex;
 
+            /// <summary>
+            /// Identifies the Event in event scripts.
+            /// </summary>
             public int EntityID { get; set; }
 
             internal Event()
@@ -257,30 +324,60 @@ namespace SoulsFormats
                 RegionIndex = GetIndex(entries.Regions, RegionName);
             }
 
+            /// <summary>
+            /// Returns the type and name of the event as a string.
+            /// </summary>
             public override string ToString()
             {
                 return $"{Type} {Name}";
             }
 
+            /// <summary>
+            /// An item pickup in the open or inside a container.
+            /// </summary>
             public class Treasure : Event
             {
+                /// <summary>
+                /// EventType.Treasure
+                /// </summary>
                 public override EventType Type => EventType.Treasure;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// The part that the treasure is attached to.
+                /// </summary>
                 public string TreasurePartName { get; set; }
                 private int TreasurePartIndex;
 
+                /// <summary>
+                /// The item lot to be given.
+                /// </summary>
                 public int ItemLotID { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int ActionButtonID { get; set; }
 
+                /// <summary>
+                /// The animation to play on pickup.
+                /// </summary>
                 public int PickupAnimID { get; set; }
 
+                /// <summary>
+                /// Whether the treasure is inside a container.
+                /// </summary>
                 public bool InChest { get; set; }
 
+                /// <summary>
+                /// Whether the treasure should be disabled by default.
+                /// </summary>
                 public bool StartDisabled { get; set; }
 
+                /// <summary>
+                /// Creates a Treasure with default values.
+                /// </summary>
                 public Treasure() : base()
                 {
                     ItemLotID = -1;
@@ -337,36 +434,78 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// An enemy spawner.
+            /// </summary>
             public class Generator : Event
             {
+                /// <summary>
+                /// EventType.Generator
+                /// </summary>
                 public override EventType Type => EventType.Generator;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short MaxNum { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short LimitNum { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short MinGenNum { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short MaxGenNum { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float MinInterval { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float MaxInterval { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int SessionCondition { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT14 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT18 { get; set; }
 
+                /// <summary>
+                /// Regions where parts will spawn from.
+                /// </summary>
                 public string[] SpawnRegionNames { get; private set; }
                 private int[] SpawnRegionIndices;
 
+                /// <summary>
+                /// Parts that will be respawned.
+                /// </summary>
                 public string[] SpawnPartNames { get; private set; }
                 private int[] SpawnPartIndices;
 
+                /// <summary>
+                /// Creates a Generator with default values.
+                /// </summary>
                 public Generator() : base()
                 {
                     SpawnRegionNames = new string[8];
@@ -434,23 +573,47 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// An interactive object.
+            /// </summary>
             public class ObjAct : Event
             {
+                /// <summary>
+                /// EventType.ObjAct
+                /// </summary>
                 public override EventType Type => EventType.ObjAct;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown why objacts need an extra entity ID.
+                /// </summary>
                 public int ObjActEntityID { get; set; }
 
+                /// <summary>
+                /// The part to be interacted with.
+                /// </summary>
                 public string ObjActPartName { get; set; }
                 private int ObjActPartIndex;
 
+                /// <summary>
+                /// A row in ObjActParam.
+                /// </summary>
                 public int ObjActID { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public byte StateType { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int EventFlagID { get; set; }
 
+                /// <summary>
+                /// Creates an ObjAct with default values.
+                /// </summary>
                 public ObjAct() : base()
                 {
                     ObjActEntityID = -1;
@@ -499,16 +662,31 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Shifts the entire map; already accounted for in MSB coordinates.
+            /// </summary>
             public class MapOffset : Event
             {
+                /// <summary>
+                /// EventType.MapOffset
+                /// </summary>
                 public override EventType Type => EventType.MapOffset;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// How much to shift by.
+                /// </summary>
                 public Vector3 Position { get; set; }
 
+                /// <summary>
+                /// Unknown, but looks like rotation.
+                /// </summary>
                 public float Degree { get; set; }
 
+                /// <summary>
+                /// Creates a MapOffset with default values.
+                /// </summary>
                 public MapOffset() : base() { }
 
                 internal MapOffset(BinaryReaderEx br) : base(br)
@@ -524,19 +702,37 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class WalkRoute : Event
             {
+                /// <summary>
+                /// EventType.WalkRoute
+                /// </summary>
                 public override EventType Type => EventType.WalkRoute;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public string[] WalkRegionNames { get; private set; }
                 private short[] WalkRegionIndices;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public WREntry[] WREntries { get; set; }
 
+                /// <summary>
+                /// Creates a WalkRoute with default values.
+                /// </summary>
                 public WalkRoute() : base()
                 {
                     WalkRegionNames = new string[32];
@@ -592,15 +788,30 @@ namespace SoulsFormats
                         wrEntry.GetIndices(entries);
                 }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public class WREntry
                 {
+                    /// <summary>
+                    /// Unknown.
+                    /// </summary>
                     public string RegionName { get; set; }
                     private short RegionIndex;
 
+                    /// <summary>
+                    /// Unknown.
+                    /// </summary>
                     public int Unk04 { get; set; }
 
+                    /// <summary>
+                    /// Unknown.
+                    /// </summary>
                     public int Unk08 { get; set; }
 
+                    /// <summary>
+                    /// Creates a WREntry with default values.
+                    /// </summary>
                     public WREntry() { }
 
                     internal WREntry(BinaryReaderEx br)
@@ -631,19 +842,37 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class GroupTour : Event
             {
+                /// <summary>
+                /// EventType.GroupTour
+                /// </summary>
                 public override EventType Type => EventType.GroupTour;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int PlatoonIDScriptActive { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int State { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public string[] GroupPartNames { get; private set; }
                 private int[] GroupPartIndices;
 
+                /// <summary>
+                /// Creates a GroupTour with default values.
+                /// </summary>
                 public GroupTour() : base()
                 {
                     GroupPartNames = new string[32];
@@ -684,14 +913,26 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class Event17 : Event
             {
+                /// <summary>
+                /// EventType.Event17
+                /// </summary>
                 public override EventType Type => EventType.Event17;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// Creates an Event17 with default values.
+                /// </summary>
                 public Event17() : base() { }
 
                 internal Event17(BinaryReaderEx br) : base(br)
@@ -707,14 +948,26 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class Event18 : Event
             {
+                /// <summary>
+                /// EventType.Event18
+                /// </summary>
                 public override EventType Type => EventType.Event18;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// Creates an Event18 with default values.
+                /// </summary>
                 public Event18() : base() { }
 
                 internal Event18(BinaryReaderEx br) : base(br)
@@ -730,18 +983,36 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class Event20 : Event
             {
+                /// <summary>
+                /// EventType.Event20
+                /// </summary>
                 public override EventType Type => EventType.Event20;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short UnkT04 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short UnkT06 { get; set; }
 
+                /// <summary>
+                /// Creates an Event20 with default values.
+                /// </summary>
                 public Event20() : base() { }
 
                 internal Event20(BinaryReaderEx br) : base(br)
@@ -761,15 +1032,27 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class Event21 : Event
             {
+                /// <summary>
+                /// EventType.Event21
+                /// </summary>
                 public override EventType Type => EventType.Event21;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public string[] Event21PartNames { get; private set; }
                 private int[] Event21PartIndices;
 
+                /// <summary>
+                /// Creates an Event21 with default values.
+                /// </summary>
                 public Event21() : base()
                 {
                     Event21PartNames = new string[32];
@@ -802,36 +1085,72 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class PartsGroup : Event
             {
+                /// <summary>
+                /// EventType.PartsGroup
+                /// </summary>
                 public override EventType Type => EventType.PartsGroup;
 
                 internal override bool HasTypeData => false;
 
+                /// <summary>
+                /// Creates a PartsGroup with default values.
+                /// </summary>
                 public PartsGroup() : base() { }
 
                 internal PartsGroup(BinaryReaderEx br) : base(br) { }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class Talk : Event
             {
+                /// <summary>
+                /// EventType.Talk
+                /// </summary>
                 public override EventType Type => EventType.Talk;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public string[] EnemyNames { get; private set; }
                 private int[] EnemyIndices;
 
+                /// <summary>
+                /// IDs of talk ESDs.
+                /// </summary>
                 public int[] TalkIDs { get; private set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short UnkT44 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short UnkT46 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT48 { get; set; }
 
+                /// <summary>
+                /// Creates a Talk with default values.
+                /// </summary>
                 public Talk() : base()
                 {
                     EnemyNames = new string[8];
@@ -877,16 +1196,31 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class AutoDrawGroup : Event
             {
+                /// <summary>
+                /// EventType.AutoDrawGroup
+                /// </summary>
                 public override EventType Type => EventType.AutoDrawGroup;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT04 { get; set; }
 
+                /// <summary>
+                /// Creates an AutoDrawGroup with default values.
+                /// </summary>
                 public AutoDrawGroup() : base() { }
 
                 internal AutoDrawGroup(BinaryReaderEx br) : base(br)
@@ -904,12 +1238,21 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class Other : Event
             {
+                /// <summary>
+                /// EventType.Other
+                /// </summary>
                 public override EventType Type => EventType.Other;
 
                 internal override bool HasTypeData => false;
 
+                /// <summary>
+                /// Creates an Other with default values.
+                /// </summary>
                 public Other() : base() { }
 
                 internal Other(BinaryReaderEx br) : base(br) { }

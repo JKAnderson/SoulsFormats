@@ -29,14 +29,9 @@ namespace SoulsFormats
             public List<Route.MufflingBoxLink> MufflingBoxLinks { get; set; }
 
             /// <summary>
-            /// Creates an empty RouteParam.
-            /// </summary>
-            public RouteParam() : this(0x23) { }
-
-            /// <summary>
             /// Creates an empty RouteParam with the given version.
             /// </summary>
-            public RouteParam(int unk00) : base(unk00, "ROUTE_PARAM_ST")
+            public RouteParam(int unk00 = 0x23) : base(unk00, "ROUTE_PARAM_ST")
             {
                 MufflingPortalLinks = new List<Route.MufflingPortalLink>();
                 MufflingBoxLinks = new List<Route.MufflingBoxLink>();

@@ -73,23 +73,25 @@ namespace SoulsFormats
 
         internal override void Read(BinaryReaderEx br)
         {
+            br.BigEndian = false;
+
             br.AssertASCII("MSB ");
             br.AssertInt32(1);
             br.AssertInt32(0x10);
-            br.AssertBoolean(false);
-            br.AssertBoolean(false);
-            br.AssertByte(1);
-            br.AssertByte(0xFF);
+            br.AssertBoolean(false); // isBigEndian
+            br.AssertBoolean(false); // isBitBigEndian
+            br.AssertByte(1); // textEncoding
+            br.AssertByte(0xFF); // is64BitOffset
 
             Entries entries;
             Models = new ModelParam();
             entries.Models = Models.Read(br);
             Events = new EventParam();
-            List<Event> events = Events.Read(br);
+            entries.Events = Events.Read(br);
             Regions = new PointParam();
             entries.Regions = Regions.Read(br);
             Routes = new RouteParam();
-            Routes.Read(br);
+            entries.Routes = Routes.Read(br);
             Layers = new EmptyParam(0x23, "LAYER_PARAM_ST");
             Layers.Read(br);
             Parts = new PartsParam();
@@ -106,7 +108,7 @@ namespace SoulsFormats
             DisambiguateNames(entries.Regions);
             DisambiguateNames(entries.Parts);
 
-            foreach (Event evt in events)
+            foreach (Event evt in entries.Events)
                 evt.GetNames(this, entries);
             foreach (Region region in entries.Regions)
                 region.GetNames(entries);
@@ -118,19 +120,21 @@ namespace SoulsFormats
         {
             Entries entries;
             entries.Models = Models.GetEntries();
-            List<Event> events = Events.GetEntries();
+            entries.Events = Events.GetEntries();
             entries.Regions = Regions.GetEntries();
-            List<Route> routes = Routes.GetEntries();
+            entries.Routes = Routes.GetEntries();
             entries.Parts = Parts.GetEntries();
 
             foreach (Model model in entries.Models)
                 model.CountInstances(entries.Parts);
-            foreach (Event evt in events)
+            foreach (Event evt in entries.Events)
                 evt.GetIndices(this, entries);
             foreach (Region region in entries.Regions)
                 region.GetIndices(entries);
             foreach (Part part in entries.Parts)
                 part.GetIndices(this, entries);
+
+            bw.BigEndian = false;
 
             bw.WriteASCII("MSB ");
             bw.WriteInt32(1);
@@ -142,11 +146,11 @@ namespace SoulsFormats
 
             Models.Write(bw, entries.Models);
             bw.FillInt64("NextParamOffset", bw.Position);
-            Events.Write(bw, events);
+            Events.Write(bw, entries.Events);
             bw.FillInt64("NextParamOffset", bw.Position);
             Regions.Write(bw, entries.Regions);
             bw.FillInt64("NextParamOffset", bw.Position);
-            Routes.Write(bw, routes);
+            Routes.Write(bw, entries.Routes);
             bw.FillInt64("NextParamOffset", bw.Position);
             Layers.Write(bw, Layers.GetEntries());
             bw.FillInt64("NextParamOffset", bw.Position);
@@ -161,7 +165,9 @@ namespace SoulsFormats
         internal struct Entries
         {
             public List<Model> Models;
+            public List<Event> Events;
             public List<Region> Regions;
+            public List<Route> Routes;
             public List<Part> Parts;
         }
 

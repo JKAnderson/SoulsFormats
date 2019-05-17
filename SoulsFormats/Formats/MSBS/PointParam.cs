@@ -74,9 +74,7 @@ namespace SoulsFormats
 
             public List<Region.Other> Others { get; set; }
 
-            public PointParam() : this(0x23) { }
-
-            public PointParam(int unk00) : base(unk00, "POINT_PARAM_ST")
+            public PointParam(int unk00 = 0x23) : base(unk00, "POINT_PARAM_ST")
             {
                 Region0s = new List<Region.Region0>();
                 InvasionPoints = new List<Region.InvasionPoint>();

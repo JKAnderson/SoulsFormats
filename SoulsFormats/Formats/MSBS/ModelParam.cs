@@ -48,14 +48,9 @@ namespace SoulsFormats
             public List<Model.Collision> Collisions { get; set; }
 
             /// <summary>
-            /// Creates an empty ModelParam.
-            /// </summary>
-            public ModelParam() : this(0x23) { }
-
-            /// <summary>
             /// Creates an empty ModelParam with the given version.
             /// </summary>
-            public ModelParam(int unk00) : base(unk00, "MODEL_PARAM_ST")
+            public ModelParam(int unk00 = 0x23) : base(unk00, "MODEL_PARAM_ST")
             {
                 MapPieces = new List<Model.MapPiece>();
                 Objects = new List<Model.Object>();
