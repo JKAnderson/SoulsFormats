@@ -40,13 +40,9 @@ namespace SoulsFormats
                 return pose;
             }
 
-            internal override void WriteEntries(BinaryWriterEx bw, List<PartsPose> entries)
+            internal override void WriteEntry(BinaryWriterEx bw, int index, PartsPose entry)
             {
-                for (int i = 0; i < entries.Count; i++)
-                {
-                    bw.FillInt64($"Offset{i}", bw.Position);
-                    entries[i].Write(bw);
-                }
+                entry.Write(bw);
             }
         }
 
@@ -56,9 +52,10 @@ namespace SoulsFormats
         public class PartsPose
         {
             /// <summary>
-            /// An index into the Parts section.
+            /// The name of the part to pose.
             /// </summary>
-            public short PartsIndex;
+            public string PartName;
+            private short PartIndex;
 
             /// <summary>
             /// Transforms for each bone.
@@ -68,15 +65,15 @@ namespace SoulsFormats
             /// <summary>
             /// Creates a new PartsPose with no members.
             /// </summary>
-            public PartsPose(short partsIndex = 0)
+            public PartsPose(string partName)
             {
-                PartsIndex = partsIndex;
+                PartName = partName;
                 Bones = new List<Bone>();
             }
 
             internal PartsPose(BinaryReaderEx br)
             {
-                PartsIndex = br.ReadInt16();
+                PartIndex = br.ReadInt16();
                 short boneCount = br.ReadInt16();
                 br.AssertInt32(0);
                 br.AssertInt64(0x10);
@@ -88,13 +85,23 @@ namespace SoulsFormats
 
             internal void Write(BinaryWriterEx bw)
             {
-                bw.WriteInt16(PartsIndex);
+                bw.WriteInt16(PartIndex);
                 bw.WriteInt16((short)Bones.Count);
                 bw.WriteInt32(0);
                 bw.WriteInt64(0x10);
 
                 foreach (var member in Bones)
                     member.Write(bw);
+            }
+
+            internal void GetNames(MSB3 msb, Entries entries)
+            {
+                PartName = GetName(entries.Parts, PartIndex);
+            }
+
+            internal void GetIndices(MSB3 msb, Entries entries)
+            {
+                PartIndex = (short)GetIndex(entries.Parts, PartName);
             }
 
             /// <summary>
@@ -128,9 +135,6 @@ namespace SoulsFormats
                 public Bone(int boneNamesIndex)
                 {
                     BoneNamesIndex = boneNamesIndex;
-                    Translation = Vector3.Zero;
-                    Rotation = Vector3.Zero;
-                    Scale = Vector3.One;
                 }
 
                 internal Bone(BinaryReaderEx br)

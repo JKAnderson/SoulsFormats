@@ -239,25 +239,9 @@ namespace SoulsFormats
                 }
             }
 
-            internal override void WriteEntries(BinaryWriterEx bw, List<Region> entries)
+            internal override void WriteEntry(BinaryWriterEx bw, int id, Region entry)
             {
-                for (int i = 0; i < entries.Count; i++)
-                {
-                    bw.FillInt64($"Offset{i}", bw.Position);
-                    entries[i].Write(bw);
-                }
-            }
-
-            internal void GetNames(MSB3 msb, Entries entries)
-            {
-                foreach (Region region in entries.Regions)
-                    region.GetNames(msb, entries);
-            }
-
-            internal void GetIndices(MSB3 msb, Entries entries)
-            {
-                foreach (Region region in entries.Regions)
-                    region.GetIndices(msb, entries);
+                entry.Write(bw, id);
             }
         }
 
@@ -301,14 +285,9 @@ namespace SoulsFormats
             public bool HasTypeData;
 
             /// <summary>
-            /// The ID of this region.
-            /// </summary>
-            public int ID;
-
-            /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk2, Unk3, Unk4;
+            public int Unk2;
 
             /// <summary>
             /// The shape of this region.
@@ -330,6 +309,8 @@ namespace SoulsFormats
             /// </summary>
             public Vector3 Rotation;
 
+            public List<short> UnkA, UnkB;
+
             private int ActivationPartIndex;
             /// <summary>
             /// Region is inactive unless this part is drawn; null for always active.
@@ -341,34 +322,30 @@ namespace SoulsFormats
             /// </summary>
             public int EventEntityID;
 
-            internal Region(int id, string name, bool hasTypeData)
+            internal Region(string name, bool hasTypeData)
             {
-                ID = id;
                 Name = name;
                 Position = Vector3.Zero;
                 Rotation = Vector3.Zero;
                 Shape = new Shape.Point();
                 ActivationPartName = null;
                 EventEntityID = -1;
-                Unk2 = 0;
-                Unk3 = 0;
-                Unk4 = 0;
-                MapStudioLayer = 0;
+                UnkA = new List<short>();
+                UnkB = new List<short>();
                 HasTypeData = hasTypeData;
             }
 
             internal Region(Region clone)
             {
                 Name = clone.Name;
-                ID = clone.ID;
                 Position = clone.Position;
                 Rotation = clone.Rotation;
                 Shape = clone.Shape.Clone();
                 ActivationPartName = clone.ActivationPartName;
                 EventEntityID = clone.EventEntityID;
                 Unk2 = clone.Unk2;
-                Unk3 = clone.Unk3;
-                Unk4 = clone.Unk4;
+                UnkA = new List<short>(clone.UnkA);
+                UnkB = new List<short>(clone.UnkB);
                 MapStudioLayer = clone.MapStudioLayer;
                 HasTypeData = clone.HasTypeData;
             }
@@ -379,34 +356,30 @@ namespace SoulsFormats
 
                 long nameOffset = br.ReadInt64();
                 br.AssertUInt32((uint)Type);
-                ID = br.ReadInt32();
+                br.ReadInt32(); // ID
                 ShapeType shapeType = br.ReadEnum32<ShapeType>();
                 Position = br.ReadVector3();
                 Rotation = br.ReadVector3();
                 Unk2 = br.ReadInt32();
+                long baseDataOffset1 = br.ReadInt64();
+                long baseDataOffset2 = br.AssertInt64(baseDataOffset1 + 4);
+                br.AssertInt32(-1);
+                MapStudioLayer = br.ReadUInt32();
+                long shapeDataOffset = br.ReadInt64();
+                long baseDataOffset3 = br.ReadInt64();
+                long typeDataOffset = br.ReadInt64();
 
                 Name = br.GetUTF16(start + nameOffset);
 
-                long baseDataOffset1 = br.ReadInt64();
-                br.StepIn(start + baseDataOffset1);
-                Unk3 = br.ReadInt32();
-                br.StepOut();
+                br.Position = start + baseDataOffset1;
+                short countA = br.ReadInt16();
+                UnkA = new List<short>(br.ReadInt16s(countA));
 
-                long baseDataOffset2 = br.AssertInt64(baseDataOffset1 + 4);
-                br.StepIn(start + baseDataOffset2);
-                Unk4 = br.ReadInt32();
+                br.Position = start + baseDataOffset2;
+                short countB = br.ReadInt16();
+                UnkB = new List<short>(br.ReadInt16s(countB));
 
-                // These padding asserts are just for my peace of mind
-                if (br.Position % 8 != 0)
-                    br.AssertInt32(0);
-                br.StepOut();
-
-                br.AssertInt32(-1);
-                MapStudioLayer = br.ReadUInt32();
-
-                // This will be 0 for points, but that's fine
-                long shapeDataOffset = br.ReadInt64();
-                br.StepIn(start + shapeDataOffset);
+                br.Position = start + shapeDataOffset;
                 switch (shapeType)
                 {
                     case ShapeType.Point:
@@ -432,42 +405,31 @@ namespace SoulsFormats
                     default:
                         throw new NotImplementedException($"Unsupported shape type: {shapeType}");
                 }
-                br.StepOut();
 
-                long baseDataOffset3 = br.ReadInt64();
-                long typeDataOffset = br.ReadInt64();
-
-                br.StepIn(start + baseDataOffset3);
+                br.Position = start + baseDataOffset3;
                 ActivationPartIndex = br.ReadInt32();
                 EventEntityID = br.ReadInt32();
 
                 HasTypeData = typeDataOffset != 0 || Type == RegionType.MufflingBox;
                 if (HasTypeData)
                     ReadSpecific(br);
-
-                if (br.Position % 8 != 0)
-                    br.AssertInt32(0);
-
-                br.StepOut();
             }
 
             internal abstract void ReadSpecific(BinaryReaderEx br);
 
-            internal void Write(BinaryWriterEx bw)
+            internal void Write(BinaryWriterEx bw, int id)
             {
                 long start = bw.Position;
 
                 bw.ReserveInt64("NameOffset");
                 bw.WriteUInt32((uint)Type);
-                bw.WriteInt32(ID);
+                bw.WriteInt32(id);
                 bw.WriteUInt32((uint)Shape.Type);
                 bw.WriteVector3(Position);
                 bw.WriteVector3(Rotation);
                 bw.WriteInt32(Unk2);
-
                 bw.ReserveInt64("BaseDataOffset1");
                 bw.ReserveInt64("BaseDataOffset2");
-
                 bw.WriteInt32(-1);
                 bw.WriteUInt32(MapStudioLayer);
 
@@ -477,13 +439,16 @@ namespace SoulsFormats
 
                 bw.FillInt64("NameOffset", bw.Position - start);
                 bw.WriteUTF16(ReambiguateName(Name), true);
-                bw.Pad(8);
+                bw.Pad(4);
 
                 bw.FillInt64("BaseDataOffset1", bw.Position - start);
-                bw.WriteInt32(Unk3);
+                bw.WriteInt16((short)UnkA.Count);
+                bw.WriteInt16s(UnkA);
+                bw.Pad(4);
 
                 bw.FillInt64("BaseDataOffset2", bw.Position - start);
-                bw.WriteInt32(Unk4);
+                bw.WriteInt16((short)UnkB.Count);
+                bw.WriteInt16s(UnkB);
                 bw.Pad(8);
 
                 Shape.Write(bw, start);
@@ -513,11 +478,11 @@ namespace SoulsFormats
             }
 
             /// <summary>
-            /// Returns the region type, ID, shape type, and name of this region.
+            /// Returns the region type, shape type, and name of this region.
             /// </summary>
             public override string ToString()
             {
-                return $"{Type} {ID} {Shape.Type} : {Name}";
+                return $"{Type} {Shape.Type} : {Name}";
             }
 
             /// <summary>
@@ -525,7 +490,7 @@ namespace SoulsFormats
             /// </summary>
             public abstract class SimpleRegion : Region
             {
-                internal SimpleRegion(int id, string name) : base(id, name, false) { }
+                internal SimpleRegion(string name) : base(name, false) { }
 
                 internal SimpleRegion(SimpleRegion clone) : base(clone) { }
 
@@ -550,9 +515,9 @@ namespace SoulsFormats
                 internal override RegionType Type => RegionType.General;
 
                 /// <summary>
-                /// Creates a new General with the given ID and name.
+                /// Creates a new General with the given name.
                 /// </summary>
-                public General(int id, string name) : base(id, name) { }
+                public General(string name) : base(name) { }
 
                 /// <summary>
                 /// Creates a new General region with values copied from another.
@@ -570,9 +535,9 @@ namespace SoulsFormats
                 internal override RegionType Type => RegionType.Unk00;
 
                 /// <summary>
-                /// Creates a new Unk00 with the given ID and name.
+                /// Creates a new Unk00 with the given name.
                 /// </summary>
-                public Unk00(int id, string name) : base(id, name) { }
+                public Unk00(string name) : base(name) { }
 
                 /// <summary>
                 /// Creates a new Unk00 with values copied from another.
@@ -595,9 +560,9 @@ namespace SoulsFormats
                 public int Priority;
 
                 /// <summary>
-                /// Creates a new InvasionPoint with the given ID and name.
+                /// Creates a new InvasionPoint with the given name.
                 /// </summary>
-                public InvasionPoint(int id, string name) : base(id, name, true)
+                public InvasionPoint(string name) : base(name, true)
                 {
                     Priority = 0;
                 }
@@ -637,9 +602,9 @@ namespace SoulsFormats
                 public int UnkFlags;
 
                 /// <summary>
-                /// Creates a new EnvironmentMapPoint with the given ID and name.
+                /// Creates a new EnvironmentMapPoint with the given name.
                 /// </summary>
-                public EnvironmentMapPoint(int id, string name) : base(id, name, true)
+                public EnvironmentMapPoint(string name) : base(name, true)
                 {
                     UnkFlags = 0;
                 }
@@ -712,9 +677,9 @@ namespace SoulsFormats
                 public string[] ChildRegionNames { get; private set; }
 
                 /// <summary>
-                /// Creates a new Sound with the given ID and name.
+                /// Creates a new Sound with the given name.
                 /// </summary>
-                public Sound(int id, string name) : base(id, name, true)
+                public Sound(string name) : base(name, true)
                 {
                     SoundType = SndType.Environment;
                     SoundID = 0;
@@ -783,9 +748,9 @@ namespace SoulsFormats
                 public bool StartDisabled;
 
                 /// <summary>
-                /// Creates a new SFX with the given ID and name.
+                /// Creates a new SFX with the given name.
                 /// </summary>
-                public SFX(int id, string name) : base(id, name, true)
+                public SFX(string name) : base(name, true)
                 {
                     FFXID = -1;
                     StartDisabled = false;
@@ -844,9 +809,9 @@ namespace SoulsFormats
                 public string WindAreaName;
 
                 /// <summary>
-                /// Creates a new WindSFX with the given ID and name.
+                /// Creates a new WindSFX with the given name.
                 /// </summary>
-                public WindSFX(int id, string name) : base(id, name, true)
+                public WindSFX(string name) : base(name, true)
                 {
                     FFXID = -1;
                     WindAreaName = null;
@@ -912,9 +877,9 @@ namespace SoulsFormats
                 public int UnkT00;
 
                 /// <summary>
-                /// Creates a new SpawnPoint with the given ID and name.
+                /// Creates a new SpawnPoint with the given name.
                 /// </summary>
-                public SpawnPoint(int id, string name) : base(id, name, true)
+                public SpawnPoint(string name) : base(name, true)
                 {
                     UnkT00 = -1;
                 }
@@ -970,9 +935,9 @@ namespace SoulsFormats
                 public bool Hidden;
 
                 /// <summary>
-                /// Creates a new Message with the given ID and name.
+                /// Creates a new Message with the given name.
                 /// </summary>
-                public Message(int id, string name) : base(id, name, true)
+                public Message(string name) : base(name, true)
                 {
                     MessageID = -1;
                     UnkT02 = 0;
@@ -1015,9 +980,9 @@ namespace SoulsFormats
                 internal override RegionType Type => RegionType.WalkRoute;
 
                 /// <summary>
-                /// Creates a new WalkRoute with the given ID and name.
+                /// Creates a new WalkRoute with the given name.
                 /// </summary>
-                public WalkRoute(int id, string name) : base(id, name) { }
+                public WalkRoute(string name) : base(name) { }
 
                 /// <summary>
                 /// Creates a new WalkRoute with values copied from another.
@@ -1035,9 +1000,9 @@ namespace SoulsFormats
                 internal override RegionType Type => RegionType.Unk12;
 
                 /// <summary>
-                /// Creates a new Unk12 with the given ID and name.
+                /// Creates a new Unk12 with the given name.
                 /// </summary>
-                public Unk12(int id, string name) : base(id, name) { }
+                public Unk12(string name) : base(name) { }
 
                 /// <summary>
                 /// Creates a new Unk12 with values copied from another.
@@ -1055,9 +1020,9 @@ namespace SoulsFormats
                 internal override RegionType Type => RegionType.WarpPoint;
 
                 /// <summary>
-                /// Creates a new WarpPoint with the given ID and name.
+                /// Creates a new WarpPoint with the given name.
                 /// </summary>
-                public WarpPoint(int id, string name) : base(id, name) { }
+                public WarpPoint(string name) : base(name) { }
 
                 /// <summary>
                 /// Creates a new WarpPoint with values copied from another.
@@ -1075,9 +1040,9 @@ namespace SoulsFormats
                 internal override RegionType Type => RegionType.ActivationArea;
 
                 /// <summary>
-                /// Creates a new ActivationArea with the given ID and name.
+                /// Creates a new ActivationArea with the given name.
                 /// </summary>
-                public ActivationArea(int id, string name) : base(id, name) { }
+                public ActivationArea(string name) : base(name) { }
 
                 /// <summary>
                 /// Creates a new ActivationArea with values copied from another.
@@ -1095,9 +1060,9 @@ namespace SoulsFormats
                 internal override RegionType Type => RegionType.Event;
 
                 /// <summary>
-                /// Creates a new Event with the given ID and name.
+                /// Creates a new Event with the given name.
                 /// </summary>
-                public Event(int id, string name) : base(id, name) { }
+                public Event(string name) : base(name) { }
 
                 /// <summary>
                 /// Creates a new Event with values copied from another.
@@ -1140,9 +1105,9 @@ namespace SoulsFormats
                 public short UnkT0A;
 
                 /// <summary>
-                /// Creates a new EnvironmentMapEffectBox with the given ID and name.
+                /// Creates a new EnvironmentMapEffectBox with the given name.
                 /// </summary>
-                public EnvironmentMapEffectBox(int id, string name) : base(id, name, true)
+                public EnvironmentMapEffectBox(string name) : base(name, true)
                 {
                     UnkT00 = 0;
                     Compare = 0;
@@ -1209,9 +1174,9 @@ namespace SoulsFormats
                 internal override RegionType Type => RegionType.WindArea;
 
                 /// <summary>
-                /// Creates a new WindArea with the given ID and name.
+                /// Creates a new WindArea with the given name.
                 /// </summary>
-                public WindArea(int id, string name) : base(id, name) { }
+                public WindArea(string name) : base(name) { }
 
                 /// <summary>
                 /// Creates a new WindArea with values copied from another.
@@ -1234,9 +1199,9 @@ namespace SoulsFormats
                 public int UnkT00;
 
                 /// <summary>
-                /// Creates a new MufflingBox with the given ID and name.
+                /// Creates a new MufflingBox with the given name.
                 /// </summary>
-                public MufflingBox(int id, string name) : base(id, name, true)
+                public MufflingBox(string name) : base(name, true)
                 {
                     UnkT00 = 0;
                 }
@@ -1271,9 +1236,9 @@ namespace SoulsFormats
                 internal override RegionType Type => RegionType.MufflingPortal;
 
                 /// <summary>
-                /// Creates a new MufflingPortal with the given ID and name.
+                /// Creates a new MufflingPortal with the given name.
                 /// </summary>
-                public MufflingPortal(int id, string name) : base(id, name) { }
+                public MufflingPortal(string name) : base(name) { }
 
                 /// <summary>
                 /// Creates a new MufflingPortal with values copied from another.
@@ -1281,307 +1246,6 @@ namespace SoulsFormats
                 public MufflingPortal(General clone) : base(clone) { }
 
                 internal MufflingPortal(BinaryReaderEx br) : base(br) { }
-            }
-        }
-
-        /// <summary>
-        /// Different shapes that regions can take.
-        /// </summary>
-        public enum ShapeType : uint
-        {
-            /// <summary>
-            /// A single point.
-            /// </summary>
-            Point = 0,
-
-            /// <summary>
-            /// A flat circle with a radius.
-            /// </summary>
-            Circle = 1,
-
-            /// <summary>
-            /// A sphere with a radius.
-            /// </summary>
-            Sphere = 2,
-
-            /// <summary>
-            /// A cylinder with a radius and height.
-            /// </summary>
-            Cylinder = 3,
-
-            /// <summary>
-            /// A flat square that is never used and I haven't bothered implementing.
-            /// </summary>
-            Square = 4,
-
-            /// <summary>
-            /// A rectangular prism with width, depth, and height.
-            /// </summary>
-            Box = 5,
-        }
-
-        /// <summary>
-        /// A shape taken by a region.
-        /// </summary>
-        public abstract class Shape
-        {
-            /// <summary>
-            /// The type of this shape.
-            /// </summary>
-            public abstract ShapeType Type { get; }
-
-            internal abstract Shape Clone();
-
-            internal abstract void Write(BinaryWriterEx bw, long start);
-
-            /// <summary>
-            /// A single point.
-            /// </summary>
-            public class Point : Shape
-            {
-                /// <summary>
-                /// The type of this shape.
-                /// </summary>
-                public override ShapeType Type => ShapeType.Point;
-
-                /// <summary>
-                /// Creates a new Point.
-                /// </summary>
-                public Point() { }
-
-                internal override Shape Clone()
-                {
-                    return new Point();
-                }
-
-                internal override void Write(BinaryWriterEx bw, long start)
-                {
-                    bw.FillInt64("ShapeDataOffset", 0);
-                }
-            }
-
-            /// <summary>
-            /// A flat circle.
-            /// </summary>
-            public class Circle : Shape
-            {
-                /// <summary>
-                /// The type of this shape.
-                /// </summary>
-                public override ShapeType Type => ShapeType.Circle;
-
-                /// <summary>
-                /// The radius of the circle.
-                /// </summary>
-                public float Radius;
-
-                /// <summary>
-                /// Creates a new Circle with radius 1.
-                /// </summary>
-                public Circle() : this(1) { }
-
-                /// <summary>
-                /// Creates a new Circle with the given radius.
-                /// </summary>
-                public Circle(float radius)
-                {
-                    Radius = radius;
-                }
-
-                /// <summary>
-                /// Creates a new Circle with the radius of another.
-                /// </summary>
-                public Circle(Circle clone) : this(clone.Radius) { }
-
-                internal override Shape Clone()
-                {
-                    return new Circle(this);
-                }
-
-                internal Circle(BinaryReaderEx br)
-                {
-                    Radius = br.ReadSingle();
-                }
-
-                internal override void Write(BinaryWriterEx bw, long start)
-                {
-                    bw.FillInt64("ShapeDataOffset", bw.Position - start);
-                    bw.WriteSingle(Radius);
-                }
-            }
-
-            /// <summary>
-            /// A volumetric sphere.
-            /// </summary>
-            public class Sphere : Shape
-            {
-                /// <summary>
-                /// The type of this shape.
-                /// </summary>
-                public override ShapeType Type => ShapeType.Sphere;
-
-                /// <summary>
-                /// The radius of the sphere.
-                /// </summary>
-                public float Radius;
-
-                /// <summary>
-                /// Creates a new Sphere with radius 1.
-                /// </summary>
-                public Sphere() : this(1) { }
-
-                /// <summary>
-                /// Creates a new Sphere with the given radius.
-                /// </summary>
-                public Sphere(float radius)
-                {
-                    Radius = radius;
-                }
-
-                /// <summary>
-                /// Creates a new Sphere with the radius of another.
-                /// </summary>
-                public Sphere(Sphere clone) : this(clone.Radius) { }
-
-                internal override Shape Clone()
-                {
-                    return new Sphere(this);
-                }
-
-                internal Sphere(BinaryReaderEx br)
-                {
-                    Radius = br.ReadSingle();
-                }
-
-                internal override void Write(BinaryWriterEx bw, long start)
-                {
-                    bw.FillInt64("ShapeDataOffset", bw.Position - start);
-                    bw.WriteSingle(Radius);
-                }
-            }
-
-            /// <summary>
-            /// A volumetric cylinder.
-            /// </summary>
-            public class Cylinder : Shape
-            {
-                /// <summary>
-                /// The type of this shape.
-                /// </summary>
-                public override ShapeType Type => ShapeType.Cylinder;
-
-                /// <summary>
-                /// The radius of the cylinder.
-                /// </summary>
-                public float Radius;
-
-                /// <summary>
-                /// The height of the cylinder.
-                /// </summary>
-                public float Height;
-
-                /// <summary>
-                /// Creates a new Cylinder with radius and height 1.
-                /// </summary>
-                public Cylinder() : this(1, 1) { }
-
-                /// <summary>
-                /// Creates a new Cylinder with the given dimensions.
-                /// </summary>
-                public Cylinder(float radius, float height)
-                {
-                    Radius = radius;
-                    Height = height;
-                }
-
-                /// <summary>
-                /// Creates a new Cylinder with the dimensions of another.
-                /// </summary>
-                public Cylinder(Cylinder clone) : this(clone.Radius, clone.Height) { }
-
-                internal override Shape Clone()
-                {
-                    return new Cylinder(this);
-                }
-
-                internal Cylinder(BinaryReaderEx br)
-                {
-                    Radius = br.ReadSingle();
-                    Height = br.ReadSingle();
-                }
-
-                internal override void Write(BinaryWriterEx bw, long start)
-                {
-                    bw.FillInt64("ShapeDataOffset", bw.Position - start);
-                    bw.WriteSingle(Radius);
-                    bw.WriteSingle(Height);
-                }
-            }
-
-            /// <summary>
-            /// A rectangular prism.
-            /// </summary>
-            public class Box : Shape
-            {
-                /// <summary>
-                /// The type of this shape.
-                /// </summary>
-                public override ShapeType Type => ShapeType.Box;
-
-                /// <summary>
-                /// The width of the box.
-                /// </summary>
-                public float Width;
-
-                /// <summary>
-                /// The depth of the box.
-                /// </summary>
-                public float Depth;
-
-                /// <summary>
-                /// The height of the box.
-                /// </summary>
-                public float Height;
-
-                /// <summary>
-                /// Creates a new Box with width, depth, and height 1.
-                /// </summary>
-                public Box() : this(1, 1, 1) { }
-
-                /// <summary>
-                /// Creates a new Box with the given dimensions.
-                /// </summary>
-                public Box(float width, float depth, float height)
-                {
-                    Width = width;
-                    Depth = depth;
-                    Height = height;
-                }
-
-                /// <summary>
-                /// Creates a new Box with the dimensions of another.
-                /// </summary>
-                public Box(Box clone) : this(clone.Width, clone.Depth, clone.Height) { }
-
-                internal override Shape Clone()
-                {
-                    return new Box(this);
-                }
-
-                internal Box(BinaryReaderEx br)
-                {
-                    Width = br.ReadSingle();
-                    Depth = br.ReadSingle();
-                    Height = br.ReadSingle();
-                }
-
-                internal override void Write(BinaryWriterEx bw, long start)
-                {
-                    bw.FillInt64("ShapeDataOffset", bw.Position - start);
-                    bw.WriteSingle(Width);
-                    bw.WriteSingle(Depth);
-                    bw.WriteSingle(Height);
-                }
             }
         }
     }

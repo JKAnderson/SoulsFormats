@@ -128,25 +128,9 @@ namespace SoulsFormats
                 }
             }
 
-            internal override void WriteEntries(BinaryWriterEx bw, List<Event> entries)
+            internal override void WriteEntry(BinaryWriterEx bw, int id, Event entry)
             {
-                for (int i = 0; i < entries.Count; i++)
-                {
-                    bw.FillInt64($"Offset{i}", bw.Position);
-                    entries[i].Write(bw);
-                }
-            }
-
-            internal void GetNames(MSB3 msb, Entries entries)
-            {
-                foreach (Event ev in entries.Events)
-                    ev.GetNames(msb, entries);
-            }
-
-            internal void GetIndices(MSB3 msb, Entries entries)
-            {
-                foreach (Event ev in entries.Events)
-                    ev.GetIndices(msb, entries);
+                entry.Write(bw, id);
             }
         }
 
@@ -187,12 +171,7 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int EventIndex;
-
-            /// <summary>
-            /// The ID of this event.
-            /// </summary>
-            public int ID;
+            public int EventID;
 
             private int partIndex;
             /// <summary>
@@ -211,21 +190,17 @@ namespace SoulsFormats
             /// </summary>
             public int EventEntityID;
 
-            internal Event(int id, string name)
+            internal Event(string name)
             {
-                ID = id;
                 Name = name;
-                EventIndex = -1;
-                PartName = null;
-                PointName = null;
+                EventID = -1;
                 EventEntityID = -1;
             }
 
             internal Event(Event clone)
             {
                 Name = clone.Name;
-                EventIndex = clone.EventIndex;
-                ID = clone.ID;
+                EventID = clone.EventID;
                 PartName = clone.PartName;
                 PointName = clone.PointName;
                 EventEntityID = clone.EventEntityID;
@@ -236,37 +211,35 @@ namespace SoulsFormats
                 long start = br.Position;
 
                 long nameOffset = br.ReadInt64();
-                EventIndex = br.ReadInt32();
+                EventID = br.ReadInt32();
                 br.AssertUInt32((uint)Type);
-                ID = br.ReadInt32();
+                br.ReadInt32(); // ID
                 br.AssertInt32(0);
                 long baseDataOffset = br.ReadInt64();
                 long typeDataOffset = br.ReadInt64();
 
                 Name = br.GetUTF16(start + nameOffset);
 
-                br.StepIn(start + baseDataOffset);
+                br.Position = start + baseDataOffset;
                 partIndex = br.ReadInt32();
                 pointIndex = br.ReadInt32();
                 EventEntityID = br.ReadInt32();
                 br.AssertInt32(0);
-                br.StepOut();
 
-                br.StepIn(start + typeDataOffset);
+                br.Position = start + typeDataOffset;
                 Read(br);
-                br.StepOut();
             }
 
             internal abstract void Read(BinaryReaderEx br);
 
-            internal void Write(BinaryWriterEx bw)
+            internal void Write(BinaryWriterEx bw, int id)
             {
                 long start = bw.Position;
 
                 bw.ReserveInt64("NameOffset");
-                bw.WriteInt32(EventIndex);
+                bw.WriteInt32(EventID);
                 bw.WriteUInt32((uint)Type);
-                bw.WriteInt32(ID);
+                bw.WriteInt32(id);
                 bw.WriteInt32(0);
                 bw.ReserveInt64("BaseDataOffset");
                 bw.ReserveInt64("TypeDataOffset");
@@ -300,11 +273,11 @@ namespace SoulsFormats
             }
 
             /// <summary>
-            /// Returns the type, ID, and name of this event.
+            /// Returns the type and name of this event.
             /// </summary>
             public override string ToString()
             {
-                return $"{Type} {ID} : {Name}";
+                return $"{Type} : {Name}";
             }
 
             /// <summary>
@@ -346,9 +319,9 @@ namespace SoulsFormats
                 public bool StartDisabled;
 
                 /// <summary>
-                /// Creates a new Treasure with the given ID and name.
+                /// Creates a new Treasure with the given name.
                 /// </summary>
-                public Treasure(int id, string name) : base(id, name)
+                public Treasure(string name) : base(name)
                 {
                     PartName2 = null;
                     ItemLot1 = -1;
@@ -506,19 +479,10 @@ namespace SoulsFormats
                 public float UnkT14, UnkT18;
 
                 /// <summary>
-                /// Creates a new Generator with the given ID and name.
+                /// Creates a new Generator with the given name.
                 /// </summary>
-                public Generator(int id, string name) : base(id, name)
+                public Generator(string name) : base(name)
                 {
-                    MaxNum = 0;
-                    LimitNum = 0;
-                    MinGenNum = 0;
-                    MaxGenNum = 0;
-                    MinInterval = 0;
-                    MaxInterval = 0;
-                    SessionCondition = 0;
-                    UnkT14 = 0;
-                    UnkT18 = 0;
                     SpawnPointNames = new string[8];
                     SpawnPartNames = new string[32];
                 }
@@ -680,9 +644,9 @@ namespace SoulsFormats
                 public int EventFlagID;
 
                 /// <summary>
-                /// Creates a new ObjAct with the given ID and name.
+                /// Creates a new ObjAct with the given name.
                 /// </summary>
-                public ObjAct(int id, string name) : base(id, name)
+                public ObjAct(string name) : base(name)
                 {
                     ObjActEntityID = -1;
                     PartName2 = null;
@@ -770,9 +734,9 @@ namespace SoulsFormats
                 public float Degree;
 
                 /// <summary>
-                /// Creates a new MapOffset with the given ID and name.
+                /// Creates a new MapOffset with the given name.
                 /// </summary>
-                public MapOffset(int id, string name) : base(id, name)
+                public MapOffset(string name) : base(name)
                 {
                     Position = Vector3.Zero;
                     Degree = 0;
@@ -845,9 +809,9 @@ namespace SoulsFormats
                 public int UnkT18;
 
                 /// <summary>
-                /// Creates a new Invasion with the given ID and name.
+                /// Creates a new Invasion with the given name.
                 /// </summary>
-                public PseudoMultiplayer(int id, string name) : base(id, name)
+                public PseudoMultiplayer(string name) : base(name)
                 {
                     HostEventEntityID = -1;
                     InvasionEventEntityID = -1;
@@ -918,9 +882,9 @@ namespace SoulsFormats
                 public string[] WalkPointNames { get; private set; }
 
                 /// <summary>
-                /// Creates a new WalkRoute with the given ID and name.
+                /// Creates a new WalkRoute with the given name.
                 /// </summary>
-                public WalkRoute(int id, string name) : base(id, name)
+                public WalkRoute(string name) : base(name)
                 {
                     UnkT00 = 0;
                     WalkPointNames = new string[32];
@@ -991,9 +955,9 @@ namespace SoulsFormats
                 public string[] GroupPartsNames { get; private set; }
 
                 /// <summary>
-                /// Creates a new GroupTour with the given ID and name.
+                /// Creates a new GroupTour with the given name.
                 /// </summary>
-                public GroupTour(int id, string name) : base(id, name)
+                public GroupTour(string name) : base(name)
                 {
                     PlatoonIDScriptActivate = 0;
                     State = 0;
@@ -1065,9 +1029,9 @@ namespace SoulsFormats
                 public int SoundIDMaybe;
 
                 /// <summary>
-                /// Creates a new Other with the given ID and name.
+                /// Creates a new Other with the given name.
                 /// </summary>
-                public Other(int id, string name) : base(id, name)
+                public Other(string name) : base(name)
                 {
                     SoundTypeMaybe = 0;
                     SoundIDMaybe = 0;

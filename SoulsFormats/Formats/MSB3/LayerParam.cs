@@ -39,13 +39,9 @@ namespace SoulsFormats
                 return layer;
             }
 
-            internal override void WriteEntries(BinaryWriterEx bw, List<Layer> entries)
+            internal override void WriteEntry(BinaryWriterEx bw, int index, Layer entry)
             {
-                for (int i = 0; i < entries.Count; i++)
-                {
-                    bw.FillInt64($"Offset{i}", bw.Position);
-                    entries[i].Write(bw);
-                }
+                entry.Write(bw);
             }
         }
 
@@ -75,9 +71,6 @@ namespace SoulsFormats
             public Layer()
             {
                 Name = "";
-                Unk08 = 0;
-                Unk0C = 0;
-                Unk10 = 0;
             }
 
             internal Layer(BinaryReaderEx br)

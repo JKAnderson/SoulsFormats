@@ -56,6 +56,7 @@
     <Compile Include="Formats\ESD.cs" />
     <Compile Include="Formats\LUAGNL.cs" />
     <Compile Include="Formats\LUAINFO.cs" />
+    <Compile Include="Formats\MSB3\Shape.cs" />
     <Compile Include="Formats\MSBS\EventParam.cs" />
     <Compile Include="Formats\MSBS\ModelParam.cs" />
     <Compile Include="Formats\MSBS\MSBS.cs" />

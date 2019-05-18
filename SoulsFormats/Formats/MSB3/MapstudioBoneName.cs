@@ -39,13 +39,9 @@ namespace SoulsFormats
                 return name;
             }
 
-            internal override void WriteEntries(BinaryWriterEx bw, List<string> entries)
+            internal override void WriteEntry(BinaryWriterEx bw, int id, string entry)
             {
-                for (int i = 0; i < entries.Count; i++)
-                {
-                    bw.FillInt64($"Offset{i}", bw.Position);
-                    bw.WriteUTF16(entries[i], true);
-                }
+                bw.WriteUTF16(entry, true);
             }
         }
     }

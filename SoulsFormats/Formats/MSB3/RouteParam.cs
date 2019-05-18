@@ -39,13 +39,9 @@ namespace SoulsFormats
                 return route;
             }
 
-            internal override void WriteEntries(BinaryWriterEx bw, List<Route> entries)
+            internal override void WriteEntry(BinaryWriterEx bw, int id, Route entry)
             {
-                for (int i = 0; i < entries.Count; i++)
-                {
-                    bw.FillInt64($"Offset{i}", bw.Position);
-                    entries[i].Write(bw);
-                }
+                entry.Write(bw, id);
             }
         }
 
@@ -62,17 +58,12 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk08, Unk0C;
-
+            public int Unk08;
+            
             /// <summary>
-            /// Unknown; seems to always be 4.
+            /// Unknown.
             /// </summary>
-            public int Unk10;
-
-            /// <summary>
-            /// Unknown; seems to just count up from 0.
-            /// </summary>
-            public int Unk14;
+            public int Unk0C;
 
             /// <summary>
             /// Creates a new Route with default values.
@@ -80,10 +71,6 @@ namespace SoulsFormats
             public Route()
             {
                 Name = "";
-                Unk08 = 0;
-                Unk0C = 0;
-                Unk10 = 4;
-                Unk14 = 0;
             }
 
             internal Route(BinaryReaderEx br)
@@ -93,27 +80,23 @@ namespace SoulsFormats
                 long nameOffset = br.ReadInt64();
                 Unk08 = br.ReadInt32();
                 Unk0C = br.ReadInt32();
-                Unk10 = br.ReadInt32();
-                Unk14 = br.ReadInt32();
-
-                for (int i = 0; i < 26; i++)
-                    br.AssertInt32(0);
+                br.AssertInt32(4); // Type
+                br.ReadInt32(); // ID
+                br.AssertNull(0x68, false);
 
                 Name = br.GetUTF16(start + nameOffset);
             }
 
-            internal void Write(BinaryWriterEx bw)
+            internal void Write(BinaryWriterEx bw, int id)
             {
                 long start = bw.Position;
 
                 bw.ReserveInt64("NameOffset");
                 bw.WriteInt32(Unk08);
                 bw.WriteInt32(Unk0C);
-                bw.WriteInt32(Unk10);
-                bw.WriteInt32(Unk14);
-
-                for (int i = 0; i < 26; i++)
-                    bw.WriteInt32(0);
+                bw.WriteInt32(4);
+                bw.WriteInt32(id);
+                bw.WriteNull(0x68, false);
 
                 bw.FillInt64("NameOffset", bw.Position - start);
                 bw.WriteUTF16(Name, true);
@@ -121,11 +104,11 @@ namespace SoulsFormats
             }
 
             /// <summary>
-            /// Returns the name and four values of this route.
+            /// Returns the name and values of this route.
             /// </summary>
             public override string ToString()
             {
-                return $"{Name} ({Unk08}, {Unk0C}, {Unk10}, {Unk14})";
+                return $"\"{Name}\" {Unk08} {Unk0C}";
             }
         }
     }

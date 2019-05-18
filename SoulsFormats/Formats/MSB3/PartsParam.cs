@@ -128,25 +128,9 @@ namespace SoulsFormats
                 }
             }
 
-            internal override void WriteEntries(BinaryWriterEx bw, List<Part> entries)
+            internal override void WriteEntry(BinaryWriterEx bw, int id, Part entry)
             {
-                for (int i = 0; i < entries.Count; i++)
-                {
-                    bw.FillInt64($"Offset{i}", bw.Position);
-                    entries[i].Write(bw);
-                }
-            }
-
-            internal void GetNames(MSB3 msb, Entries entries)
-            {
-                foreach (Part part in entries.Parts)
-                    part.GetNames(msb, entries);
-            }
-
-            internal void GetIndices(MSB3 msb, Entries entries)
-            {
-                foreach (Part part in entries.Parts)
-                    part.GetIndices(msb, entries);
+                entry.Write(bw, id);
             }
         }
 
@@ -183,11 +167,6 @@ namespace SoulsFormats
             /// </summary>
             public string Placeholder;
 
-            /// <summary>
-            /// The ID of this part, which should be unique but does not appear to be used otherwise.
-            /// </summary>
-            public int ID;
-
             private int modelIndex;
             /// <summary>
             /// The name of this part's model.
@@ -208,11 +187,6 @@ namespace SoulsFormats
             /// The scale of the part, which only really works right for map pieces.
             /// </summary>
             public Vector3 Scale;
-
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public uint OldDrawGroup1;
 
             /// <summary>
             /// Unknown; related to which parts do or don't appear in different ceremonies.
@@ -267,16 +241,10 @@ namespace SoulsFormats
 
             private long UnkOffset1Delta, UnkOffset2Delta;
 
-            internal Part(int id, string name, long unkOffset1Delta, long unkOffset2Delta)
+            internal Part(string name, long unkOffset1Delta, long unkOffset2Delta)
             {
-                ID = id;
                 Name = name;
-                ModelName = null;
-                Position = Vector3.Zero;
-                Rotation = Vector3.Zero;
                 Scale = Vector3.One;
-                OldDrawGroup1 = 0;
-                MapStudioLayer = 0;
                 DrawGroups = new uint[8] { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
                     0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
                 DispGroups = new uint[8] { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
@@ -284,23 +252,6 @@ namespace SoulsFormats
                 BackreadGroups = new uint[8] { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
                     0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
                 EventEntityID = -1;
-                OldLightID = 0;
-                OldFogID = 0;
-                OldScatterID = 0;
-                OldLensFlareID = 0;
-                LanternID = 0;
-                LodParamID = 0;
-                UnkB0E = 0;
-                PointLightShadowSource = false;
-                ShadowSource = false;
-                ShadowDest = false;
-                IsShadowOnly = false;
-                DrawByReflectCam = false;
-                DrawOnlyReflectCam = false;
-                UseDepthBiasFloat = false;
-                DisablePointLightEffect = false;
-                UnkB17 = false;
-                UnkB18 = 0;
                 EventEntityGroups = new int[8] { -1, -1, -1, -1, -1, -1, -1, -1 };
                 UnkOffset1Delta = unkOffset1Delta;
                 UnkOffset2Delta = unkOffset2Delta;
@@ -310,12 +261,10 @@ namespace SoulsFormats
             {
                 Name = clone.Name;
                 Placeholder = clone.Placeholder;
-                ID = clone.ID;
                 ModelName = clone.ModelName;
                 Position = clone.Position;
                 Rotation = clone.Rotation;
                 Scale = clone.Scale;
-                OldDrawGroup1 = clone.OldDrawGroup1;
                 MapStudioLayer = clone.MapStudioLayer;
                 DrawGroups = (uint[])clone.DrawGroups.Clone();
                 DispGroups = (uint[])clone.DispGroups.Clone();
@@ -349,7 +298,7 @@ namespace SoulsFormats
 
                 long nameOffset = br.ReadInt64();
                 br.AssertUInt32((uint)Type);
-                ID = br.ReadInt32();
+                br.ReadInt32(); // ID
                 modelIndex = br.ReadInt32();
                 br.AssertInt32(0);
                 long placeholderOffset = br.ReadInt64();
@@ -357,7 +306,7 @@ namespace SoulsFormats
                 Rotation = br.ReadVector3();
                 Scale = br.ReadVector3();
 
-                OldDrawGroup1 = br.ReadUInt32(); // -1
+                br.AssertInt32(-1);
                 MapStudioLayer = br.ReadInt32();
                 DrawGroups = br.ReadUInt32s(8);
                 DispGroups = br.ReadUInt32s(8);
@@ -413,13 +362,13 @@ namespace SoulsFormats
 
             internal abstract void Read(BinaryReaderEx br);
 
-            internal void Write(BinaryWriterEx bw)
+            internal void Write(BinaryWriterEx bw, int id)
             {
                 long start = bw.Position;
 
                 bw.ReserveInt64("NameOffset");
                 bw.WriteUInt32((uint)Type);
-                bw.WriteInt32(ID);
+                bw.WriteInt32(id);
                 bw.WriteInt32(modelIndex);
                 bw.WriteInt32(0);
                 bw.ReserveInt64("PlaceholderOffset");
@@ -427,7 +376,7 @@ namespace SoulsFormats
                 bw.WriteVector3(Rotation);
                 bw.WriteVector3(Scale);
 
-                bw.WriteUInt32(OldDrawGroup1);
+                bw.WriteInt32(-1);
                 bw.WriteInt32(MapStudioLayer);
                 bw.WriteUInt32s(DrawGroups);
                 bw.WriteUInt32s(DispGroups);
@@ -501,11 +450,11 @@ namespace SoulsFormats
             }
 
             /// <summary>
-            /// Returns the type, ID, and name of this part.
+            /// Returns the type and name of this part.
             /// </summary>
             public override string ToString()
             {
-                return $"{Type} {ID} : {Name}";
+                return $"{Type} : {Name}";
             }
 
             /// <summary>
@@ -531,15 +480,9 @@ namespace SoulsFormats
                 public int UnkT10, UnkT14;
 
                 /// <summary>
-                /// Creates a new MapPiece with the given ID and name.
+                /// Creates a new MapPiece with the given name.
                 /// </summary>
-                public MapPiece(int id, string name) : base(id, name, 8, 0)
-                {
-                    LightParamID = 0;
-                    FogParamID = 0;
-                    UnkT10 = 0;
-                    UnkT14 = 0;
-                }
+                public MapPiece(string name) : base(name, 8, 0) { }
 
                 /// <summary>
                 /// Creates a new MapPiece with values copied from another.
@@ -607,26 +550,9 @@ namespace SoulsFormats
                 public int UnkT20, UnkT24, UnkT28, UnkT2C;
 
                 /// <summary>
-                /// Creates a new Object with the given ID and name.
+                /// Creates a new Object with the given name.
                 /// </summary>
-                public Object(int id, string name) : base(id, name, 32, 0)
-                {
-                    CollisionName = null;
-                    UnkT0C = 0;
-                    UnkT0E = 0;
-                    UnkT10 = 0;
-                    UnkT12 = 0;
-                    UnkT14 = 0;
-                    UnkT16 = 0;
-                    UnkT18 = 0;
-                    UnkT1A = 0;
-                    UnkT1C = 0;
-                    UnkT1E = 0;
-                    UnkT20 = 0;
-                    UnkT24 = 0;
-                    UnkT28 = 0;
-                    UnkT2C = 0;
-                }
+                public Object(string name) : base(name, 32, 0) { }
 
                 /// <summary>
                 /// Creates a new Object with values copied from another.
@@ -769,9 +695,9 @@ namespace SoulsFormats
                 public int UnkT8C, UnkT94, UnkT9C, UnkTA4, UnkTAC, UnkTC0, UnkTC4, UnkTC8, UnkTCC;
 
                 /// <summary>
-                /// Creates a new Enemy with the given ID and name.
+                /// Creates a new Enemy with the given name.
                 /// </summary>
-                public Enemy(int id, string name) : base(id, name, 192, 0)
+                public Enemy(string name) : base(name, 192, 0)
                 {
                     ThinkParamID = 0;
                     NPCParamID = 0;
@@ -967,9 +893,9 @@ namespace SoulsFormats
                 internal override PartsType Type => PartsType.Player;
 
                 /// <summary>
-                /// Creates a new Player with the given ID and name.
+                /// Creates a new Player with the given name.
                 /// </summary>
-                public Player(int id, string name) : base(id, name, 0, 0) { }
+                public Player(string name) : base(name, 0, 0) { }
 
                 /// <summary>
                 /// Creates a new Player with values copied from another.
@@ -1109,9 +1035,9 @@ namespace SoulsFormats
                 public float UnkTC4;
 
                 /// <summary>
-                /// Creates a new Collision with the given ID and name.
+                /// Creates a new Collision with the given name.
                 /// </summary>
-                public Collision(int id, string name) : base(id, name, 80, 112)
+                public Collision(string name) : base(name, 80, 112)
                 {
                     HitFilterID = 0;
                     SoundSpaceType = SoundSpace.NoReverb;
@@ -1277,9 +1203,9 @@ namespace SoulsFormats
                 internal override PartsType Type => PartsType.DummyObject;
 
                 /// <summary>
-                /// Creates a new DummyObject with the given ID and name.
+                /// Creates a new DummyObject with the given name.
                 /// </summary>
-                public DummyObject(int id, string name) : base(id, name) { }
+                public DummyObject(string name) : base(name) { }
 
                 /// <summary>
                 /// Creates a new DummyObject with values copied from another.
@@ -1297,9 +1223,9 @@ namespace SoulsFormats
                 internal override PartsType Type => PartsType.DummyEnemy;
 
                 /// <summary>
-                /// Creates a new DummyEnemy with the given ID and name.
+                /// Creates a new DummyEnemy with the given name.
                 /// </summary>
-                public DummyEnemy(int id, string name) : base(id, name) { }
+                public DummyEnemy(string name) : base(name) { }
 
                 /// <summary>
                 /// Creates a new DummyEnemy with values copied from another.
@@ -1328,9 +1254,9 @@ namespace SoulsFormats
                 public byte MapID1, MapID2, MapID3, MapID4;
 
                 /// <summary>
-                /// Creates a new ConnectCollision with the given ID and name.
+                /// Creates a new ConnectCollision with the given name.
                 /// </summary>
-                public ConnectCollision(int id, string name) : base(id, name, 0, 0)
+                public ConnectCollision(string name) : base(name, 0, 0)
                 {
                     CollisionName = null;
                     MapID1 = 0;
