@@ -344,7 +344,7 @@ namespace SoulsFormats
             {
                 int result = list.FindIndex(entry => entry.Name == name);
                 if (result == -1)
-                    throw new KeyNotFoundException("No items found in list.");
+                    throw new KeyNotFoundException($"Name not found: {name}");
                 return result;
             }
         }
