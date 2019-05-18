@@ -229,6 +229,7 @@ namespace SoulsFormats
         private void Write(BinaryWriterEx bhdWriter, BinaryWriterEx bdtWriter)
         {
             BHD.Write(bhdWriter, Files);
+            BDT.Write(bdtWriter);
 
             for (int i = 0; i < Files.Count; i++)
             {
