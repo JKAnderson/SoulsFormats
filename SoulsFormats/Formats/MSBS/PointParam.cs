@@ -232,7 +232,7 @@ namespace SoulsFormats
 
             public int Unk2C { get; set; }
 
-            public int MapStudioLayer { get; set; }
+            public uint MapStudioLayer { get; set; }
 
             public List<short> UnkA { get; set; }
 
@@ -247,7 +247,7 @@ namespace SoulsFormats
             {
                 Name = "";
                 Shape = new Shape.Point();
-                MapStudioLayer = -1;
+                MapStudioLayer = 0xFFFFFFFF;
                 UnkA = new List<short>();
                 UnkB = new List<short>();
                 EntityID = -1;
@@ -266,7 +266,7 @@ namespace SoulsFormats
                 long baseDataOffset1 = br.ReadInt64();
                 long baseDataOffset2 = br.ReadInt64();
                 br.AssertInt32(-1);
-                MapStudioLayer = br.ReadInt32();
+                MapStudioLayer = br.ReadUInt32();
                 long shapeDataOffset = br.ReadInt64();
                 long baseDataOffset3 = br.ReadInt64();
                 long typeDataOffset = br.ReadInt64();
@@ -333,7 +333,7 @@ namespace SoulsFormats
                 bw.ReserveInt64("BaseDataOffset1");
                 bw.ReserveInt64("BaseDataOffset2");
                 bw.WriteInt32(-1);
-                bw.WriteInt32(MapStudioLayer);
+                bw.WriteUInt32(MapStudioLayer);
                 bw.ReserveInt64("ShapeDataOffset");
                 bw.ReserveInt64("BaseDataOffset3");
                 bw.ReserveInt64("TypeDataOffset");
