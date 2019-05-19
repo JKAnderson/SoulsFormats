@@ -42,6 +42,7 @@ namespace SoulsFormats
             internal override void WriteEntry(BinaryWriterEx bw, int id, string entry)
             {
                 bw.WriteUTF16(entry, true);
+                bw.Pad(8);
             }
         }
     }

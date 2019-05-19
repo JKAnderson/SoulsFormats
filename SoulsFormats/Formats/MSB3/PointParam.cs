@@ -134,8 +134,10 @@ namespace SoulsFormats
             public override List<Region> GetEntries()
             {
                 return SFUtil.ConcatAll<Region>(
-                    General, Unk00s, InvasionPoints, EnvironmentMapPoints, Sounds, SFX, WindSFX, SpawnPoints, Messages,
-                    WalkRoutes, Unk12s, WarpPoints, ActivationAreas, Events, EnvironmentMapEffectBoxes, WindAreas, MufflingBoxes, MufflingPortals);
+                    InvasionPoints, EnvironmentMapPoints, Sounds, SFX, WindSFX,
+                    SpawnPoints, Messages, WalkRoutes, Unk12s, WarpPoints,
+                    ActivationAreas, Events, Unk00s, EnvironmentMapEffectBoxes, WindAreas,
+                    MufflingBoxes, MufflingPortals, General);
             }
 
             internal override Region ReadEntry(BinaryReaderEx br)
@@ -410,7 +412,7 @@ namespace SoulsFormats
                 ActivationPartIndex = br.ReadInt32();
                 EventEntityID = br.ReadInt32();
 
-                HasTypeData = typeDataOffset != 0 || Type == RegionType.MufflingBox;
+                HasTypeData = typeDataOffset != 0 || Type == RegionType.MufflingBox || Type == RegionType.MufflingPortal;
                 if (HasTypeData)
                     ReadSpecific(br);
             }
@@ -542,7 +544,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new Unk00 with values copied from another.
                 /// </summary>
-                public Unk00(General clone) : base(clone) { }
+                public Unk00(Unk00 clone) : base(clone) { }
 
                 internal Unk00(BinaryReaderEx br) : base(br) { }
             }
@@ -987,7 +989,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new WalkRoute with values copied from another.
                 /// </summary>
-                public WalkRoute(General clone) : base(clone) { }
+                public WalkRoute(WalkRoute clone) : base(clone) { }
 
                 internal WalkRoute(BinaryReaderEx br) : base(br) { }
             }
@@ -1007,7 +1009,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new Unk12 with values copied from another.
                 /// </summary>
-                public Unk12(General clone) : base(clone) { }
+                public Unk12(Unk12 clone) : base(clone) { }
 
                 internal Unk12(BinaryReaderEx br) : base(br) { }
             }
@@ -1027,7 +1029,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new WarpPoint with values copied from another.
                 /// </summary>
-                public WarpPoint(General clone) : base(clone) { }
+                public WarpPoint(WarpPoint clone) : base(clone) { }
 
                 internal WarpPoint(BinaryReaderEx br) : base(br) { }
             }
@@ -1047,7 +1049,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new ActivationArea with values copied from another.
                 /// </summary>
-                public ActivationArea(General clone) : base(clone) { }
+                public ActivationArea(ActivationArea clone) : base(clone) { }
 
                 internal ActivationArea(BinaryReaderEx br) : base(br) { }
             }
@@ -1067,7 +1069,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new Event with values copied from another.
                 /// </summary>
-                public Event(General clone) : base(clone) { }
+                public Event(Event clone) : base(clone) { }
 
                 internal Event(BinaryReaderEx br) : base(br) { }
             }
@@ -1181,7 +1183,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new WindArea with values copied from another.
                 /// </summary>
-                public WindArea(General clone) : base(clone) { }
+                public WindArea(WindArea clone) : base(clone) { }
 
                 internal WindArea(BinaryReaderEx br) : base(br) { }
             }
@@ -1201,10 +1203,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new MufflingBox with the given name.
                 /// </summary>
-                public MufflingBox(string name) : base(name, true)
-                {
-                    UnkT00 = 0;
-                }
+                public MufflingBox(string name) : base(name, true) { }
 
                 /// <summary>
                 /// Creates a new MufflingBox with values copied from another.
@@ -1231,21 +1230,46 @@ namespace SoulsFormats
             /// <summary>
             /// A region leading into a MufflingBox.
             /// </summary>
-            public class MufflingPortal : SimpleRegion
+            public class MufflingPortal : Region
             {
                 internal override RegionType Type => RegionType.MufflingPortal;
 
                 /// <summary>
+                /// Unknown.
+                /// </summary>
+                public int UnkT00;
+
+                /// <summary>
                 /// Creates a new MufflingPortal with the given name.
                 /// </summary>
-                public MufflingPortal(string name) : base(name) { }
+                public MufflingPortal(string name) : base(name, true) { }
 
                 /// <summary>
                 /// Creates a new MufflingPortal with values copied from another.
                 /// </summary>
-                public MufflingPortal(General clone) : base(clone) { }
+                public MufflingPortal(MufflingPortal clone) : base(clone)
+                {
+                    UnkT00 = clone.UnkT00;
+                }
 
                 internal MufflingPortal(BinaryReaderEx br) : base(br) { }
+
+                internal override void ReadSpecific(BinaryReaderEx br)
+                {
+                    UnkT00 = br.ReadInt32();
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw, long start)
+                {
+                    bw.FillInt64("TypeDataOffset", 0);
+                    bw.WriteInt32(UnkT00);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                }
             }
         }
     }
