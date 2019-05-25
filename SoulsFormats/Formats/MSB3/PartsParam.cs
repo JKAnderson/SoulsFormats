@@ -157,7 +157,7 @@ namespace SoulsFormats
         {
             internal abstract PartsType Type { get; }
 
-            internal abstract bool HasUnk3 { get; }
+            internal abstract bool HasGparamConfig { get; }
             internal abstract bool HasUnk4 { get; }
 
             /// <summary>
@@ -312,7 +312,7 @@ namespace SoulsFormats
 
                 long baseDataOffset = br.ReadInt64();
                 long typeDataOffset = br.ReadInt64();
-                long unkOffset3 = br.ReadInt64();
+                long gparamOffset = br.ReadInt64();
                 long unkOffset4 = br.ReadInt64();
 
                 Name = br.GetUTF16(start + nameOffset);
@@ -344,10 +344,10 @@ namespace SoulsFormats
                 br.Position = start + typeDataOffset;
                 ReadTypeData(br);
 
-                if (HasUnk3)
+                if (HasGparamConfig)
                 {
-                    br.Position = start + unkOffset3;
-                    ReadUnk3(br);
+                    br.Position = start + gparamOffset;
+                    ReadGparamConfig(br);
                 }
 
                 if (HasUnk4)
@@ -359,9 +359,9 @@ namespace SoulsFormats
 
             internal abstract void ReadTypeData(BinaryReaderEx br);
 
-            internal virtual void ReadUnk3(BinaryReaderEx br)
+            internal virtual void ReadGparamConfig(BinaryReaderEx br)
             {
-                throw new InvalidOperationException("Unk struct 3 should not be read for parts with no unk struct 3.");
+                throw new InvalidOperationException("Gparam config should not be read for parts with no gparam config.");
             }
 
             internal virtual void ReadUnk4(BinaryReaderEx br)
@@ -392,7 +392,7 @@ namespace SoulsFormats
 
                 bw.ReserveInt64("BaseDataOffset");
                 bw.ReserveInt64("TypeDataOffset");
-                bw.ReserveInt64("UnkOffset3");
+                bw.ReserveInt64("GparamOffset");
                 bw.ReserveInt64("UnkOffset4");
 
                 bw.FillInt64("NameOffset", bw.Position - start);
@@ -437,14 +437,14 @@ namespace SoulsFormats
                 bw.FillInt64("TypeDataOffset", bw.Position - start);
                 WriteTypeData(bw);
 
-                if (HasUnk3)
+                if (HasGparamConfig)
                 {
-                    bw.FillInt64("UnkOffset3", bw.Position - start);
-                    WriteUnk3(bw);
+                    bw.FillInt64("GparamOffset", bw.Position - start);
+                    WriteGparamConfig(bw);
                 }
                 else
                 {
-                    bw.FillInt64("UnkOffset3", 0);
+                    bw.FillInt64("GparamOffset", 0);
                 }
 
                 if (HasUnk4)
@@ -460,9 +460,9 @@ namespace SoulsFormats
 
             internal abstract void WriteTypeData(BinaryWriterEx bw);
 
-            internal virtual void WriteUnk3(BinaryWriterEx bw)
+            internal virtual void WriteGparamConfig(BinaryWriterEx bw)
             {
-                throw new InvalidOperationException("Unk struct 3 should not be written for parts with no unk struct 3.");
+                throw new InvalidOperationException("Gparam config should not be written for parts with no gparam config.");
             }
 
             internal virtual void WriteUnk4(BinaryWriterEx bw)
@@ -489,19 +489,19 @@ namespace SoulsFormats
             }
 
             /// <summary>
-            /// Unknown.
+            /// Gparam value IDs for various part types.
             /// </summary>
-            public class UnkStruct3
+            public class GparamConfig
             {
                 /// <summary>
-                /// Unknown.
+                /// ID of the value set from LightSet ParamEditor to use.
                 /// </summary>
-                public int Unk00 { get; set; }
+                public int LightSetID { get; set; }
 
                 /// <summary>
-                /// Unknown.
+                /// ID of the value set from FogParamEditor to use.
                 /// </summary>
-                public int Unk04 { get; set; }
+                public int FogParamID { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -509,42 +509,50 @@ namespace SoulsFormats
                 public int Unk08 { get; set; }
 
                 /// <summary>
-                /// Unknown.
+                /// ID of the value set from Env Map:Editor to use.
                 /// </summary>
-                public int Unk0C { get; set; }
+                public int EnvMapID { get; set; }
 
                 /// <summary>
-                /// Creates an UnkStruct3 with default values.
+                /// Creates a GparamConfig with default values.
                 /// </summary>
-                public UnkStruct3() { }
+                public GparamConfig() { }
 
                 /// <summary>
-                /// Clones an existing UnkStruct3.
+                /// Clones an existing GparamConfig.
                 /// </summary>
-                public UnkStruct3(UnkStruct3 clone)
+                public GparamConfig(GparamConfig clone)
                 {
-                    Unk00 = clone.Unk00;
-                    Unk04 = clone.Unk04;
+                    LightSetID = clone.LightSetID;
+                    FogParamID = clone.FogParamID;
                     Unk08 = clone.Unk08;
-                    Unk0C = clone.Unk0C;
+                    EnvMapID = clone.EnvMapID;
                 }
 
-                internal UnkStruct3(BinaryReaderEx br)
+                internal GparamConfig(BinaryReaderEx br)
                 {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadInt32();
+                    LightSetID = br.ReadInt32();
+                    FogParamID = br.ReadInt32();
                     Unk08 = br.ReadInt32();
-                    Unk0C = br.ReadInt32();
+                    EnvMapID = br.ReadInt32();
                     br.AssertNull(0x10, false);
                 }
 
                 internal void Write(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
+                    bw.WriteInt32(LightSetID);
+                    bw.WriteInt32(FogParamID);
                     bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
+                    bw.WriteInt32(EnvMapID);
                     bw.WriteNull(0x10, false);
+                }
+
+                /// <summary>
+                /// Returns the four gparam values as a string.
+                /// </summary>
+                public override string ToString()
+                {
+                    return $"{LightSetID}, {FogParamID}, {Unk08}, {EnvMapID}";
                 }
             }
 
@@ -605,20 +613,20 @@ namespace SoulsFormats
             {
                 internal override PartsType Type => PartsType.MapPiece;
 
-                internal override bool HasUnk3 => true;
+                internal override bool HasGparamConfig => true;
                 internal override bool HasUnk4 => false;
 
                 /// <summary>
-                /// Unknown.
+                /// Gparam IDs for this map piece.
                 /// </summary>
-                public UnkStruct3 Unk3;
+                public GparamConfig Gparam;
 
                 /// <summary>
                 /// Creates a new MapPiece with the given name.
                 /// </summary>
                 public MapPiece(string name) : base(name)
                 {
-                    Unk3 = new UnkStruct3();
+                    Gparam = new GparamConfig();
                 }
 
                 /// <summary>
@@ -626,7 +634,7 @@ namespace SoulsFormats
                 /// </summary>
                 public MapPiece(MapPiece clone) : base(clone)
                 {
-                    Unk3 = new UnkStruct3(clone.Unk3);
+                    Gparam = new GparamConfig(clone.Gparam);
                 }
 
                 internal MapPiece(BinaryReaderEx br) : base(br) { }
@@ -637,7 +645,7 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                 }
 
-                internal override void ReadUnk3(BinaryReaderEx br) => Unk3 = new UnkStruct3(br);
+                internal override void ReadGparamConfig(BinaryReaderEx br) => Gparam = new GparamConfig(br);
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
                 {
@@ -645,7 +653,7 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                 }
 
-                internal override void WriteUnk3(BinaryWriterEx bw) => Unk3.Write(bw);
+                internal override void WriteGparamConfig(BinaryWriterEx bw) => Gparam.Write(bw);
             }
 
             /// <summary>
@@ -655,13 +663,13 @@ namespace SoulsFormats
             {
                 internal override PartsType Type => PartsType.Object;
 
-                internal override bool HasUnk3 => true;
+                internal override bool HasGparamConfig => true;
                 internal override bool HasUnk4 => false;
 
                 /// <summary>
-                /// Unknown.
+                /// Gparam IDs for this object.
                 /// </summary>
-                public UnkStruct3 Unk3;
+                public GparamConfig Gparam;
 
                 private int collisionPartIndex;
                 /// <summary>
@@ -679,7 +687,7 @@ namespace SoulsFormats
                 /// </summary>
                 public Object(string name) : base(name)
                 {
-                    Unk3 = new UnkStruct3();
+                    Gparam = new GparamConfig();
                 }
 
                 /// <summary>
@@ -687,7 +695,7 @@ namespace SoulsFormats
                 /// </summary>
                 public Object(Object clone) : base(clone)
                 {
-                    Unk3 = new UnkStruct3(clone.Unk3);
+                    Gparam = new GparamConfig(clone.Gparam);
                     CollisionName = clone.CollisionName;
                     UnkT0C = clone.UnkT0C;
                     UnkT0E = clone.UnkT0E;
@@ -720,7 +728,7 @@ namespace SoulsFormats
                     UnkT1E = br.ReadInt16();
                 }
 
-                internal override void ReadUnk3(BinaryReaderEx br) => Unk3 = new UnkStruct3(br);
+                internal override void ReadGparamConfig(BinaryReaderEx br) => Gparam = new GparamConfig(br);
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
                 {
@@ -739,7 +747,7 @@ namespace SoulsFormats
                     bw.WriteInt16(UnkT1E);
                 }
 
-                internal override void WriteUnk3(BinaryWriterEx bw) => Unk3.Write(bw);
+                internal override void WriteGparamConfig(BinaryWriterEx bw) => Gparam.Write(bw);
 
                 internal override void GetNames(MSB3 msb, Entries entries)
                 {
@@ -761,13 +769,13 @@ namespace SoulsFormats
             {
                 internal override PartsType Type => PartsType.Enemy;
 
-                internal override bool HasUnk3 => true;
+                internal override bool HasGparamConfig => true;
                 internal override bool HasUnk4 => false;
 
                 /// <summary>
-                /// Unknown.
+                /// Gparam IDs for this enemy.
                 /// </summary>
-                public UnkStruct3 Unk3;
+                public GparamConfig Gparam;
 
                 private int collisionPartIndex;
                 /// <summary>
@@ -801,9 +809,15 @@ namespace SoulsFormats
                 public short UnkT04, ChrManipulatorAllocationParameter;
 
                 /// <summary>
+                /// Walk route followed by this enemy.
+                /// </summary>
+                public string WalkRouteName;
+                private short WalkRouteIndex;
+
+                /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT20, BackupEventAnimID, UnkT78;
+                public int BackupEventAnimID, UnkT78;
 
                 /// <summary>
                 /// Unknown.
@@ -815,7 +829,7 @@ namespace SoulsFormats
                 /// </summary>
                 public Enemy(string name) : base(name)
                 {
-                    Unk3 = new UnkStruct3();
+                    Gparam = new GparamConfig();
                 }
 
                 /// <summary>
@@ -823,7 +837,7 @@ namespace SoulsFormats
                 /// </summary>
                 public Enemy(Enemy clone) : base(clone)
                 {
-                    Unk3 = new UnkStruct3(clone.Unk3);
+                    Gparam = new GparamConfig(clone.Gparam);
                     ThinkParamID = clone.ThinkParamID;
                     NPCParamID = clone.NPCParamID;
                     TalkID = clone.TalkID;
@@ -831,7 +845,7 @@ namespace SoulsFormats
                     ChrManipulatorAllocationParameter = clone.ChrManipulatorAllocationParameter;
                     CharaInitID = clone.CharaInitID;
                     CollisionName = clone.CollisionName;
-                    UnkT20 = clone.UnkT20;
+                    WalkRouteName = clone.WalkRouteName;
                     BackupEventAnimID = clone.BackupEventAnimID;
                     UnkT78 = clone.UnkT78;
                     UnkT84 = clone.UnkT84;
@@ -850,7 +864,8 @@ namespace SoulsFormats
                     ChrManipulatorAllocationParameter = br.ReadInt16();
                     CharaInitID = br.ReadInt32();
                     collisionPartIndex = br.ReadInt32();
-                    UnkT20 = br.ReadInt32();
+                    WalkRouteIndex = br.ReadInt16();
+                    br.AssertInt16(0);
                     br.AssertInt32(0);
                     br.AssertInt32(-1);
                     br.AssertInt32(-1);
@@ -888,7 +903,7 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                 }
 
-                internal override void ReadUnk3(BinaryReaderEx br) => Unk3 = new UnkStruct3(br);
+                internal override void ReadGparamConfig(BinaryReaderEx br) => Gparam = new GparamConfig(br);
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
                 {
@@ -901,7 +916,8 @@ namespace SoulsFormats
                     bw.WriteInt16(ChrManipulatorAllocationParameter);
                     bw.WriteInt32(CharaInitID);
                     bw.WriteInt32(collisionPartIndex);
-                    bw.WriteInt32(UnkT20);
+                    bw.WriteInt16(WalkRouteIndex);
+                    bw.WriteInt16(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(-1);
                     bw.WriteInt32(-1);
@@ -939,18 +955,20 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                 }
 
-                internal override void WriteUnk3(BinaryWriterEx bw) => Unk3.Write(bw);
+                internal override void WriteGparamConfig(BinaryWriterEx bw) => Gparam.Write(bw);
 
                 internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
                     CollisionName = GetName(entries.Parts, collisionPartIndex);
+                    WalkRouteName = GetName(msb.Events.WalkRoutes, WalkRouteIndex);
                 }
 
                 internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
                     collisionPartIndex = GetIndex(entries.Parts, CollisionName);
+                    WalkRouteIndex = (short)GetIndex(msb.Events.WalkRoutes, WalkRouteName);
                 }
             }
 
@@ -961,7 +979,7 @@ namespace SoulsFormats
             {
                 internal override PartsType Type => PartsType.Player;
 
-                internal override bool HasUnk3 => false;
+                internal override bool HasGparamConfig => false;
                 internal override bool HasUnk4 => false;
 
                 /// <summary>
@@ -1030,13 +1048,13 @@ namespace SoulsFormats
 
                 internal override PartsType Type => PartsType.Collision;
 
-                internal override bool HasUnk3 => true;
+                internal override bool HasGparamConfig => true;
                 internal override bool HasUnk4 => true;
 
                 /// <summary>
-                /// Unknown.
+                /// Gparam IDs for this collision.
                 /// </summary>
-                public UnkStruct3 Unk3;
+                public GparamConfig Gparam;
 
                 /// <summary>
                 /// Unknown.
@@ -1114,7 +1132,7 @@ namespace SoulsFormats
                 /// </summary>
                 public Collision(string name) : base(name)
                 {
-                    Unk3 = new UnkStruct3();
+                    Gparam = new GparamConfig();
                     Unk4 = new UnkStruct4();
                     SoundSpaceType = SoundSpace.NoReverb;
                     MapNameID = -1;
@@ -1129,7 +1147,7 @@ namespace SoulsFormats
                 /// </summary>
                 public Collision(Collision clone) : base(clone)
                 {
-                    Unk3 = new UnkStruct3(clone.Unk3);
+                    Gparam = new GparamConfig(clone.Gparam);
                     Unk4 = new UnkStruct4(clone.Unk4);
                     HitFilterID = clone.HitFilterID;
                     SoundSpaceType = clone.SoundSpaceType;
@@ -1182,7 +1200,7 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                 }
 
-                internal override void ReadUnk3(BinaryReaderEx br) => Unk3 = new UnkStruct3(br);
+                internal override void ReadGparamConfig(BinaryReaderEx br) => Gparam = new GparamConfig(br);
                 internal override void ReadUnk4(BinaryReaderEx br) => Unk4 = new UnkStruct4(br);
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
@@ -1216,7 +1234,7 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                 }
 
-                internal override void WriteUnk3(BinaryWriterEx bw) => Unk3.Write(bw);
+                internal override void WriteGparamConfig(BinaryWriterEx bw) => Gparam.Write(bw);
                 internal override void WriteUnk4(BinaryWriterEx bw) => Unk4.Write(bw);
 
                 internal override void GetNames(MSB3 msb, Entries entries)
@@ -1279,7 +1297,7 @@ namespace SoulsFormats
             {
                 internal override PartsType Type => PartsType.ConnectCollision;
 
-                internal override bool HasUnk3 => false;
+                internal override bool HasGparamConfig => false;
                 internal override bool HasUnk4 => false;
 
                 private int collisionIndex;
