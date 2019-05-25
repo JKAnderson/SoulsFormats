@@ -21,15 +21,15 @@ namespace SoulsFormats
         /// <summary>
         /// Values determining material properties.
         /// </summary>
-        public List<Param> Params;
+        public List<Param> Params { get; set; }
 
         /// <summary>
         /// Texture types required by the material shader.
         /// </summary>
-        public List<Texture> Textures;
+        public List<Texture> Textures { get; set; }
 
         /// <summary>
-        /// Creates a new MTD with default values.
+        /// Creates an MTD with default values.
         /// </summary>
         public MTD()
         {
@@ -52,7 +52,7 @@ namespace SoulsFormats
             br.BigEndian = false;
 
             br.AssertInt32(0);
-            int fileSize = br.ReadInt32();
+            br.ReadInt32(); // File size
             br.AssertInt32(0);
             br.AssertInt32(3);
             AssertMarker(br, 0x01);
@@ -67,7 +67,7 @@ namespace SoulsFormats
             br.AssertInt32(0x3E8);
             AssertMarker(br, 0x01);
             br.AssertInt32(0);
-            int dataSize = br.ReadInt32();
+            br.ReadInt32(); // Data size
             br.AssertInt32(2);
             br.AssertInt32(4);
             AssertMarker(br, 0xA3);
@@ -77,7 +77,7 @@ namespace SoulsFormats
 
             br.AssertInt32(1);
             br.AssertInt32(0);
-            int paramSize = br.ReadInt32();
+            br.ReadInt32(); // Params size
             br.AssertInt32(3);
             br.AssertInt32(4);
             AssertMarker(br, 0xA3);
@@ -180,7 +180,7 @@ namespace SoulsFormats
             /// <summary>
             /// The type of this value.
             /// </summary>
-            public ParamType Type { get; set; }
+            public ParamType Type { get; }
 
             /// <summary>
             /// The value itself.
@@ -195,12 +195,24 @@ namespace SoulsFormats
             /// <summary>
             /// Creates a new Param with the specified values.
             /// </summary>
-            public Param(string name, ParamType type, object value, int unk04 = 0)
+            public Param(string name, ParamType type, object value = null)
             {
                 Name = name;
                 Type = type;
                 Value = value;
-                Unk04 = unk04;
+                if (Value == null)
+                {
+                    switch (type)
+                    {
+                        case ParamType.Bool: Value = false; break;
+                        case ParamType.Float: Value = 0f; break;
+                        case ParamType.Float2: Value = new float[2]; break;
+                        case ParamType.Float3: Value = new float[3]; break;
+                        case ParamType.Float4: Value = new float[4]; break;
+                        case ParamType.Int: Value = 0; break;
+                        case ParamType.Int2: Value = new int[2]; break;
+                    }
+                }
             }
 
             internal Param(BinaryReaderEx br)
@@ -215,7 +227,7 @@ namespace SoulsFormats
                 Type = (ParamType)Enum.Parse(typeof(ParamType), type, true);
                 br.AssertInt32(1);
                 br.AssertInt32(0);
-                int valueSize = br.ReadInt32();
+                br.ReadInt32(); // Value size
 
                 if (Type == ParamType.Bool)
                     br.AssertByte(0);
@@ -419,7 +431,17 @@ namespace SoulsFormats
             /// <summary>
             /// Floats for an unknown purpose, only used in Sekiro.
             /// </summary>
-            public float[] UnkFloats { get; set; }
+            public List<float> UnkFloats { get; set; }
+
+            /// <summary>
+            /// Creates a Texture with default values.
+            /// </summary>
+            public Texture()
+            {
+                Type = "g_DiffuseTexture";
+                Path = "";
+                UnkFloats = new List<float>();
+            }
 
             internal Texture(BinaryReaderEx br)
             {
@@ -438,12 +460,12 @@ namespace SoulsFormats
                     br.AssertInt32(0xA3);
                     Path = br.ReadShiftJISLengthPrefixed(0xBA);
                     int floatCount = br.ReadInt32();
-                    UnkFloats = br.ReadSingles(floatCount);
+                    UnkFloats = new List<float>(br.ReadSingles(floatCount));
                 }
                 else
                 {
-                    Path = null;
-                    UnkFloats = null;
+                    Path = "";
+                    UnkFloats = new List<float>();
                 }
             }
 
@@ -463,7 +485,7 @@ namespace SoulsFormats
                 {
                     bw.WriteInt32(0xA3);
                     bw.WriteShiftJISLengthPrefixed(Path, 0xBA);
-                    bw.WriteInt32(UnkFloats.Length);
+                    bw.WriteInt32(UnkFloats.Count);
                     bw.WriteSingles(UnkFloats);
                 }
             }
