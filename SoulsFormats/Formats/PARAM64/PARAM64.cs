@@ -9,50 +9,38 @@ namespace SoulsFormats
     /// </summary>
     public partial class PARAM64 : SoulsFile<PARAM64>
     {
-        /// <summary>
-        /// A name given to this param; no functional significance.
-        /// </summary>
-        public string Name;
+        public bool BigEndian { get; set; }
+
+        public byte Format2D { get; set; }
+
+        public byte Format2E { get; set; }
+
+        public byte Format2F { get; set; }
+
+        public short Format3Unk06 { get; set; }
+
+        public short Format3Unk08 { get; set; }
+
+        public short Format4Unk06 { get; set; }
+
+        public short Format4Unk08 { get; set; }
+
+        public short Format5Unk08 { get; set; }
 
         /// <summary>
         /// The param format ID of rows in this param.
         /// </summary>
-        public string ID;
+        public string ID { get; set; }
 
         /// <summary>
         /// Automatically determined based on spacing of row offsets; could be wrong in theory, but never seems to be.
         /// </summary>
-        public long DetectedSize;
-
-        /// <summary>
-        /// If true, use an older DS1-like format found in some DS3 network test params.
-        /// </summary>
-        public bool FixStrID;
-
-        /// <summary>
-        /// Unknown.
-        /// </summary>
-        public short Unk1;
-
-        /// <summary>
-        /// Unknown.
-        /// </summary>
-        public short Unk2;
-
-        /// <summary>
-        /// Unknown.
-        /// </summary>
-        public byte Unk3;
-
-        /// <summary>
-        /// Unknown.
-        /// </summary>
-        public byte Unk4;
+        public long DetectedSize { get; private set; }
 
         /// <summary>
         /// The rows of this param; must be loaded with PARAM64.ReadRows() before cells can be used.
         /// </summary>
-        public List<Row> Rows;
+        public List<Row> Rows { get; set; }
 
         private BinaryReaderEx brRows;
         private Layout layout;
@@ -69,72 +57,83 @@ namespace SoulsFormats
 
         internal override void Read(BinaryReaderEx br)
         {
-            br.BigEndian = false;
-            layout = null;
+            br.Position = 0x2C;
+            BigEndian = br.AssertByte(0, 0xFF) == 0xFF;
+            Format2D = br.ReadByte();
+            Format2E = br.ReadByte();
+            Format2F = br.AssertByte(0, 0xFF);
+            br.Position = 0;
+            br.BigEndian = BigEndian;
 
             // Make a private copy of the file to read row data from later
             byte[] copy = br.GetBytes(0, (int)br.Stream.Length);
-            brRows = new BinaryReaderEx(false, copy);
+            brRows = new BinaryReaderEx(BigEndian, copy);
 
-            int nameOffset = br.ReadInt32();
-            FixStrID = br.GetInt32(0xC) != 0;
+            short rowCount;
+            long stringsOffset;
 
-            br.AssertInt16(0);
-            Unk1 = br.ReadInt16();
-            Unk2 = br.ReadInt16();
-            ushort rowCount = br.ReadUInt16();
-
-            if (FixStrID)
+            // DeS, DS1
+            if ((Format2D & 0x7F) < 3)
             {
+                stringsOffset = br.ReadUInt32();
+                br.ReadUInt16(); // Data start
+                br.AssertInt16(0);
+                br.AssertInt16(1);
+                rowCount = br.ReadInt16();
                 ID = br.ReadFixStr(0x20);
+                br.Skip(4); // Format
             }
+            // DS2
+            else if ((Format2D & 0x7F) == 3)
+            {
+                stringsOffset = br.ReadUInt32();
+                br.AssertInt16(0);
+                Format3Unk06 = br.ReadInt16();
+                Format3Unk08 = br.ReadInt16();
+                rowCount = br.ReadInt16();
+                ID = br.ReadFixStr(0x20);
+                br.Skip(4); // Format
+                br.ReadUInt32(); // Data start
+                br.AssertInt32(0);
+                br.AssertInt32(0);
+                br.AssertInt32(0);
+            }
+            // SotFS, BB
+            else if ((Format2D & 0x7F) == 4)
+            {
+                stringsOffset = br.ReadUInt32();
+                br.AssertInt16(0);
+                Format4Unk06 = br.ReadInt16();
+                Format4Unk08 = br.ReadInt16();
+                rowCount = br.ReadInt16();
+                ID = br.ReadFixStr(0x20);
+                br.Skip(4); // Format
+                br.ReadInt64(); // Data start
+                br.AssertInt64(0);
+            }
+            // DS3, SDT
             else
             {
+                stringsOffset = br.ReadInt64();
+                Format5Unk08 = br.ReadInt16();
+                rowCount = br.ReadInt16();
                 br.AssertInt32(0);
-
-                // Maybe long, but doesn't matter
-                int idOffset = br.ReadInt32();
-                br.AssertInt32(0);
-                br.AssertInt32(0);
-                br.AssertInt32(0);
-
-                br.AssertInt32(0);
-                br.AssertInt32(0);
-                br.AssertInt32(0);
-
+                long idOffset = br.ReadInt64();
+                br.AssertNull(0x14, false);
+                br.Skip(4); // Format
+                br.ReadInt64(); // Data start
+                br.AssertInt64(0);
                 ID = br.GetASCII(idOffset);
-                nameOffset = idOffset;
             }
-
-            br.AssertByte(0);
-            Unk3 = br.AssertByte(0x04, 0x85);
-            Unk4 = br.AssertByte(0x06, 0x07);
-            br.AssertByte(0);
-
-            if (FixStrID)
-            {
-                if (Unk4 == 6)
-                    Name = br.GetShiftJIS(nameOffset);
-                else if (Unk4 == 7)
-                    Name = br.GetUTF16(nameOffset);
-            }
-            else
-            {
-                Name = br.GetShiftJIS(nameOffset);
-            }
-
-            long dataStart = br.ReadInt64();
-            br.AssertInt32(0);
-            br.AssertInt32(0);
 
             Rows = new List<Row>(rowCount);
             for (int i = 0; i < rowCount; i++)
-                Rows.Add(new Row(br, Unk4));
+                Rows.Add(new Row(br, Format2D));
 
             if (Rows.Count > 1)
                 DetectedSize = Rows[1].Offset - Rows[0].Offset;
             else
-                DetectedSize = nameOffset - Rows[0].Offset;
+                DetectedSize = stringsOffset - Rows[0].Offset;
         }
 
         internal override void Write(BinaryWriterEx bw)
@@ -144,64 +143,94 @@ namespace SoulsFormats
 
             Rows.Sort((r1, r2) => r1.ID.CompareTo(r2.ID));
 
-            bw.BigEndian = false;
-
-            bw.ReserveInt32("NameOffset");
-            bw.WriteInt16(0);
-            bw.WriteInt16(Unk1);
-            bw.WriteInt16(Unk2);
-            bw.WriteUInt16((ushort)Rows.Count);
-
-            if (FixStrID)
+            bw.BigEndian = BigEndian;
+            void WriteFormat()
             {
-                bw.WriteFixStr(ID, 0x20);
+                bw.WriteByte((byte)(BigEndian ? 0xFF : 0x00));
+                bw.WriteByte(Format2D);
+                bw.WriteByte(Format2E);
+                bw.WriteByte(Format2F);
             }
+
+            // DeS, DS1
+            if ((Format2D & 0x7F) < 3)
+            {
+                bw.ReserveUInt32("StringsOffset");
+                bw.ReserveUInt16("DataStart");
+                bw.WriteInt16(0);
+                bw.WriteInt16(1);
+                bw.WriteInt16((short)Rows.Count);
+                bw.WriteFixStr(ID, 0x20, 0x20);
+                WriteFormat();
+            }
+            // DS2
+            else if ((Format2D & 0x7F) == 3)
+            {
+                bw.ReserveUInt32("StringsOffset");
+                bw.WriteInt16(0);
+                bw.WriteInt16(Format3Unk06);
+                bw.WriteInt16(Format3Unk08);
+                bw.WriteInt16((short)Rows.Count);
+                bw.WriteFixStr(ID, 0x20, 0x20);
+                WriteFormat();
+                bw.ReserveUInt32("DataStart");
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
+                bw.WriteInt32(0);
+            }
+            // SotFS, BB
+            else if ((Format2D & 0x7F) == 4)
+            {
+                bw.ReserveUInt32("StringsOffset");
+                bw.WriteInt16(0);
+                bw.WriteInt16(Format4Unk06);
+                bw.WriteInt16(Format4Unk08);
+                bw.WriteInt16((short)Rows.Count);
+                bw.WriteFixStr(ID, 0x20, 0x00);
+                WriteFormat();
+                bw.ReserveInt64("DataStart");
+                bw.WriteInt64(0);
+            }
+            // DS3, SDT
             else
             {
+                bw.ReserveInt64("StringsOffset");
+                bw.WriteInt16(Format5Unk08);
+                bw.WriteInt16((short)Rows.Count);
                 bw.WriteInt32(0);
-                bw.ReserveInt32("IDOffset");
-                bw.WriteInt32(0);
-                bw.WriteInt32(0);
-                bw.WriteInt32(0);
-                bw.WriteInt32(0);
-                bw.WriteInt32(0);
-                bw.WriteInt32(0);
+                bw.ReserveInt64("IDOffset");
+                bw.WriteNull(0x14, false);
+                WriteFormat();
+                bw.ReserveInt64("DataStart");
+                bw.WriteInt64(0);
             }
 
-            bw.WriteByte(0);
-            bw.WriteByte(Unk3);
-            bw.WriteByte(Unk4);
-            bw.WriteByte(0);
-
-            bw.ReserveInt64("DataStart");
-            bw.WriteInt32(0);
-            bw.WriteInt32(0);
-
             for (int i = 0; i < Rows.Count; i++)
-                Rows[i].WriteHeader(bw, i);
+                Rows[i].WriteHeader(bw, Format2D, i);
 
-            bw.FillInt64("DataStart", bw.Position);
-
-            for (int i = 0; i < Rows.Count; i++)
-                Rows[i].WriteCells(bw, i, layout);
-
-            bw.FillInt32("NameOffset", (int)bw.Position);
-            if (FixStrID)
-            {
-                if (Unk4 == 6)
-                    bw.WriteShiftJIS(Name, true);
-                else if (Unk4 == 7)
-                    bw.WriteUTF16(Name, true);
-            }
+            if ((Format2D & 0x7F) < 3)
+                bw.FillUInt16("DataStart", (ushort)bw.Position);
+            else if ((Format2D & 0x7F) == 3)
+                bw.FillUInt32("DataStart", (uint)bw.Position);
             else
+                bw.FillInt64("DataStart", bw.Position);
+
+            for (int i = 0; i < Rows.Count; i++)
+                Rows[i].WriteCells(bw, Format2D, i, layout);
+
+            if ((Format2D & 0x7F) < 5)
+                bw.FillUInt32("StringsOffset", (uint)bw.Position);
+            else
+                bw.FillInt64("StringsOffset", bw.Position);
+
+            if ((Format2D & 0x7F) > 4)
             {
-                bw.WriteShiftJIS(Name, true);
-                bw.FillInt32("IDOffset", (int)bw.Position);
+                bw.FillInt64("IDOffset", bw.Position);
                 bw.WriteASCII(ID, true);
             }
 
             for (int i = 0; i < Rows.Count; i++)
-                Rows[i].WriteName(bw, i, Unk4);
+                Rows[i].WriteName(bw, Format2D, i);
         }
 
         /// <summary>
@@ -254,24 +283,29 @@ namespace SoulsFormats
                     Cells.Add(new Cell(entry, entry.Default));
             }
 
-            internal Row(BinaryReaderEx br, short Unk4)
+            internal Row(BinaryReaderEx br, byte format2D)
             {
-                ID = br.ReadInt64();
-                Offset = br.ReadInt64();
-                long nameOffset = br.ReadInt64();
-
-                // Name is always empty in DS3, but not in the network test
-                if (nameOffset == 0 || br.GetByte(nameOffset) == 0)
-                    Name = null;
+                long nameOffset;
+                if ((format2D & 0x7F) < 4)
+                {
+                    ID = br.ReadUInt32();
+                    Offset = br.ReadUInt32();
+                    nameOffset = br.ReadUInt32();
+                }
                 else
                 {
-                    if (Unk4 == 6)
-                        Name = br.GetShiftJIS(nameOffset);
-                    else if (Unk4 == 7)
-                        Name = br.GetUTF16(nameOffset);
+                    ID = br.ReadInt64();
+                    Offset = br.ReadInt64();
+                    nameOffset = br.ReadInt64();
                 }
 
-                Cells = null;
+                if (nameOffset != 0)
+                {
+                    if ((format2D & 0x7F) < 4)
+                        Name = br.GetShiftJIS(nameOffset);
+                    else
+                        Name = br.GetUTF16(nameOffset);
+                }
             }
 
             internal void ReadRow(BinaryReaderEx br, Layout layout)
@@ -344,16 +378,29 @@ namespace SoulsFormats
                 br.StepOut();
             }
 
-            internal void WriteHeader(BinaryWriterEx bw, int i)
+            internal void WriteHeader(BinaryWriterEx bw, byte format2D, int i)
             {
-                bw.WriteInt64(ID);
-                bw.ReserveInt64($"RowOffset{i}");
-                bw.ReserveInt64($"NameOffset{i}");
+                if ((format2D & 0x7F) < 4)
+                {
+                    bw.WriteUInt32((uint)ID);
+                    bw.ReserveUInt32($"RowOffset{i}");
+                    bw.ReserveUInt32($"NameOffset{i}");
+                }
+                else
+                {
+                    bw.WriteInt64(ID);
+                    bw.ReserveInt64($"RowOffset{i}");
+                    bw.ReserveInt64($"NameOffset{i}");
+                }
             }
 
-            internal void WriteCells(BinaryWriterEx bw, int i, Layout layout)
+            internal void WriteCells(BinaryWriterEx bw, byte format2D, int i, Layout layout)
             {
-                bw.FillInt64($"RowOffset{i}", bw.Position);
+                if ((format2D & 0x7F) < 4)
+                    bw.FillUInt32($"RowOffset{i}", (uint)bw.Position);
+                else
+                    bw.FillInt64($"RowOffset{i}", bw.Position);
+
                 for (int j = 0; j < layout.Count; j++)
                 {
                     Cell cell = Cells[j];
@@ -417,19 +464,27 @@ namespace SoulsFormats
                 }
             }
 
-            internal void WriteName(BinaryWriterEx bw, int i, byte Unk4)
+            internal void WriteName(BinaryWriterEx bw, byte format2D, int i)
             {
                 if (Name == null || Name == "")
                 {
-                    bw.FillInt64($"NameOffset{i}", 0);
+                    if ((format2D & 0x7F) < 4)
+                        bw.FillUInt32($"NameOffset{i}", 0);
+                    else
+                        bw.FillInt64($"NameOffset{i}", 0);
                 }
                 else
                 {
-                    bw.FillInt64($"NameOffset{i}", bw.Position);
-                    if (Unk4 == 6)
+                    if ((format2D & 0x7F) < 4)
+                    {
+                        bw.FillUInt32($"NameOffset{i}", (uint)bw.Position);
                         bw.WriteShiftJIS(Name, true);
-                    else if (Unk4 == 7)
+                    }
+                    else
+                    {
+                        bw.FillInt64($"NameOffset{i}", bw.Position);
                         bw.WriteUTF16(Name, true);
+                    }
                 }
             }
 
