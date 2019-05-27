@@ -119,6 +119,7 @@
     <Compile Include="Formats\TPF\TPF.cs" />
     <Compile Include="SoulsFile.cs" />
     <Compile Include="SFUtil.cs" />
+    <Compile Include="SupportsAlphaAttribute.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Formats\TAE3\TAE3.Event.cs" />

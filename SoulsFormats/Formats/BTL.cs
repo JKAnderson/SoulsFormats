@@ -15,6 +15,9 @@ namespace SoulsFormats
         /// </summary>
         public int Version { get; set; }
 
+        /// <summary>
+        /// Whether offsets are 64-bit; set to false for Dark Souls 2.
+        /// </summary>
         public bool LongOffsets { get; set; }
 
         /// <summary>
@@ -101,6 +104,27 @@ namespace SoulsFormats
         }
 
         /// <summary>
+        /// Type of a light source.
+        /// </summary>
+        public enum LightType : uint
+        {
+            /// <summary>
+            /// Omnidirectional light.
+            /// </summary>
+            Point = 0,
+
+            /// <summary>
+            /// Cone of light.
+            /// </summary>
+            Spot = 1,
+
+            /// <summary>
+            /// Light at a constant angle.
+            /// </summary>
+            Directional = 2,
+        }
+
+        /// <summary>
         /// An omnidirectional and/or spot light source.
         /// </summary>
         public class Light
@@ -133,7 +157,7 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk18 { get; set; }
+            public LightType Type { get; set; }
 
             /// <summary>
             /// Unknown.
@@ -143,6 +167,7 @@ namespace SoulsFormats
             /// <summary>
             /// Color of the light on diffuse surfaces.
             /// </summary>
+            [SupportsAlpha(false)]
             public Color DiffuseColor { get; set; }
 
             /// <summary>
@@ -153,6 +178,7 @@ namespace SoulsFormats
             /// <summary>
             /// Color of the light on reflective surfaces.
             /// </summary>
+            [SupportsAlpha(false)]
             public Color SpecularColor { get; set; }
 
             /// <summary>
@@ -221,9 +247,10 @@ namespace SoulsFormats
             public float Unk68 { get; set; }
 
             /// <summary>
-            /// Unknown; 4 bytes.
+            /// Color of shadows cast by the light; alpha is relative to 100.
             /// </summary>
-            public byte[] Unk6C { get; set; }
+            [SupportsAlpha(true)]
+            public Color ShadowColor { get; set; }
 
             /// <summary>
             /// Unknown.
@@ -231,20 +258,20 @@ namespace SoulsFormats
             public float Unk70 { get; set; }
 
             /// <summary>
-            /// Unknown.
+            /// Minimum time between flickers.
             /// </summary>
-            public float Unk74 { get; set; }
+            public float FlickerIntervalMin { get; set; }
 
             /// <summary>
-            /// Opacity of cast shadows.
+            /// Maximum time between flickers.
             /// </summary>
-            public float ShadowOpacity { get; set; }
+            public float FlickerIntervalMax { get; set; }
 
             /// <summary>
-            /// Unknown.
+            /// Multiplies the brightness of the light while flickering.
             /// </summary>
-            public float Unk7C { get; set; }
-            
+            public float FlickerBrightnessMult { get; set; }
+
             /// <summary>
             /// Unknown.
             /// </summary>
@@ -283,7 +310,7 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public float UnkA4 { get; set; }
+            public float Sharpness { get; set; }
 
             /// <summary>
             /// Unknown.
@@ -351,13 +378,37 @@ namespace SoulsFormats
             public Light()
             {
                 Name = "";
+                Unk1C = true;
                 DiffuseColor = Color.White;
+                DiffusePower = 1;
                 SpecularColor = Color.White;
-                Unk64 = new byte[4];
-                Unk6C = new byte[4];
+                SpecularPower = 1;
+                Unk50 = 4;
+                Radius = 10;
+                Unk5C = -1;
+                Unk64 = new byte[4] { 0, 0, 0, 1 };
+                ShadowColor = Color.FromArgb(100, 0, 0, 0);
+                FlickerBrightnessMult = 1;
+                Unk80 = -1;
                 Unk84 = new byte[4];
-                UnkA0 = new byte[4];
+                Unk98 = 1;
+                Unk9C = 1;
+                UnkA0 = new byte[4] { 1, 0, 2, 1 };
+                Sharpness = 1;
                 UnkC0 = new byte[4];
+            }
+
+            /// <summary>
+            /// Creates a clone of an existing Light.
+            /// </summary>
+            public Light Clone()
+            {
+                var clone = (Light)MemberwiseClone();
+                clone.Unk64 = (byte[])Unk64.Clone();
+                clone.Unk84 = (byte[])Unk84.Clone();
+                clone.UnkA0 = (byte[])UnkA0.Clone();
+                clone.UnkC0 = (byte[])UnkC0.Clone();
+                return clone;
             }
 
             internal Light(BinaryReaderEx br, long namesStart, int version, bool longOffsets)
@@ -374,18 +425,14 @@ namespace SoulsFormats
                     nameOffset = br.ReadInt32();
                 Name = br.GetUTF16(namesStart + nameOffset);
 
-                Unk18 = br.ReadInt32();
+                Type = br.ReadEnum32<LightType>();
                 Unk1C = br.ReadBoolean();
-                byte r = br.ReadByte();
-                byte g = br.ReadByte();
-                byte b = br.ReadByte();
-                DiffuseColor = Color.FromArgb(255, r, g, b);
+                byte[] color = br.ReadBytes(3);
+                DiffuseColor = Color.FromArgb(255, color[0], color[1], color[2]);
                 DiffusePower = br.ReadSingle();
-                r = br.ReadByte();
-                g = br.ReadByte();
-                b = br.ReadByte();
+                color = br.ReadBytes(3);
+                SpecularColor = Color.FromArgb(255, color[0], color[1], color[2]);
                 CastShadows = br.ReadBoolean();
-                SpecularColor = Color.FromArgb(255, r, g, b);
                 SpecularPower = br.ReadSingle();
                 ConeAngle = br.ReadSingle();
                 Unk30 = br.ReadSingle();
@@ -399,11 +446,12 @@ namespace SoulsFormats
                 br.AssertInt32(0);
                 Unk64 = br.ReadBytes(4);
                 Unk68 = br.ReadSingle();
-                Unk6C = br.ReadBytes(4);
+                color = br.ReadBytes(4);
+                ShadowColor = Color.FromArgb(color[3], color[0], color[1], color[2]);
                 Unk70 = br.ReadSingle();
-                Unk74 = br.ReadSingle();
-                ShadowOpacity = br.ReadSingle();
-                Unk7C = br.ReadSingle();
+                FlickerIntervalMin = br.ReadSingle();
+                FlickerIntervalMax = br.ReadSingle();
+                FlickerBrightnessMult = br.ReadSingle();
                 Unk80 = br.ReadInt32();
                 Unk84 = br.ReadBytes(4);
                 Unk88 = br.ReadSingle();
@@ -412,20 +460,25 @@ namespace SoulsFormats
                 br.AssertInt32(0);
                 Unk98 = br.ReadSingle();
                 Unk9C = br.ReadSingle();
-                UnkA0 = br.ReadBytes(4);
-                UnkA4 = br.ReadSingle();
-                br.AssertInt32(0);
-                UnkAC = br.ReadSingle();
 
-                if (longOffsets)
-                    br.AssertInt64(0);
+                if (version == 2 && !longOffsets)
+                {
+                    br.AssertNull(0x24, false);
+                    UnkA0 = new byte[4];
+                    UnkC0 = new byte[4];
+                }
                 else
+                {
+                    UnkA0 = br.ReadBytes(4);
+                    Sharpness = br.ReadSingle();
                     br.AssertInt32(0);
-
-                Width = br.ReadSingle();
-                UnkBC = br.ReadSingle();
-                UnkC0 = br.ReadBytes(4);
-                UnkC4 = br.ReadSingle();
+                    UnkAC = br.ReadSingle();
+                    br.AssertInt64(0);
+                    Width = br.ReadSingle();
+                    UnkBC = br.ReadSingle();
+                    UnkC0 = br.ReadBytes(4);
+                    UnkC4 = br.ReadSingle();
+                }
 
                 if (version >= 16)
                 {
@@ -452,7 +505,7 @@ namespace SoulsFormats
                 else
                     bw.WriteInt32((int)nameOffset);
 
-                bw.WriteInt32(Unk18);
+                bw.WriteUInt32((uint)Type);
                 bw.WriteBoolean(Unk1C);
                 bw.WriteByte(DiffuseColor.R);
                 bw.WriteByte(DiffuseColor.G);
@@ -475,11 +528,14 @@ namespace SoulsFormats
                 bw.WriteInt32(0);
                 bw.WriteBytes(Unk64);
                 bw.WriteSingle(Unk68);
-                bw.WriteBytes(Unk6C);
+                bw.WriteByte(ShadowColor.R);
+                bw.WriteByte(ShadowColor.G);
+                bw.WriteByte(ShadowColor.B);
+                bw.WriteByte(ShadowColor.A);
                 bw.WriteSingle(Unk70);
-                bw.WriteSingle(Unk74);
-                bw.WriteSingle(ShadowOpacity);
-                bw.WriteSingle(Unk7C);
+                bw.WriteSingle(FlickerIntervalMin);
+                bw.WriteSingle(FlickerIntervalMax);
+                bw.WriteSingle(FlickerBrightnessMult);
                 bw.WriteInt32(Unk80);
                 bw.WriteBytes(Unk84);
                 bw.WriteSingle(Unk88);
@@ -489,7 +545,7 @@ namespace SoulsFormats
                 bw.WriteSingle(Unk98);
                 bw.WriteSingle(Unk9C);
                 bw.WriteBytes(UnkA0);
-                bw.WriteSingle(UnkA4);
+                bw.WriteSingle(Sharpness);
                 bw.WriteInt32(0);
                 bw.WriteSingle(UnkAC);
 
