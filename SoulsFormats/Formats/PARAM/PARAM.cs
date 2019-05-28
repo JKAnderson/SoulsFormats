@@ -332,6 +332,21 @@ namespace SoulsFormats
 
                     object value = null;
 
+                    void ReadBools(CellType boolType, int fieldSize)
+                    {
+                        byte[] b = br.ReadBytes(fieldSize);
+                        int j;
+                        for (j = 0; j < fieldSize * 8; j++)
+                        {
+                            if (i + j >= layout.Count || layout[i + j].Type != boolType)
+                                break;
+
+                            byte mask = (byte)(1 << (j % 8));
+                            Cells.Add(new Cell(layout[i + j], (b[j / 8] & mask) != 0));
+                        }
+                        i += j - 1;
+                    }
+
                     if (type == CellType.s8)
                         value = br.ReadSByte();
                     else if (type == CellType.u8 || type == CellType.x8)
@@ -353,33 +368,11 @@ namespace SoulsFormats
                     else if (type == CellType.fixstrW)
                         value = br.ReadFixStrW(entry.Size);
                     else if (type == CellType.b8)
-                    {
-                        byte b = br.ReadByte();
-                        int j;
-                        for (j = 0; j < 8; j++)
-                        {
-                            if (i + j >= layout.Count || layout[i + j].Type != CellType.b8)
-                                break;
-
-                            byte mask = (byte)(1 << j);
-                            Cells.Add(new Cell(layout[i + j], (b & mask) != 0));
-                        }
-                        i += j - 1;
-                    }
+                        ReadBools(type, 1);
+                    else if (type == CellType.b16)
+                        ReadBools(type, 2);
                     else if (type == CellType.b32)
-                    {
-                        byte[] b = br.ReadBytes(4);
-                        int j;
-                        for (j = 0; j < 32; j++)
-                        {
-                            if (i + j >= layout.Count || layout[i + j].Type != CellType.b32)
-                                break;
-
-                            byte mask = (byte)(1 << (j % 8));
-                            Cells.Add(new Cell(layout[i + j], (b[j / 8] & mask) != 0));
-                        }
-                        i += j - 1;
-                    }
+                        ReadBools(type, 4);
                     else
                         throw new NotImplementedException($"Unsupported param layout type: {type}");
 
@@ -423,6 +416,22 @@ namespace SoulsFormats
                     if (entry.Name != cell.Name || type != cell.Type)
                         throw new FormatException("Layout does not match cells.");
 
+                    void WriteBools(CellType boolType, int fieldSize)
+                    {
+                        byte[] b = new byte[fieldSize];
+                        int k;
+                        for (k = 0; k < fieldSize * 8; k++)
+                        {
+                            if (j + k >= layout.Count || layout[j + k].Type != boolType)
+                                break;
+
+                            if ((bool)Cells[j + k].Value)
+                                b[k / 8] |= (byte)(1 << (k % 8));
+                        }
+                        j += k - 1;
+                        bw.WriteBytes(b);
+                    }
+
                     if (type == CellType.s8)
                         bw.WriteSByte((sbyte)value);
                     else if (type == CellType.u8 || type == CellType.x8)
@@ -444,35 +453,11 @@ namespace SoulsFormats
                     else if (type == CellType.fixstrW)
                         bw.WriteFixStrW((string)value, entry.Size);
                     else if (type == CellType.b8)
-                    {
-                        byte b = 0;
-                        int k;
-                        for (k = 0; k < 8; k++)
-                        {
-                            if (j + k >= layout.Count || layout[j + k].Type != CellType.b8)
-                                break;
-
-                            if ((bool)Cells[j + k].Value)
-                                b |= (byte)(1 << k);
-                        }
-                        j += k - 1;
-                        bw.WriteByte(b);
-                    }
+                        WriteBools(type, 1);
+                    else if (type == CellType.b16)
+                        WriteBools(type, 2);
                     else if (type == CellType.b32)
-                    {
-                        byte[] b = new byte[4];
-                        int k;
-                        for (k = 0; k < 32; k++)
-                        {
-                            if (j + k >= layout.Count || layout[j + k].Type != CellType.b32)
-                                break;
-
-                            if ((bool)Cells[j + k].Value)
-                                b[k / 8] |= (byte)(1 << (k % 8));
-                        }
-                        j += k - 1;
-                        bw.WriteBytes(b);
-                    }
+                        WriteBools(type, 4);
                 }
             }
 

@@ -25,34 +25,27 @@ namespace SoulsFormats
                     {
                         CellType type = this[i].Type;
 
+                        void ConsumeBools(CellType boolType, int fieldSize)
+                        {
+                            size += fieldSize;
+
+                            int j;
+                            for (j = 0; j < fieldSize * 8; j++)
+                            {
+                                if (i + j >= Count || this[i + j].Type != boolType)
+                                    break;
+                            }
+                            i += j - 1;
+                        }
+
                         if (type == CellType.b8)
-                        {
-                            size += 1;
-
-                            int j;
-                            for (j = 0; j < 8; j++)
-                            {
-                                if (i + j >= Count || this[i + j].Type != CellType.b8)
-                                    break;
-                            }
-                            i += j - 1;
-                        }
+                            ConsumeBools(type, 1);
+                        else if (type == CellType.b16)
+                            ConsumeBools(type, 2);
                         else if (type == CellType.b32)
-                        {
-                            size += 4;
-
-                            int j;
-                            for (j = 0; j < 32; j++)
-                            {
-                                if (i + j >= Count || this[i + j].Type != CellType.b32)
-                                    break;
-                            }
-                            i += j - 1;
-                        }
+                            ConsumeBools(type, 4);
                         else
-                        {
                             size += this[i].Size;
-                        }
                     }
 
                     return size;
@@ -126,7 +119,7 @@ namespace SoulsFormats
             {
                 if (type == CellType.fixstr || type == CellType.fixstrW)
                     return value;
-                else if (type == CellType.b8 || type == CellType.b32)
+                else if (type == CellType.b8 || type == CellType.b16 || type == CellType.b32)
                     return bool.Parse(value);
                 else if (type == CellType.s8)
                     return sbyte.Parse(value);
@@ -218,7 +211,7 @@ namespace SoulsFormats
                         else if (Type == CellType.s32 || Type == CellType.u32 || Type == CellType.x32 || Type == CellType.f32)
                             return 4;
                         // Not meaningful
-                        else if (Type == CellType.b8 || Type == CellType.b32)
+                        else if (Type == CellType.b8 || Type == CellType.b16 || Type == CellType.b32)
                             return 0;
                         else
                             throw new InvalidCastException("Unknown type: " + Type);
@@ -337,6 +330,11 @@ namespace SoulsFormats
             /// 1-bit bool in a 1-byte field.
             /// </summary>
             b8,
+
+            /// <summary>
+            /// 1-bit bool in a 2-byte field.
+            /// </summary>
+            b16,
 
             /// <summary>
             /// 1-bit bool in a 4-byte field.
