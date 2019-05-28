@@ -107,8 +107,8 @@
     <Compile Include="Formats\Other\MSBN\MSBN.PartsSection.cs" />
     <Compile Include="Formats\MTD.cs" />
     <Compile Include="Formats\Other\Otogi\MDL.cs" />
-    <Compile Include="Formats\PARAM64\PARAM64.cs" />
-    <Compile Include="Formats\PARAM64\PARAM64.Layout.cs" />
+    <Compile Include="Formats\PARAM\PARAM.cs" />
+    <Compile Include="Formats\PARAM\PARAM.Layout.cs" />
     <Compile Include="Formats\DDS.cs" />
     <Compile Include="Formats\PMDCL.cs" />
     <Compile Include="Formats\TAE3\TAE3.cs" />
