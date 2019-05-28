@@ -9,23 +9,35 @@ namespace SoulsFormats
     /// </summary>
     public partial class PARAM64 : SoulsFile<PARAM64>
     {
+        /// <summary>
+        /// Whether the file is big-endian; true for PS3/360 files, false otherwise.
+        /// </summary>
         public bool BigEndian { get; set; }
 
+        /// <summary>
+        /// An unknown format or version indicator.
+        /// </summary>
         public byte Format2D { get; set; }
 
+        /// <summary>
+        /// An unknown format or version indicator.
+        /// </summary>
         public byte Format2E { get; set; }
 
+        /// <summary>
+        /// An unknown format or version indicator; usually 0x00, 0xFF in DS2 NT.
+        /// </summary>
         public byte Format2F { get; set; }
 
-        public short Format3Unk06 { get; set; }
+        /// <summary>
+        /// Unknown.
+        /// </summary>
+        public short Unk06 { get; set; }
 
-        public short Format3Unk08 { get; set; }
-
-        public short Format4Unk06 { get; set; }
-
-        public short Format4Unk08 { get; set; }
-
-        public short Format5Unk08 { get; set; }
+        /// <summary>
+        /// Unknown.
+        /// </summary>
+        public short Unk08 { get; set; }
 
         /// <summary>
         /// The param format ID of rows in this param.
@@ -69,17 +81,17 @@ namespace SoulsFormats
             byte[] copy = br.GetBytes(0, (int)br.Stream.Length);
             brRows = new BinaryReaderEx(BigEndian, copy);
 
-            short rowCount;
-            long stringsOffset;
+            ushort rowCount;
+            uint stringsOffset;
 
             // DeS, DS1
             if ((Format2D & 0x7F) < 3)
             {
                 stringsOffset = br.ReadUInt32();
                 br.ReadUInt16(); // Data start
-                br.AssertInt16(0);
-                br.AssertInt16(1);
-                rowCount = br.ReadInt16();
+                Unk06 = br.ReadInt16();
+                Unk08 = br.ReadInt16();
+                rowCount = br.ReadUInt16();
                 ID = br.ReadFixStr(0x20);
                 br.Skip(4); // Format
             }
@@ -88,9 +100,9 @@ namespace SoulsFormats
             {
                 stringsOffset = br.ReadUInt32();
                 br.AssertInt16(0);
-                Format3Unk06 = br.ReadInt16();
-                Format3Unk08 = br.ReadInt16();
-                rowCount = br.ReadInt16();
+                Unk06 = br.ReadInt16();
+                Unk08 = br.ReadInt16();
+                rowCount = br.ReadUInt16();
                 ID = br.ReadFixStr(0x20);
                 br.Skip(4); // Format
                 br.ReadUInt32(); // Data start
@@ -103,9 +115,9 @@ namespace SoulsFormats
             {
                 stringsOffset = br.ReadUInt32();
                 br.AssertInt16(0);
-                Format4Unk06 = br.ReadInt16();
-                Format4Unk08 = br.ReadInt16();
-                rowCount = br.ReadInt16();
+                Unk06 = br.ReadInt16();
+                Unk08 = br.ReadInt16();
+                rowCount = br.ReadUInt16();
                 ID = br.ReadFixStr(0x20);
                 br.Skip(4); // Format
                 br.ReadInt64(); // Data start
@@ -114,9 +126,11 @@ namespace SoulsFormats
             // DS3, SDT
             else
             {
-                stringsOffset = br.ReadInt64();
-                Format5Unk08 = br.ReadInt16();
-                rowCount = br.ReadInt16();
+                stringsOffset = br.ReadUInt32();
+                br.AssertInt16(0);
+                Unk06 = br.ReadInt16();
+                Unk08 = br.ReadInt16();
+                rowCount = br.ReadUInt16();
                 br.AssertInt32(0);
                 long idOffset = br.ReadInt64();
                 br.AssertNull(0x14, false);
@@ -157,9 +171,9 @@ namespace SoulsFormats
             {
                 bw.ReserveUInt32("StringsOffset");
                 bw.ReserveUInt16("DataStart");
-                bw.WriteInt16(0);
-                bw.WriteInt16(1);
-                bw.WriteInt16((short)Rows.Count);
+                bw.WriteInt16(Unk06);
+                bw.WriteInt16(Unk08);
+                bw.WriteUInt16((ushort)Rows.Count);
                 bw.WriteFixStr(ID, 0x20, 0x20);
                 WriteFormat();
             }
@@ -168,9 +182,9 @@ namespace SoulsFormats
             {
                 bw.ReserveUInt32("StringsOffset");
                 bw.WriteInt16(0);
-                bw.WriteInt16(Format3Unk06);
-                bw.WriteInt16(Format3Unk08);
-                bw.WriteInt16((short)Rows.Count);
+                bw.WriteInt16(Unk06);
+                bw.WriteInt16(Unk08);
+                bw.WriteUInt16((ushort)Rows.Count);
                 bw.WriteFixStr(ID, 0x20, 0x20);
                 WriteFormat();
                 bw.ReserveUInt32("DataStart");
@@ -183,9 +197,9 @@ namespace SoulsFormats
             {
                 bw.ReserveUInt32("StringsOffset");
                 bw.WriteInt16(0);
-                bw.WriteInt16(Format4Unk06);
-                bw.WriteInt16(Format4Unk08);
-                bw.WriteInt16((short)Rows.Count);
+                bw.WriteInt16(Unk06);
+                bw.WriteInt16(Unk08);
+                bw.WriteUInt16((ushort)Rows.Count);
                 bw.WriteFixStr(ID, 0x20, 0x00);
                 WriteFormat();
                 bw.ReserveInt64("DataStart");
@@ -194,9 +208,11 @@ namespace SoulsFormats
             // DS3, SDT
             else
             {
-                bw.ReserveInt64("StringsOffset");
-                bw.WriteInt16(Format5Unk08);
-                bw.WriteInt16((short)Rows.Count);
+                bw.ReserveUInt32("StringsOffset");
+                bw.WriteInt16(0);
+                bw.WriteInt16(Unk06);
+                bw.WriteInt16(Unk08);
+                bw.WriteUInt16((ushort)Rows.Count);
                 bw.WriteInt32(0);
                 bw.ReserveInt64("IDOffset");
                 bw.WriteNull(0x14, false);
@@ -218,10 +234,7 @@ namespace SoulsFormats
             for (int i = 0; i < Rows.Count; i++)
                 Rows[i].WriteCells(bw, Format2D, i, layout);
 
-            if ((Format2D & 0x7F) < 5)
-                bw.FillUInt32("StringsOffset", (uint)bw.Position);
-            else
-                bw.FillInt64("StringsOffset", bw.Position);
+            bw.FillUInt32("StringsOffset", (uint)bw.Position);
 
             if ((Format2D & 0x7F) > 4)
             {
