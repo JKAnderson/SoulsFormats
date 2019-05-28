@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 
 namespace SoulsFormats
 {
     /// <summary>
-    /// A param data file for DS3.
+    /// A general-purpose configuration file used throughout the series.
     /// </summary>
-    public partial class PARAM64 : SoulsFile<PARAM64>
+    public partial class PARAM : SoulsFile<PARAM>
     {
         /// <summary>
         /// Whether the file is big-endian; true for PS3/360 files, false otherwise.
@@ -50,7 +49,7 @@ namespace SoulsFormats
         public long DetectedSize { get; private set; }
 
         /// <summary>
-        /// The rows of this param; must be loaded with PARAM64.ReadRows() before cells can be used.
+        /// The rows of this param; must be loaded with PARAM.ReadRows() before cells can be used.
         /// </summary>
         public List<Row> Rows { get; set; }
 
@@ -58,9 +57,9 @@ namespace SoulsFormats
         private Layout layout;
 
         /// <summary>
-        /// Creates an uninitialized PARAM64. Should not be used publicly; use PARAM64.Read instead.
+        /// Creates an uninitialized PARAM. Should not be used publicly; use PARAM.Read instead.
         /// </summary>
-        public PARAM64() { }
+        public PARAM() { }
 
         internal override bool Is(BinaryReaderEx br)
         {
@@ -277,7 +276,7 @@ namespace SoulsFormats
             public string Name { get; set; }
 
             /// <summary>
-            /// Cells contained in this row. Must be loaded with PARAM64.ReadRows() before use.
+            /// Cells contained in this row. Must be loaded with PARAM.ReadRows() before use.
             /// </summary>
             public List<Cell> Cells { get; set; }
 

@@ -5,7 +5,7 @@ using System.Xml;
 
 namespace SoulsFormats
 {
-    public partial class PARAM64 : SoulsFile<PARAM64>
+    public partial class PARAM : SoulsFile<PARAM>
     {
         /// <summary>
         /// The layout of cell data within each row in a param.
@@ -60,27 +60,27 @@ namespace SoulsFormats
             }
 
             /// <summary>
-            /// Read a PARAM64 layout from an XML file.
+            /// Read a PARAM layout from an XML file.
             /// </summary>
             public static Layout ReadXMLFile(string path)
             {
-                XmlDocument xml = new XmlDocument();
+                var xml = new XmlDocument();
                 xml.Load(path);
                 return new Layout(xml);
             }
 
             /// <summary>
-            /// Read a PARAM64 layout from an XML string.
+            /// Read a PARAM layout from an XML string.
             /// </summary>
             public static Layout ReadXMLText(string text)
             {
-                XmlDocument xml = new XmlDocument();
+                var xml = new XmlDocument();
                 xml.LoadXml(text);
                 return new Layout(xml);
             }
 
             /// <summary>
-            /// Read a PARAM64 layout from an XML document.
+            /// Read a PARAM layout from an XML document.
             /// </summary>
             public static Layout ReadXMLDoc(XmlDocument xml)
             {
