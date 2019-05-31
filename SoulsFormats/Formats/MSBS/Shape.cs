@@ -291,12 +291,12 @@ namespace SoulsFormats
 
                     internal void GetNames(Entries entries)
                     {
-                        RegionName = GetName(entries.Regions, RegionIndex);
+                        RegionName = FindName(entries.Regions, RegionIndex);
                     }
 
                     internal void GetIndices(Entries entries)
                     {
-                        RegionIndex = GetIndex(entries.Regions, RegionName);
+                        RegionIndex = FindIndex(entries.Regions, RegionName);
                     }
                 }
             }

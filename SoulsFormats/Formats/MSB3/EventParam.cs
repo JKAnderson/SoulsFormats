@@ -173,17 +173,17 @@ namespace SoulsFormats
             /// </summary>
             public int EventID;
 
-            private int partIndex;
             /// <summary>
             /// The name of a part the event is attached to.
             /// </summary>
             public string PartName;
+            private int PartIndex;
 
-            private int pointIndex;
             /// <summary>
             /// The name of a region the event is attached to.
             /// </summary>
             public string PointName;
+            private int PointIndex;
 
             /// <summary>
             /// Used to identify the event in event scripts.
@@ -221,8 +221,8 @@ namespace SoulsFormats
                 Name = br.GetUTF16(start + nameOffset);
 
                 br.Position = start + baseDataOffset;
-                partIndex = br.ReadInt32();
-                pointIndex = br.ReadInt32();
+                PartIndex = br.ReadInt32();
+                PointIndex = br.ReadInt32();
                 EventEntityID = br.ReadInt32();
                 br.AssertInt32(0);
 
@@ -249,8 +249,8 @@ namespace SoulsFormats
                 bw.Pad(8);
 
                 bw.FillInt64("BaseDataOffset", bw.Position - start);
-                bw.WriteInt32(partIndex);
-                bw.WriteInt32(pointIndex);
+                bw.WriteInt32(PartIndex);
+                bw.WriteInt32(PointIndex);
                 bw.WriteInt32(EventEntityID);
                 bw.WriteInt32(0);
 
@@ -262,14 +262,14 @@ namespace SoulsFormats
 
             internal virtual void GetNames(MSB3 msb, Entries entries)
             {
-                PartName = GetName(entries.Parts, partIndex);
-                PointName = GetName(entries.Regions, pointIndex);
+                PartName = FindName(entries.Parts, PartIndex);
+                PointName = FindName(entries.Regions, PointIndex);
             }
 
             internal virtual void GetIndices(MSB3 msb, Entries entries)
             {
-                partIndex = GetIndex(entries.Parts, PartName);
-                pointIndex = GetIndex(entries.Regions, PointName);
+                PartIndex = FindIndex(entries.Parts, PartName);
+                PointIndex = FindIndex(entries.Regions, PointName);
             }
 
             /// <summary>
@@ -287,11 +287,11 @@ namespace SoulsFormats
             {
                 internal override EventType Type => EventType.Treasure;
 
-                private int partIndex2;
                 /// <summary>
                 /// The part the treasure is attached to.
                 /// </summary>
                 public string PartName2;
+                private int PartIndex2;
 
                 /// <summary>
                 /// IDs in the item lot param given by this treasure.
@@ -323,13 +323,10 @@ namespace SoulsFormats
                 /// </summary>
                 public Treasure(string name) : base(name)
                 {
-                    PartName2 = null;
                     ItemLot1 = -1;
                     ItemLot2 = -1;
                     ActionButtonParamID = -1;
                     PickupAnimID = -1;
-                    InChest = false;
-                    StartDisabled = false;
                 }
 
                 /// <summary>
@@ -352,7 +349,7 @@ namespace SoulsFormats
                 {
                     br.AssertInt32(0);
                     br.AssertInt32(0);
-                    partIndex2 = br.ReadInt32();
+                    PartIndex2 = br.ReadInt32();
                     br.AssertInt32(0);
                     ItemLot1 = br.ReadInt32();
                     ItemLot2 = br.ReadInt32();
@@ -381,7 +378,7 @@ namespace SoulsFormats
                 {
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
-                    bw.WriteInt32(partIndex2);
+                    bw.WriteInt32(PartIndex2);
                     bw.WriteInt32(0);
                     bw.WriteInt32(ItemLot1);
                     bw.WriteInt32(ItemLot2);
@@ -409,13 +406,13 @@ namespace SoulsFormats
                 internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    PartName2 = GetName(entries.Parts, partIndex2);
+                    PartName2 = FindName(entries.Parts, PartIndex2);
                 }
 
                 internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    partIndex2 = GetIndex(entries.Parts, PartName2);
+                    PartIndex2 = FindIndex(entries.Parts, PartName2);
                 }
             }
 
@@ -456,17 +453,17 @@ namespace SoulsFormats
                 /// </summary>
                 public float MaxInterval;
 
-                private int[] spawnPointIndices;
                 /// <summary>
                 /// Regions that enemies can be spawned at.
                 /// </summary>
                 public string[] SpawnPointNames { get; private set; }
+                private int[] SpawnPointIndices;
 
-                private int[] spawnPartIndices;
                 /// <summary>
                 /// Enemies spawned by this generator.
                 /// </summary>
                 public string[] SpawnPartNames { get; private set; }
+                private int[] SpawnPartIndices;
 
                 /// <summary>
                 /// Unknown.
@@ -523,12 +520,12 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
-                    spawnPointIndices = br.ReadInt32s(8);
+                    SpawnPointIndices = br.ReadInt32s(8);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
-                    spawnPartIndices = br.ReadInt32s(32);
+                    SpawnPartIndices = br.ReadInt32s(32);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -555,12 +552,12 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
-                    bw.WriteInt32s(spawnPointIndices);
+                    bw.WriteInt32s(SpawnPointIndices);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
-                    bw.WriteInt32s(spawnPartIndices);
+                    bw.WriteInt32s(SpawnPartIndices);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
@@ -574,25 +571,15 @@ namespace SoulsFormats
                 internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    SpawnPointNames = new string[spawnPointIndices.Length];
-                    for (int i = 0; i < spawnPointIndices.Length; i++)
-                        SpawnPointNames[i] = GetName(entries.Regions, spawnPointIndices[i]);
-
-                    SpawnPartNames = new string[spawnPartIndices.Length];
-                    for (int i = 0; i < spawnPartIndices.Length; i++)
-                        SpawnPartNames[i] = GetName(entries.Parts, spawnPartIndices[i]);
+                    SpawnPointNames = FindNames(entries.Regions, SpawnPointIndices);
+                    SpawnPartNames = FindNames(entries.Parts, SpawnPartIndices);
                 }
 
                 internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    spawnPointIndices = new int[SpawnPointNames.Length];
-                    for (int i = 0; i < SpawnPointNames.Length; i++)
-                        spawnPointIndices[i] = GetIndex(entries.Regions, SpawnPointNames[i]);
-
-                    spawnPartIndices = new int[SpawnPartNames.Length];
-                    for (int i = 0; i < SpawnPartNames.Length; i++)
-                        spawnPartIndices[i] = GetIndex(entries.Parts, SpawnPartNames[i]);
+                    SpawnPointIndices = FindIndices(entries.Regions, SpawnPointNames);
+                    SpawnPartIndices = FindIndices(entries.Parts, SpawnPartNames);
                 }
             }
 
@@ -622,11 +609,11 @@ namespace SoulsFormats
                 /// </summary>
                 public int ObjActEntityID;
 
-                private int partIndex2;
                 /// <summary>
                 /// Unknown.
                 /// </summary>
                 public string PartName2;
+                private int PartIndex2;
 
                 /// <summary>
                 /// Unknown.
@@ -649,10 +636,7 @@ namespace SoulsFormats
                 public ObjAct(string name) : base(name)
                 {
                     ObjActEntityID = -1;
-                    PartName2 = null;
-                    ObjActParamID = 0;
                     ObjActStateType = ObjActState.OneState;
-                    EventFlagID = 0;
                 }
 
                 /// <summary>
@@ -672,7 +656,7 @@ namespace SoulsFormats
                 internal override void Read(BinaryReaderEx br)
                 {
                     ObjActEntityID = br.ReadInt32();
-                    partIndex2 = br.ReadInt32();
+                    PartIndex2 = br.ReadInt32();
                     ObjActParamID = br.ReadInt32();
 
                     ObjActStateType = br.ReadEnum8<ObjActState>();
@@ -689,7 +673,7 @@ namespace SoulsFormats
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(ObjActEntityID);
-                    bw.WriteInt32(partIndex2);
+                    bw.WriteInt32(PartIndex2);
                     bw.WriteInt32(ObjActParamID);
 
                     bw.WriteByte((byte)ObjActStateType);
@@ -706,13 +690,13 @@ namespace SoulsFormats
                 internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    PartName2 = GetName(entries.Parts, partIndex2);
+                    PartName2 = FindName(entries.Parts, PartIndex2);
                 }
 
                 internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    partIndex2 = GetIndex(entries.Parts, PartName2);
+                    PartIndex2 = FindIndex(entries.Parts, PartName2);
                 }
             }
 
@@ -818,8 +802,6 @@ namespace SoulsFormats
                     InvasionRegionIndex = -1;
                     SoundIDMaybe = -1;
                     MapEventIDMaybe = -1;
-                    FlagsMaybe = 0;
-                    UnkT18 = 0;
                 }
 
                 /// <summary>
@@ -875,11 +857,11 @@ namespace SoulsFormats
                 /// </summary>
                 public int UnkT00;
 
-                private short[] walkPointIndices;
                 /// <summary>
                 /// List of points in the route.
                 /// </summary>
                 public string[] WalkPointNames { get; private set; }
+                private short[] WalkPointIndices;
 
                 /// <summary>
                 /// Creates a new WalkRoute with the given name.
@@ -907,7 +889,7 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
-                    walkPointIndices = br.ReadInt16s(32);
+                    WalkPointIndices = br.ReadInt16s(32);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
@@ -916,23 +898,23 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
-                    bw.WriteInt16s(walkPointIndices);
+                    bw.WriteInt16s(WalkPointIndices);
                 }
 
                 internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    WalkPointNames = new string[walkPointIndices.Length];
-                    for (int i = 0; i < walkPointIndices.Length; i++)
-                        WalkPointNames[i] = GetName(entries.Regions, walkPointIndices[i]);
+                    WalkPointNames = new string[WalkPointIndices.Length];
+                    for (int i = 0; i < WalkPointIndices.Length; i++)
+                        WalkPointNames[i] = FindName(entries.Regions, WalkPointIndices[i]);
                 }
 
                 internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    walkPointIndices = new short[WalkPointNames.Length];
+                    WalkPointIndices = new short[WalkPointNames.Length];
                     for (int i = 0; i < WalkPointNames.Length; i++)
-                        walkPointIndices[i] = (short)GetIndex(entries.Regions, WalkPointNames[i]);
+                        WalkPointIndices[i] = (short)FindIndex(entries.Regions, WalkPointNames[i]);
                 }
             }
 
@@ -948,19 +930,17 @@ namespace SoulsFormats
                 /// </summary>
                 public int PlatoonIDScriptActivate, State;
 
-                private int[] groupPartsIndices;
                 /// <summary>
                 /// Unknown.
                 /// </summary>
                 public string[] GroupPartsNames { get; private set; }
+                private int[] GroupPartsIndices;
 
                 /// <summary>
                 /// Creates a new GroupTour with the given name.
                 /// </summary>
                 public GroupTour(string name) : base(name)
                 {
-                    PlatoonIDScriptActivate = 0;
-                    State = 0;
                     GroupPartsNames = new string[32];
                 }
 
@@ -982,7 +962,7 @@ namespace SoulsFormats
                     State = br.ReadInt32();
                     br.AssertInt32(0);
                     br.AssertInt32(0);
-                    groupPartsIndices = br.ReadInt32s(32);
+                    GroupPartsIndices = br.ReadInt32s(32);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
@@ -991,23 +971,19 @@ namespace SoulsFormats
                     bw.WriteInt32(State);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
-                    bw.WriteInt32s(groupPartsIndices);
+                    bw.WriteInt32s(GroupPartsIndices);
                 }
 
                 internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    GroupPartsNames = new string[groupPartsIndices.Length];
-                    for (int i = 0; i < groupPartsIndices.Length; i++)
-                        GroupPartsNames[i] = GetName(entries.Parts, groupPartsIndices[i]);
+                    GroupPartsNames = FindNames(entries.Parts, GroupPartsIndices);
                 }
 
                 internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    groupPartsIndices = new int[GroupPartsNames.Length];
-                    for (int i = 0; i < GroupPartsNames.Length; i++)
-                        groupPartsIndices[i] = GetIndex(entries.Parts, GroupPartsNames[i]);
+                    GroupPartsIndices = FindIndices(entries.Parts, GroupPartsNames);
                 }
             }
 

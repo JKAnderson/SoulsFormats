@@ -247,8 +247,6 @@ namespace SoulsFormats
                 /// </summary>
                 public MapPiece(string name) : base(name)
                 {
-                    UnkT00 = 0;
-                    UnkT01 = 0;
                     UnkT02 = true;
                     UnkT03 = true;
                 }
@@ -313,8 +311,6 @@ namespace SoulsFormats
                 /// </summary>
                 public Object(string name) : base(name)
                 {
-                    UnkT00 = 0;
-                    UnkT01 = 0;
                     UnkT02 = true;
                     UnkT03 = true;
                 }

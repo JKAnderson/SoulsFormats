@@ -388,7 +388,7 @@ namespace SoulsFormats
 
             internal virtual void GetNames(Entries entries)
             {
-                ActivationPartName = GetName(entries.Parts, ActivationPartIndex);
+                ActivationPartName = FindName(entries.Parts, ActivationPartIndex);
                 if (Shape is Shape.Composite composite)
                 {
                     foreach (Shape.Composite.Child child in composite.Children)
@@ -398,7 +398,7 @@ namespace SoulsFormats
 
             internal virtual void GetIndices(Entries entries)
             {
-                ActivationPartIndex = GetIndex(entries.Parts, ActivationPartName);
+                ActivationPartIndex = FindIndex(entries.Parts, ActivationPartName);
                 if (Shape is Shape.Composite composite)
                 {
                     foreach (Shape.Composite.Child child in composite.Children)
@@ -545,17 +545,13 @@ namespace SoulsFormats
                 internal override void GetNames(Entries entries)
                 {
                     base.GetNames(entries);
-                    ChildRegionNames = new string[ChildRegionIndices.Length];
-                    for (int i = 0; i < ChildRegionIndices.Length; i++)
-                        ChildRegionNames[i] = GetName(entries.Regions, ChildRegionIndices[i]);
+                    ChildRegionNames = FindNames(entries.Regions, ChildRegionIndices);
                 }
 
                 internal override void GetIndices(Entries entries)
                 {
                     base.GetIndices(entries);
-                    ChildRegionIndices = new int[ChildRegionNames.Length];
-                    for (int i = 0; i < ChildRegionNames.Length; i++)
-                        ChildRegionIndices[i] = GetIndex(entries.Regions, ChildRegionNames[i]);
+                    ChildRegionIndices = FindIndices(entries.Regions, ChildRegionNames);
                 }
             }
 
@@ -630,13 +626,13 @@ namespace SoulsFormats
                 internal override void GetNames(Entries entries)
                 {
                     base.GetNames(entries);
-                    WindAreaName = GetName(entries.Regions, WindAreaIndex);
+                    WindAreaName = FindName(entries.Regions, WindAreaIndex);
                 }
 
                 internal override void GetIndices(Entries entries)
                 {
                     base.GetIndices(entries);
-                    WindAreaIndex = GetIndex(entries.Regions, WindAreaName);
+                    WindAreaIndex = FindIndex(entries.Regions, WindAreaName);
                 }
             }
 

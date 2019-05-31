@@ -311,13 +311,16 @@ namespace SoulsFormats
             /// </summary>
             public Vector3 Rotation;
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<short> UnkA, UnkB;
 
-            private int ActivationPartIndex;
             /// <summary>
             /// Region is inactive unless this part is drawn; null for always active.
             /// </summary>
             public string ActivationPartName;
+            private int ActivationPartIndex;
 
             /// <summary>
             /// An ID used to identify this region in event scripts.
@@ -471,12 +474,12 @@ namespace SoulsFormats
 
             internal virtual void GetNames(MSB3 msb, Entries entries)
             {
-                ActivationPartName = GetName(entries.Parts, ActivationPartIndex);
+                ActivationPartName = FindName(entries.Parts, ActivationPartIndex);
             }
 
             internal virtual void GetIndices(MSB3 msb, Entries entries)
             {
-                ActivationPartIndex = GetIndex(entries.Parts, ActivationPartName);
+                ActivationPartIndex = FindIndex(entries.Parts, ActivationPartName);
             }
 
             /// <summary>
@@ -671,12 +674,11 @@ namespace SoulsFormats
                 /// </summary>
                 public int SoundID;
 
-                private int[] ChildRegionIndices;
-
                 /// <summary>
                 /// Names of other Sound regions which extend this one.
                 /// </summary>
                 public string[] ChildRegionNames { get; private set; }
+                private int[] ChildRegionIndices;
 
                 /// <summary>
                 /// Creates a new Sound with the given name.
@@ -718,17 +720,13 @@ namespace SoulsFormats
                 internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    ChildRegionNames = new string[ChildRegionIndices.Length];
-                    for (int i = 0; i < ChildRegionIndices.Length; i++)
-                        ChildRegionNames[i] = GetName(entries.Regions, ChildRegionIndices[i]);
+                    ChildRegionNames = FindNames(entries.Regions, ChildRegionIndices);
                 }
 
                 internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    ChildRegionIndices = new int[ChildRegionNames.Length];
-                    for (int i = 0; i < ChildRegionNames.Length; i++)
-                        ChildRegionIndices[i] = GetIndex(entries.Regions, ChildRegionNames[i]);
+                    ChildRegionIndices = FindIndices(entries.Regions, ChildRegionNames);
                 }
             }
 
@@ -804,11 +802,11 @@ namespace SoulsFormats
                 /// </summary>
                 public int FFXID;
 
-                private int WindAreaIndex;
                 /// <summary>
                 /// Name of a corresponding WindArea region.
                 /// </summary>
                 public string WindAreaName;
+                private int WindAreaIndex;
 
                 /// <summary>
                 /// Creates a new WindSFX with the given name.
@@ -856,13 +854,13 @@ namespace SoulsFormats
                 internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    WindAreaName = GetName(entries.Regions, WindAreaIndex);
+                    WindAreaName = FindName(entries.Regions, WindAreaIndex);
                 }
 
                 internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    WindAreaIndex = GetIndex(entries.Regions, WindAreaName);
+                    WindAreaIndex = FindIndex(entries.Regions, WindAreaName);
                 }
             }
 

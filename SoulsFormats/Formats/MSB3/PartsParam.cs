@@ -472,12 +472,12 @@ namespace SoulsFormats
 
             internal virtual void GetNames(MSB3 msb, Entries entries)
             {
-                ModelName = GetName(entries.Models, modelIndex);
+                ModelName = FindName(entries.Models, modelIndex);
             }
 
             internal virtual void GetIndices(MSB3 msb, Entries entries)
             {
-                modelIndex = GetIndex(entries.Models, ModelName);
+                modelIndex = FindIndex(entries.Models, ModelName);
             }
 
             /// <summary>
@@ -671,11 +671,11 @@ namespace SoulsFormats
                 /// </summary>
                 public GparamConfig Gparam;
 
-                private int collisionPartIndex;
                 /// <summary>
                 /// Unknown.
                 /// </summary>
                 public string CollisionName;
+                private int CollisionPartIndex;
 
                 /// <summary>
                 /// Unknown.
@@ -715,7 +715,7 @@ namespace SoulsFormats
                 {
                     br.AssertInt32(0);
                     br.AssertInt32(0);
-                    collisionPartIndex = br.ReadInt32();
+                    CollisionPartIndex = br.ReadInt32();
                     UnkT0C = br.ReadInt16();
                     UnkT0E = br.ReadInt16();
                     UnkT10 = br.ReadInt16();
@@ -734,7 +734,7 @@ namespace SoulsFormats
                 {
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
-                    bw.WriteInt32(collisionPartIndex);
+                    bw.WriteInt32(CollisionPartIndex);
                     bw.WriteInt16(UnkT0C);
                     bw.WriteInt16(UnkT0E);
                     bw.WriteInt16(UnkT10);
@@ -752,13 +752,13 @@ namespace SoulsFormats
                 internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    CollisionName = GetName(entries.Parts, collisionPartIndex);
+                    CollisionName = FindName(entries.Parts, CollisionPartIndex);
                 }
 
                 internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    collisionPartIndex = GetIndex(entries.Parts, CollisionName);
+                    CollisionPartIndex = FindIndex(entries.Parts, CollisionName);
                 }
             }
 
@@ -777,11 +777,11 @@ namespace SoulsFormats
                 /// </summary>
                 public GparamConfig Gparam;
 
-                private int collisionPartIndex;
                 /// <summary>
                 /// Unknown.
                 /// </summary>
                 public string CollisionName;
+                private int CollisionPartIndex;
 
                 /// <summary>
                 /// Controls enemy AI.
@@ -863,7 +863,7 @@ namespace SoulsFormats
                     UnkT04 = br.ReadInt16();
                     ChrManipulatorAllocationParameter = br.ReadInt16();
                     CharaInitID = br.ReadInt32();
-                    collisionPartIndex = br.ReadInt32();
+                    CollisionPartIndex = br.ReadInt32();
                     WalkRouteIndex = br.ReadInt16();
                     br.AssertInt16(0);
                     br.AssertInt32(0);
@@ -915,7 +915,7 @@ namespace SoulsFormats
                     bw.WriteInt16(UnkT04);
                     bw.WriteInt16(ChrManipulatorAllocationParameter);
                     bw.WriteInt32(CharaInitID);
-                    bw.WriteInt32(collisionPartIndex);
+                    bw.WriteInt32(CollisionPartIndex);
                     bw.WriteInt16(WalkRouteIndex);
                     bw.WriteInt16(0);
                     bw.WriteInt32(0);
@@ -960,15 +960,15 @@ namespace SoulsFormats
                 internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    CollisionName = GetName(entries.Parts, collisionPartIndex);
-                    WalkRouteName = GetName(msb.Events.WalkRoutes, WalkRouteIndex);
+                    CollisionName = FindName(entries.Parts, CollisionPartIndex);
+                    WalkRouteName = FindName(msb.Events.WalkRoutes, WalkRouteIndex);
                 }
 
                 internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    collisionPartIndex = GetIndex(entries.Parts, CollisionName);
-                    WalkRouteIndex = (short)GetIndex(msb.Events.WalkRoutes, WalkRouteName);
+                    CollisionPartIndex = FindIndex(entries.Parts, CollisionName);
+                    WalkRouteIndex = (short)FindIndex(msb.Events.WalkRoutes, WalkRouteName);
                 }
             }
 
@@ -1106,11 +1106,11 @@ namespace SoulsFormats
                 /// </summary>
                 public short LockCamID1, LockCamID2;
 
-                private int UnkHitIndex;
                 /// <summary>
                 /// Unknown. Always refers to another collision part.
                 /// </summary>
                 public string UnkHitName;
+                private int UnkHitIndex;
 
                 /// <summary>
                 /// Unknown.
@@ -1240,13 +1240,13 @@ namespace SoulsFormats
                 internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    UnkHitName = GetName(entries.Parts, UnkHitIndex);
+                    UnkHitName = FindName(entries.Parts, UnkHitIndex);
                 }
 
                 internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    UnkHitIndex = GetIndex(entries.Parts, UnkHitName);
+                    UnkHitIndex = FindIndex(entries.Parts, UnkHitName);
                 }
             }
 
@@ -1300,11 +1300,11 @@ namespace SoulsFormats
                 internal override bool HasGparamConfig => false;
                 internal override bool HasUnk4 => false;
 
-                private int collisionIndex;
                 /// <summary>
                 /// The name of the associated collision part.
                 /// </summary>
                 public string CollisionName;
+                private int CollisionIndex;
 
                 /// <summary>
                 /// A map ID in format mXX_XX_XX_XX.
@@ -1314,14 +1314,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new ConnectCollision with the given name.
                 /// </summary>
-                public ConnectCollision(string name) : base(name)
-                {
-                    CollisionName = null;
-                    MapID1 = 0;
-                    MapID2 = 0;
-                    MapID3 = 0;
-                    MapID4 = 0;
-                }
+                public ConnectCollision(string name) : base(name) { }
 
                 /// <summary>
                 /// Creates a new ConnectCollision with values copied from another.
@@ -1339,7 +1332,7 @@ namespace SoulsFormats
 
                 internal override void ReadTypeData(BinaryReaderEx br)
                 {
-                    collisionIndex = br.ReadInt32();
+                    CollisionIndex = br.ReadInt32();
                     MapID1 = br.ReadByte();
                     MapID2 = br.ReadByte();
                     MapID3 = br.ReadByte();
@@ -1350,7 +1343,7 @@ namespace SoulsFormats
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(collisionIndex);
+                    bw.WriteInt32(CollisionIndex);
                     bw.WriteByte(MapID1);
                     bw.WriteByte(MapID2);
                     bw.WriteByte(MapID3);
@@ -1362,13 +1355,13 @@ namespace SoulsFormats
                 internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    CollisionName = GetName(msb.Parts.Collisions, collisionIndex);
+                    CollisionName = FindName(msb.Parts.Collisions, CollisionIndex);
                 }
 
                 internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    collisionIndex = GetIndex(msb.Parts.Collisions, CollisionName);
+                    CollisionIndex = FindIndex(msb.Parts.Collisions, CollisionName);
                 }
             }
         }

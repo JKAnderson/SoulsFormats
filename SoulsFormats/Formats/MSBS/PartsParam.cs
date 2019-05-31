@@ -608,12 +608,12 @@ namespace SoulsFormats
 
             internal virtual void GetNames(MSBS msb, Entries entries)
             {
-                ModelName = GetName(entries.Models, ModelIndex);
+                ModelName = FindName(entries.Models, ModelIndex);
             }
 
             internal virtual void GetIndices(MSBS msb, Entries entries)
             {
-                ModelIndex = GetIndex(entries.Models, ModelName);
+                ModelIndex = FindIndex(entries.Models, ModelName);
             }
 
             /// <summary>
@@ -1425,15 +1425,15 @@ namespace SoulsFormats
                 internal override void GetNames(MSBS msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    CollisionPartName1 = GetName(entries.Parts, CollisionPartIndex1);
-                    CollisionPartName2 = GetName(entries.Parts, CollisionPartIndex2);
+                    CollisionPartName1 = FindName(entries.Parts, CollisionPartIndex1);
+                    CollisionPartName2 = FindName(entries.Parts, CollisionPartIndex2);
                 }
 
                 internal override void GetIndices(MSBS msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    CollisionPartIndex1 = GetIndex(entries.Parts, CollisionPartName1);
-                    CollisionPartIndex2 = GetIndex(entries.Parts, CollisionPartName2);
+                    CollisionPartIndex1 = FindIndex(entries.Parts, CollisionPartName1);
+                    CollisionPartIndex2 = FindIndex(entries.Parts, CollisionPartName2);
                 }
             }
 
@@ -1653,13 +1653,13 @@ namespace SoulsFormats
                 internal override void GetNames(MSBS msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    CollisionPartName = GetName(entries.Parts, CollisionPartIndex);
+                    CollisionPartName = FindName(entries.Parts, CollisionPartIndex);
                 }
 
                 internal override void GetIndices(MSBS msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    CollisionPartIndex = GetIndex(entries.Parts, CollisionPartName);
+                    CollisionPartIndex = FindIndex(entries.Parts, CollisionPartName);
                 }
             }
 
@@ -1724,13 +1724,13 @@ namespace SoulsFormats
                 internal override void GetNames(MSBS msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    CollisionName = GetName(msb.Parts.Collisions, CollisionIndex);
+                    CollisionName = FindName(msb.Parts.Collisions, CollisionIndex);
                 }
 
                 internal override void GetIndices(MSBS msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    CollisionIndex = GetIndex(msb.Parts.Collisions, CollisionName);
+                    CollisionIndex = FindIndex(msb.Parts.Collisions, CollisionName);
                 }
             }
         }

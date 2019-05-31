@@ -211,7 +211,7 @@ namespace SoulsFormats
             return Regex.Replace(name, @" \{\d+\}", "");
         }
 
-        private static string GetName<T>(List<T> list, int index) where T : Entry
+        private static string FindName<T>(List<T> list, int index) where T : Entry
         {
             if (index == -1)
                 return null;
@@ -219,7 +219,15 @@ namespace SoulsFormats
                 return list[index].Name;
         }
 
-        private static int GetIndex<T>(List<T> list, string name) where T : Entry
+        private static string[] FindNames<T>(List<T> list, int[] indices) where T : Entry
+        {
+            var names = new string[indices.Length];
+            for (int i = 0; i < indices.Length; i++)
+                names[i] = FindName(list, indices[i]);
+            return names;
+        }
+
+        private static int FindIndex<T>(List<T> list, string name) where T : Entry
         {
             if (name == null)
             {
@@ -232,6 +240,14 @@ namespace SoulsFormats
                     throw new KeyNotFoundException($"Name not found: {name}");
                 return result;
             }
+        }
+
+        private static int[] FindIndices<T>(List<T> list, string[] names) where T : Entry
+        {
+            var indices = new int[names.Length];
+            for (int i = 0; i < names.Length; i++)
+                indices[i] = FindIndex(list, names[i]);
+            return indices;
         }
 
         /// <summary>
