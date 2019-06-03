@@ -153,7 +153,7 @@ namespace SoulsFormats
 
             internal abstract bool HasUnk1 { get; }
             internal abstract bool HasUnk2 { get; }
-            internal abstract bool HasUnk5 { get; }
+            internal abstract bool HasGparamConfig { get; }
             internal abstract bool HasUnk6 { get; }
             internal abstract bool HasUnk7 { get; }
 
@@ -373,7 +373,7 @@ namespace SoulsFormats
                 long unkOffset2 = br.ReadInt64();
                 long entityDataOffset = br.ReadInt64();
                 long typeDataOffset = br.ReadInt64();
-                long unkOffset5 = br.ReadInt64();
+                long gparamOffset = br.ReadInt64();
                 long unkOffset6 = br.ReadInt64();
                 long unkOffset7 = br.ReadInt64();
                 br.AssertInt64(0);
@@ -421,10 +421,10 @@ namespace SoulsFormats
                 UnkE40 = br.ReadInt32();
                 br.AssertNull(0x10, false);
 
-                if (HasUnk5)
+                if (HasGparamConfig)
                 {
-                    br.Position = start + unkOffset5;
-                    ReadUnk5(br);
+                    br.Position = start + gparamOffset;
+                    ReadGparamConfig(br);
                 }
                 if (HasUnk6)
                 {
@@ -449,7 +449,7 @@ namespace SoulsFormats
                 throw new InvalidOperationException("Unk struct 2 should not be read for parts with no unk struct 2.");
             }
 
-            internal virtual void ReadUnk5(BinaryReaderEx br)
+            internal virtual void ReadGparamConfig(BinaryReaderEx br)
             {
                 throw new InvalidOperationException("Unk struct 5 should not be read for parts with no unk struct 5.");
             }
@@ -483,7 +483,7 @@ namespace SoulsFormats
                 bw.ReserveInt64("UnkOffset2");
                 bw.ReserveInt64("EntityDataOffset");
                 bw.ReserveInt64("TypeDataOffset");
-                bw.ReserveInt64("UnkOffset5");
+                bw.ReserveInt64("GparamOffset");
                 bw.ReserveInt64("UnkOffset6");
                 bw.ReserveInt64("UnkOffset7");
                 bw.WriteInt64(0);
@@ -548,14 +548,14 @@ namespace SoulsFormats
                 bw.FillInt64("TypeDataOffset", bw.Position - start);
                 WriteTypeData(bw);
 
-                if (HasUnk5)
+                if (HasGparamConfig)
                 {
-                    bw.FillInt64("UnkOffset5", bw.Position - start);
-                    WriteUnk5(bw);
+                    bw.FillInt64("GparamOffset", bw.Position - start);
+                    WriteGparamConfig(bw);
                 }
                 else
                 {
-                    bw.FillInt64("UnkOffset5", 0);
+                    bw.FillInt64("GparamOffset", 0);
                 }
 
                 if (HasUnk6)
@@ -591,7 +591,7 @@ namespace SoulsFormats
                 throw new InvalidOperationException("Unk struct 2 should not be written for parts with no unk struct 2.");
             }
 
-            internal virtual void WriteUnk5(BinaryWriterEx bw)
+            internal virtual void WriteGparamConfig(BinaryWriterEx bw)
             {
                 throw new InvalidOperationException("Unk struct 5 should not be written for parts with no unk struct 5.");
             }
@@ -736,19 +736,19 @@ namespace SoulsFormats
             }
 
             /// <summary>
-            /// Unknown.
+            /// Gparam value IDs for various part types.
             /// </summary>
-            public class UnkStruct5
+            public class GparamConfig
             {
                 /// <summary>
-                /// Unknown.
+                /// ID of the value set from LightSet ParamEditor to use.
                 /// </summary>
-                public int Unk00 { get; set; }
+                public int LightSetID { get; set; }
 
                 /// <summary>
-                /// Unknown.
+                /// ID of the value set from FogParamEditor to use.
                 /// </summary>
-                public int Unk04 { get; set; }
+                public int FogParamID { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -756,42 +756,50 @@ namespace SoulsFormats
                 public int Unk08 { get; set; }
 
                 /// <summary>
-                /// Unknown.
+                /// ID of the value set from Env Map:Editor to use.
                 /// </summary>
-                public int Unk0C { get; set; }
+                public int EnvMapID { get; set; }
 
                 /// <summary>
-                /// Creates an UnkStruct5 with default values.
+                /// Creates a GparamConfig with default values.
                 /// </summary>
-                public UnkStruct5() { }
+                public GparamConfig() { }
 
                 /// <summary>
-                /// Clones an existing UnkStruct5.
+                /// Clones an existing GparamConfig.
                 /// </summary>
-                public UnkStruct5(UnkStruct5 clone)
+                public GparamConfig(GparamConfig clone)
                 {
-                    Unk00 = clone.Unk00;
-                    Unk04 = clone.Unk04;
+                    LightSetID = clone.LightSetID;
+                    FogParamID = clone.FogParamID;
                     Unk08 = clone.Unk08;
-                    Unk0C = clone.Unk0C;
+                    EnvMapID = clone.EnvMapID;
                 }
 
-                internal UnkStruct5(BinaryReaderEx br)
+                internal GparamConfig(BinaryReaderEx br)
                 {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadInt32();
+                    LightSetID = br.ReadInt32();
+                    FogParamID = br.ReadInt32();
                     Unk08 = br.ReadInt32();
-                    Unk0C = br.ReadInt32();
+                    EnvMapID = br.ReadInt32();
                     br.AssertNull(0x10, false);
                 }
 
                 internal void Write(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
+                    bw.WriteInt32(LightSetID);
+                    bw.WriteInt32(FogParamID);
                     bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
+                    bw.WriteInt32(EnvMapID);
                     bw.WriteNull(0x10, false);
+                }
+
+                /// <summary>
+                /// Returns the four gparam values as a string.
+                /// </summary>
+                public override string ToString()
+                {
+                    return $"{LightSetID}, {FogParamID}, {Unk08}, {EnvMapID}";
                 }
             }
 
@@ -913,7 +921,7 @@ namespace SoulsFormats
 
                 internal override bool HasUnk1 => true;
                 internal override bool HasUnk2 => false;
-                internal override bool HasUnk5 => true;
+                internal override bool HasGparamConfig => true;
                 internal override bool HasUnk6 => false;
                 internal override bool HasUnk7 => true;
 
@@ -925,7 +933,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public UnkStruct5 Unk5 { get; set; }
+                public GparamConfig Gparam { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -938,7 +946,7 @@ namespace SoulsFormats
                 public MapPiece() : base()
                 {
                     Unk1 = new UnkStruct1();
-                    Unk5 = new UnkStruct5();
+                    Gparam = new GparamConfig();
                     Unk7 = new UnkStruct7();
                 }
 
@@ -949,7 +957,7 @@ namespace SoulsFormats
                 }
 
                 internal override void ReadUnk1(BinaryReaderEx br) => Unk1 = new UnkStruct1(br);
-                internal override void ReadUnk5(BinaryReaderEx br) => Unk5 = new UnkStruct5(br);
+                internal override void ReadGparamConfig(BinaryReaderEx br) => Gparam = new GparamConfig(br);
                 internal override void ReadUnk7(BinaryReaderEx br) => Unk7 = new UnkStruct7(br);
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
@@ -959,7 +967,7 @@ namespace SoulsFormats
                 }
 
                 internal override void WriteUnk1(BinaryWriterEx bw) => Unk1.Write(bw);
-                internal override void WriteUnk5(BinaryWriterEx bw) => Unk5.Write(bw);
+                internal override void WriteGparamConfig(BinaryWriterEx bw) => Gparam.Write(bw);
                 internal override void WriteUnk7(BinaryWriterEx bw) => Unk7.Write(bw);
             }
 
@@ -1071,7 +1079,7 @@ namespace SoulsFormats
 
                 internal override bool HasUnk1 => false;
                 internal override bool HasUnk2 => false;
-                internal override bool HasUnk5 => false;
+                internal override bool HasGparamConfig => false;
                 internal override bool HasUnk6 => false;
                 internal override bool HasUnk7 => false;
 
@@ -1103,7 +1111,7 @@ namespace SoulsFormats
 
                 internal override bool HasUnk1 => true;
                 internal override bool HasUnk2 => true;
-                internal override bool HasUnk5 => true;
+                internal override bool HasGparamConfig => true;
                 internal override bool HasUnk6 => true;
                 internal override bool HasUnk7 => false;
 
@@ -1120,7 +1128,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public UnkStruct5 Unk5 { get; set; }
+                public GparamConfig Gparam { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -1234,7 +1242,7 @@ namespace SoulsFormats
                 {
                     Unk1 = new UnkStruct1();
                     Unk2 = new UnkStruct2();
-                    Unk5 = new UnkStruct5();
+                    Gparam = new GparamConfig();
                     Unk6 = new UnkStruct6();
                     DisableBonfireEntityID = -1;
                 }
@@ -1277,7 +1285,7 @@ namespace SoulsFormats
 
                 internal override void ReadUnk1(BinaryReaderEx br) => Unk1 = new UnkStruct1(br);
                 internal override void ReadUnk2(BinaryReaderEx br) => Unk2 = new UnkStruct2(br);
-                internal override void ReadUnk5(BinaryReaderEx br) => Unk5 = new UnkStruct5(br);
+                internal override void ReadGparamConfig(BinaryReaderEx br) => Gparam = new GparamConfig(br);
                 internal override void ReadUnk6(BinaryReaderEx br) => Unk6 = new UnkStruct6(br);
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
@@ -1318,7 +1326,7 @@ namespace SoulsFormats
 
                 internal override void WriteUnk1(BinaryWriterEx bw) => Unk1.Write(bw);
                 internal override void WriteUnk2(BinaryWriterEx bw) => Unk2.Write(bw);
-                internal override void WriteUnk5(BinaryWriterEx bw) => Unk5.Write(bw);
+                internal override void WriteGparamConfig(BinaryWriterEx bw) => Gparam.Write(bw);
                 internal override void WriteUnk6(BinaryWriterEx bw) => Unk6.Write(bw);
             }
 
@@ -1334,14 +1342,14 @@ namespace SoulsFormats
 
                 internal override bool HasUnk1 => false;
                 internal override bool HasUnk2 => false;
-                internal override bool HasUnk5 => true;
+                internal override bool HasGparamConfig => true;
                 internal override bool HasUnk6 => false;
                 internal override bool HasUnk7 => false;
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public UnkStruct5 Unk5 { get; set; }
+                public GparamConfig Gparam { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -1400,16 +1408,15 @@ namespace SoulsFormats
                 /// </summary>
                 public DummyObject() : base()
                 {
-                    Unk5 = new UnkStruct5();
+                    Gparam = new GparamConfig();
                 }
 
                 /// <summary>
                 /// Clones an existing DummyObject.
                 /// </summary>
-                /// <param name="clone"></param>
                 public DummyObject(DummyObject clone) : base(clone)
                 {
-                    Unk5 = new UnkStruct5(clone.Unk5);
+                    Gparam = new GparamConfig(clone.Gparam);
                     CollisionPartName1 = clone.CollisionPartName1;
                     UnkT0C = clone.UnkT0C;
                     EnableObjAnimNetSyncStructure = clone.EnableObjAnimNetSyncStructure;
@@ -1441,7 +1448,7 @@ namespace SoulsFormats
                     CollisionPartIndex2 = br.ReadInt32();
                 }
 
-                internal override void ReadUnk5(BinaryReaderEx br) => Unk5 = new UnkStruct5(br);
+                internal override void ReadGparamConfig(BinaryReaderEx br) => Gparam = new GparamConfig(br);
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
                 {
@@ -1462,7 +1469,7 @@ namespace SoulsFormats
                     bw.WriteInt32(CollisionPartIndex2);
                 }
 
-                internal override void WriteUnk5(BinaryWriterEx bw) => Unk5.Write(bw);
+                internal override void WriteGparamConfig(BinaryWriterEx bw) => Gparam.Write(bw);
 
                 internal override void GetNames(MSBS msb, Entries entries)
                 {
@@ -1491,14 +1498,14 @@ namespace SoulsFormats
 
                 internal override bool HasUnk1 => false;
                 internal override bool HasUnk2 => false;
-                internal override bool HasUnk5 => true;
+                internal override bool HasGparamConfig => true;
                 internal override bool HasUnk6 => false;
                 internal override bool HasUnk7 => false;
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public UnkStruct5 Unk5 { get; set; }
+                public GparamConfig Gparam { get; set; }
 
                 /// <summary>
                 /// An ID in NPCThinkParam that determines the enemy's AI characteristics.
@@ -1591,7 +1598,7 @@ namespace SoulsFormats
                 /// </summary>
                 public DummyEnemy() : base()
                 {
-                    Unk5 = new UnkStruct5();
+                    Gparam = new GparamConfig();
                     ThinkParamID = -1;
                     NPCParamID = -1;
                     UnkT10 = -1;
@@ -1605,7 +1612,7 @@ namespace SoulsFormats
                 /// </summary>
                 public DummyEnemy(DummyEnemy clone) : base(clone)
                 {
-                    Unk5 = new UnkStruct5(clone.Unk5);
+                    Gparam = new GparamConfig(clone.Gparam);
                     ThinkParamID = clone.ThinkParamID;
                     NPCParamID = clone.NPCParamID;
                     UnkT10 = clone.UnkT10;
@@ -1664,7 +1671,7 @@ namespace SoulsFormats
                     br.AssertNull(0x10, false);
                 }
 
-                internal override void ReadUnk5(BinaryReaderEx br) => Unk5 = new UnkStruct5(br);
+                internal override void ReadGparamConfig(BinaryReaderEx br) => Gparam = new GparamConfig(br);
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
                 {
@@ -1705,7 +1712,7 @@ namespace SoulsFormats
                     bw.WriteNull(0x10, false);
                 }
 
-                internal override void WriteUnk5(BinaryWriterEx bw) => Unk5.Write(bw);
+                internal override void WriteGparamConfig(BinaryWriterEx bw) => Gparam.Write(bw);
 
                 internal override void GetNames(MSBS msb, Entries entries)
                 {
@@ -1732,7 +1739,7 @@ namespace SoulsFormats
 
                 internal override bool HasUnk1 => false;
                 internal override bool HasUnk2 => true;
-                internal override bool HasUnk5 => false;
+                internal override bool HasGparamConfig => false;
                 internal override bool HasUnk6 => false;
                 internal override bool HasUnk7 => false;
 
