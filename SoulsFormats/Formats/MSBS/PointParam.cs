@@ -32,48 +32,114 @@ namespace SoulsFormats
         }
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 
+        /// <summary>
+        /// Points and volumes used to trigger various effects.
+        /// </summary>
         public class PointParam : Param<Region>
         {
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Region.Region0> Region0s { get; set; }
 
+            /// <summary>
+            /// Previously points where players will appear when invading; not sure if they do anything in Sekiro.
+            /// </summary>
             public List<Region.InvasionPoint> InvasionPoints { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Region.EnvironmentMapPoint> EnvironmentMapPoints { get; set; }
 
+            /// <summary>
+            /// Areas where a sound will play.
+            /// </summary>
             public List<Region.Sound> Sounds { get; set; }
 
+            /// <summary>
+            /// Points for particle effects to play at.
+            /// </summary>
             public List<Region.SFX> SFXs { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Region.WindSFX> WindSFXs { get; set; }
 
+            /// <summary>
+            /// Points where the player can spawn into a map.
+            /// </summary>
             public List<Region.SpawnPoint> SpawnPoints { get; set; }
 
+            /// <summary>
+            /// Points that describe an NPC patrol path.
+            /// </summary>
             public List<Region.WalkRoute> WalkRoutes { get; set; }
 
+            /// <summary>
+            /// Regions for warping the player.
+            /// </summary>
             public List<Region.WarpPoint> WarpPoints { get; set; }
 
+            /// <summary>
+            /// Regions that trigger enemies when entered.
+            /// </summary>
             public List<Region.ActivationArea> ActivationAreas { get; set; }
 
+            /// <summary>
+            /// Generic regions for use with event scripts.
+            /// </summary>
             public List<Region.Event> Events { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Region.EnvironmentMapEffectBox> EnvironmentMapEffectBoxes { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Region.WindArea> WindAreas { get; set; }
 
+            /// <summary>
+            /// Areas where sound is muffled.
+            /// </summary>
             public List<Region.MufflingBox> MufflingBoxes { get; set; }
 
+            /// <summary>
+            /// Entrances to muffling boxes.
+            /// </summary>
             public List<Region.MufflingPortal> MufflingPortals { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Region.Region23> Region23s { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Region.Region24> Region24s { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Region.PartsGroup> PartsGroups { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Region.AutoDrawGroup> AutoDrawGroups { get; set; }
 
+            /// <summary>
+            /// Some sort of generic region that is almost never used.
+            /// </summary>
             public List<Region.Other> Others { get; set; }
 
+            /// <summary>
+            /// Creates an empty PointParam with the given version.
+            /// </summary>
             public PointParam(int unk00 = 0x23) : base(unk00, "POINT_PARAM_ST")
             {
                 Region0s = new List<Region.Region0>();
@@ -208,6 +274,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Returns every region in the order they'll be written.
+            /// </summary>
             public override List<Region> GetEntries()
             {
                 return SFUtil.ConcatAll<Region>(
@@ -218,29 +287,62 @@ namespace SoulsFormats
             }
         }
 
+        /// <summary>
+        /// A point or volume that triggers some sort of interaction.
+        /// </summary>
         public abstract class Region : Entry
         {
+            /// <summary>
+            /// The specific type of the region.
+            /// </summary>
             public abstract RegionType Type { get; }
 
             internal abstract bool HasTypeData { get; }
 
+            /// <summary>
+            /// The shape of the region.
+            /// </summary>
             public Shape Shape { get; set; }
 
+            /// <summary>
+            /// The location of the region.
+            /// </summary>
             public Vector3 Position { get; set; }
 
+            /// <summary>
+            /// The rotiation of the region, in degrees.
+            /// </summary>
             public Vector3 Rotation { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public int Unk2C { get; set; }
 
+            /// <summary>
+            /// Controls whether the region is active in different ceremonies.
+            /// </summary>
             public uint MapStudioLayer { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<short> UnkA { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<short> UnkB { get; set; }
 
+            /// <summary>
+            /// If specified, the region is only active when the part is loaded.
+            /// </summary>
             public string ActivationPartName { get; set; }
             private int ActivationPartIndex;
 
+            /// <summary>
+            /// Identifies the region in event scripts.
+            /// </summary>
             public int EntityID { get; set; }
 
             internal Region()
@@ -406,30 +508,55 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Returns the type, shape type, and name of the region as a string.
+            /// </summary>
+            /// <returns></returns>
             public override string ToString()
             {
                 return $"{Type} {Shape.Type} {Name}";
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class Region0 : Region
             {
+                /// <summary>
+                /// RegionType.Region0
+                /// </summary>
                 public override RegionType Type => RegionType.Region0;
 
                 internal override bool HasTypeData => false;
 
+                /// <summary>
+                /// Creates a Region0 with default values.
+                /// </summary>
                 public Region0() : base() { }
 
                 internal Region0(BinaryReaderEx br) : base(br) { }
             }
 
+            /// <summary>
+            /// A point where a player can invade your world.
+            /// </summary>
             public class InvasionPoint : Region
             {
+                /// <summary>
+                /// RegionType.InvasionPoint
+                /// </summary>
                 public override RegionType Type => RegionType.InvasionPoint;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// Creates an InvasionPoint with default values.
+                /// </summary>
                 public InvasionPoint() : base() { }
 
                 internal InvasionPoint(BinaryReaderEx br) : base(br)
@@ -443,32 +570,71 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class EnvironmentMapPoint : Region
             {
+                /// <summary>
+                /// RegionType.EnvironmentMapPoint
+                /// </summary>
                 public override RegionType Type => RegionType.EnvironmentMapPoint;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT00 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT04 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT0C { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT10 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT14 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT18 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT1C { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT20 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT24 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT28 { get; set; }
 
+                /// <summary>
+                /// Creates an EnvironmentMapPoint with default values.
+                /// </summary>
                 public EnvironmentMapPoint() : base() { }
 
                 internal EnvironmentMapPoint(BinaryReaderEx br) : base(br)
@@ -506,21 +672,42 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// An area where a sound plays.
+            /// </summary>
             public class Sound : Region
             {
+                /// <summary>
+                /// RegionType.Sound
+                /// </summary>
                 public override RegionType Type => RegionType.Sound;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// The category of the sound.
+                /// </summary>
                 public int SoundType { get; set; }
 
+                /// <summary>
+                /// The ID of the sound.
+                /// </summary>
                 public int SoundID { get; set; }
 
+                /// <summary>
+                /// References to other regions used to build a composite shape.
+                /// </summary>
                 public string[] ChildRegionNames { get; private set; }
                 private int[] ChildRegionIndices;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT48 { get; set; }
 
+                /// <summary>
+                /// Creates a Sound with default values.
+                /// </summary>
                 public Sound() : base()
                 {
                     ChildRegionNames = new string[16];
@@ -555,18 +742,36 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// A point where a particle effect can play.
+            /// </summary>
             public class SFX : Region
             {
+                /// <summary>
+                /// RegionType.SFX
+                /// </summary>
                 public override RegionType Type => RegionType.SFX;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// The ID of the particle effect FFX.
+                /// </summary>
                 public int FFXID { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT04 { get; set; }
 
+                /// <summary>
+                /// Whether the effect is off until activated.
+                /// </summary>
                 public int StartDisabled { get; set; }
 
+                /// <summary>
+                /// Creates an SFX with default values.
+                /// </summary>
                 public SFX() : base() { }
 
                 internal SFX(BinaryReaderEx br) : base(br)
@@ -590,19 +795,37 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class WindSFX : Region
             {
+                /// <summary>
+                /// RegionType.WindSFX
+                /// </summary>
                 public override RegionType Type => RegionType.WindSFX;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// ID of the effect FFX.
+                /// </summary>
                 public int FFXID { get; set; }
 
+                /// <summary>
+                /// Reference to a WindArea region.
+                /// </summary>
                 public string WindAreaName;
                 private int WindAreaIndex;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT18 { get; set; }
 
+                /// <summary>
+                /// Creates a WindSFX with default values.
+                /// </summary>
                 public WindSFX() : base() { }
 
                 internal WindSFX(BinaryReaderEx br) : base(br)
@@ -636,12 +859,21 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// A point where the player can spawn into the map.
+            /// </summary>
             public class SpawnPoint : Region
             {
+                /// <summary>
+                /// RegionType.SpawnPoint
+                /// </summary>
                 public override RegionType Type => RegionType.SpawnPoint;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Creates a SpawnPoint with default values.
+                /// </summary>
                 public SpawnPoint() : base() { }
 
                 internal SpawnPoint(BinaryReaderEx br) : base(br)
@@ -661,72 +893,141 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// A point along an NPC patrol path.
+            /// </summary>
             public class WalkRoute : Region
             {
+                /// <summary>
+                /// RegionType.WalkRoute
+                /// </summary>
                 public override RegionType Type => RegionType.WalkRoute;
 
                 internal override bool HasTypeData => false;
-
+                
+                /// <summary>
+                /// Creates a WalkRoute with default values.
+                /// </summary>
                 public WalkRoute() : base() { }
 
                 internal WalkRoute(BinaryReaderEx br) : base(br) { }
             }
 
+            /// <summary>
+            /// A point the player can be warped to.
+            /// </summary>
             public class WarpPoint : Region
             {
+                /// <summary>
+                /// RegionType.WarpPoint
+                /// </summary>
                 public override RegionType Type => RegionType.WarpPoint;
 
                 internal override bool HasTypeData => false;
 
+                /// <summary>
+                /// Creates a WarpPoint with default values.
+                /// </summary>
                 public WarpPoint() : base() { }
 
                 internal WarpPoint(BinaryReaderEx br) : base(br) { }
             }
 
+            /// <summary>
+            /// An area that triggers enemies when entered.
+            /// </summary>
             public class ActivationArea : Region
             {
+                /// <summary>
+                /// RegionType.ActivationArea
+                /// </summary>
                 public override RegionType Type => RegionType.ActivationArea;
 
                 internal override bool HasTypeData => false;
 
+                /// <summary>
+                /// Creates an ActivationArea with default values.
+                /// </summary>
                 public ActivationArea() : base() { }
 
                 internal ActivationArea(BinaryReaderEx br) : base(br) { }
             }
 
+            /// <summary>
+            /// A generic area used by event scripts.
+            /// </summary>
             public class Event : Region
             {
+                /// <summary>
+                /// RegionType.Event
+                /// </summary>
                 public override RegionType Type => RegionType.Event;
 
                 internal override bool HasTypeData => false;
 
+                /// <summary>
+                /// Creates an Event with default values.
+                /// </summary>
                 public Event() : base() { }
 
                 internal Event(BinaryReaderEx br) : base(br) { }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class EnvironmentMapEffectBox : Region
             {
+                /// <summary>
+                /// RegionType.EnvironmentMapEffectBox
+                /// </summary>
                 public override RegionType Type => RegionType.EnvironmentMapEffectBox;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT00 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float Compare { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public byte UnkT08 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public byte UnkT09 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short UnkT0A { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT24 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT28 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT2C { get; set; }
 
+                /// <summary>
+                /// Creates an EnvironmentMapEffectBox with default values.
+                /// </summary>
                 public EnvironmentMapEffectBox() : base() { }
 
                 internal EnvironmentMapEffectBox(BinaryReaderEx br) : base(br)
@@ -758,25 +1059,46 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class WindArea : Region
             {
+                /// <summary>
+                /// RegionType.WindArea
+                /// </summary>
                 public override RegionType Type => RegionType.WindArea;
 
                 internal override bool HasTypeData => false;
 
+                /// <summary>
+                /// Creates a WindArea with default values.
+                /// </summary>
                 public WindArea() : base() { }
 
                 internal WindArea(BinaryReaderEx br) : base(br) { }
             }
 
+            /// <summary>
+            /// An area where sound is muffled.
+            /// </summary>
             public class MufflingBox : Region
             {
+                /// <summary>
+                /// RegionType.MufflingBox
+                /// </summary>
                 public override RegionType Type => RegionType.MufflingBox;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// Creates a MufflingBox with default values.
+                /// </summary>
                 public MufflingBox() : base() { }
 
                 internal MufflingBox(BinaryReaderEx br) : base(br)
@@ -790,14 +1112,26 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// An entrance to a muffling box.
+            /// </summary>
             public class MufflingPortal : Region
             {
+                /// <summary>
+                /// RegionType.MufflingPortal
+                /// </summary>
                 public override RegionType Type => RegionType.MufflingPortal;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// Creates a MufflingPortal with default values.
+                /// </summary>
                 public MufflingPortal() : base() { }
 
                 internal MufflingPortal(BinaryReaderEx br) : base(br)
@@ -813,14 +1147,26 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class Region23 : Region
             {
+                /// <summary>
+                /// RegionType.Region23
+                /// </summary>
                 public override RegionType Type => RegionType.Region23;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public long UnkT00 { get; set; }
 
+                /// <summary>
+                /// Creates a Region23 with default values.
+                /// </summary>
                 public Region23() : base() { }
 
                 internal Region23(BinaryReaderEx br) : base(br)
@@ -836,25 +1182,46 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class Region24 : Region
             {
+                /// <summary>
+                /// RegionType.Region24
+                /// </summary>
                 public override RegionType Type => RegionType.Region24;
 
                 internal override bool HasTypeData => false;
 
+                /// <summary>
+                /// Creates a Region24 with default values.
+                /// </summary>
                 public Region24() : base() { }
 
                 internal Region24(BinaryReaderEx br) : base(br) { }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class PartsGroup : Region
             {
+                /// <summary>
+                /// RegionType.PartsGroup
+                /// </summary>
                 public override RegionType Type => RegionType.PartsGroup;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public long UnkT00 { get; set; }
 
+                /// <summary>
+                /// Creates a PartsGroup with default values.
+                /// </summary>
                 public PartsGroup() : base() { }
 
                 internal PartsGroup(BinaryReaderEx br) : base(br)
@@ -868,14 +1235,26 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class AutoDrawGroup : Region
             {
+                /// <summary>
+                /// RegionType.AutoDrawGroup
+                /// </summary>
                 public override RegionType Type => RegionType.AutoDrawGroup;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public long UnkT00 { get; set; }
 
+                /// <summary>
+                /// Creates an AutoDrawGroup with default values.
+                /// </summary>
                 public AutoDrawGroup() : base() { }
 
                 internal AutoDrawGroup(BinaryReaderEx br) : base(br)
@@ -891,12 +1270,21 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// A rarely used generic type of region.
+            /// </summary>
             public class Other : Region
             {
+                /// <summary>
+                /// RegionType.Other
+                /// </summary>
                 public override RegionType Type => RegionType.Other;
 
                 internal override bool HasTypeData => false;
 
+                /// <summary>
+                /// Creates an Other with default values.
+                /// </summary>
                 public Other() : base() { }
 
                 internal Other(BinaryReaderEx br) : base(br) { }

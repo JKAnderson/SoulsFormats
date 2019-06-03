@@ -963,6 +963,9 @@ namespace SoulsFormats
                 internal override void WriteUnk7(BinaryWriterEx bw) => Unk7.Write(bw);
             }
 
+            /// <summary>
+            /// A dynamic or interactible element in the map.
+            /// </summary>
             public class Object : DummyObject
             {
                 /// <summary>
@@ -1008,6 +1011,9 @@ namespace SoulsFormats
                 internal override void WriteUnk1(BinaryWriterEx bw) => Unk1.Write(bw);
             }
 
+            /// <summary>
+            /// Any non-player character.
+            /// </summary>
             public class Enemy : DummyEnemy
             {
                 /// <summary>
@@ -1053,6 +1059,9 @@ namespace SoulsFormats
                 internal override void WriteUnk1(BinaryWriterEx bw) => Unk1.Write(bw);
             }
 
+            /// <summary>
+            /// A spawn point for the player, or something.
+            /// </summary>
             public class Player : Part
             {
                 /// <summary>
@@ -1082,6 +1091,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Invisible but physical geometry.
+            /// </summary>
             public class Collision : Part
             {
                 /// <summary>
@@ -1115,14 +1127,29 @@ namespace SoulsFormats
                 /// </summary>
                 public UnkStruct6 Unk6 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public byte HitFilterID { get; set; }
 
+                /// <summary>
+                /// Adds reverb to sounds while on this collision to simulate echoes.
+                /// </summary>
                 public byte SoundSpaceType { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float ReflectPlaneHeight { get; set; }
 
+                /// <summary>
+                /// Determines the text to display for map popups and save files.
+                /// </summary>
                 public short MapNameID { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public bool DisableStart { get; set; }
 
                 /// <summary>
@@ -1130,6 +1157,9 @@ namespace SoulsFormats
                 /// </summary>
                 public byte UnkT17 { get; set; }
 
+                /// <summary>
+                /// If not -1, the bonfire with this ID will be disabled when enemies are on this collision.
+                /// </summary>
                 public int DisableBonfireEntityID { get; set; }
 
                 /// <summary>
@@ -1147,10 +1177,19 @@ namespace SoulsFormats
                 /// </summary>
                 public byte UnkT26 { get; set; }
 
+                /// <summary>
+                /// Should alter visibility while on this collision, but doesn't seem to do much.
+                /// </summary>
                 public byte MapVisibility { get; set; }
 
+                /// <summary>
+                /// Used to determine invasion eligibility.
+                /// </summary>
                 public int PlayRegionID { get; set; }
 
+                /// <summary>
+                /// Alters camera properties while on this collision.
+                /// </summary>
                 public short LockCamParamID { get; set; }
 
                 /// <summary>
@@ -1283,6 +1322,9 @@ namespace SoulsFormats
                 internal override void WriteUnk6(BinaryWriterEx bw) => Unk6.Write(bw);
             }
 
+            /// <summary>
+            /// An object that either isn't used, or is used for a cutscene.
+            /// </summary>
             public class DummyObject : Part
             {
                 /// <summary>
@@ -1437,6 +1479,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// An enemy that either isn't used, or is used for a cutscene.
+            /// </summary>
             public class DummyEnemy : Part
             {
                 /// <summary>
@@ -1455,8 +1500,14 @@ namespace SoulsFormats
                 /// </summary>
                 public UnkStruct5 Unk5 { get; set; }
 
+                /// <summary>
+                /// An ID in NPCThinkParam that determines the enemy's AI characteristics.
+                /// </summary>
                 public int ThinkParamID { get; set; }
 
+                /// <summary>
+                /// An ID in NPCParam that determines a variety of enemy properties.
+                /// </summary>
                 public int NPCParamID { get; set; }
 
                 /// <summary>
@@ -1469,8 +1520,14 @@ namespace SoulsFormats
                 /// </summary>
                 public short ChrManipulatorAllocationParameter { get; set; }
 
+                /// <summary>
+                /// An ID in CharaInitParam that determines a human's inventory and stats.
+                /// </summary>
                 public int CharaInitID { get; set; }
 
+                /// <summary>
+                /// Should reference the collision the enemy starts on.
+                /// </summary>
                 public string CollisionPartName { get; set; }
                 private int CollisionPartIndex;
 
@@ -1663,6 +1720,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// References an actual collision and causes another map to be loaded while on it.
+            /// </summary>
             public class ConnectCollision : Part
             {
                 /// <summary>

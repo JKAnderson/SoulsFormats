@@ -4,10 +4,19 @@ using System.Numerics;
 
 namespace SoulsFormats
 {
+    /// <summary>
+    /// A Sekiro file that defines grapple points and hangable edges for a model.
+    /// </summary>
     public class EDGE : SoulsFile<EDGE>
     {
+        /// <summary>
+        /// Unknown.
+        /// </summary>
         public int ID { get; set; }
 
+        /// <summary>
+        /// Edges defined in this file.
+        /// </summary>
         public List<Edge> Edges;
 
         internal override bool Is(BinaryReaderEx br)
@@ -40,18 +49,39 @@ namespace SoulsFormats
                 edge.Write(bw);
         }
 
+        /// <summary>
+        /// A grapple point or hangable edge.
+        /// </summary>
         public class Edge
         {
+            /// <summary>
+            /// The starting point of the edge.
+            /// </summary>
             public Vector3 V1 { get; set; }
 
+            /// <summary>
+            /// The ending point of the edge.
+            /// </summary>
             public Vector3 V2 { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public int Unk30 { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte Unk34 { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte Unk35 { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte Unk36 { get; set; }
 
             internal Edge(BinaryReaderEx br)

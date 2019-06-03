@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SoulsFormats.Otogi
 {
+    /// <summary>
+    /// A model format used in Otogi 2.
+    /// </summary>
     public class MDL : SoulsFile<MDL>
     {
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         public List<Faceset> Facesets { get; set; }
 
         public ushort[] Indices { get; set; }
@@ -195,5 +196,6 @@ namespace SoulsFormats.Otogi
                 Normal = new Vector4(x, y, z, w);
             }
         }
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }
