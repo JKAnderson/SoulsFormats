@@ -13,6 +13,11 @@ namespace SoulsFormats
         public class Layout : List<Layout.Entry>
         {
             /// <summary>
+            /// Collections of named values which may be referenced by cells.
+            /// </summary>
+            public Dictionary<string, Enum> Enums;
+
+            /// <summary>
             /// The size of a row, determined automatically from the layout.
             /// </summary>
             public int Size
@@ -83,14 +88,22 @@ namespace SoulsFormats
             /// <summary>
             /// Creates a new empty layout.
             /// </summary>
-            public Layout() : base() { }
+            public Layout() : base()
+            {
+                Enums = new Dictionary<string, Enum>();
+            }
 
             private Layout(XmlDocument xml) : base()
             {
-                foreach (XmlNode node in xml.SelectNodes("layout/entry"))
+                Enums = new Dictionary<string, Enum>();
+                foreach (XmlNode node in xml.SelectNodes("/layout/enum"))
                 {
-                    Add(new Entry(node));
+                    string enumName = node.Attributes["name"].InnerText;
+                    Enums[enumName] = new Enum(node);
                 }
+
+                foreach (XmlNode node in xml.SelectNodes("/layout/entry"))
+                    Add(new Entry(node));
             }
 
             /// <summary>
@@ -193,8 +206,6 @@ namespace SoulsFormats
                 /// </summary>
                 public string Name { get; set; }
 
-                private int size;
-
                 /// <summary>
                 /// Size in bytes of the entry; may only be set for fixstr, fixstrW, and dummy8.
                 /// </summary>
@@ -225,8 +236,7 @@ namespace SoulsFormats
                             throw new InvalidOperationException("Size may only be set for variable-width types: fixstr, fixstrW, and dummy8.");
                     }
                 }
-
-                private object def;
+                private int size;
 
                 /// <summary>
                 /// The default value to use when creating a new row.
@@ -249,6 +259,7 @@ namespace SoulsFormats
                             def = value;
                     }
                 }
+                private object def;
 
                 /// <summary>
                 /// Whether the size can be modified.
@@ -259,6 +270,11 @@ namespace SoulsFormats
                 /// A description of this field's purpose; may be null.
                 /// </summary>
                 public string Description;
+
+                /// <summary>
+                /// If not null, the enum containing possible values for this cell.
+                /// </summary>
+                public string Enum;
 
                 /// <summary>
                 /// Create a new entry of a fixed-width type.
@@ -284,7 +300,7 @@ namespace SoulsFormats
                 internal Entry(XmlNode node)
                 {
                     Name = node.SelectSingleNode("name").InnerText;
-                    Type = (CellType)Enum.Parse(typeof(CellType), node.SelectSingleNode("type").InnerText, true);
+                    Type = (CellType)System.Enum.Parse(typeof(CellType), node.SelectSingleNode("type").InnerText, true);
 
                     if (IsVariableSize)
                         size = int.Parse(node.SelectSingleNode("size").InnerText);
@@ -292,8 +308,8 @@ namespace SoulsFormats
                     if (Type != CellType.dummy8)
                         Default = ParseParamValue(Type, node.SelectSingleNode("default").InnerText);
 
-                    if (node.SelectSingleNode("description") != null)
-                        Description = node.SelectSingleNode("description").InnerText;
+                    Description = node.SelectSingleNode("description")?.InnerText;
+                    Enum = node.SelectSingleNode("enum")?.InnerText;
                 }
 
                 internal void Write(XmlWriter xw)
@@ -310,6 +326,9 @@ namespace SoulsFormats
 
                     if (Description != null)
                         xw.WriteElementString("description", Description);
+
+                    if (Enum != null)
+                        xw.WriteElementString("enum", Enum);
 
                     xw.WriteEndElement();
                 }

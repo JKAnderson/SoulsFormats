@@ -512,14 +512,19 @@ namespace SoulsFormats
             public string Name => Layout.Name;
 
             /// <summary>
-            /// The value of this cell.
-            /// </summary>
-            public object Value { get; set; }
-
-            /// <summary>
             /// A description of this field's purpose; may be null.
             /// </summary>
             public string Description => Layout.Description;
+
+            /// <summary>
+            /// If not null, the enum containing possible values for this cell.
+            /// </summary>
+            public string Enum => Layout.Enum;
+
+            /// <summary>
+            /// The value of this cell.
+            /// </summary>
+            public object Value { get; set; }
 
             internal Cell(Layout.Entry layout, object value)
             {
