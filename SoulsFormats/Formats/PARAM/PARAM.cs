@@ -81,7 +81,7 @@ namespace SoulsFormats
             brRows = new BinaryReaderEx(BigEndian, copy);
 
             ushort rowCount;
-            uint stringsOffset;
+            long stringsOffset;
 
             // DeS, DS1
             if ((Format2D & 0x7F) < 3)
@@ -137,6 +137,10 @@ namespace SoulsFormats
                 br.ReadInt64(); // Data start
                 br.AssertInt64(0);
                 ID = br.GetASCII(idOffset);
+
+                // This is stupid, but the strings offset is always aligned to 0x10,
+                // which can put it right in the middle of the ID string
+                stringsOffset = idOffset;
             }
 
             Rows = new List<Row>(rowCount);
