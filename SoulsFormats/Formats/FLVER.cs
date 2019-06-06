@@ -85,7 +85,7 @@ namespace SoulsFormats
             // BB:  20013, 20014
             // DS3: 20013, 20014
             // SDT: 2001A
-            Header.Version = br.AssertInt32(0x20009, 0x2000C, 0x2000D, 0x20010, 0x20013, 0x20014, 0x2001A);
+            Header.Version = br.AssertInt32(0x20009, 0x2000C, 0x2000D, 0x20010, 0x20013, 0x20014, 0x20016, 0x2001A);
 
             int dataOffset = br.ReadInt32();
             int dataSize = br.ReadInt32();
@@ -2030,6 +2030,11 @@ namespace SoulsFormats
                             {
                                 Positions.Add(br.ReadVector3());
                             }
+                            else if (member.Type == BufferLayout.MemberType.Float4)
+                            {
+                                Positions.Add(br.ReadVector3());
+                                br.AssertSingle(0);
+                            }
                             else
                                 throw new NotImplementedException();
                             break;
@@ -2266,6 +2271,11 @@ namespace SoulsFormats
                             if (member.Type == BufferLayout.MemberType.Float3)
                             {
                                 bw.WriteVector3(positionQueue.Dequeue());
+                            }
+                            else if (member.Type == BufferLayout.MemberType.Float4)
+                            {
+                                bw.WriteVector3(positionQueue.Dequeue());
+                                bw.WriteSingle(0);
                             }
                             else
                                 throw new NotImplementedException();
