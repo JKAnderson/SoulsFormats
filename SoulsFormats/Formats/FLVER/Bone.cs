@@ -74,12 +74,7 @@ namespace SoulsFormats
                 ChildIndex = -1;
                 NextSiblingIndex = -1;
                 PreviousSiblingIndex = -1;
-                Translation = Vector3.Zero;
-                Rotation = Vector3.Zero;
                 Scale = Vector3.One;
-                BoundingBoxMin = Vector3.Zero;
-                BoundingBoxMax = Vector3.Zero;
-                Unk3C = 0;
             }
 
             internal Bone(BinaryReaderEx br)

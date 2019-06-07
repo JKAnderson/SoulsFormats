@@ -63,19 +63,15 @@ namespace SoulsFormats
             private Queue<Color> colorQueue;
 
             /// <summary>
-            /// Create a new Vertex with null or empty values.
+            /// Create a Vertex with null or empty values.
             /// </summary>
             public Vertex()
             {
                 Positions = new List<Vector3>();
-                BoneIndices = null;
-                BoneWeights = null;
                 UVs = new List<Vector3>();
                 Normals = new List<Vector4>();
                 Tangents = new List<Vector4>();
                 Colors = new List<Color>();
-                UnknownVector4 = null;
-                ExtraBytes = null;
             }
 
             /// <summary>
@@ -580,25 +576,36 @@ namespace SoulsFormats
                 /// <summary>
                 /// Alpha component of the color.
                 /// </summary>
-                public float A;
+                public float A { get; set; }
 
                 /// <summary>
                 /// Red component of the color.
                 /// </summary>
-                public float R;
+                public float R { get; set; }
 
                 /// <summary>
                 /// Green component of the color.
                 /// </summary>
-                public float G;
+                public float G { get; set; }
 
                 /// <summary>
                 /// Blue component of the color.
                 /// </summary>
-                public float B;
+                public float B { get; set; }
 
                 /// <summary>
-                /// Creates a new color with the given ARGB values.
+                /// Creates a pure white Color.
+                /// </summary>
+                public Color()
+                {
+                    A = 1;
+                    R = 1;
+                    G = 1;
+                    B = 1;
+                }
+
+                /// <summary>
+                /// Creates a Color with the given ARGB values.
                 /// </summary>
                 public Color(float a, float r, float g, float b)
                 {
@@ -609,7 +616,7 @@ namespace SoulsFormats
                 }
 
                 /// <summary>
-                /// Creates a new color with the given ARGB values, divided by 255.
+                /// Creates a Color with the given ARGB values divided by 255.
                 /// </summary>
                 public Color(byte a, byte r, byte g, byte b)
                 {

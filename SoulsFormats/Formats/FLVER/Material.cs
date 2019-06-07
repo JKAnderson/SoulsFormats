@@ -47,12 +47,9 @@ namespace SoulsFormats
             /// </summary>
             public Material()
             {
-                Name = null;
-                MTD = null;
-                Flags = 0;
+                Name = "";
+                MTD = "";
                 Textures = new List<Texture>();
-                GXBytes = null;
-                Unk18 = 0;
             }
 
             /// <summary>

@@ -43,7 +43,7 @@
             public int Unk14, Unk18, Unk1C;
 
             /// <summary>
-            /// Creates a new Texture with default values.
+            /// Creates a Texture with default values.
             /// </summary>
             public Texture()
             {
@@ -51,11 +51,6 @@
                 Path = "";
                 ScaleX = 1;
                 ScaleY = 1;
-                Unk10 = 0;
-                Unk11 = false;
-                Unk14 = 0;
-                Unk18 = 0;
-                Unk1C = 0;
             }
 
             /// <summary>

@@ -64,19 +64,8 @@ namespace SoulsFormats
             /// </summary>
             public Dummy()
             {
-                Position = Vector3.Zero;
-                Forward = Vector3.Zero;
-                Upward = Vector3.Zero;
-                ReferenceID = 0;
                 DummyBoneIndex = -1;
                 AttachBoneIndex = -1;
-                Unk0C = 0;
-                Unk0D = 0;
-                Unk0E = 0;
-                Flag1 = false;
-                Flag2 = false;
-                Unk30 = 0;
-                Unk34 = 0;
             }
 
             internal Dummy(BinaryReaderEx br)

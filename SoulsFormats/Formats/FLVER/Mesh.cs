@@ -80,10 +80,6 @@ namespace SoulsFormats
                 FaceSets = new List<FaceSet>();
                 VertexBuffers = new List<VertexBuffer>();
                 Vertices = new List<Vertex>();
-                BoundingBoxMin = Vector3.Zero;
-                BoundingBoxMax = Vector3.Zero;
-                BoundingBoxUnk = Vector3.Zero;
-                Unk1 = 0;
             }
 
             internal Mesh(BinaryReaderEx br, int version)

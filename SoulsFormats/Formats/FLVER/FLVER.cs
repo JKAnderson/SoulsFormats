@@ -25,7 +25,7 @@ namespace SoulsFormats
         public List<Material> Materials;
 
         /// <summary>
-        /// Bones used by this model, often the full skeleton.
+        /// Bones used by this model, may or may not be the full skeleton.
         /// </summary>
         public List<Bone> Bones;
 
@@ -45,7 +45,7 @@ namespace SoulsFormats
         public SekiroUnkStruct SekiroUnk;
 
         /// <summary>
-        /// Creates a new FLVER with a default header and empty lists.
+        /// Creates a FLVER with a default header and empty lists.
         /// </summary>
         public FLVER()
         {
@@ -462,19 +462,12 @@ namespace SoulsFormats
             public int Unk68;
 
             /// <summary>
-            /// Creates a new FLVERHeader with default values.
+            /// Creates a FLVERHeader with default values.
             /// </summary>
             public FLVERHeader()
             {
                 BigEndian = false;
-                BoundingBoxMin = Vector3.Zero;
-                BoundingBoxMax = Vector3.Zero;
-                Unk40 = 0;
-                Unk48 = 0;
-                Unk4A = false;
-                Unk4E = 0;
-                Unk5C = 0;
-                Unk68 = 0;
+                Version = 0x20014;
             }
         }
 
@@ -487,6 +480,15 @@ namespace SoulsFormats
             /// Unknown.
             /// </summary>
             public List<Member> Members1, Members2;
+
+            /// <summary>
+            /// Creates an empty SekiroUnkStruct.
+            /// </summary>
+            public SekiroUnkStruct()
+            {
+                Members1 = new List<Member>();
+                Members2 = new List<Member>();
+            }
 
             internal SekiroUnkStruct(BinaryReaderEx br)
             {
@@ -544,14 +546,22 @@ namespace SoulsFormats
             public class Member
             {
                 /// <summary>
-                /// Unknown; maybe bone indices?
+                /// Unknown; maybe bone indices? Length 4.
                 /// </summary>
-                public short[] Unk00;
+                public short[] Unk00 { get; private set; }
 
                 /// <summary>
                 /// Unknown; seems to just count up from 0.
                 /// </summary>
                 public int Index;
+
+                /// <summary>
+                /// Creates a Member with default values.
+                /// </summary>
+                public Member()
+                {
+                    Unk00 = new short[4];
+                }
 
                 internal Member(BinaryReaderEx br)
                 {
