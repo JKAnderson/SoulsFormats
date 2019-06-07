@@ -651,7 +651,7 @@ namespace SoulsFormats
                     UnkT24 = br.ReadInt32();
                     UnkT28 = br.ReadInt32();
                     br.AssertInt32(-1);
-                    br.AssertNull(0x10, false);
+                    br.AssertPattern(0x10, 0x00);
                 }
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
@@ -668,7 +668,7 @@ namespace SoulsFormats
                     bw.WriteInt32(UnkT24);
                     bw.WriteInt32(UnkT28);
                     bw.WriteInt32(-1);
-                    bw.WriteNull(0x10, false);
+                    bw.WritePattern(0x10, 0x00);
                 }
             }
 
@@ -831,7 +831,7 @@ namespace SoulsFormats
                 internal WindSFX(BinaryReaderEx br) : base(br)
                 {
                     FFXID = br.ReadInt32();
-                    br.AssertNull(0x10, true);
+                    br.AssertPattern(0x10, 0xFF);
                     WindAreaIndex = br.ReadInt32();
                     UnkT18 = br.ReadSingle();
                     br.AssertInt32(0);
@@ -840,7 +840,7 @@ namespace SoulsFormats
                 internal override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(FFXID);
-                    bw.WriteNull(0x10, true);
+                    bw.WritePattern(0x10, 0xFF);
                     bw.WriteInt32(WindAreaIndex);
                     bw.WriteSingle(UnkT18);
                     bw.WriteInt32(0);
@@ -1037,7 +1037,7 @@ namespace SoulsFormats
                     UnkT08 = br.ReadByte();
                     UnkT09 = br.ReadByte();
                     UnkT0A = br.ReadInt16();
-                    br.AssertNull(0x18, false);
+                    br.AssertPattern(0x18, 0x00);
                     UnkT24 = br.ReadInt32();
                     UnkT28 = br.ReadSingle();
                     UnkT2C = br.ReadSingle();
@@ -1051,7 +1051,7 @@ namespace SoulsFormats
                     bw.WriteByte(UnkT08);
                     bw.WriteByte(UnkT09);
                     bw.WriteInt16(UnkT0A);
-                    bw.WriteNull(0x18, false);
+                    bw.WritePattern(0x18, 0x00);
                     bw.WriteInt32(UnkT24);
                     bw.WriteSingle(UnkT28);
                     bw.WriteSingle(UnkT2C);
@@ -1172,13 +1172,13 @@ namespace SoulsFormats
                 internal Region23(BinaryReaderEx br) : base(br)
                 {
                     UnkT00 = br.ReadInt64();
-                    br.AssertNull(0x18, false);
+                    br.AssertPattern(0x18, 0x00);
                 }
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteInt64(UnkT00);
-                    bw.WriteNull(0x18, false);
+                    bw.WritePattern(0x18, 0x00);
                 }
             }
 
@@ -1260,13 +1260,13 @@ namespace SoulsFormats
                 internal AutoDrawGroup(BinaryReaderEx br) : base(br)
                 {
                     UnkT00 = br.ReadInt64();
-                    br.AssertNull(0x18, false);
+                    br.AssertPattern(0x18, 0x00);
                 }
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteInt64(UnkT00);
-                    bw.WriteNull(0x18, false);
+                    bw.WritePattern(0x18, 0x00);
                 }
             }
 

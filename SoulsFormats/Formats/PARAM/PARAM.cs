@@ -132,7 +132,7 @@ namespace SoulsFormats
                 rowCount = br.ReadUInt16();
                 br.AssertInt32(0);
                 long idOffset = br.ReadInt64();
-                br.AssertNull(0x14, false);
+                br.AssertPattern(0x14, 0x00);
                 br.Skip(4); // Format
                 br.ReadInt64(); // Data start
                 br.AssertInt64(0);
@@ -218,7 +218,7 @@ namespace SoulsFormats
                 bw.WriteUInt16((ushort)Rows.Count);
                 bw.WriteInt32(0);
                 bw.ReserveInt64("IDOffset");
-                bw.WriteNull(0x14, false);
+                bw.WritePattern(0x14, 0x00);
                 WriteFormat();
                 bw.ReserveInt64("DataStart");
                 bw.WriteInt64(0);

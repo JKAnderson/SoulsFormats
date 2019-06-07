@@ -392,7 +392,7 @@ namespace SoulsFormats
                     TreasurePartIndex = br.ReadInt32();
                     br.AssertInt32(0);
                     ItemLotID = br.ReadInt32();
-                    br.AssertNull(0x24, true);
+                    br.AssertPattern(0x24, 0xFF);
                     ActionButtonID = br.ReadInt32();
                     PickupAnimID = br.ReadInt32();
                     InChest = br.ReadBoolean();
@@ -410,7 +410,7 @@ namespace SoulsFormats
                     bw.WriteInt32(TreasurePartIndex);
                     bw.WriteInt32(0);
                     bw.WriteInt32(ItemLotID);
-                    bw.WriteNull(0x24, true);
+                    bw.WritePattern(0x24, 0xFF);
                     bw.WriteInt32(ActionButtonID);
                     bw.WriteInt32(PickupAnimID);
                     bw.WriteBoolean(InChest);
@@ -523,11 +523,11 @@ namespace SoulsFormats
                     SessionCondition = br.ReadInt32();
                     UnkT14 = br.ReadSingle();
                     UnkT18 = br.ReadSingle();
-                    br.AssertNull(0x14, false);
+                    br.AssertPattern(0x14, 0x00);
                     SpawnRegionIndices = br.ReadInt32s(8);
-                    br.AssertNull(0x10, false);
+                    br.AssertPattern(0x10, 0x00);
                     SpawnPartIndices = br.ReadInt32s(32);
-                    br.AssertNull(0x20, false);
+                    br.AssertPattern(0x20, 0x00);
                 }
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
@@ -541,11 +541,11 @@ namespace SoulsFormats
                     bw.WriteInt32(SessionCondition);
                     bw.WriteSingle(UnkT14);
                     bw.WriteSingle(UnkT18);
-                    bw.WriteNull(0x14, false);
+                    bw.WritePattern(0x14, 0x00);
                     bw.WriteInt32s(SpawnRegionIndices);
-                    bw.WriteNull(0x10, false);
+                    bw.WritePattern(0x10, 0x00);
                     bw.WriteInt32s(SpawnPartIndices);
-                    bw.WriteNull(0x20, false);
+                    bw.WritePattern(0x20, 0x00);
                 }
 
                 internal override void GetNames(MSBS msb, Entries entries)
@@ -741,7 +741,7 @@ namespace SoulsFormats
                     WREntries = new WREntry[5];
                     for (int i = 0; i < 5; i++)
                         WREntries[i] = new WREntry(br);
-                    br.AssertNull(0x14, false);
+                    br.AssertPattern(0x14, 0x00);
                 }
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
@@ -753,7 +753,7 @@ namespace SoulsFormats
                     bw.WriteInt16s(WalkRegionIndices);
                     for (int i = 0; i < 5; i++)
                         WREntries[i].Write(bw);
-                    bw.WriteNull(0x14, false);
+                    bw.WritePattern(0x14, 0x00);
                 }
 
                 internal override void GetNames(MSBS msb, Entries entries)
@@ -924,13 +924,13 @@ namespace SoulsFormats
                 internal Event17(BinaryReaderEx br) : base(br)
                 {
                     UnkT00 = br.ReadInt32();
-                    br.AssertNull(0x1C, false);
+                    br.AssertPattern(0x1C, 0x00);
                 }
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(UnkT00);
-                    bw.WriteNull(0x1C, false);
+                    bw.WritePattern(0x1C, 0x00);
                 }
             }
 
@@ -959,13 +959,13 @@ namespace SoulsFormats
                 internal Event18(BinaryReaderEx br) : base(br)
                 {
                     UnkT00 = br.ReadInt32();
-                    br.AssertNull(0x1C, false);
+                    br.AssertPattern(0x1C, 0x00);
                 }
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(UnkT00);
-                    bw.WriteNull(0x1C, false);
+                    bw.WritePattern(0x1C, 0x00);
                 }
             }
 
@@ -1006,7 +1006,7 @@ namespace SoulsFormats
                     UnkT00 = br.ReadInt32();
                     UnkT04 = br.ReadInt16();
                     UnkT06 = br.ReadInt16();
-                    br.AssertNull(0x18, false);
+                    br.AssertPattern(0x18, 0x00);
                 }
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
@@ -1014,7 +1014,7 @@ namespace SoulsFormats
                     bw.WriteInt32(UnkT00);
                     bw.WriteInt16(UnkT04);
                     bw.WriteInt16(UnkT06);
-                    bw.WriteNull(0x18, false);
+                    bw.WritePattern(0x18, 0x00);
                 }
             }
 
@@ -1147,7 +1147,7 @@ namespace SoulsFormats
                     UnkT44 = br.ReadInt16();
                     UnkT46 = br.ReadInt16();
                     UnkT48 = br.ReadInt32();
-                    br.AssertNull(0x34, false);
+                    br.AssertPattern(0x34, 0x00);
                 }
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
@@ -1158,7 +1158,7 @@ namespace SoulsFormats
                     bw.WriteInt16(UnkT44);
                     bw.WriteInt16(UnkT46);
                     bw.WriteInt32(UnkT48);
-                    bw.WriteNull(0x34, false);
+                    bw.WritePattern(0x34, 0x00);
                 }
 
                 internal override void GetNames(MSBS msb, Entries entries)
@@ -1205,14 +1205,14 @@ namespace SoulsFormats
                 {
                     UnkT00 = br.ReadInt32();
                     UnkT04 = br.ReadInt32();
-                    br.AssertNull(0x18, false);
+                    br.AssertPattern(0x18, 0x00);
                 }
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(UnkT00);
                     bw.WriteInt32(UnkT04);
-                    bw.WriteNull(0x18, false);
+                    bw.WritePattern(0x18, 0x00);
                 }
             }
 

@@ -90,13 +90,13 @@ namespace SoulsFormats
                 br.AssertSingle(1);
                 V2 = br.ReadVector3();
                 br.AssertSingle(1);
-                br.AssertNull(0x10, false);
+                br.AssertPattern(0x10, 0x00);
                 Unk30 = br.ReadInt32();
                 Unk34 = br.ReadByte();
                 Unk35 = br.ReadByte();
                 Unk36 = br.ReadByte();
                 br.AssertByte(0);
-                br.AssertNull(8, false);
+                br.AssertPattern(0x8, 0x00);
             }
 
             internal void Write(BinaryWriterEx bw)
@@ -105,13 +105,13 @@ namespace SoulsFormats
                 bw.WriteSingle(1);
                 bw.WriteVector3(V2);
                 bw.WriteSingle(1);
-                bw.WriteNull(0x10, false);
+                bw.WritePattern(0x10, 0x00);
                 bw.WriteInt32(Unk30);
                 bw.WriteByte(Unk34);
                 bw.WriteByte(Unk35);
                 bw.WriteByte(Unk36);
                 bw.WriteByte(0);
-                bw.WriteNull(0x8, false);
+                bw.WritePattern(0x8, 0x00);
             }
         }
     }

@@ -401,7 +401,7 @@ namespace SoulsFormats
                 bw.WriteUTF16(Placeholder, true);
                 // This is purely here for byte-perfect writes because From is nasty
                 if (Placeholder == "")
-                    bw.WriteNull(0x24, false);
+                    bw.WritePattern(0x24, 0x00);
                 bw.Pad(8);
 
                 bw.FillInt64("BaseDataOffset", bw.Position - start);
@@ -535,7 +535,7 @@ namespace SoulsFormats
                     FogParamID = br.ReadInt32();
                     Unk08 = br.ReadInt32();
                     EnvMapID = br.ReadInt32();
-                    br.AssertNull(0x10, false);
+                    br.AssertPattern(0x10, 0x00);
                 }
 
                 internal void Write(BinaryWriterEx bw)
@@ -544,7 +544,7 @@ namespace SoulsFormats
                     bw.WriteInt32(FogParamID);
                     bw.WriteInt32(Unk08);
                     bw.WriteInt32(EnvMapID);
-                    bw.WriteNull(0x10, false);
+                    bw.WritePattern(0x10, 0x00);
                 }
 
                 /// <summary>
@@ -587,7 +587,7 @@ namespace SoulsFormats
 
                 internal UnkStruct4(BinaryReaderEx br)
                 {
-                    br.AssertNull(0x3C, false);
+                    br.AssertPattern(0x3C, 0x00);
                     Unk3C = br.ReadInt32();
                     Unk40 = br.ReadSingle();
                     br.AssertInt32(0);
@@ -597,7 +597,7 @@ namespace SoulsFormats
 
                 internal void Write(BinaryWriterEx bw)
                 {
-                    bw.WriteNull(0x3C, false);
+                    bw.WritePattern(0x3C, 0x00);
                     bw.WriteInt32(Unk3C);
                     bw.WriteSingle(Unk40);
                     bw.WriteInt32(0);

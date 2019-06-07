@@ -419,7 +419,7 @@ namespace SoulsFormats
                 EntityGroupIDs = br.ReadInt32s(8);
                 UnkE3C = br.ReadInt32();
                 UnkE40 = br.ReadInt32();
-                br.AssertNull(0x10, false);
+                br.AssertPattern(0x10, 0x00);
 
                 if (HasGparamConfig)
                 {
@@ -542,7 +542,7 @@ namespace SoulsFormats
                 bw.WriteInt32s(EntityGroupIDs);
                 bw.WriteInt32(UnkE3C);
                 bw.WriteInt32(UnkE40);
-                bw.WriteNull(0x10, false);
+                bw.WritePattern(0x10, 0x00);
                 bw.Pad(8);
 
                 bw.FillInt64("TypeDataOffset", bw.Position - start);
@@ -670,7 +670,7 @@ namespace SoulsFormats
                     Condition1 = br.ReadByte();
                     Condition2 = br.ReadByte();
                     br.AssertInt16(0);
-                    br.AssertNull(0xC0, false);
+                    br.AssertPattern(0xC0, 0x00);
                 }
 
                 internal void Write(BinaryWriterEx bw)
@@ -679,7 +679,7 @@ namespace SoulsFormats
                     bw.WriteByte(Condition1);
                     bw.WriteByte(Condition2);
                     bw.WriteInt16(0);
-                    bw.WriteNull(0xC0, false);
+                    bw.WritePattern(0xC0, 0x00);
                 }
             }
 
@@ -722,7 +722,7 @@ namespace SoulsFormats
                     DispGroups = br.ReadInt32s(8);
                     Unk24 = br.ReadInt16();
                     Unk26 = br.ReadInt16();
-                    br.AssertNull(0x20, false);
+                    br.AssertPattern(0x20, 0x00);
                 }
 
                 internal void Write(BinaryWriterEx bw)
@@ -731,7 +731,7 @@ namespace SoulsFormats
                     bw.WriteInt32s(DispGroups);
                     bw.WriteInt16(Unk24);
                     bw.WriteInt16(Unk26);
-                    bw.WriteNull(0x20, false);
+                    bw.WritePattern(0x20, 0x00);
                 }
             }
 
@@ -782,7 +782,7 @@ namespace SoulsFormats
                     FogParamID = br.ReadInt32();
                     Unk08 = br.ReadInt32();
                     EnvMapID = br.ReadInt32();
-                    br.AssertNull(0x10, false);
+                    br.AssertPattern(0x10, 0x00);
                 }
 
                 internal void Write(BinaryWriterEx bw)
@@ -791,7 +791,7 @@ namespace SoulsFormats
                     bw.WriteInt32(FogParamID);
                     bw.WriteInt32(Unk08);
                     bw.WriteInt32(EnvMapID);
-                    bw.WriteNull(0x10, false);
+                    bw.WritePattern(0x10, 0x00);
                 }
 
                 /// <summary>
@@ -825,7 +825,7 @@ namespace SoulsFormats
 
                 internal UnkStruct6(BinaryReaderEx br)
                 {
-                    br.AssertNull(0x3C, false);
+                    br.AssertPattern(0x3C, 0x00);
                     Unk3C = br.ReadInt32();
                     Unk40 = br.ReadSingle();
                     br.AssertInt32(0);
@@ -835,7 +835,7 @@ namespace SoulsFormats
 
                 internal void Write(BinaryWriterEx bw)
                 {
-                    bw.WriteNull(0x3C, false);
+                    bw.WritePattern(0x3C, 0x00);
                     bw.WriteInt32(Unk3C);
                     bw.WriteSingle(Unk40);
                     bw.WriteInt32(0);
@@ -1090,12 +1090,12 @@ namespace SoulsFormats
 
                 internal Player(BinaryReaderEx br) : base(br)
                 {
-                    br.AssertNull(0x10, false);
+                    br.AssertPattern(0x10, 0x00);
                 }
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.WriteNull(0x10, false);
+                    bw.WritePattern(0x10, 0x00);
                 }
             }
 
@@ -1646,7 +1646,7 @@ namespace SoulsFormats
                     UnkT20 = br.ReadInt16();
                     UnkT22 = br.ReadInt16();
                     UnkT24 = br.ReadInt32();
-                    br.AssertNull(0x10, true);
+                    br.AssertPattern(0x10, 0xFF);
                     BackupEventAnimID = br.ReadInt32();
                     br.AssertInt32(-1);
                     EventFlagID = br.ReadInt32();
@@ -1657,7 +1657,7 @@ namespace SoulsFormats
                     br.AssertInt32(1);
                     br.AssertInt32(-1);
                     br.AssertInt32(1);
-                    br.AssertNull(0x18, false);
+                    br.AssertPattern(0x18, 0x00);
                     UnkT78 = br.ReadInt32();
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -1668,7 +1668,7 @@ namespace SoulsFormats
                         br.AssertInt16(-1);
                         br.AssertInt16(0xA);
                     }
-                    br.AssertNull(0x10, false);
+                    br.AssertPattern(0x10, 0x00);
                 }
 
                 internal override void ReadGparamConfig(BinaryReaderEx br) => Gparam = new GparamConfig(br);
@@ -1687,7 +1687,7 @@ namespace SoulsFormats
                     bw.WriteInt16(UnkT20);
                     bw.WriteInt16(UnkT22);
                     bw.WriteInt32(UnkT24);
-                    bw.WriteNull(0x10, true);
+                    bw.WritePattern(0x10, 0xFF);
                     bw.WriteInt32(BackupEventAnimID);
                     bw.WriteInt32(-1);
                     bw.WriteInt32(EventFlagID);
@@ -1698,7 +1698,7 @@ namespace SoulsFormats
                     bw.WriteInt32(1);
                     bw.WriteInt32(-1);
                     bw.WriteInt32(1);
-                    bw.WriteNull(0x18, false);
+                    bw.WritePattern(0x18, 0x00);
                     bw.WriteInt32(UnkT78);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
@@ -1709,7 +1709,7 @@ namespace SoulsFormats
                         bw.WriteInt16(-1);
                         bw.WriteInt16(0xA);
                     }
-                    bw.WriteNull(0x10, false);
+                    bw.WritePattern(0x10, 0x00);
                 }
 
                 internal override void WriteGparamConfig(BinaryWriterEx bw) => Gparam.Write(bw);

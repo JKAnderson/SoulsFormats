@@ -95,7 +95,7 @@ namespace SoulsFormats
                 nameOffsets.Add(nameOffset);
                 bw.WriteUTF16(entry.Name, true);
                 if (nameOffset % 0x10 != 0)
-                    bw.WriteNull((int)(0x10 - (nameOffset % 0x10)), false);
+                    bw.WritePattern((int)(0x10 - (nameOffset % 0x10)), 0x00);
             }
 
             bw.FillInt32("NamesLength", (int)(bw.Position - namesStart));
@@ -463,7 +463,7 @@ namespace SoulsFormats
 
                 if (version == 2 && !longOffsets)
                 {
-                    br.AssertNull(0x24, false);
+                    br.AssertPattern(0x24, 0x00);
                     UnkA0 = new byte[4];
                     UnkC0 = new byte[4];
                 }

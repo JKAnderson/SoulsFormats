@@ -993,16 +993,15 @@ namespace SoulsFormats
         }
 
         /// <summary>
-        /// Read length number of bytes and assert that each is 0, or 0xFF if ff is true.
+        /// Read length number of bytes and assert that they all match the given value.
         /// </summary>
-        public void AssertNull(int length, bool ff)
+        public void AssertPattern(int length, byte pattern)
         {
-            byte test = (byte)(ff ? 0xFF : 0);
             byte[] bytes = ReadBytes(length);
             for (int i = 0; i < length; i++)
             {
-                if (bytes[i] != test)
-                    throw new InvalidDataException($"Expected {length} 0x{test:X2}, got {bytes[i]:X2} at position {i}");
+                if (bytes[i] != pattern)
+                    throw new InvalidDataException($"Expected {length} 0x{pattern:X2}, got {bytes[i]:X2} at position {i}");
             }
         }
         #endregion

@@ -82,7 +82,7 @@ namespace SoulsFormats
                 Unk0C = br.ReadInt32();
                 br.AssertInt32(4); // Type
                 br.ReadInt32(); // ID
-                br.AssertNull(0x68, false);
+                br.AssertPattern(0x68, 0x00);
 
                 Name = br.GetUTF16(start + nameOffset);
             }
@@ -96,7 +96,7 @@ namespace SoulsFormats
                 bw.WriteInt32(Unk0C);
                 bw.WriteInt32(4);
                 bw.WriteInt32(id);
-                bw.WriteNull(0x68, false);
+                bw.WritePattern(0x68, 0x00);
 
                 bw.FillInt64("NameOffset", bw.Position - start);
                 bw.WriteUTF16(Name, true);

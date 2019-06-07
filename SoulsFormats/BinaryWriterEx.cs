@@ -668,15 +668,15 @@ namespace SoulsFormats
         }
 
         /// <summary>
-        /// Write length number of 0 bytes, or 0xFF bytes if ff is true.
+        /// Write length number of the given value.
         /// </summary>
-        public void WriteNull(int length, bool ff)
+        public void WritePattern(int length, byte pattern)
         {
             byte[] bytes = new byte[length];
-            if (ff)
+            if (pattern != 0)
             {
                 for (int i = 0; i < length; i++)
-                    bytes[i] = 0xFF;
+                    bytes[i] = pattern;
             }
             WriteBytes(bytes);
         }
