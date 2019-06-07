@@ -33,72 +33,63 @@ namespace SoulsFormats
                 LodLevel2 = 0x02000000,
 
                 /// <summary>
-                /// Some meshes have what appears to be a copy of each faceset, and the copy has this flag.
+                /// Many meshes have a copy of each faceset with and without this flag. If you remove them, motion blur stops working.
                 /// </summary>
-                Unk80000000 = 0x80000000,
+                MotionBlur = 0x80000000,
             }
 
             /// <summary>
             /// FaceSet Flags on this FaceSet.
             /// </summary>
-            public FSFlags Flags;
+            public FSFlags Flags { get; set; }
 
             /// <summary>
             /// Whether vertices are defined as a triangle strip or individual triangles.
             /// </summary>
-            public bool TriangleStrip;
+            public bool TriangleStrip { get; set; }
 
             /// <summary>
             /// Whether triangles can be seen through from behind.
             /// </summary>
-            public bool CullBackfaces;
+            public bool CullBackfaces { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public byte Unk06;
+            public byte Unk06 { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public byte Unk07;
+            public bool Unk07 { get; set; }
 
             /// <summary>
-            /// Bits per index; 0 or 16 for shorts, 32 for ints.
+            /// Indices to vertices in a mesh.
             /// </summary>
-            public int IndexSize;
+            public List<int> Indices { get; set; }
 
             /// <summary>
-            /// Indexes to vertices in a mesh.
-            /// </summary>
-            public uint[] Vertices;
-
-            /// <summary>
-            /// Creates a new FaceSet with default values and null vertices.
+            /// Creates a new FaceSet with default values and no indices.
             /// </summary>
             public FaceSet()
             {
                 Flags = FSFlags.None;
                 TriangleStrip = false;
                 CullBackfaces = true;
-                Unk06 = 0;
-                Unk07 = 0;
-                IndexSize = 16;
-                Vertices = null;
+                Indices = new List<int>();
             }
 
             /// <summary>
             /// Creates a new FaceSet with the specified values.
             /// </summary>
-            public FaceSet(FSFlags flags, bool triangleStrip, bool cullBackfaces, byte unk06, byte unk07, int indexSize, uint[] vertices)
+            public FaceSet(FSFlags flags, bool triangleStrip, bool cullBackfaces, byte unk06, bool unk07, List<int> indices)
             {
                 Flags = flags;
                 TriangleStrip = triangleStrip;
                 CullBackfaces = cullBackfaces;
                 Unk06 = unk06;
                 Unk07 = unk07;
-                IndexSize = indexSize;
-                Vertices = vertices;
+                Indices = indices;
             }
 
             internal FaceSet(BinaryReaderEx br, int dataOffset)
@@ -108,70 +99,72 @@ namespace SoulsFormats
                 TriangleStrip = br.ReadBoolean();
                 CullBackfaces = br.ReadBoolean();
                 Unk06 = br.ReadByte();
-                Unk07 = br.ReadByte();
+                Unk07 = br.ReadBoolean();
 
-                int vertexCount = br.ReadInt32();
-                int vertexOffset = br.ReadInt32();
-                int vertexSize = br.ReadInt32();
+                int indexCount = br.ReadInt32();
+                int indicesOffset = br.ReadInt32();
+                br.ReadInt32(); // Indices size
 
                 br.AssertInt32(0);
-                IndexSize = br.AssertInt32(0, 16, 32);
+                int indexSize = br.AssertInt32(0, 16, 32);
                 br.AssertInt32(0);
 
-                if (IndexSize == 0 || IndexSize == 16)
-                    Vertices = br.GetUInt16s(dataOffset + vertexOffset, vertexCount).Select(i => (uint)i).ToArray();
-                else if (IndexSize == 32)
-                    Vertices = br.GetUInt32s(dataOffset + vertexOffset, vertexCount);
+                if (indexSize == 0 || indexSize == 16)
+                    Indices = br.GetUInt16s(dataOffset + indicesOffset, indexCount).Select(i => (int)i).ToList();
+                else if (indexSize == 32)
+                    Indices = br.GetInt32s(dataOffset + indicesOffset, indexCount).ToList();
             }
 
             internal void Write(BinaryWriterEx bw, int index)
             {
+                int indexSize = Indices.Any(i => i > ushort.MaxValue) ? 32 : 16;
                 bw.WriteUInt32((uint)Flags);
 
                 bw.WriteBoolean(TriangleStrip);
                 bw.WriteBoolean(CullBackfaces);
                 bw.WriteByte(Unk06);
-                bw.WriteByte(Unk07);
+                bw.WriteBoolean(Unk07);
 
-                bw.WriteInt32(Vertices.Length);
+                bw.WriteInt32(Indices.Count);
                 bw.ReserveInt32($"FaceSetVertices{index}");
-                bw.WriteInt32(Vertices.Length * 2);
+                bw.WriteInt32(Indices.Count * (indexSize / 8));
 
                 bw.WriteInt32(0);
-                bw.WriteInt32(IndexSize);
+                bw.WriteInt32(indexSize);
                 bw.WriteInt32(0);
             }
 
             internal void WriteVertices(BinaryWriterEx bw, int index, int dataStart)
             {
+                int indexSize = Indices.Any(i => i > ushort.MaxValue) ? 32 : 16;
                 bw.FillInt32($"FaceSetVertices{index}", (int)bw.Position - dataStart);
-                if (IndexSize == 0 || IndexSize == 16)
-                    bw.WriteUInt16s(Vertices.Select(i => checked((ushort)i)).ToArray());
-                else if (IndexSize == 32)
-                    bw.WriteUInt32s(Vertices);
+                if (indexSize == 0 || indexSize == 16)
+                    bw.WriteUInt16s(Indices.Select(i => (ushort)i).ToArray());
+                else if (indexSize == 32)
+                    bw.WriteInt32s(Indices);
             }
 
             /// <summary>
             /// Returns a list of arrays of 3 vertex indices, each representing one triangle in a mesh.
             /// </summary>
-            public List<uint[]> GetFaces()
+            public List<int[]> GetFaces()
             {
-                var faces = new List<uint[]>();
+                var faces = new List<int[]>();
                 if (TriangleStrip)
                 {
                     bool flip = false;
-                    for (int i = 0; i < Vertices.Length - 2; i++)
+                    for (int i = 0; i < Indices.Count - 2; i++)
                     {
-                        uint vi1 = Vertices[i];
-                        uint vi2 = Vertices[i + 1];
-                        uint vi3 = Vertices[i + 2];
+                        int vi1 = Indices[i];
+                        int vi2 = Indices[i + 1];
+                        int vi3 = Indices[i + 2];
 
                         if (vi1 != vi2 && vi1 != vi3 && vi2 != vi3)
                         {
                             if (!flip)
-                                faces.Add(new uint[] { vi1, vi2, vi3 });
+                                faces.Add(new int[] { vi1, vi2, vi3 });
                             else
-                                faces.Add(new uint[] { vi3, vi2, vi1 });
+                                faces.Add(new int[] { vi3, vi2, vi1 });
                         }
 
                         flip = !flip;
@@ -179,9 +172,9 @@ namespace SoulsFormats
                 }
                 else
                 {
-                    for (int i = 0; i < Vertices.Length - 2; i += 3)
+                    for (int i = 0; i < Indices.Count - 2; i += 3)
                     {
-                        faces.Add(new uint[] { Vertices[i], Vertices[i + 1], Vertices[i + 2] });
+                        faces.Add(new int[] { Indices[i], Indices[i + 1], Indices[i + 2] });
                     }
                 }
                 return faces;

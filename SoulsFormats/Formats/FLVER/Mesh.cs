@@ -243,10 +243,10 @@ namespace SoulsFormats
             public List<Vertex[]> GetFaces(FaceSet.FSFlags fsFlags = FaceSet.FSFlags.None)
             {
                 FaceSet faceset = FaceSets.Find(fs => fs.Flags == fsFlags) ?? FaceSets[0];
-                List<uint[]> indices = faceset.GetFaces();
+                List<int[]> indices = faceset.GetFaces();
                 var vertices = new List<Vertex[]>(indices.Count);
-                foreach (uint[] face in indices)
-                    vertices.Add(new Vertex[] { Vertices[(int)face[0]], Vertices[(int)face[1]], Vertices[(int)face[2]] });
+                foreach (int[] face in indices)
+                    vertices.Add(new Vertex[] { Vertices[face[0]], Vertices[face[1]], Vertices[face[2]] });
                 return vertices;
             }
         }
