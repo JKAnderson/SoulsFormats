@@ -157,7 +157,7 @@ namespace SoulsFormats
             if (Header.Version >= 0x2001A)
                 SekiroUnk = new SekiroUnkStruct(br);
 
-            Dictionary<int, Texture> textureDict = Dictionize(textures);
+            Dictionary<int, Texture> textureDict = SFUtil.Dictionize(textures);
             foreach (Material material in Materials)
             {
                 material.TakeTextures(textureDict);
@@ -165,8 +165,8 @@ namespace SoulsFormats
             if (textureDict.Count != 0)
                 throw new NotSupportedException("Orphaned textures found.");
 
-            Dictionary<int, FaceSet> faceSetDict = Dictionize(faceSets);
-            Dictionary<int, VertexBuffer> vertexBufferDict = Dictionize(vertexBuffers);
+            Dictionary<int, FaceSet> faceSetDict = SFUtil.Dictionize(faceSets);
+            Dictionary<int, VertexBuffer> vertexBufferDict = SFUtil.Dictionize(vertexBuffers);
             foreach (Mesh mesh in Meshes)
             {
                 mesh.TakeFaceSets(faceSetDict);
@@ -177,17 +177,6 @@ namespace SoulsFormats
                 throw new NotSupportedException("Orphaned face sets found.");
             if (vertexBufferDict.Count != 0)
                 throw new NotSupportedException("Orphaned vertex buffers found.");
-        }
-
-        /// <summary>
-        /// Convert a list to a dictionary with indices as keys.
-        /// </summary>
-        private static Dictionary<int, T> Dictionize<T>(List<T> items)
-        {
-            var dict = new Dictionary<int, T>(items.Count);
-            for (int i = 0; i < items.Count; i++)
-                dict[i] = items[i];
-            return dict;
         }
 
         /// <summary>

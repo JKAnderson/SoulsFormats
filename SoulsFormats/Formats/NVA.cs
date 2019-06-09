@@ -57,16 +57,6 @@ namespace SoulsFormats
         public ConnectorSection Connectors { get; set; }
 
         /// <summary>
-        /// Points used to connect different navmeshes.
-        /// </summary>
-        public ConnectorPointSection ConnectorPoints { get; set; }
-
-        /// <summary>
-        /// Unknown conditions for connectors.
-        /// </summary>
-        public ConnectorConditionSection ConnectorConditions { get; set; }
-
-        /// <summary>
         /// Unknown.
         /// </summary>
         public Section7 Entries7 { get; set; }
@@ -86,8 +76,6 @@ namespace SoulsFormats
             Entries1 = new Section1();
             Entries2 = new Section2();
             Connectors = new ConnectorSection();
-            ConnectorPoints = new ConnectorPointSection();
-            ConnectorConditions = new ConnectorConditionSection();
             Entries7 = new Section7();
             Entries8 = new Section8(1);
         }
@@ -111,17 +99,27 @@ namespace SoulsFormats
             Entries2 = new Section2(br);
             new Section3(br);
             Connectors = new ConnectorSection(br);
-            ConnectorPoints = new ConnectorPointSection(br);
-            ConnectorConditions = new ConnectorConditionSection(br);
+            var connectorPoints = new ConnectorPointSection(br);
+            var connectorConditions = new ConnectorConditionSection(br);
             Entries7 = new Section7(br);
             if (Version == NVAVersion.OldBloodborne)
                 Entries8 = new Section8(1);
             else
                 Entries8 = new Section8(br);
+
+            Dictionary<int, ConnectorPoint> pointsDict = SFUtil.Dictionize(connectorPoints);
+            Dictionary<int, ConnectorCondition> condsDict = SFUtil.Dictionize(connectorConditions);
+            foreach (Connector connector in Connectors)
+                connector.TakePointsAndConds(pointsDict, condsDict);
         }
 
         internal override void Write(BinaryWriterEx bw)
         {
+            var connectorPoints = new ConnectorPointSection();
+            var connectorConditions = new ConnectorConditionSection();
+            foreach (Connector connector in Connectors)
+                connector.GivePointsAndConds(connectorPoints, connectorConditions);
+
             bw.BigEndian = false;
             bw.WriteASCII("NVMA");
             bw.WriteUInt32((uint)Version);
@@ -133,8 +131,8 @@ namespace SoulsFormats
             Entries2.Write(bw, 2);
             new Section3().Write(bw, 3);
             Connectors.Write(bw, 4);
-            ConnectorPoints.Write(bw, 5);
-            ConnectorConditions.Write(bw, 6);
+            connectorPoints.Write(bw, 5);
+            connectorConditions.Write(bw, 6);
             Entries7.Write(bw, 7);
             if (Version != NVAVersion.OldBloodborne)
                 Entries8.Write(bw, 8);
@@ -613,51 +611,72 @@ namespace SoulsFormats
             public int TargetNameID { get; set; }
 
             /// <summary>
-            /// Index to another connector.
+            /// Points used by this connection.
             /// </summary>
-            public int Section4Index { get; set; }
+            public List<ConnectorPoint> Points { get; set; }
 
             /// <summary>
-            /// Unknown.
+            /// Conditions used by this connection.
             /// </summary>
-            public int SelfCompareCondition { get; set; }
+            public List<ConnectorCondition> Conditions { get; set; }
 
-            /// <summary>
-            /// Index to a connector point.
-            /// </summary>
-            public int Section5Index { get; set; }
-
-            /// <summary>
-            /// Index to a connector condition.
-            /// </summary>
-            public int Section6Index { get; set; }
+            private int PointCount;
+            private int ConditionCount;
+            private int PointsIndex;
+            private int ConditionsIndex;
 
             /// <summary>
             /// Creates a Connector with default values.
             /// </summary>
-            public Connector() { }
+            public Connector()
+            {
+                Points = new List<ConnectorPoint>();
+                Conditions = new List<ConnectorCondition>();
+            }
 
             internal Connector(BinaryReaderEx br)
             {
                 MainNameID = br.ReadInt32();
                 TargetNameID = br.ReadInt32();
-                Section4Index = br.ReadInt32();
-                SelfCompareCondition = br.ReadInt32();
-                Section5Index = br.ReadInt32();
+                PointCount = br.ReadInt32();
+                ConditionCount = br.ReadInt32();
+                PointsIndex = br.ReadInt32();
                 br.AssertInt32(0);
-                Section6Index = br.ReadInt32();
+                ConditionsIndex = br.ReadInt32();
                 br.AssertInt32(0);
+            }
+
+            internal void TakePointsAndConds(Dictionary<int, ConnectorPoint> points, Dictionary<int, ConnectorCondition> conds)
+            {
+                Points = new List<ConnectorPoint>(PointCount);
+                for (int i = 0; i < PointCount; i++)
+                    Points.Add(points[PointsIndex + i]);
+                PointCount = -1;
+
+                Conditions = new List<ConnectorCondition>(ConditionCount);
+                for (int i = 0; i < ConditionCount; i++)
+                    Conditions.Add(conds[ConditionsIndex + i]);
+                ConditionCount = -1;
+            }
+
+            internal void GivePointsAndConds(ConnectorPointSection points, ConnectorConditionSection conds)
+            {
+                PointsIndex = points.Count;
+                points.AddRange(Points);
+
+                ConditionsIndex = conds.Count;
+                conds.AddRange(Conditions);
             }
 
             internal void Write(BinaryWriterEx bw)
             {
                 bw.WriteInt32(MainNameID);
                 bw.WriteInt32(TargetNameID);
-                bw.WriteInt32(Section4Index);
-                bw.WriteInt32(SelfCompareCondition);
-                bw.WriteInt32(Section5Index);
+                bw.WriteInt32(Points.Count);
+                bw.WriteInt32(Conditions.Count);
+                bw.WriteInt32(PointsIndex);
                 bw.WriteInt32(0);
-                bw.WriteInt32(Section6Index);
+                bw.WriteInt32(ConditionsIndex);
                 bw.WriteInt32(0);
             }
         }
@@ -665,7 +684,7 @@ namespace SoulsFormats
         /// <summary>
         /// A list of points used to connect navmeshes.
         /// </summary>
-        public class ConnectorPointSection : Section<ConnectorPoint>
+        internal class ConnectorPointSection : Section<ConnectorPoint>
         {
             /// <summary>
             /// Creates an empty ConnectorPointSection.
@@ -737,7 +756,7 @@ namespace SoulsFormats
         /// <summary>
         /// A list of unknown conditions used by connectors.
         /// </summary>
-        public class ConnectorConditionSection : Section<ConnectorCondition>
+        internal class ConnectorConditionSection : Section<ConnectorCondition>
         {
             /// <summary>
             /// Creates an empty ConnectorConditionSection.

@@ -177,6 +177,17 @@ namespace SoulsFormats
             return all.ToList();
         }
 
+        /// <summary>
+        /// Convert a list to a dictionary with indices as keys.
+        /// </summary>
+        public static Dictionary<int, T> Dictionize<T>(List<T> items)
+        {
+            var dict = new Dictionary<int, T>(items.Count);
+            for (int i = 0; i < items.Count; i++)
+                dict[i] = items[i];
+            return dict;
+        }
+
         private static byte[] ds3RegulationKey = Encoding.ASCII.GetBytes("ds3#jn/8_7(rsY9pg55GFN7VFL#+3n/)");
 
         /// <summary>
