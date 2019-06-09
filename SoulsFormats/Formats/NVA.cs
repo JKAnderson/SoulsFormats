@@ -362,6 +362,14 @@ namespace SoulsFormats
                     bw.WriteInt32s(NameReferenceIDs);
                 }
             }
+
+            /// <summary>
+            /// Returns a string representation of the navmesh.
+            /// </summary>
+            public override string ToString()
+            {
+                return $"{NameID} {Position} {Rotation} [{NameReferenceIDs.Count} References]";
+            }
         }
 
         /// <summary>
@@ -414,6 +422,14 @@ namespace SoulsFormats
             {
                 bw.WriteInt32(Unk00);
                 bw.WriteInt32(0);
+            }
+
+            /// <summary>
+            /// Returns a string representation of the entry.
+            /// </summary>
+            public override string ToString()
+            {
+                return $"{Unk00}";
             }
         }
 
@@ -505,6 +521,14 @@ namespace SoulsFormats
             }
 
             /// <summary>
+            /// Returns a string representation of the entry.
+            /// </summary>
+            public override string ToString()
+            {
+                return $"{Unk00} {Unk08} [{References.Count} References]";
+            }
+
+            /// <summary>
             /// Unknown.
             /// </summary>
             public class Reference
@@ -534,6 +558,14 @@ namespace SoulsFormats
                 {
                     bw.WriteInt32(UnkIndex);
                     bw.WriteInt32(NameID);
+                }
+
+                /// <summary>
+                /// Returns a string representation of the reference.
+                /// </summary>
+                public override string ToString()
+                {
+                    return $"{UnkIndex} {NameID}";
                 }
             }
         }
@@ -679,6 +711,14 @@ namespace SoulsFormats
                 bw.WriteInt32(ConditionsIndex);
                 bw.WriteInt32(0);
             }
+
+            /// <summary>
+            /// Returns a string representation of the connector.
+            /// </summary>
+            public override string ToString()
+            {
+                return $"{MainNameID} -> {TargetNameID} [{Points.Count} Points][{Conditions.Count} Conditions]";
+            }
         }
 
         /// <summary>
@@ -751,6 +791,14 @@ namespace SoulsFormats
                 bw.WriteInt32(Unk08);
                 bw.WriteInt32(Unk0C);
             }
+
+            /// <summary>
+            /// Returns a string representation of the point.
+            /// </summary>
+            public override string ToString()
+            {
+                return $"{Unk00} {Unk04} {Unk08} {Unk0C}";
+            }
         }
 
         /// <summary>
@@ -808,6 +856,14 @@ namespace SoulsFormats
             {
                 bw.WriteInt32(Condition1);
                 bw.WriteInt32(Condition2);
+            }
+
+            /// <summary>
+            /// Returns a string representation of the condition.
+            /// </summary>
+            public override string ToString()
+            {
+                return $"{Condition1} {Condition2}";
             }
         }
 
@@ -879,6 +935,14 @@ namespace SoulsFormats
                 bw.WriteInt32(0);
                 bw.WriteInt32(Unk18);
                 bw.WriteInt32(0);
+            }
+
+            /// <summary>
+            /// Returns a string representation of the entry.
+            /// </summary>
+            public override string ToString()
+            {
+                return $"{Position} {NameID} {Unk18}";
             }
         }
 
@@ -998,6 +1062,14 @@ namespace SoulsFormats
                     bw.FillInt32($"SubIDsOffset{index}", (int)bw.Position);
                     bw.WriteInt16s(SubIDs);
                 }
+            }
+
+            /// <summary>
+            /// Returns a string representation of the entry.
+            /// </summary>
+            public override string ToString()
+            {
+                return $"{Position} {Section0Index} {MainID} [{SubIDs.Count} SubIDs]";
             }
         }
     }
