@@ -107,10 +107,8 @@ namespace SoulsFormats
             else
                 Entries8 = new Section8(br);
 
-            Dictionary<int, ConnectorPoint> pointsDict = SFUtil.Dictionize(connectorPoints);
-            Dictionary<int, ConnectorCondition> condsDict = SFUtil.Dictionize(connectorConditions);
             foreach (Connector connector in Connectors)
-                connector.TakePointsAndConds(pointsDict, condsDict);
+                connector.TakePointsAndConds(connectorPoints, connectorConditions);
         }
 
         internal override void Write(BinaryWriterEx bw)
@@ -136,6 +134,7 @@ namespace SoulsFormats
             Entries7.Write(bw, 7);
             if (Version != NVAVersion.OldBloodborne)
                 Entries8.Write(bw, 8);
+
             bw.FillUInt32("FileSize", (uint)bw.Position);
         }
 
@@ -678,7 +677,7 @@ namespace SoulsFormats
                 br.AssertInt32(0);
             }
 
-            internal void TakePointsAndConds(Dictionary<int, ConnectorPoint> points, Dictionary<int, ConnectorCondition> conds)
+            internal void TakePointsAndConds(ConnectorPointSection points, ConnectorConditionSection conds)
             {
                 Points = new List<ConnectorPoint>(PointCount);
                 for (int i = 0; i < PointCount; i++)
