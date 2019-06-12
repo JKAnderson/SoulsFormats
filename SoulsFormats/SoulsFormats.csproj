@@ -57,9 +57,11 @@
     <Compile Include="Formats\FLVER\BufferLayout.cs" />
     <Compile Include="Formats\FLVER\Dummy.cs" />
     <Compile Include="Formats\FLVER\FaceSet.cs" />
+    <Compile Include="Formats\FLVER\GXItem.cs" />
     <Compile Include="Formats\FLVER\Material.cs" />
     <Compile Include="Formats\FLVER\Bone.cs" />
     <Compile Include="Formats\FLVER\Mesh.cs" />
+    <Compile Include="Formats\FLVER\SekiroUnkStruct.cs" />
     <Compile Include="Formats\FLVER\Texture.cs" />
     <Compile Include="Formats\FLVER\Vertex.cs" />
     <Compile Include="Formats\FLVER\VertexBuffer.cs" />

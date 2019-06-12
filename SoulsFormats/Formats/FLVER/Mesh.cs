@@ -47,19 +47,9 @@ namespace SoulsFormats
             public List<Vertex> Vertices;
 
             /// <summary>
-            /// Minimum extent of the mesh.
+            /// Optional bounding box struct; may be null.
             /// </summary>
-            public Vector3 BoundingBoxMin;
-
-            /// <summary>
-            /// Maximum extent of the mesh.
-            /// </summary>
-            public Vector3 BoundingBoxMax;
-
-            /// <summary>
-            /// Unknown; only present in Sekiro.
-            /// </summary>
-            public Vector3 BoundingBoxUnk;
+            public BoundingBoxes BoundingBox { get; set; }
 
             /// <summary>
             /// Unknown.
@@ -91,33 +81,27 @@ namespace SoulsFormats
 
                 MaterialIndex = br.ReadInt32();
                 br.AssertInt32(0);
-                if (version <= 0x20010)
-                    br.AssertInt32(0);
+                br.AssertInt32(0);
                 DefaultBoneIndex = br.ReadInt32();
-
                 int boneCount = br.ReadInt32();
-                Unk1 = br.AssertInt32(0, 1, 10);
-                if (version >= 0x20013)
+                int boundingBoxOffset = br.ReadInt32();
+                int boneOffset = br.ReadInt32();
+                int faceSetCount = br.ReadInt32();
+                int faceSetOffset = br.ReadInt32();
+                int vertexBufferCount = br.AssertInt32(1, 2, 3);
+                int vertexBufferOffset = br.ReadInt32();
+
+                if (boundingBoxOffset != 0)
                 {
-                    int boundingBoxOffset = br.ReadInt32();
                     br.StepIn(boundingBoxOffset);
                     {
-                        BoundingBoxMin = br.ReadVector3();
-                        BoundingBoxMax = br.ReadVector3();
-                        if (version >= 0x2001A)
-                            BoundingBoxUnk = br.ReadVector3();
+                        BoundingBox = new BoundingBoxes(br, version);
                     }
                     br.StepOut();
                 }
-                int boneOffset = br.ReadInt32();
+
                 BoneIndices = new List<int>(br.GetInt32s(boneOffset, boneCount));
-
-                int faceSetCount = br.ReadInt32();
-                int faceSetOffset = br.ReadInt32();
                 faceSetIndices = br.GetInt32s(faceSetOffset, faceSetCount);
-
-                int vertexBufferCount = br.AssertInt32(1, 2, 3);
-                int vertexBufferOffset = br.ReadInt32();
                 vertexBufferIndices = br.GetInt32s(vertexBufferOffset, vertexBufferCount);
             }
 
@@ -199,30 +183,28 @@ namespace SoulsFormats
 
                 bw.WriteInt32(MaterialIndex);
                 bw.WriteInt32(0);
-                if (version <= 0x20010)
-                    bw.WriteInt32(0);
+                bw.WriteInt32(0);
                 bw.WriteInt32(DefaultBoneIndex);
-
                 bw.WriteInt32(BoneIndices.Count);
-                bw.WriteInt32(Unk1);
-                if (version >= 0x20013)
-                    bw.ReserveInt32($"MeshBoundingBox{index}");
+                bw.ReserveInt32($"MeshBoundingBox{index}");
                 bw.ReserveInt32($"MeshBoneIndices{index}");
-
                 bw.WriteInt32(FaceSets.Count);
                 bw.ReserveInt32($"MeshFaceSetIndices{index}");
-
                 bw.WriteInt32(VertexBuffers.Count);
                 bw.ReserveInt32($"MeshVertexBufferIndices{index}");
             }
 
             internal void WriteBoundingBox(BinaryWriterEx bw, int index, int version)
             {
-                bw.FillInt32($"MeshBoundingBox{index}", (int)bw.Position);
-                bw.WriteVector3(BoundingBoxMin);
-                bw.WriteVector3(BoundingBoxMax);
-                if (version >= 0x2001A)
-                    bw.WriteVector3(BoundingBoxUnk);
+                if (BoundingBox == null)
+                {
+                    bw.FillInt32($"MeshBoundingBox{index}", 0);
+                }
+                else
+                {
+                    bw.FillInt32($"MeshBoundingBox{index}", (int)bw.Position);
+                    BoundingBox.Write(bw, version);
+                }
             }
 
             internal void WriteBoneIndices(BinaryWriterEx bw, int index)
@@ -239,11 +221,48 @@ namespace SoulsFormats
             public List<Vertex[]> GetFaces(FaceSet.FSFlags fsFlags = FaceSet.FSFlags.None)
             {
                 FaceSet faceset = FaceSets.Find(fs => fs.Flags == fsFlags) ?? FaceSets[0];
-                List<int[]> indices = faceset.GetFaces();
+                List<int[]> indices = faceset.GetFaces(Vertices.Count < ushort.MaxValue);
                 var vertices = new List<Vertex[]>(indices.Count);
                 foreach (int[] face in indices)
                     vertices.Add(new Vertex[] { Vertices[face[0]], Vertices[face[1]], Vertices[face[2]] });
                 return vertices;
+            }
+
+            /// <summary>
+            /// An optional bounding box for meshes added in DS2.
+            /// </summary>
+            public class BoundingBoxes
+            {
+                /// <summary>
+                /// Minimum extent of the mesh.
+                /// </summary>
+                public Vector3 Min { get; set; }
+
+                /// <summary>
+                /// Maximum extent of the mesh.
+                /// </summary>
+                public Vector3 Max { get; set; }
+
+                /// <summary>
+                /// Unknown; only present in Sekiro.
+                /// </summary>
+                public Vector3 Unk { get; set; }
+
+                internal BoundingBoxes(BinaryReaderEx br, int version)
+                {
+                    Min = br.ReadVector3();
+                    Max = br.ReadVector3();
+                    if (version >= 0x2001A)
+                        Unk = br.ReadVector3();
+                }
+
+                internal void Write(BinaryWriterEx bw, int version)
+                {
+                    bw.WriteVector3(Min);
+                    bw.WriteVector3(Max);
+                    if (version >= 0x2001A)
+                        bw.WriteVector3(Unk);
+                }
             }
         }
     }

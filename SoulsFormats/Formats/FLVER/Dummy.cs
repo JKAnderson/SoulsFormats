@@ -42,22 +42,27 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public byte Unk0C, Unk0D;
+            public int Unk0C;
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public short Unk0E;
-
+            public bool Flag1;
+            
             /// <summary>
-            /// Unknown.
+            /// If false, the upward vector is not read.
             /// </summary>
-            public bool Flag1, Flag2;
+            public bool UseUpwardVector;
 
             /// <summary>
             /// Unknown; only used in Sekiro.
             /// </summary>
-            public int Unk30, Unk34;
+            public int Unk30;
+
+            /// <summary>
+            /// Unknown; only used in Sekiro.
+            /// </summary>
+            public int Unk34;
 
             /// <summary>
             /// Creates a new dummy point with default values.
@@ -71,22 +76,14 @@ namespace SoulsFormats
             internal Dummy(BinaryReaderEx br)
             {
                 Position = br.ReadVector3();
-
-                Unk0C = br.ReadByte();
-                Unk0D = br.ReadByte();
-                Unk0E = br.ReadInt16();
-
+                Unk0C = br.ReadInt32();
                 Forward = br.ReadVector3();
-
                 ReferenceID = br.ReadInt16();
                 DummyBoneIndex = br.ReadInt16();
-
                 Upward = br.ReadVector3();
-
                 AttachBoneIndex = br.ReadInt16();
                 Flag1 = br.ReadBoolean();
-                Flag2 = br.ReadBoolean();
-
+                UseUpwardVector = br.ReadBoolean();
                 Unk30 = br.ReadInt32();
                 Unk34 = br.ReadInt32();
                 br.AssertInt32(0);
@@ -96,22 +93,14 @@ namespace SoulsFormats
             internal void Write(BinaryWriterEx bw)
             {
                 bw.WriteVector3(Position);
-
-                bw.WriteByte(Unk0C);
-                bw.WriteByte(Unk0D);
-                bw.WriteInt16(Unk0E);
-
+                bw.WriteInt32(Unk0C);
                 bw.WriteVector3(Forward);
-
                 bw.WriteInt16(ReferenceID);
                 bw.WriteInt16(DummyBoneIndex);
-
                 bw.WriteVector3(Upward);
-
                 bw.WriteInt16(AttachBoneIndex);
                 bw.WriteBoolean(Flag1);
-                bw.WriteBoolean(Flag2);
-
+                bw.WriteBoolean(UseUpwardVector);
                 bw.WriteInt32(Unk30);
                 bw.WriteInt32(Unk34);
                 bw.WriteInt32(0);

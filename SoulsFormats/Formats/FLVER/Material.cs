@@ -31,9 +31,9 @@ namespace SoulsFormats
             public List<Texture> Textures;
 
             /// <summary>
-            /// Unknown.
+            /// Index to the flver's list of GX lists.
             /// </summary>
-            public byte[] GXBytes;
+            public int GXIndex;
 
             /// <summary>
             /// Unknown; only used in Sekiro.
@@ -50,22 +50,23 @@ namespace SoulsFormats
                 Name = "";
                 MTD = "";
                 Textures = new List<Texture>();
+                GXIndex = -1;
             }
 
             /// <summary>
             /// Creates a new Material with the given values and an empty texture list.
             /// </summary>
-            public Material(string name, string mtd, int flags, byte[] gxBytes = null)
+            public Material(string name, string mtd, int flags)
             {
                 Name = name;
                 MTD = mtd;
                 Flags = flags;
                 Textures = new List<Texture>();
-                GXBytes = gxBytes;
+                GXIndex = -1;
                 Unk18 = 0;
             }
 
-            internal Material(BinaryReaderEx br)
+            internal Material(BinaryReaderEx br, List<List<GXItem>> gxLists, Dictionary<int, int> gxListIndices)
             {
                 int nameOffset = br.ReadInt32();
                 int mtdOffset = br.ReadInt32();
@@ -81,23 +82,21 @@ namespace SoulsFormats
 
                 if (gxOffset == 0)
                 {
-                    GXBytes = null;
+                    GXIndex = -1;
                 }
                 else
                 {
-                    br.StepIn(gxOffset);
-
-                    // Other than the terminating section, should be GX** in ASCII
-                    int section;
-                    do
+                    if (!gxListIndices.ContainsKey(gxOffset))
                     {
-                        section = br.ReadInt32();
-                        br.ReadInt32();
-                        br.Skip(br.ReadInt32() - 0xC);
-                    } while (section != 0x7FFFFFFF);
-
-                    GXBytes = br.GetBytes(gxOffset, (int)br.Position - gxOffset);
-                    br.StepOut();
+                        br.StepIn(gxOffset);
+                        {
+                            gxListIndices[gxOffset] = gxLists.Count;
+                            List<GXItem> gxList = GXItem.ReadList(br);
+                            gxLists.Add(gxList);
+                        }
+                        br.StepOut();
+                    }
+                    GXIndex = gxListIndices[gxOffset];
                 }
             }
 
@@ -124,9 +123,17 @@ namespace SoulsFormats
                 bw.WriteInt32(Textures.Count);
                 bw.ReserveInt32($"TextureIndex{index}");
                 bw.WriteInt32(Flags);
-                bw.ReserveInt32($"MaterialUnk{index}");
+                bw.ReserveInt32($"GXOffset{index}");
                 bw.WriteInt32(Unk18);
                 bw.WriteInt32(0);
+            }
+
+            internal void FillGXOffset(BinaryWriterEx bw, int index, List<int> gxOffsets)
+            {
+                if (GXIndex == -1)
+                    bw.FillInt32($"GXOffset{index}", 0);
+                else
+                    bw.FillInt32($"GXOffset{index}", gxOffsets[GXIndex]);
             }
 
             internal void WriteTextures(BinaryWriterEx bw, int index, int textureIndex)
@@ -135,19 +142,6 @@ namespace SoulsFormats
                 for (int i = 0; i < Textures.Count; i++)
                 {
                     Textures[i].Write(bw, textureIndex + i);
-                }
-            }
-
-            internal void WriteUnkGX(BinaryWriterEx bw, int index)
-            {
-                if (GXBytes == null)
-                {
-                    bw.FillInt32($"MaterialUnk{index}", 0);
-                }
-                else
-                {
-                    bw.FillInt32($"MaterialUnk{index}", (int)bw.Position);
-                    bw.WriteBytes(GXBytes);
                 }
             }
 

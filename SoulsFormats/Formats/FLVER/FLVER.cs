@@ -12,37 +12,42 @@ namespace SoulsFormats
         /// <summary>
         /// General values for this model.
         /// </summary>
-        public FLVERHeader Header;
+        public FLVERHeader Header { get; set; }
 
         /// <summary>
         /// Dummy polygons in this model.
         /// </summary>
-        public List<Dummy> Dummies;
+        public List<Dummy> Dummies { get; set; }
 
         /// <summary>
         /// Materials in this model, usually one per mesh.
         /// </summary>
-        public List<Material> Materials;
+        public List<Material> Materials { get; set; }
+
+        /// <summary>
+        /// Lists of GX elements referenced by materials in DS2 and beyond.
+        /// </summary>
+        public List<List<GXItem>> GXLists { get; set; }
 
         /// <summary>
         /// Bones used by this model, may or may not be the full skeleton.
         /// </summary>
-        public List<Bone> Bones;
+        public List<Bone> Bones { get; set; }
 
         /// <summary>
         /// Individual chunks of the model.
         /// </summary>
-        public List<Mesh> Meshes;
+        public List<Mesh> Meshes { get; set; }
 
         /// <summary>
         /// Layouts determining how to write vertex information.
         /// </summary>
-        public List<BufferLayout> BufferLayouts;
+        public List<BufferLayout> BufferLayouts { get; set; }
 
         /// <summary>
         /// Unknown; only present in Sekiro.
         /// </summary>
-        public SekiroUnkStruct SekiroUnk;
+        public SekiroUnkStruct SekiroUnk { get; set; }
 
         /// <summary>
         /// Creates a FLVER with a default header and empty lists.
@@ -52,6 +57,7 @@ namespace SoulsFormats
             Header = new FLVERHeader();
             Dummies = new List<Dummy>();
             Materials = new List<Material>();
+            GXLists = new List<List<GXItem>>();
             Bones = new List<Bone>();
             Meshes = new List<Mesh>();
             BufferLayouts = new List<BufferLayout>();
@@ -87,7 +93,7 @@ namespace SoulsFormats
             Header.Version = br.AssertInt32(0x20009, 0x2000C, 0x2000D, 0x20010, 0x20013, 0x20014, 0x20016, 0x2001A);
 
             int dataOffset = br.ReadInt32();
-            int dataSize = br.ReadInt32();
+            br.ReadInt32(); // Data length
             int dummyCount = br.ReadInt32();
             int materialCount = br.ReadInt32();
             int boneCount = br.ReadInt32();
@@ -98,9 +104,9 @@ namespace SoulsFormats
             Header.BoundingBoxMax = br.ReadVector3();
 
             Header.Unk40 = br.ReadInt32();
-            int totalFaceCount = br.ReadInt32();
+            br.ReadInt32(); // Total face count
 
-            Header.Unk48 = br.AssertByte(0x00, 0x10);
+            Header.VertexIndicesSize = br.AssertByte(0x00, 0x10);
             br.AssertBoolean(true);
             Header.Unk4A = br.ReadBoolean();
             br.AssertByte(0);
@@ -127,8 +133,10 @@ namespace SoulsFormats
                 Dummies.Add(new Dummy(br));
 
             Materials = new List<Material>(materialCount);
+            var gxListIndices = new Dictionary<int, int>();
+            GXLists = new List<List<GXItem>>();
             for (int i = 0; i < materialCount; i++)
-                Materials.Add(new Material(br));
+                Materials.Add(new Material(br, GXLists, gxListIndices));
 
             Bones = new List<Bone>(boneCount);
             for (int i = 0; i < boneCount; i++)
@@ -186,10 +194,7 @@ namespace SoulsFormats
         {
             bw.BigEndian = Header.BigEndian;
             bw.WriteASCII("FLVER\0");
-            if (Header.BigEndian)
-                bw.WriteASCII("B\0");
-            else
-                bw.WriteASCII("L\0");
+            bw.WriteASCII(Header.BigEndian ? "B\0" : "L\0");
             bw.WriteInt32(Header.Version);
 
             bw.ReserveInt32("DataOffset");
@@ -213,10 +218,10 @@ namespace SoulsFormats
             int totalFaceCount = 0;
             foreach (Mesh mesh in Meshes)
                 foreach (FaceSet faceSet in mesh.FaceSets)
-                    totalFaceCount += faceSet.GetFaces().Count;
+                    totalFaceCount += faceSet.GetFaces(mesh.Vertices.Count < ushort.MaxValue, true).Count;
             bw.WriteInt32(totalFaceCount);
 
-            bw.WriteByte(Header.Unk48);
+            bw.WriteByte(Header.VertexIndicesSize);
             bw.WriteBoolean(true);
             bw.WriteBoolean(Header.Unk4A);
             bw.WriteByte(0);
@@ -292,13 +297,10 @@ namespace SoulsFormats
                 BufferLayouts[i].WriteMembers(bw, i);
             }
 
-            if (Header.Version >= 0x20013)
+            bw.Pad(0x10);
+            for (int i = 0; i < Meshes.Count; i++)
             {
-                bw.Pad(0x10);
-                for (int i = 0; i < Meshes.Count; i++)
-                {
-                    Meshes[i].WriteBoundingBox(bw, i, Header.Version);
-                }
+                Meshes[i].WriteBoundingBox(bw, i, Header.Version);
             }
 
             bw.Pad(0x10);
@@ -328,9 +330,15 @@ namespace SoulsFormats
             }
 
             bw.Pad(0x10);
+            var gxOffsets = new List<int>();
+            foreach (List<GXItem> gxList in GXLists)
+            {
+                gxOffsets.Add((int)bw.Position);
+                GXItem.WriteList(bw, gxList);
+            }
             for (int i = 0; i < Materials.Count; i++)
             {
-                Materials[i].WriteUnkGX(bw, i);
+                Materials[i].FillGXOffset(bw, i, gxOffsets);
             }
 
             bw.Pad(0x10);
@@ -360,38 +368,38 @@ namespace SoulsFormats
                 bw.WriteUTF16(Bones[i].Name, true);
             }
 
-            bw.Pad(0x20);
+            bw.Pad(0x10);
             int dataStart = (int)bw.Position;
             bw.FillInt32("DataOffset", dataStart);
 
             faceSetIndex = 0;
-            for (int i = 0; i < Meshes.Count; i++)
-            {
-                Mesh mesh = Meshes[i];
-                for (int j = 0; j < mesh.FaceSets.Count; j++)
-                    mesh.FaceSets[j].WriteVertices(bw, faceSetIndex + j, dataStart);
-                faceSetIndex += mesh.FaceSets.Count;
-                bw.Pad(0x20);
-            }
-
             vertexBufferIndex = 0;
             for (int i = 0; i < Meshes.Count; i++)
             {
                 Mesh mesh = Meshes[i];
+                for (int j = 0; j < mesh.FaceSets.Count; j++)
+                {
+                    bw.Pad(0x10);
+                    mesh.FaceSets[j].WriteVertices(bw, faceSetIndex + j, dataStart);
+                }
+                faceSetIndex += mesh.FaceSets.Count;
 
                 foreach (Vertex vertex in mesh.Vertices)
                     vertex.PrepareWrite();
 
                 for (int j = 0; j < mesh.VertexBuffers.Count; j++)
+                {
+                    bw.Pad(0x10);
                     mesh.VertexBuffers[j].WriteBuffer(bw, vertexBufferIndex + j, BufferLayouts, mesh.Vertices, dataStart, Header.Version);
+                }
 
                 foreach (Vertex vertex in mesh.Vertices)
                     vertex.FinishWrite();
 
                 vertexBufferIndex += mesh.VertexBuffers.Count;
-                bw.Pad(0x20);
             }
 
+            bw.Pad(0x10);
             bw.FillInt32("DataSize", (int)bw.Position - dataStart);
         }
 
@@ -421,14 +429,14 @@ namespace SoulsFormats
             public Vector3 BoundingBoxMax;
 
             /// <summary>
-            /// Unknown.
+            /// Unknown; seems close to vertex or edge count.
             /// </summary>
             public int Unk40;
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public byte Unk48;
+            public byte VertexIndicesSize;
 
             /// <summary>
             /// Unknown.
@@ -457,114 +465,6 @@ namespace SoulsFormats
             {
                 BigEndian = false;
                 Version = 0x20014;
-            }
-        }
-
-        /// <summary>
-        /// Unknown; only present in Sekiro.
-        /// </summary>
-        public class SekiroUnkStruct
-        {
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public List<Member> Members1, Members2;
-
-            /// <summary>
-            /// Creates an empty SekiroUnkStruct.
-            /// </summary>
-            public SekiroUnkStruct()
-            {
-                Members1 = new List<Member>();
-                Members2 = new List<Member>();
-            }
-
-            internal SekiroUnkStruct(BinaryReaderEx br)
-            {
-                short count1 = br.ReadInt16();
-                short count2 = br.ReadInt16();
-                uint offset1 = br.ReadUInt32();
-                uint offset2 = br.ReadUInt32();
-                br.AssertInt32(0);
-                br.AssertInt32(0);
-                br.AssertInt32(0);
-                br.AssertInt32(0);
-                br.AssertInt32(0);
-
-                br.StepIn(offset1);
-                {
-                    Members1 = new List<Member>(count1);
-                    for (int i = 0; i < count1; i++)
-                        Members1.Add(new Member(br));
-                }
-                br.StepOut();
-
-                br.StepIn(offset2);
-                {
-                    Members2 = new List<Member>(count2);
-                    for (int i = 0; i < count2; i++)
-                        Members2.Add(new Member(br));
-                }
-                br.StepOut();
-            }
-
-            internal void Write(BinaryWriterEx bw)
-            {
-                bw.WriteInt16((short)Members1.Count);
-                bw.WriteInt16((short)Members2.Count);
-                bw.ReserveUInt32("SekiroUnkOffset1");
-                bw.ReserveUInt32("SekiroUnkOffset2");
-                bw.WriteInt32(0);
-                bw.WriteInt32(0);
-                bw.WriteInt32(0);
-                bw.WriteInt32(0);
-                bw.WriteInt32(0);
-
-                bw.FillUInt32("SekiroUnkOffset1", (uint)bw.Position);
-                foreach (Member member in Members1)
-                    member.Write(bw);
-
-                bw.FillUInt32("SekiroUnkOffset2", (uint)bw.Position);
-                foreach (Member member in Members2)
-                    member.Write(bw);
-            }
-
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public class Member
-            {
-                /// <summary>
-                /// Unknown; maybe bone indices? Length 4.
-                /// </summary>
-                public short[] Unk00 { get; private set; }
-
-                /// <summary>
-                /// Unknown; seems to just count up from 0.
-                /// </summary>
-                public int Index;
-
-                /// <summary>
-                /// Creates a Member with default values.
-                /// </summary>
-                public Member()
-                {
-                    Unk00 = new short[4];
-                }
-
-                internal Member(BinaryReaderEx br)
-                {
-                    Unk00 = br.ReadInt16s(4);
-                    Index = br.ReadInt32();
-                    br.AssertInt32(0);
-                }
-
-                internal void Write(BinaryWriterEx bw)
-                {
-                    bw.WriteInt16s(Unk00);
-                    bw.WriteInt32(Index);
-                    bw.WriteInt32(0);
-                }
             }
         }
     }

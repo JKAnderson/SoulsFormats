@@ -130,7 +130,7 @@ namespace SoulsFormats
                 bw.WriteInt32(Indices.Count * (indexSize / 8));
 
                 bw.WriteInt32(0);
-                bw.WriteInt32(indexSize);
+                bw.WriteInt32(indexSize == 16 ? 16 : indexSize);
                 bw.WriteInt32(0);
             }
 
@@ -147,7 +147,7 @@ namespace SoulsFormats
             /// <summary>
             /// Returns a list of arrays of 3 vertex indices, each representing one triangle in a mesh.
             /// </summary>
-            public List<int[]> GetFaces()
+            public List<int[]> GetFaces(bool allowPrimitiveRestarts, bool includeDegenerateFaces = false)
             {
                 var faces = new List<int[]>();
                 if (TriangleStrip)
@@ -159,15 +159,22 @@ namespace SoulsFormats
                         int vi2 = Indices[i + 1];
                         int vi3 = Indices[i + 2];
 
-                        if (vi1 != vi2 && vi1 != vi3 && vi2 != vi3)
+                        if (allowPrimitiveRestarts && (vi1 == 0xFFFF || vi2 == 0xFFFF || vi3 == 0xFFFF))
                         {
-                            if (!flip)
-                                faces.Add(new int[] { vi1, vi2, vi3 });
-                            else
-                                faces.Add(new int[] { vi3, vi2, vi1 });
+                            flip = false;
                         }
-
-                        flip = !flip;
+                        else
+                        {
+                            bool degenerate = vi1 == vi2 || vi2 == vi3 || vi1 == vi3;
+                            if ((!degenerate) || includeDegenerateFaces)
+                            {
+                                if (!flip)
+                                    faces.Add(new int[] { vi1, vi2, vi3 });
+                                else
+                                    faces.Add(new int[] { vi3, vi2, vi1 });
+                            }
+                            flip = !flip;
+                        }
                     }
                 }
                 else
