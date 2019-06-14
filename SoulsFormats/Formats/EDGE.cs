@@ -19,6 +19,9 @@ namespace SoulsFormats
         /// </summary>
         public List<Edge> Edges { get; set; }
 
+        /// <summary>
+        /// Creates an empty EDGE.
+        /// </summary>
         public EDGE()
         {
             Edges = new List<Edge>();
