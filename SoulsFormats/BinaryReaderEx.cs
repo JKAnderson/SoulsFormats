@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using System.Text;
 
@@ -22,7 +23,7 @@ namespace SoulsFormats
         /// <summary>
         /// Interpret values as big-endian if set, or little-endian if not.
         /// </summary>
-        public bool BigEndian;
+        public bool BigEndian { get; set; }
 
         /// <summary>
         /// The underlying stream.
@@ -34,9 +35,14 @@ namespace SoulsFormats
         /// </summary>
         public long Position
         {
-            get { return Stream.Position; }
-            set { Stream.Position = value; }
+            get => Stream.Position;
+            set => Stream.Position = value;
         }
+
+        /// <summary>
+        /// The length of the stream.
+        /// </summary>
+        public long Length => Stream.Length;
 
         /// <summary>
         /// Initializes a new BinaryReaderEx reading from the specified byte array.
@@ -65,17 +71,6 @@ namespace SoulsFormats
         }
 
         /// <summary>
-        /// Reads an array of values using the given function.
-        /// </summary>
-        private T[] ReadValues<T>(Func<T> readValue, int count)
-        {
-            T[] result = new T[count];
-            for (int i = 0; i < count; i++)
-                result[i] = readValue();
-            return result;
-        }
-
-        /// <summary>
         /// Reads a value from the specified offset using the given function, returning the stream to its original position afterwards.
         /// </summary>
         private T GetValue<T>(Func<T> readValue, long offset)
@@ -98,33 +93,17 @@ namespace SoulsFormats
         }
 
         /// <summary>
-        /// Reads a value using the given function, throwing an exception if it does not match any options specified.
+        /// Compares a value to a list of options, returning it if found or excepting if not.
         /// </summary>
-        /// <param name="readValue">A function which reads one value.</param>
-        /// <param name="typeName">The human-readable name of the type, to be included in the exception message.</param>
-        /// <param name="valueFormat">A format to be applied to the read value and options, to be included in the exception message.</param>
-        /// <param name="options">A list of possible values.</param>
-        private T AssertValue<T>(Func<T> readValue, string typeName, string valueFormat, T[] options) where T : IEquatable<T>
+        private T AssertValue<T>(T value, string typeName, string valueFormat, T[] options) where T : IEquatable<T>
         {
-            T value = readValue();
-            bool valid = false;
             foreach (T option in options)
                 if (value.Equals(option))
-                    valid = true;
+                    return value;
 
-            if (!valid)
-            {
-                string strValue = string.Format(valueFormat, value);
-
-                List<string> strOptions = new List<string>(options.Length);
-                foreach (T option in options)
-                    strOptions.Add(string.Format(valueFormat, option));
-
-                throw new InvalidDataException(string.Format(
-                    "Read {0}: {1} | Expected {0}: {2}", typeName, strValue, string.Join(", ", strOptions)));
-            }
-
-            return value;
+            string strValue = string.Format(valueFormat, value);
+            string strOptions = string.Join(", ", options.Select(o => string.Format(valueFormat, o)));
+            throw new InvalidDataException($"Read {typeName}: {strValue} | Expected: {strOptions} | Ending position: 0x{Position:X}");
         }
 
         /// <summary>
@@ -185,7 +164,10 @@ namespace SoulsFormats
         /// </summary>
         public bool[] ReadBooleans(int count)
         {
-            return ReadValues(ReadBoolean, count);
+            var result = new bool[count];
+            for (int i = 0; i < count; i++)
+                result[i] = ReadBoolean();
+            return result;
         }
 
         /// <summary>
@@ -209,7 +191,7 @@ namespace SoulsFormats
         /// </summary>
         public bool AssertBoolean(bool option)
         {
-            return AssertValue(ReadBoolean, "Boolean", "{0}", new bool[] { option });
+            return AssertValue(ReadBoolean(), "Boolean", "{0}", new bool[] { option });
         }
         #endregion
 
@@ -227,7 +209,10 @@ namespace SoulsFormats
         /// </summary>
         public sbyte[] ReadSBytes(int count)
         {
-            return ReadValues(ReadSByte, count);
+            var result = new sbyte[count];
+            for (int i = 0; i < count; i++)
+                result[i] = ReadSByte();
+            return result;
         }
 
         /// <summary>
@@ -251,7 +236,7 @@ namespace SoulsFormats
         /// </summary>
         public sbyte AssertSByte(params sbyte[] options)
         {
-            return AssertValue(ReadSByte, "SByte", "0x{0:X}", options);
+            return AssertValue(ReadSByte(), "SByte", "0x{0:X}", options);
         }
         #endregion
 
@@ -299,7 +284,7 @@ namespace SoulsFormats
         /// </summary>
         public byte AssertByte(params byte[] options)
         {
-            return AssertValue(ReadByte, "Byte", "0x{0:X}", options);
+            return AssertValue(ReadByte(), "Byte", "0x{0:X}", options);
         }
         #endregion
 
@@ -320,7 +305,10 @@ namespace SoulsFormats
         /// </summary>
         public short[] ReadInt16s(int count)
         {
-            return ReadValues(ReadInt16, count);
+            var result = new short[count];
+            for (int i = 0; i < count; i++)
+                result[i] = ReadInt16();
+            return result;
         }
 
         /// <summary>
@@ -344,7 +332,7 @@ namespace SoulsFormats
         /// </summary>
         public short AssertInt16(params short[] options)
         {
-            return AssertValue(ReadInt16, "Int16", "0x{0:X}", options);
+            return AssertValue(ReadInt16(), "Int16", "0x{0:X}", options);
         }
         #endregion
 
@@ -365,7 +353,10 @@ namespace SoulsFormats
         /// </summary>
         public ushort[] ReadUInt16s(int count)
         {
-            return ReadValues(ReadUInt16, count);
+            var result = new ushort[count];
+            for (int i = 0; i < count; i++)
+                result[i] = ReadUInt16();
+            return result;
         }
 
         /// <summary>
@@ -389,7 +380,7 @@ namespace SoulsFormats
         /// </summary>
         public ushort AssertUInt16(params ushort[] options)
         {
-            return AssertValue(ReadUInt16, "UInt16", "0x{0:X}", options);
+            return AssertValue(ReadUInt16(), "UInt16", "0x{0:X}", options);
         }
         #endregion
 
@@ -410,7 +401,10 @@ namespace SoulsFormats
         /// </summary>
         public int[] ReadInt32s(int count)
         {
-            return ReadValues(ReadInt32, count);
+            int[] result = new int[count];
+            for (int i = 0; i < count; i++)
+                result[i] = ReadInt32();
+            return result;
         }
 
         /// <summary>
@@ -434,7 +428,7 @@ namespace SoulsFormats
         /// </summary>
         public int AssertInt32(params int[] options)
         {
-            return AssertValue(ReadInt32, "Int32", "0x{0:X}", options);
+            return AssertValue(ReadInt32(), "Int32", "0x{0:X}", options);
         }
         #endregion
 
@@ -455,7 +449,10 @@ namespace SoulsFormats
         /// </summary>
         public uint[] ReadUInt32s(int count)
         {
-            return ReadValues(ReadUInt32, count);
+            var result = new uint[count];
+            for (int i = 0; i < count; i++)
+                result[i] = ReadUInt32();
+            return result;
         }
 
         /// <summary>
@@ -479,7 +476,7 @@ namespace SoulsFormats
         /// </summary>
         public uint AssertUInt32(params uint[] options)
         {
-            return AssertValue(ReadUInt32, "UInt32", "0x{0:X}", options);
+            return AssertValue(ReadUInt32(), "UInt32", "0x{0:X}", options);
         }
         #endregion
 
@@ -500,7 +497,10 @@ namespace SoulsFormats
         /// </summary>
         public long[] ReadInt64s(int count)
         {
-            return ReadValues(ReadInt64, count);
+            var result = new long[count];
+            for (int i = 0; i < count; i++)
+                result[i] = ReadInt64();
+            return result;
         }
 
         /// <summary>
@@ -524,7 +524,7 @@ namespace SoulsFormats
         /// </summary>
         public long AssertInt64(params long[] options)
         {
-            return AssertValue(ReadInt64, "Int64", "0x{0:X}", options);
+            return AssertValue(ReadInt64(), "Int64", "0x{0:X}", options);
         }
         #endregion
 
@@ -545,7 +545,10 @@ namespace SoulsFormats
         /// </summary>
         public ulong[] ReadUInt64s(int count)
         {
-            return ReadValues(ReadUInt64, count);
+            var result = new ulong[count];
+            for (int i = 0; i < count; i++)
+                result[i] = ReadUInt64();
+            return result;
         }
 
         /// <summary>
@@ -569,7 +572,7 @@ namespace SoulsFormats
         /// </summary>
         public ulong AssertUInt64(params ulong[] options)
         {
-            return AssertValue(ReadUInt64, "UInt64", "0x{0:X}", options);
+            return AssertValue(ReadUInt64(), "UInt64", "0x{0:X}", options);
         }
         #endregion
 
@@ -590,7 +593,10 @@ namespace SoulsFormats
         /// </summary>
         public float[] ReadSingles(int count)
         {
-            return ReadValues(ReadSingle, count);
+            var result = new float[count];
+            for (int i = 0; i < count; i++)
+                result[i] = ReadSingle();
+            return result;
         }
 
         /// <summary>
@@ -614,7 +620,7 @@ namespace SoulsFormats
         /// </summary>
         public float AssertSingle(params float[] options)
         {
-            return AssertValue(ReadSingle, "Single", "{0}", options);
+            return AssertValue(ReadSingle(), "Single", "{0}", options);
         }
         #endregion
 
@@ -635,7 +641,10 @@ namespace SoulsFormats
         /// </summary>
         public double[] ReadDoubles(int count)
         {
-            return ReadValues(ReadDouble, count);
+            var result = new double[count];
+            for (int i = 0; i < count; i++)
+                result[i] = ReadDouble();
+            return result;
         }
 
         /// <summary>
@@ -659,7 +668,7 @@ namespace SoulsFormats
         /// </summary>
         public double AssertDouble(params double[] options)
         {
-            return AssertValue(ReadDouble, "Double", "{0}", options);
+            return AssertValue(ReadDouble(), "Double", "{0}", options);
         }
         #endregion
 

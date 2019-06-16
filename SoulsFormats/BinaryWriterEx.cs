@@ -23,7 +23,7 @@ namespace SoulsFormats
         /// <summary>
         /// Interpret values as big-endian if set, or little-endian if not.
         /// </summary>
-        public bool BigEndian;
+        public bool BigEndian { get; set; }
 
         /// <summary>
         /// The underlying stream.
@@ -35,9 +35,14 @@ namespace SoulsFormats
         /// </summary>
         public long Position
         {
-            get { return Stream.Position; }
-            set { Stream.Position = value; }
+            get => Stream.Position;
+            set => Stream.Position = value;
         }
+
+        /// <summary>
+        /// The length of the stream.
+        /// </summary>
+        public long Length => Stream.Length;
 
         /// <summary>
         /// Initializes a new <c>BinaryWriterEx</c> writing to an empty <c>MemoryStream</c>
@@ -62,27 +67,25 @@ namespace SoulsFormats
             bw.Write(bytes);
         }
 
-        private void Reserve(string name, string typeName, int bytes)
+        private void Reserve(string name, string typeName, int length)
         {
-            name += ":" + typeName;
+            name = $"{name}:{typeName}";
             if (reservations.ContainsKey(name))
                 throw new ArgumentException("Key already reserved: " + name);
 
             reservations[name] = Stream.Position;
-            for (int i = 0; i < bytes; i++)
+            for (int i = 0; i < length; i++)
                 WriteByte(0xFE);
         }
 
-        private void Fill<T>(Action<T> writeValue, string name, string typeName, T value)
+        private long Fill(string name, string typeName)
         {
-            name += ":" + typeName;
-            if (!reservations.ContainsKey(name))
+            name = $"{name}:{typeName}";
+            if (!reservations.TryGetValue(name, out long jump))
                 throw new ArgumentException("Key is not reserved: " + name);
 
-            StepIn(reservations[name]);
-            writeValue(value);
-            StepOut();
             reservations.Remove(name);
+            return jump;
         }
 
         /// <summary>
@@ -168,7 +171,9 @@ namespace SoulsFormats
         /// </summary>
         public void FillBoolean(string name, bool value)
         {
-            Fill(WriteBoolean, name, "Boolean", value);
+            StepIn(Fill(name, "Boolean"));
+            WriteBoolean(value);
+            StepOut();
         }
         #endregion
 
@@ -203,7 +208,9 @@ namespace SoulsFormats
         /// </summary>
         public void FillSByte(string name, sbyte value)
         {
-            Fill(WriteSByte, name, "SByte", value);
+            StepIn(Fill(name, "SByte"));
+            WriteSByte(value);
+            StepOut();
         }
         #endregion
 
@@ -246,7 +253,9 @@ namespace SoulsFormats
         /// </summary>
         public void FillByte(string name, byte value)
         {
-            Fill(WriteByte, name, "Byte", value);
+            StepIn(Fill(name, "Byte"));
+            WriteByte(value);
+            StepOut();
         }
         #endregion
 
@@ -284,7 +293,9 @@ namespace SoulsFormats
         /// </summary>
         public void FillInt16(string name, short value)
         {
-            Fill(WriteInt16, name, "Int16", value);
+            StepIn(Fill(name, "Int16"));
+            WriteInt16(value);
+            StepOut();
         }
         #endregion
 
@@ -322,7 +333,9 @@ namespace SoulsFormats
         /// </summary>
         public void FillUInt16(string name, ushort value)
         {
-            Fill(WriteUInt16, name, "UInt16", value);
+            StepIn(Fill(name, "UInt16"));
+            WriteUInt16(value);
+            StepOut();
         }
         #endregion
 
@@ -360,7 +373,9 @@ namespace SoulsFormats
         /// </summary>
         public void FillInt32(string name, int value)
         {
-            Fill(WriteInt32, name, "Int32", value);
+            StepIn(Fill(name, "Int32"));
+            WriteInt32(value);
+            StepOut();
         }
         #endregion
 
@@ -398,7 +413,9 @@ namespace SoulsFormats
         /// </summary>
         public void FillUInt32(string name, uint value)
         {
-            Fill(WriteUInt32, name, "UInt32", value);
+            StepIn(Fill(name, "UInt32"));
+            WriteUInt32(value);
+            StepOut();
         }
         #endregion
 
@@ -436,7 +453,9 @@ namespace SoulsFormats
         /// </summary>
         public void FillInt64(string name, long value)
         {
-            Fill(WriteInt64, name, "Int64", value);
+            StepIn(Fill(name, "Int64"));
+            WriteInt64(value);
+            StepOut();
         }
         #endregion
 
@@ -474,7 +493,9 @@ namespace SoulsFormats
         /// </summary>
         public void FillUInt64(string name, ulong value)
         {
-            Fill(WriteUInt64, name, "UInt64", value);
+            StepIn(Fill(name, "UInt64"));
+            WriteUInt64(value);
+            StepOut();
         }
         #endregion
 
@@ -512,7 +533,9 @@ namespace SoulsFormats
         /// </summary>
         public void FillSingle(string name, float value)
         {
-            Fill(WriteSingle, name, "Single", value);
+            StepIn(Fill(name, "Single"));
+            WriteSingle(value);
+            StepOut();
         }
         #endregion
 
@@ -550,7 +573,9 @@ namespace SoulsFormats
         /// </summary>
         public void FillDouble(string name, double value)
         {
-            Fill(WriteDouble, name, "Double", value);
+            StepIn(Fill(name, "Double"));
+            WriteDouble(value);
+            StepOut();
         }
         #endregion
 
