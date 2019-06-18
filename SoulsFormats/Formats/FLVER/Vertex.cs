@@ -14,7 +14,7 @@ namespace SoulsFormats
             /// <summary>
             /// Where the vertex is.
             /// </summary>
-            public List<Vector3> Positions;
+            public Vector3 Position;
 
             /// <summary>
             /// Bones the vertex is weighted to, indexing the parent mesh's bone indices; must be 4 length.
@@ -34,7 +34,7 @@ namespace SoulsFormats
             /// <summary>
             /// Vector pointing away from the surface.
             /// </summary>
-            public List<Vector4> Normals;
+            public Vector4 Normal;
 
             /// <summary>
             /// Vector pointing perpendicular to the normal.
@@ -56,8 +56,6 @@ namespace SoulsFormats
             /// </summary>
             public byte[] ExtraBytes;
 
-            private Queue<Vector3> positionQueue;
-            private Queue<Vector4> normalQueue;
             private Queue<Vector3> uvQueue;
             private Queue<Vector4> tangentQueue;
             private Queue<Color> colorQueue;
@@ -65,13 +63,11 @@ namespace SoulsFormats
             /// <summary>
             /// Create a Vertex with null or empty values.
             /// </summary>
-            public Vertex()
+            public Vertex(int uvCapacity = 0, int tangentCapacity = 0, int colorCapacity = 0)
             {
-                Positions = new List<Vector3>();
-                UVs = new List<Vector3>();
-                Normals = new List<Vector4>();
-                Tangents = new List<Vector4>();
-                Colors = new List<Color>();
+                UVs = new List<Vector3>(uvCapacity);
+                Tangents = new List<Vector4>(tangentCapacity);
+                Colors = new List<Color>(colorCapacity);
             }
 
             /// <summary>
@@ -79,11 +75,11 @@ namespace SoulsFormats
             /// </summary>
             public Vertex(Vertex clone)
             {
-                Positions = new List<Vector3>(clone.Positions);
+                Position = clone.Position;
                 BoneIndices = (int[])clone.BoneIndices?.Clone();
                 BoneWeights = (float[])clone.BoneWeights?.Clone();
                 UVs = new List<Vector3>(clone.UVs);
-                Normals = new List<Vector4>(clone.Normals);
+                Normal = clone.Normal;
                 Tangents = new List<Vector4>(clone.Tangents);
                 Colors = new List<Color>(clone.Colors);
                 UnknownVector4 = (byte[])clone.UnknownVector4?.Clone();
@@ -109,11 +105,11 @@ namespace SoulsFormats
                         case BufferLayout.MemberSemantic.Position:
                             if (member.Type == BufferLayout.MemberType.Float3)
                             {
-                                Positions.Add(br.ReadVector3());
+                                Position = br.ReadVector3();
                             }
                             else if (member.Type == BufferLayout.MemberType.Float4)
                             {
-                                Positions.Add(br.ReadVector3());
+                                Position = br.ReadVector3();
                                 br.AssertSingle(0);
                             }
                             else
@@ -163,35 +159,35 @@ namespace SoulsFormats
                         case BufferLayout.MemberSemantic.Normal:
                             if (member.Type == BufferLayout.MemberType.Float4)
                             {
-                                Normals.Add(br.ReadVector4());
+                                Normal = br.ReadVector4();
                             }
                             else if (member.Type == BufferLayout.MemberType.Byte4A)
                             {
                                 float[] floats = new float[4];
                                 for (int i = 0; i < 4; i++)
                                     floats[i] = (br.ReadByte() - 127) / 127f;
-                                Normals.Add(new Vector4(floats[0], floats[1], floats[2], floats[3]));
+                                Normal = new Vector4(floats[0], floats[1], floats[2], floats[3]);
                             }
                             else if (member.Type == BufferLayout.MemberType.Byte4B)
                             {
                                 float[] floats = new float[4];
                                 for (int i = 0; i < 4; i++)
                                     floats[i] = (br.ReadByte() - 127) / 127f;
-                                Normals.Add(new Vector4(floats[0], floats[1], floats[2], floats[3]));
+                                Normal = new Vector4(floats[0], floats[1], floats[2], floats[3]);
                             }
                             else if (member.Type == BufferLayout.MemberType.Byte4C)
                             {
                                 float[] floats = new float[4];
                                 for (int i = 0; i < 4; i++)
                                     floats[i] = (br.ReadByte() - 127) / 127f;
-                                Normals.Add(new Vector4(floats[0], floats[1], floats[2], floats[3]));
+                                Normal = new Vector4(floats[0], floats[1], floats[2], floats[3]);
                             }
                             else if (member.Type == BufferLayout.MemberType.Short4toFloat4B)
                             {
                                 float[] floats = new float[4];
                                 for (int i = 0; i < 4; i++)
                                     floats[i] = (br.ReadUInt16() - 32767) / 32767f;
-                                Normals.Add(new Vector4(floats[0], floats[1], floats[2], floats[3]));
+                                Normal = new Vector4(floats[0], floats[1], floats[2], floats[3]);
                             }
                             else
                                 throw new NotImplementedException();
@@ -313,8 +309,6 @@ namespace SoulsFormats
             /// </summary>
             internal void PrepareWrite()
             {
-                positionQueue = new Queue<Vector3>(Positions);
-                normalQueue = new Queue<Vector4>(Normals);
                 tangentQueue = new Queue<Vector4>(Tangents);
                 colorQueue = new Queue<Color>(Colors);
                 uvQueue = new Queue<Vector3>(UVs);
@@ -325,8 +319,6 @@ namespace SoulsFormats
             /// </summary>
             internal void FinishWrite()
             {
-                positionQueue = null;
-                normalQueue = null;
                 tangentQueue = null;
                 colorQueue = null;
                 uvQueue = null;
@@ -351,11 +343,11 @@ namespace SoulsFormats
                         case BufferLayout.MemberSemantic.Position:
                             if (member.Type == BufferLayout.MemberType.Float3)
                             {
-                                bw.WriteVector3(positionQueue.Dequeue());
+                                bw.WriteVector3(Position);
                             }
                             else if (member.Type == BufferLayout.MemberType.Float4)
                             {
-                                bw.WriteVector3(positionQueue.Dequeue());
+                                bw.WriteVector3(Position);
                                 bw.WriteSingle(0);
                             }
                             else
@@ -398,38 +390,37 @@ namespace SoulsFormats
                             break;
 
                         case BufferLayout.MemberSemantic.Normal:
-                            Vector4 normal = normalQueue.Dequeue();
                             if (member.Type == BufferLayout.MemberType.Float4)
                             {
-                                bw.WriteVector4(normal);
+                                bw.WriteVector4(Normal);
                             }
                             else if (member.Type == BufferLayout.MemberType.Byte4A)
                             {
-                                bw.WriteByte((byte)Math.Round(normal.X * 127 + 127));
-                                bw.WriteByte((byte)Math.Round(normal.Y * 127 + 127));
-                                bw.WriteByte((byte)Math.Round(normal.Z * 127 + 127));
-                                bw.WriteByte((byte)Math.Round(normal.W * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Normal.X * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Normal.Y * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Normal.Z * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Normal.W * 127 + 127));
                             }
                             else if (member.Type == BufferLayout.MemberType.Byte4B)
                             {
-                                bw.WriteByte((byte)Math.Round(normal.X * 127 + 127));
-                                bw.WriteByte((byte)Math.Round(normal.Y * 127 + 127));
-                                bw.WriteByte((byte)Math.Round(normal.Z * 127 + 127));
-                                bw.WriteByte((byte)Math.Round(normal.W * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Normal.X * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Normal.Y * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Normal.Z * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Normal.W * 127 + 127));
                             }
                             else if (member.Type == BufferLayout.MemberType.Byte4C)
                             {
-                                bw.WriteByte((byte)Math.Round(normal.X * 127 + 127));
-                                bw.WriteByte((byte)Math.Round(normal.Y * 127 + 127));
-                                bw.WriteByte((byte)Math.Round(normal.Z * 127 + 127));
-                                bw.WriteByte((byte)Math.Round(normal.W * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Normal.X * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Normal.Y * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Normal.Z * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Normal.W * 127 + 127));
                             }
                             else if (member.Type == BufferLayout.MemberType.Short4toFloat4B)
                             {
-                                bw.WriteInt16((short)Math.Round(normal.X * 32767 + 32767));
-                                bw.WriteInt16((short)Math.Round(normal.Y * 32767 + 32767));
-                                bw.WriteInt16((short)Math.Round(normal.Z * 32767 + 32767));
-                                bw.WriteInt16((short)Math.Round(normal.W * 32767 + 32767));
+                                bw.WriteInt16((short)Math.Round(Normal.X * 32767 + 32767));
+                                bw.WriteInt16((short)Math.Round(Normal.Y * 32767 + 32767));
+                                bw.WriteInt16((short)Math.Round(Normal.Z * 32767 + 32767));
+                                bw.WriteInt16((short)Math.Round(Normal.W * 32767 + 32767));
                             }
                             else
                                 throw new NotImplementedException();

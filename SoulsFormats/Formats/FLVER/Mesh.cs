@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 
 namespace SoulsFormats
@@ -165,10 +166,15 @@ namespace SoulsFormats
 
             internal void ReadVertices(BinaryReaderEx br, int dataOffset, List<BufferLayout> layouts, int version)
             {
+                var layoutMembers = layouts.SelectMany(l => l);
+                int uvCap = layoutMembers.Where(m => m.Semantic == BufferLayout.MemberSemantic.UV).Count();
+                int tanCap = layoutMembers.Where(m => m.Semantic == BufferLayout.MemberSemantic.Tangent).Count();
+                int colorCap = layoutMembers.Where(m => m.Semantic == BufferLayout.MemberSemantic.VertexColor).Count();
+
                 int vertexCount = VertexBuffers[0].VertexCount;
                 Vertices = new List<Vertex>(vertexCount);
                 for (int i = 0; i < vertexCount; i++)
-                    Vertices.Add(new Vertex());
+                    Vertices.Add(new Vertex(uvCap, tanCap, colorCap));
 
                 foreach (VertexBuffer buffer in VertexBuffers)
                     buffer.ReadBuffer(br, layouts, Vertices, dataOffset, version);

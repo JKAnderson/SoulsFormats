@@ -110,9 +110,15 @@ namespace SoulsFormats
                 br.AssertInt32(0);
 
                 if (indexSize == 0 || indexSize == 16)
-                    Indices = br.GetUInt16s(dataOffset + indicesOffset, indexCount).Select(i => (int)i).ToList();
+                {
+                    Indices = new List<int>(indexCount);
+                    foreach (ushort index in br.GetUInt16s(dataOffset + indicesOffset, indexCount))
+                        Indices.Add(index);
+                }
                 else if (indexSize == 32)
-                    Indices = br.GetInt32s(dataOffset + indicesOffset, indexCount).ToList();
+                {
+                    Indices = new List<int>(br.GetInt32s(dataOffset + indicesOffset, indexCount));
+                }
             }
 
             internal void Write(BinaryWriterEx bw, int index)
