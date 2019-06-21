@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 
@@ -13,37 +14,37 @@ namespace SoulsFormats
         /// <summary>
         /// If true, Shapes have scaling information.
         /// </summary>
-        public bool DSR;
+        public bool DSR { get; set; }
 
         /// <summary>
         /// Textures available for use by Shapes.
         /// </summary>
-        public List<Texture> Textures;
+        public List<Texture> Textures { get; set; }
 
         /// <summary>
         /// Unknown data used by Aniks.
         /// </summary>
-        public byte[] AnipBytes;
+        public byte[] AnipBytes { get; set; }
 
         /// <summary>
         /// Unknown data used by Aniks.
         /// </summary>
-        public byte[] IntpBytes;
+        public byte[] IntpBytes { get; set; }
 
         /// <summary>
         /// Unknown.
         /// </summary>
-        public List<Anim> Anims;
+        public List<Anim> Anims { get; set; }
 
         /// <summary>
         /// Unknown.
         /// </summary>
-        public List<Scdl> Scdls;
+        public List<Scdl> Scdls { get; set; }
 
         /// <summary>
         /// Groups of UI elements.
         /// </summary>
-        public List<Dlg> Dlgs;
+        public List<Dlg> Dlgs { get; set; }
 
         private const int ANIK_SIZE = 0x20;
         private const int ANIO_SIZE = 0x10;
@@ -81,10 +82,46 @@ namespace SoulsFormats
             Dictionary<int, Dlgo> dlgos = ReadDLGO(br, strings, shapes, controls);
             Dlgs = ReadDLG(br, strings, shapes, controls, dlgos);
             ReadNullBlock(br, "END\0");
+
+            void CheckShape(Shape shape)
+            {
+                if (shape is Shape.Dialog dialog)
+                {
+                    if (dialog.DlgIndex != -1)
+                        dialog.Dlg = Dlgs[dialog.DlgIndex];
+                }
+            }
+
+            foreach (Dlg dlg in Dlgs)
+            {
+                CheckShape(dlg.Shape);
+                foreach (Dlgo dlgo in dlg.Dlgos)
+                    CheckShape(dlgo.Shape);
+            }
         }
 
         private void Write(BinaryWriterEx bw)
         {
+            void CheckShape(Shape shape)
+            {
+                if (shape is Shape.Dialog dialog)
+                {
+                    if (dialog.Dlg == null)
+                        dialog.DlgIndex = -1;
+                    else if (Dlgs.Contains(dialog.Dlg))
+                        dialog.DlgIndex = (short)Dlgs.IndexOf(dialog.Dlg);
+                    else
+                        throw new InvalidDataException($"Dlg \"{dialog.Dlg.Name}\" is referenced but no found in Dlgs list.");
+                }
+            }
+
+            foreach (Dlg dlg in Dlgs)
+            {
+                CheckShape(dlg.Shape);
+                foreach (Dlgo dlgo in dlg.Dlgos)
+                    CheckShape(dlgo.Shape);
+            }
+
             bw.BigEndian = false;
 
             WriteNullBlock(bw, "DRB\0");
@@ -121,15 +158,24 @@ namespace SoulsFormats
             /// <summary>
             /// A friendly name for the texture.
             /// </summary>
-            public string Name;
+            public string Name { get; set; }
 
             /// <summary>
             /// The network path to the texture.
             /// </summary>
-            public string Path;
+            public string Path { get; set; }
 
             /// <summary>
-            /// Creates a new Texture with the given name and path.
+            /// Creates a Texture with default values.
+            /// </summary>
+            public Texture()
+            {
+                Name = "";
+                Path = "";
+            }
+
+            /// <summary>
+            /// Creates a Texture with the given name and path.
             /// </summary>
             public Texture(string name, string path)
             {
@@ -232,19 +278,45 @@ namespace SoulsFormats
             public abstract ShapeType Type { get; }
 
             /// <summary>
-            /// The bounds of this element, relative to 1280x720.
+            /// Left bound of this element, relative to 1280x720.
             /// </summary>
-            public short LeftEdge, TopEdge, RightEdge, BottomEdge;
+            public short LeftEdge { get; set; }
 
             /// <summary>
-            /// For DSR, the point which the element scales relative to.
+            /// Top bound of this element, relative to 1280x720.
             /// </summary>
-            public short ScalingOriginX, ScalingOriginY;
+            public short TopEdge { get; set; }
+
+            /// <summary>
+            /// Right bound of this element, relative to 1280x720.
+            /// </summary>
+            public short RightEdge { get; set; }
+
+            /// <summary>
+            /// Bottom bound of this element, relative to 1280x720.
+            /// </summary>
+            public short BottomEdge { get; set; }
+
+            /// <summary>
+            /// For DSR, the X coordinate which the element scales relative to.
+            /// </summary>
+            public short ScalingOriginX { get; set; }
+
+            /// <summary>
+            /// For DSR, the Y coordinate which the element scales relative to.
+            /// </summary>
+            public short ScalingOriginY { get; set; }
 
             /// <summary>
             /// For DSR, the behavior of scaling for this element.
             /// </summary>
-            public int ScalingType;
+            public int ScalingType { get; set; }
+
+            internal Shape()
+            {
+                ScalingOriginX = -1;
+                ScalingOriginY = -1;
+            }
 
             internal static Shape Read(BinaryReaderEx br, bool dsr, Dictionary<int, string> strings, long shprStart)
             {
@@ -347,34 +419,44 @@ namespace SoulsFormats
                 public override ShapeType Type => ShapeType.Dialog;
 
                 /// <summary>
-                /// The index of the child group in the main group list.
+                /// Dlg referenced by this element; must be found in the DRB's Dlg list.
                 /// </summary>
-                public short DlgIndex;
+                public Dlg Dlg { get; set; }
+                internal short DlgIndex;
 
                 /// <summary>
                 /// Unknown; always 0 or 1.
                 /// </summary>
-                public byte Unk02;
+                public byte Unk02 { get; set; }
 
                 /// <summary>
                 /// Unknown; always 1.
                 /// </summary>
-                public byte Unk03;
+                public byte Unk03 { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int Unk04;
+                public int Unk04 { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int Unk08;
+                public int Unk08 { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int Unk0C;
+                public int Unk0C { get; set; }
+
+                /// <summary>
+                /// Creates a Dialog with default values.
+                /// </summary>
+                public Dialog()
+                {
+                    DlgIndex = -1;
+                    Unk03 = 1;
+                }
 
                 internal Dialog(BinaryReaderEx br, bool dsr) : base(br, dsr)
                 {
@@ -410,12 +492,35 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown; always 1.
                 /// </summary>
-                public int Unk00;
+                public int Unk00 { get; set; }
 
                 /// <summary>
-                /// The color of a corner of the rectangle.
+                /// The color of the top left corner of the rectangle.
                 /// </summary>
-                public Color TopLeftColor, TopRightColor, BottomRightColor, BottomLeftColor;
+                public Color TopLeftColor { get; set; }
+
+                /// <summary>
+                /// The color of the top right corner of the rectangle.
+                /// </summary>
+                public Color TopRightColor { get; set; }
+
+                /// <summary>
+                /// The color of the bottom right corner of the rectangle.
+                /// </summary>
+                public Color BottomRightColor { get; set; }
+
+                /// <summary>
+                /// The color of the bottom left corner of the rectangle.
+                /// </summary>
+                public Color BottomLeftColor { get; set; }
+
+                /// <summary>
+                /// Creates a GouraudRect with default values.
+                /// </summary>
+                public GouraudRect() : base()
+                {
+                    Unk00 = 1;
+                }
 
                 internal GouraudRect(BinaryReaderEx br, bool dsr) : base(br, dsr)
                 {
@@ -449,27 +554,51 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown; always 0.
                 /// </summary>
-                public int Unk00;
+                public int Unk00 { get; set; }
 
                 /// <summary>
                 /// Unknown; always 0.
                 /// </summary>
-                public int Unk04;
+                public int Unk04 { get; set; }
 
                 /// <summary>
                 /// Unknown; always -1.
                 /// </summary>
-                public short Unk08;
+                public short Unk08 { get; set; }
 
                 /// <summary>
                 /// Unknown; always 256.
                 /// </summary>
-                public short Unk0A;
+                public short Unk0A { get; set; }
 
                 /// <summary>
-                /// The color of a corner of the sprite.
+                /// The color of the top left corner of the sprite.
                 /// </summary>
-                public Color TopLeftColor, TopRightColor, BottomRightColor, BottomLeftColor;
+                public Color TopLeftColor { get; set; }
+
+                /// <summary>
+                /// The color of the top right corner of the sprite.
+                /// </summary>
+                public Color TopRightColor { get; set; }
+
+                /// <summary>
+                /// The color of the bottom right corner of the sprite.
+                /// </summary>
+                public Color BottomRightColor { get; set; }
+
+                /// <summary>
+                /// The color of the bottom left corner of the sprite.
+                /// </summary>
+                public Color BottomLeftColor { get; set; }
+
+                /// <summary>
+                /// Creates a GouraudSprite with default values.
+                /// </summary>
+                public GouraudSprite()
+                {
+                    Unk08 = -1;
+                    Unk0A = 256;
+                }
 
                 internal GouraudSprite(BinaryReaderEx br, bool dsr) : base(br, dsr)
                 {
@@ -509,22 +638,40 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int Unk00;
+                public int Unk00 { get; set; }
 
                 /// <summary>
                 /// Unknown; always 1.
                 /// </summary>
-                public int Unk04;
+                public int Unk04 { get; set; }
 
                 /// <summary>
                 /// Unknown; always 0.
                 /// </summary>
-                public int Unk08;
+                public int Unk08 { get; set; }
 
                 /// <summary>
                 /// Unknown; always 0.
                 /// </summary>
-                public byte Unk0C, Unk0D, Unk0E;
+                public byte Unk0C { get; set; }
+
+                /// <summary>
+                /// Unknown; always 0.
+                /// </summary>
+                public byte Unk0D { get; set; }
+
+                /// <summary>
+                /// Unknown; always 0.
+                /// </summary>
+                public byte Unk0E { get; set; }
+
+                /// <summary>
+                /// Creates a Mask with default values.
+                /// </summary>
+                public Mask() : base()
+                {
+                    Unk04 = 1;
+                }
 
                 internal Mask(BinaryReaderEx br, bool dsr) : base(br, dsr)
                 {
@@ -560,32 +707,41 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown; always 1.
                 /// </summary>
-                public byte Unk00;
+                public byte Unk00 { get; set; }
 
                 /// <summary>
                 /// Unknown; always 0.
                 /// </summary>
-                public byte Unk01;
+                public byte Unk01 { get; set; }
 
                 /// <summary>
                 /// Unknown; always 0.
                 /// </summary>
-                public byte Unk02;
+                public byte Unk02 { get; set; }
 
                 /// <summary>
                 /// Unknown; always 1-3.
                 /// </summary>
-                public byte Unk03;
+                public byte Unk03 { get; set; }
 
                 /// <summary>
                 /// Unknown; always 0-7.
                 /// </summary>
-                public int Unk04;
+                public int Unk04 { get; set; }
 
                 /// <summary>
                 /// Unknown; possibly a color.
                 /// </summary>
-                public int Unk08;
+                public int Unk08 { get; set; }
+
+                /// <summary>
+                /// Creates a MonoFrame with default values.
+                /// </summary>
+                public MonoFrame() : base()
+                {
+                    Unk00 = 1;
+                    Unk03 = 1;
+                }
 
                 internal MonoFrame(BinaryReaderEx br, bool dsr) : base(br, dsr)
                 {
@@ -621,17 +777,25 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown; always 1.
                 /// </summary>
-                public int Unk00;
+                public int Unk00 { get; set; }
 
                 /// <summary>
                 /// Chooses a color from a palette of 1-80, or 0 to use a custom color.
                 /// </summary>
-                public int PaletteColor;
+                public int PaletteColor { get; set; }
 
                 /// <summary>
                 /// When PaletteColor is 0, specifies the color of the rectangle.
                 /// </summary>
-                public Color CustomColor;
+                public Color CustomColor { get; set; }
+
+                /// <summary>
+                /// Creates a MonoRect with default values.
+                /// </summary>
+                public MonoRect() : base()
+                {
+                    Unk00 = 1;
+                }
 
                 internal MonoRect(BinaryReaderEx br, bool dsr) : base(br, dsr)
                 {
@@ -658,6 +822,11 @@ namespace SoulsFormats
                 /// </summary>
                 public override ShapeType Type => ShapeType.Null;
 
+                /// <summary>
+                /// Creates a Null with default values.
+                /// </summary>
+                public Null() : base() { }
+
                 internal Null(BinaryReaderEx br, bool dsr) : base(br, dsr) { }
 
                 internal override void WriteSpecific(BinaryWriterEx bw, Dictionary<string, int> stringOffsets) { }
@@ -676,27 +845,35 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown; always 0.
                 /// </summary>
-                public int Unk1C;
+                public int Unk1C { get; set; }
 
                 /// <summary>
                 /// Unknown; always 0.
                 /// </summary>
-                public int Unk20;
+                public int Unk20 { get; set; }
 
                 /// <summary>
                 /// Unknown; always 15 or 100.
                 /// </summary>
-                public int Unk24;
+                public int Unk24 { get; set; }
 
                 /// <summary>
                 /// Unknown; always 0.
                 /// </summary>
-                public int Unk28;
+                public int Unk28 { get; set; }
 
                 /// <summary>
                 /// Unknown; always 0.
                 /// </summary>
-                public short Unk2C;
+                public short Unk2C { get; set; }
+
+                /// <summary>
+                /// Creates a ScrollText with default values.
+                /// </summary>
+                public ScrollText() : base()
+                {
+                    Unk24 = 15;
+                }
 
                 internal ScrollText(BinaryReaderEx br, bool dsr, Dictionary<int, string> strings) : base(br, dsr, strings)
                 {
@@ -771,29 +948,53 @@ namespace SoulsFormats
                 public override ShapeType Type => ShapeType.Sprite;
 
                 /// <summary>
-                /// The bounds of the texture region displayed by this element.
+                /// Left bound of the texture region displayed by this element.
                 /// </summary>
-                public short TexLeftEdge, TexTopEdge, TexRightEdge, TexBottomEdge;
+                public short TexLeftEdge { get; set; }
+
+                /// <summary>
+                /// Top bound of the texture region displayed by this element.
+                /// </summary>
+                public short TexTopEdge { get; set; }
+
+                /// <summary>
+                /// Right bound of the texture region displayed by this element.
+                /// </summary>
+                public short TexRightEdge { get; set; }
+
+                /// <summary>
+                /// Bottom bound of the texture region displayed by this element.
+                /// </summary>
+                public short TexBottomEdge { get; set; }
 
                 /// <summary>
                 /// The texture to display, indexing the main Textures list.
                 /// </summary>
-                public short TextureIndex;
+                public short TextureIndex { get; set; }
 
                 /// <summary>
                 /// Flags modifying how the texture is displayed.
                 /// </summary>
-                public SpriteFlags Flags;
+                public SpriteFlags Flags { get; set; }
 
                 /// <summary>
                 /// Unknown; often 0. Palette color?
                 /// </summary>
-                public int Unk0C;
+                public int Unk0C { get; set; }
 
                 /// <summary>
                 /// Tints the Sprite a certain color.
                 /// </summary>
-                public Color Color;
+                public Color Color { get; set; }
+
+                /// <summary>
+                /// Creates a Sprite with default values.
+                /// </summary>
+                public Sprite() : base()
+                {
+                    Flags = SpriteFlags.Alpha;
+                    Color = Color.White;
+                }
 
                 internal Sprite(BinaryReaderEx br, bool dsr) : base(br, dsr)
                 {
@@ -886,12 +1087,17 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown; always 0.
                 /// </summary>
-                public int Unk1C;
+                public int Unk1C { get; set; }
 
                 /// <summary>
                 /// Unknown; always 0.
                 /// </summary>
-                public short Unk20;
+                public short Unk20 { get; set; }
+
+                /// <summary>
+                /// Creates a Text with default values.
+                /// </summary>
+                public Text() : base() { }
 
                 internal Text(BinaryReaderEx br, bool dsr, Dictionary<int, string> strings) : base(br, dsr, strings)
                 {
@@ -915,62 +1121,70 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown; always 0-2.
                 /// </summary>
-                public byte Unk00;
+                public byte Unk00 { get; set; }
 
                 /// <summary>
                 /// Unknown; always 1.
                 /// </summary>
-                public byte Unk01;
+                public byte Unk01 { get; set; }
 
                 /// <summary>
                 /// Distance between each line of text.
                 /// </summary>
-                public short LineSpacing;
+                public short LineSpacing { get; set; }
 
                 /// <summary>
                 /// Chooses a color from a palette of 1-80, or 0 to use a custom color.
                 /// </summary>
-                public int PaletteColor;
+                public int PaletteColor { get; set; }
 
                 /// <summary>
                 /// When PaletteColor is 0, specifies the color of the text.
                 /// </summary>
-                public Color CustomColor;
+                public Color CustomColor { get; set; }
 
                 /// <summary>
                 /// From 0-11, different sizes of the menu font. 12 is the subtitle font.
                 /// </summary>
-                public short FontSize;
+                public short FontSize { get; set; }
 
                 /// <summary>
                 /// The horizontal and vertical alignment of the text.
                 /// </summary>
-                public AlignFlags Alignment;
+                public AlignFlags Alignment { get; set; }
 
                 /// <summary>
                 /// Whether the element uses a text literal, a static FMG ID, or is assigned at runtime.
                 /// </summary>
-                public TxtType TextType;
+                public TxtType TextType { get; set; }
 
                 /// <summary>
                 /// Unknown; always 0x1C.
                 /// </summary>
-                public int Unk10;
+                public int Unk10 { get; set; }
 
                 /// <summary>
                 /// The maximum characters to display.
                 /// </summary>
-                public int CharLength;
+                public int CharLength { get; set; }
 
                 /// <summary>
                 /// If TextType is Literal, the text to display, otherwise null.
                 /// </summary>
-                public string TextLiteral;
+                public string TextLiteral { get; set; }
 
                 /// <summary>
                 /// If TextType is FMG, the FMG ID to display, otherwise -1.
                 /// </summary>
-                public int TextID;
+                public int TextID { get; set; }
+
+                internal TextBase() : base()
+                {
+                    Unk01 = 1;
+                    TextType = TxtType.FMG;
+                    Unk10 = 0x1C;
+                    TextID = -1;
+                }
 
                 internal TextBase(BinaryReaderEx br, bool dsr, Dictionary<int, string> strings) : base(br, dsr)
                 {
@@ -1058,6 +1272,7 @@ namespace SoulsFormats
         /// <summary>
         /// Determines the behavior of a UI element.
         /// </summary>
+        [TypeConverter(typeof(ExpandableObjectConverter))]
         public abstract class Control
         {
             /// <summary>
@@ -1109,14 +1324,19 @@ namespace SoulsFormats
             public class ScrollTextDummy : Control
             {
                 /// <summary>
-                /// The type of this control.
+                /// ControlType.DmeCtrlScrollText
                 /// </summary>
                 public override ControlType Type => ControlType.DmeCtrlScrollText;
 
                 /// <summary>
                 /// Unknown; always 0.
                 /// </summary>
-                public int Unk00;
+                public int Unk00 { get; set; }
+
+                /// <summary>
+                /// Creates a ScrollTextDummy with default values.
+                /// </summary>
+                public ScrollTextDummy() : base() { }
 
                 internal ScrollTextDummy(BinaryReaderEx br)
                 {
@@ -1135,44 +1355,52 @@ namespace SoulsFormats
             public class HelpItem : Control
             {
                 /// <summary>
-                /// The type of this control.
+                /// ControlType.FrpgMenuDlgObjContentsHelpItem
                 /// </summary>
                 public override ControlType Type => ControlType.FrpgMenuDlgObjContentsHelpItem;
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int Unk00;
+                public int Unk00 { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int Unk04;
+                public int Unk04 { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int Unk08;
+                public int Unk08 { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int Unk0C;
+                public int Unk0C { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int Unk10;
+                public int Unk10 { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int Unk14;
+                public int Unk14 { get; set; }
 
                 /// <summary>
                 /// An FMG ID.
                 /// </summary>
-                public int TextID;
+                public int TextID { get; set; }
+
+                /// <summary>
+                /// Creates a HelpItem with default values.
+                /// </summary>
+                public HelpItem() : base()
+                {
+                    TextID = -1;
+                }
 
                 internal HelpItem(BinaryReaderEx br)
                 {
@@ -1203,14 +1431,19 @@ namespace SoulsFormats
             public class Static : Control
             {
                 /// <summary>
-                /// The type of this control.
+                /// ControlType.Static
                 /// </summary>
                 public override ControlType Type => ControlType.Static;
 
                 /// <summary>
                 /// Unknown; always 0.
                 /// </summary>
-                public int Unk00;
+                public int Unk00 { get; set; }
+
+                /// <summary>
+                /// Creates a Static with default values.
+                /// </summary>
+                public Static() : base() { }
 
                 internal Static(BinaryReaderEx br)
                 {
@@ -1232,52 +1465,52 @@ namespace SoulsFormats
             /// <summary>
             /// The name of this Anik.
             /// </summary>
-            public string Name;
+            public string Name { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk04;
+            public int Unk04 { get; set; }
 
             /// <summary>
             /// Unknown; always 0-1.
             /// </summary>
-            public byte Unk08;
+            public byte Unk08 { get; set; }
 
             /// <summary>
             /// Unknown; always 1-2.
             /// </summary>
-            public byte Unk09;
+            public byte Unk09 { get; set; }
 
             /// <summary>
             /// Unknown; always 0.
             /// </summary>
-            public short Unk0A;
+            public short Unk0A { get; set; }
 
             /// <summary>
             /// An offset into the INTP block.
             /// </summary>
-            public int IntpOffset;
+            public int IntpOffset { get; set; }
 
             /// <summary>
             /// An offset into the ANIP block.
             /// </summary>
-            public int AnipOffset;
+            public int AnipOffset { get; set; }
 
             /// <summary>
             /// Unknown; always 0.
             /// </summary>
-            public int Unk14;
+            public int Unk14 { get; set; }
 
             /// <summary>
             /// Unknown; always 0.
             /// </summary>
-            public int Unk18;
+            public int Unk18 { get; set; }
 
             /// <summary>
             /// Unknown; always 0.
             /// </summary>
-            public int Unk1C;
+            public int Unk1C { get; set; }
 
             internal Anik(BinaryReaderEx br, Dictionary<int, string> strings)
             {
@@ -1326,17 +1559,25 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk00;
+            public int Unk00 { get; set; }
 
             /// <summary>
             /// Aniks in this Anio.
             /// </summary>
-            public List<Anik> Aniks;
+            public List<Anik> Aniks { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk0C;
+            public int Unk0C { get; set; }
+
+            /// <summary>
+            /// Creates an Anio with default values.
+            /// </summary>
+            public Anio()
+            {
+                Aniks = new List<Anik>();
+            }
 
             internal Anio(BinaryReaderEx br, Dictionary<int, Anik> aniks)
             {
@@ -1379,57 +1620,70 @@ namespace SoulsFormats
             /// <summary>
             /// The name of this Anim.
             /// </summary>
-            public string Name;
+            public string Name { get; set; }
 
             /// <summary>
             /// Anios in this Anim.
             /// </summary>
-            public List<Anio> Anios;
+            public List<Anio> Anios { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk0C;
+            public int Unk0C { get; set; }
 
             /// <summary>
             /// Unknown; always 4.
             /// </summary>
-            public int Unk10;
+            public int Unk10 { get; set; }
 
             /// <summary>
             /// Unknown; always 4.
             /// </summary>
-            public int Unk14;
+            public int Unk14 { get; set; }
 
             /// <summary>
             /// Unknown; always 4.
             /// </summary>
-            public int Unk18;
+            public int Unk18 { get; set; }
 
             /// <summary>
             /// Unknown; always 1.
             /// </summary>
-            public int Unk1C;
+            public int Unk1C { get; set; }
 
             /// <summary>
             /// Unknown; always 0.
             /// </summary>
-            public int Unk20;
+            public int Unk20 { get; set; }
 
             /// <summary>
             /// Unknown; always 0.
             /// </summary>
-            public int Unk24;
+            public int Unk24 { get; set; }
 
             /// <summary>
             /// Unknown; always 0.
             /// </summary>
-            public int Unk28;
+            public int Unk28 { get; set; }
 
             /// <summary>
             /// Unknown; always 0.
             /// </summary>
-            public int Unk2C;
+            public int Unk2C { get; set; }
+
+            /// <summary>
+            /// Creates an Anim with default values.
+            /// </summary>
+            public Anim()
+            {
+                Name = "";
+                Anios = new List<Anio>();
+                Unk10 = 4;
+                Unk14 = 4;
+                Unk18 = 4;
+                Unk1C = 1;
+            }
 
             internal Anim(BinaryReaderEx br, Dictionary<int, string> strings, Dictionary<int, Anio> anios)
             {
@@ -1489,47 +1743,56 @@ namespace SoulsFormats
             /// <summary>
             /// The name of this Scdk.
             /// </summary>
-            public string Name;
+            public string Name { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk04;
+            public int Unk04 { get; set; }
 
             /// <summary>
             /// Unknown; always 1.
             /// </summary>
-            public int Unk08;
+            public int Unk08 { get; set; }
 
             /// <summary>
             /// Unknown; always 0-1.
             /// </summary>
-            public int Unk0C;
+            public int Unk0C { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk14;
+            public int Unk14 { get; set; }
 
             /// <summary>
             /// Unknown; always 0.
             /// </summary>
-            public int Unk18;
+            public int Unk18 { get; set; }
 
             /// <summary>
             /// Unknown; always 0.
             /// </summary>
-            public int Unk1C;
+            public int Unk1C { get; set; }
 
             /// <summary>
             /// An index into the Anim list.
             /// </summary>
-            public int AnimIndex;
+            public int AnimIndex { get; set; }
 
             /// <summary>
             /// Unknown; always 0-1.
             /// </summary>
-            public int Scdp04;
+            public int Scdp04 { get; set; }
+
+            /// <summary>
+            /// Creates a Scdk with default values.
+            /// </summary>
+            public Scdk()
+            {
+                Name = "";
+                Unk08 = 1;
+            }
 
             internal Scdk(BinaryReaderEx br, Dictionary<int, string> strings, long scdpStart)
             {
@@ -1586,17 +1849,26 @@ namespace SoulsFormats
             /// <summary>
             /// The name of this Scdo.
             /// </summary>
-            public string Name;
+            public string Name { get; set; }
 
             /// <summary>
             /// Scdks in this Scdo.
             /// </summary>
-            public List<Scdk> Scdks;
+            public List<Scdk> Scdks { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk0C;
+            public int Unk0C { get; set; }
+
+            /// <summary>
+            /// Creates a Scdo with default values.
+            /// </summary>
+            public Scdo()
+            {
+                Name = "";
+                Scdks = new List<Scdk>();
+            }
 
             internal Scdo(BinaryReaderEx br, Dictionary<int, string> strings, Dictionary<int, Scdk> scdks)
             {
@@ -1640,17 +1912,26 @@ namespace SoulsFormats
             /// <summary>
             /// The name of this Scdl.
             /// </summary>
-            public string Name;
+            public string Name { get; set; }
 
             /// <summary>
             /// Scdos in this Scdl.
             /// </summary>
-            public List<Scdo> Scdos;
+            public List<Scdo> Scdos { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk0C;
+            public int Unk0C { get; set; }
+
+            /// <summary>
+            /// Creates a Scdl with default values.
+            /// </summary>
+            public Scdl()
+            {
+                Name = "";
+                Scdos = new List<Scdo>();
+            }
 
             internal Scdl(BinaryReaderEx br, Dictionary<int, string> strings, Dictionary<int, Scdo> scdos)
             {
@@ -1694,42 +1975,63 @@ namespace SoulsFormats
             /// <summary>
             /// The name of the element.
             /// </summary>
-            public string Name;
+            public string Name { get; set; }
 
             /// <summary>
             /// The visual properties of the element.
             /// </summary>
-            public Shape Shape;
+            [Browsable(false)]
+            public Shape Shape { get; set; }
 
             /// <summary>
             /// The behavior of the element.
             /// </summary>
-            public Control Control;
+            public Control Control { get; set; }
 
             /// <summary>
             /// Unknown; always 0.
             /// </summary>
-            public int Unk0C;
+            public int Unk0C { get; set; }
 
             /// <summary>
             /// Unknown; always 0.
             /// </summary>
-            public int Unk10;
+            public int Unk10 { get; set; }
 
             /// <summary>
             /// Unknown; always 0.
             /// </summary>
-            public int Unk14;
+            public int Unk14 { get; set; }
 
             /// <summary>
             /// Unknown; always 0.
             /// </summary>
-            public int Unk18;
+            public int Unk18 { get; set; }
 
             /// <summary>
             /// Unknown; always 0.
             /// </summary>
-            public int Unk1C;
+            public int Unk1C { get; set; }
+
+            /// <summary>
+            /// Creates a Dlgo with default values.
+            /// </summary>
+            public Dlgo()
+            {
+                Name = "";
+                Shape = new Shape.Null();
+                Control = new Control.Static();
+            }
+
+            /// <summary>
+            /// Creates a Dlgo with the given values.
+            /// </summary>
+            public Dlgo(string name, Shape shape, Control control)
+            {
+                Name = name;
+                Shape = shape;
+                Control = control;
+            }
 
             internal Dlgo(BinaryReaderEx br, Dictionary<int, string> strings, Dictionary<int, Shape> shapes, Dictionary<int, Control> controls)
             {
@@ -1766,7 +2068,7 @@ namespace SoulsFormats
             /// </summary>
             public override string ToString()
             {
-                return $"{Name} {Shape.Type} {Control.Type}";
+                return $"{Name} ({Control.Type} {Shape.Type})";
             }
         }
 
@@ -1778,12 +2080,28 @@ namespace SoulsFormats
             /// <summary>
             /// The child elements attached to this group.
             /// </summary>
-            public List<Dlgo> Dlgos;
+            [Browsable(false)]
+            public List<Dlgo> Dlgos { get; set; }
 
             /// <summary>
-            /// The bounds of the element group.
+            /// Left edge of the group.
             /// </summary>
-            public short LeftEdge, TopEdge, RightEdge, BottomEdge;
+            public short LeftEdge { get; set; }
+
+            /// <summary>
+            /// Top edge of the group.
+            /// </summary>
+            public short TopEdge { get; set; }
+
+            /// <summary>
+            /// Right edge of the group.
+            /// </summary>
+            public short RightEdge { get; set; }
+
+            /// <summary>
+            /// Bottom edge of the group.
+            /// </summary>
+            public short BottomEdge { get; set; }
 
             /// <summary>
             /// Unknown.
@@ -1793,12 +2111,30 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown; always 0.
             /// </summary>
-            public short Unk3A;
+            public short Unk3A { get; set; }
 
             /// <summary>
             /// Unknown; always 0.
             /// </summary>
-            public int Unk3C;
+            public int Unk3C { get; set; }
+
+            /// <summary>
+            /// Creates a Dlg with default values.
+            /// </summary>
+            public Dlg() : base()
+            {
+                Dlgos = new List<Dlgo>();
+                Unk30 = new short[5] { -1, -1, -1, -1, -1 };
+            }
+
+            /// <summary>
+            /// Creates a Dlg with the given values.
+            /// </summary>
+            public Dlg(string name, Shape shape, Control control) : base(name, shape, control)
+            {
+                Dlgos = new List<Dlgo>();
+                Unk30 = new short[5] { -1, -1, -1, -1, -1 };
+            }
 
             internal Dlg(BinaryReaderEx br, Dictionary<int, string> strings, Dictionary<int, Shape> shapes, Dictionary<int, Control> controls, Dictionary<int, Dlgo> dlgos) : base(br, strings, shapes, controls)
             {
@@ -1845,7 +2181,7 @@ namespace SoulsFormats
             /// </summary>
             public override string ToString()
             {
-                return $"{Name}[{Dlgos.Count}] {Shape.Type} {Control.Type}";
+                return $"{Name} ({Control.Type} {Shape.Type} [{Dlgos.Count}])";
             }
         }
 
