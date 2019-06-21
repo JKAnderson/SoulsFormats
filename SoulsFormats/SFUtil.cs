@@ -15,6 +15,17 @@ namespace SoulsFormats
     public static class SFUtil
     {
         /// <summary>
+        /// Makes a backup of a file if not already found, and returns the backed-up path.
+        /// </summary>
+        public static string Backup(string file)
+        {
+            string bak = file + ".bak";
+            if (!File.Exists(bak))
+                File.Copy(file, bak);
+            return bak;
+        }
+
+        /// <summary>
         /// Returns the extension of the specified file path, removing .dcx if present.
         /// </summary>
         public static string GetRealExtension(string path)
