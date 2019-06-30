@@ -132,22 +132,22 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk00 { get; set; }
+            public uint Unk00 { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk04 { get; set; }
+            public uint Unk04 { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk08 { get; set; }
+            public uint Unk08 { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk0C { get; set; }
+            public uint Unk0C { get; set; }
 
             /// <summary>
             /// Name of this light.
@@ -298,9 +298,9 @@ namespace SoulsFormats
             public float Unk98 { get; set; }
 
             /// <summary>
-            /// Unknown.
+            /// Distance at which spot light beam starts.
             /// </summary>
-            public float Unk9C { get; set; }
+            public float NearClip { get; set; }
 
             /// <summary>
             /// Unknown; 4 bytes.
@@ -392,7 +392,7 @@ namespace SoulsFormats
                 Unk80 = -1;
                 Unk84 = new byte[4];
                 Unk98 = 1;
-                Unk9C = 1;
+                NearClip = 1;
                 UnkA0 = new byte[4] { 1, 0, 2, 1 };
                 Sharpness = 1;
                 UnkC0 = new byte[4];
@@ -413,10 +413,10 @@ namespace SoulsFormats
 
             internal Light(BinaryReaderEx br, long namesStart, int version, bool longOffsets)
             {
-                Unk00 = br.ReadInt32();
-                Unk04 = br.ReadInt32();
-                Unk08 = br.ReadInt32();
-                Unk0C = br.ReadInt32();
+                Unk00 = br.ReadUInt32();
+                Unk04 = br.ReadUInt32();
+                Unk08 = br.ReadUInt32();
+                Unk0C = br.ReadUInt32();
 
                 long nameOffset;
                 if (longOffsets)
@@ -459,7 +459,7 @@ namespace SoulsFormats
                 Unk90 = br.ReadSingle();
                 br.AssertInt32(0);
                 Unk98 = br.ReadSingle();
-                Unk9C = br.ReadSingle();
+                NearClip = br.ReadSingle();
 
                 if (version == 2 && !longOffsets)
                 {
@@ -495,10 +495,10 @@ namespace SoulsFormats
 
             internal void Write(BinaryWriterEx bw, long nameOffset, int version, bool longOffsets)
             {
-                bw.WriteInt32(Unk00);
-                bw.WriteInt32(Unk04);
-                bw.WriteInt32(Unk08);
-                bw.WriteInt32(Unk0C);
+                bw.WriteUInt32(Unk00);
+                bw.WriteUInt32(Unk04);
+                bw.WriteUInt32(Unk08);
+                bw.WriteUInt32(Unk0C);
 
                 if (longOffsets)
                     bw.WriteInt64(nameOffset);
@@ -543,7 +543,7 @@ namespace SoulsFormats
                 bw.WriteSingle(Unk90);
                 bw.WriteInt32(0);
                 bw.WriteSingle(Unk98);
-                bw.WriteSingle(Unk9C);
+                bw.WriteSingle(NearClip);
                 bw.WriteBytes(UnkA0);
                 bw.WriteSingle(Sharpness);
                 bw.WriteInt32(0);
