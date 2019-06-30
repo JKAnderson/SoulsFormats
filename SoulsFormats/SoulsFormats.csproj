@@ -54,6 +54,7 @@
     <Compile Include="Formats\EDGE.cs" />
     <Compile Include="Formats\EMEVD.cs" />
     <Compile Include="Formats\ESD.cs" />
+    <Compile Include="Formats\F2TR.cs" />
     <Compile Include="Formats\FLVER\BufferLayout.cs" />
     <Compile Include="Formats\FLVER\Dummy.cs" />
     <Compile Include="Formats\FLVER\FaceSet.cs" />
@@ -67,6 +68,12 @@
     <Compile Include="Formats\FLVER\VertexBuffer.cs" />
     <Compile Include="Formats\LUAGNL.cs" />
     <Compile Include="Formats\LUAINFO.cs" />
+    <Compile Include="Formats\MSB1\PointParam.cs" />
+    <Compile Include="Formats\MSB1\PartsParam.cs" />
+    <Compile Include="Formats\MSB1\EventParam.cs" />
+    <Compile Include="Formats\MSB1\ModelParam.cs" />
+    <Compile Include="Formats\MSB1\MSB1.cs" />
+    <Compile Include="Formats\MSB1\Shape.cs" />
     <Compile Include="Formats\MSB3\Shape.cs" />
     <Compile Include="Formats\MSBS\EventParam.cs" />
     <Compile Include="Formats\MSBS\ModelParam.cs" />
