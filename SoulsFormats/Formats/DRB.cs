@@ -17,7 +17,7 @@ namespace SoulsFormats
         public bool DSR { get; set; }
 
         /// <summary>
-        /// Textures available for use by Shapes.
+        /// Available UI textures for reference; not actually necessary for textures to work.
         /// </summary>
         public List<Texture> Textures { get; set; }
 
@@ -968,7 +968,7 @@ namespace SoulsFormats
                 public short TexBottomEdge { get; set; }
 
                 /// <summary>
-                /// The texture to display, indexing the main Textures list.
+                /// The texture to display, indexing textures in menu.tpf.
                 /// </summary>
                 public short TextureIndex { get; set; }
 
@@ -978,14 +978,14 @@ namespace SoulsFormats
                 public SpriteFlags Flags { get; set; }
 
                 /// <summary>
-                /// Unknown; often 0. Palette color?
+                /// Tints the sprite from a palette of 1-80, or 0 to use custom color below.
                 /// </summary>
-                public int Unk0C { get; set; }
+                public int PaletteColor { get; set; }
 
                 /// <summary>
-                /// Tints the Sprite a certain color.
+                /// Tints the sprite a certain color.
                 /// </summary>
-                public Color Color { get; set; }
+                public Color CustomColor { get; set; }
 
                 /// <summary>
                 /// Creates a Sprite with default values.
@@ -993,7 +993,7 @@ namespace SoulsFormats
                 public Sprite() : base()
                 {
                     Flags = SpriteFlags.Alpha;
-                    Color = Color.White;
+                    CustomColor = Color.White;
                 }
 
                 internal Sprite(BinaryReaderEx br, bool dsr) : base(br, dsr)
@@ -1004,8 +1004,8 @@ namespace SoulsFormats
                     TexBottomEdge = br.ReadInt16();
                     TextureIndex = br.ReadInt16();
                     Flags = (SpriteFlags)br.ReadUInt16();
-                    Unk0C = br.ReadInt32();
-                    Color = ReadABGR(br);
+                    PaletteColor = br.ReadInt32();
+                    CustomColor = ReadABGR(br);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw, Dictionary<string, int> stringOffsets)
@@ -1016,8 +1016,8 @@ namespace SoulsFormats
                     bw.WriteInt16(TexBottomEdge);
                     bw.WriteInt16(TextureIndex);
                     bw.WriteUInt16((ushort)Flags);
-                    bw.WriteInt32(Unk0C);
-                    WriteABGR(bw, Color);
+                    bw.WriteInt32(PaletteColor);
+                    WriteABGR(bw, CustomColor);
                 }
             }
 
