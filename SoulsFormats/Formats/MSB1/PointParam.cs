@@ -6,17 +6,29 @@ namespace SoulsFormats
 {
     public partial class MSB1
     {
+        /// <summary>
+        /// A collection of points and trigger volumes used by scripts and events.
+        /// </summary>
         public class PointParam : Param<Region>
         {
             internal override string Name => "POINT_PARAM_ST";
 
+            /// <summary>
+            /// All regions in the map.
+            /// </summary>
             public List<Region> Regions { get; set; }
 
+            /// <summary>
+            /// Creates an empty PointParam.
+            /// </summary>
             public PointParam() : base()
             {
                 Regions = new List<Region>();
             }
 
+            /// <summary>
+            /// Returns the list of regions.
+            /// </summary>
             public override List<Region> GetEntries()
             {
                 return Regions;
@@ -30,16 +42,34 @@ namespace SoulsFormats
             }
         }
 
+        /// <summary>
+        /// A point or volume used by scripts or events.
+        /// </summary>
         public class Region : Entry
         {
+            /// <summary>
+            /// Describes the physical shape of the region.
+            /// </summary>
             public Shape Shape { get; set; }
 
+            /// <summary>
+            /// Location of the region.
+            /// </summary>
             public Vector3 Position { get; set; }
 
+            /// <summary>
+            /// Rotation of the region, in degrees.
+            /// </summary>
             public Vector3 Rotation { get; set; }
 
+            /// <summary>
+            /// Identifies the region in external files.
+            /// </summary>
             public int EntityID { get; set; }
 
+            /// <summary>
+            /// Creates a Region with default values.
+            /// </summary>
             public Region()
             {
                 Name = "";

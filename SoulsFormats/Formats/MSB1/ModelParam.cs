@@ -131,6 +131,9 @@ namespace SoulsFormats
 
             private int InstanceCount;
 
+            /// <summary>
+            /// Creates a Model with default values.
+            /// </summary>
             public Model()
             {
                 Name = "";

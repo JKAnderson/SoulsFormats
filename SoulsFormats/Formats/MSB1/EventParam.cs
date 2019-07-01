@@ -25,34 +25,76 @@ namespace SoulsFormats
         }
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 
+        /// <summary>
+        /// Contains abstract entities that control various dynamic elements in the map.
+        /// </summary>
         public class EventParam : Param<Event>
         {
             internal override string Name => "EVENT_PARAM_ST";
 
+            /// <summary>
+            /// Fixed point light sources.
+            /// </summary>
             public List<Event.Light> Lights { get; set; }
 
+            /// <summary>
+            /// Background music and area-based sounds.
+            /// </summary>
             public List<Event.Sound> Sounds { get; set; }
 
+            /// <summary>
+            /// Particle effects.
+            /// </summary>
             public List<Event.SFX> SFXs { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Event.WindSFX> WindSFXs { get; set; }
 
+            /// <summary>
+            /// Item pickups in the open or in chests.
+            /// </summary>
             public List<Event.Treasure> Treasures { get; set; }
 
+            /// <summary>
+            /// Repeated enemy spawners.
+            /// </summary>
             public List<Event.Generator> Generators { get; set; }
 
+            /// <summary>
+            /// Static soapstone messages.
+            /// </summary>
             public List<Event.Message> Messages { get; set; }
 
+            /// <summary>
+            /// Controllers for object interactions.
+            /// </summary>
             public List<Event.ObjAct> ObjActs { get; set; }
 
+            /// <summary>
+            /// Unknown exactly what this is for.
+            /// </summary>
             public List<Event.SpawnPoint> SpawnPoints { get; set; }
 
+            /// <summary>
+            /// Represents the origin of the map; already accounted for in MSB positions.
+            /// </summary>
             public List<Event.MapOffset> MapOffsets { get; set; }
 
+            /// <summary>
+            /// Unknown, interacts with navmeshes somehow.
+            /// </summary>
             public List<Event.Navmesh> Navmeshes { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Event.Environment> Environments { get; set; }
 
+            /// <summary>
+            /// Controls the player being summoned to an NPC's world.
+            /// </summary>
             public List<Event.PseudoMultiplayer> PseudoMultiplayers { get; set; }
 
             /// <summary>
@@ -75,6 +117,9 @@ namespace SoulsFormats
                 PseudoMultiplayers = new List<Event.PseudoMultiplayer>();
             }
 
+            /// <summary>
+            /// Returns a list of every event in the order they'll be written.
+            /// </summary>
             public override List<Event> GetEntries()
             {
                 return SFUtil.ConcatAll<Event>(
@@ -159,18 +204,36 @@ namespace SoulsFormats
             }
         }
 
+        /// <summary>
+        /// Common data for all dynamic events.
+        /// </summary>
         public abstract class Event : Entry
         {
+            /// <summary>
+            /// Unknown, should be unique.
+            /// </summary>
             public int EventID { get; set; }
 
+            /// <summary>
+            /// The type of this event.
+            /// </summary>
             public abstract EventType Type { get; }
 
+            /// <summary>
+            /// Part referenced by the event.
+            /// </summary>
             public string PartName { get; set; }
             private int PartIndex;
 
+            /// <summary>
+            /// Region referenced by the event.
+            /// </summary>
             public string RegionName { get; set; }
             private int RegionIndex;
 
+            /// <summary>
+            /// Identifies the event in external files.
+            /// </summary>
             public int EntityID { get; set; }
 
             internal Event()
@@ -238,11 +301,17 @@ namespace SoulsFormats
                 RegionIndex = FindIndex(entries.Regions, RegionName);
             }
 
+            /// <summary>
+            /// Returns the type and name of the event.
+            /// </summary>
             public override string ToString()
             {
                 return $"{Type} {Name}";
             }
 
+            /// <summary>
+            /// A fixed point light.
+            /// </summary>
             public class Light : Event
             {
                 /// <summary>
@@ -255,6 +324,9 @@ namespace SoulsFormats
                 /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// Creates a Light with default values.
+                /// </summary>
                 public Light() : base() { }
 
                 internal Light(BinaryReaderEx br) : base(br)
@@ -269,6 +341,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// An area-based music or sound effect.
+            /// </summary>
             public class Sound : Event
             {
                 /// <summary>
@@ -276,10 +351,19 @@ namespace SoulsFormats
                 /// </summary>
                 public override EventType Type => EventType.Sound;
 
+                /// <summary>
+                /// Category of sound.
+                /// </summary>
                 public int SoundType { get; set; }
 
+                /// <summary>
+                /// ID of the sound file in the FSBs.
+                /// </summary>
                 public int SoundID { get; set; }
 
+                /// <summary>
+                /// Creates a Sound with default values.
+                /// </summary>
                 public Sound() : base() { }
 
                 internal Sound(BinaryReaderEx br) : base(br)
@@ -296,6 +380,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// A fixed particle effect.
+            /// </summary>
             public class SFX : Event
             {
                 /// <summary>
@@ -303,8 +390,14 @@ namespace SoulsFormats
                 /// </summary>
                 public override EventType Type => EventType.SFX;
 
+                /// <summary>
+                /// ID of the effect in the ffxbnds.
+                /// </summary>
                 public int FFXID { get; set; }
 
+                /// <summary>
+                /// Creates an SFX with default values.
+                /// </summary>
                 public SFX() : base() { }
 
                 internal SFX(BinaryReaderEx br) : base(br)
@@ -319,6 +412,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class WindSFX : Event
             {
                 /// <summary>
@@ -406,6 +502,9 @@ namespace SoulsFormats
                 /// </summary>
                 public float UnkT3C { get; set; }
 
+                /// <summary>
+                /// Creates a WindSFX with default values.
+                /// </summary>
                 public WindSFX() : base() { }
 
                 internal WindSFX(BinaryReaderEx br) : base(br)
@@ -450,6 +549,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// A pick-uppable item.
+            /// </summary>
             public class Treasure : Event
             {
                 /// <summary>
@@ -457,6 +559,9 @@ namespace SoulsFormats
                 /// </summary>
                 public override EventType Type => EventType.Treasure;
 
+                /// <summary>
+                /// The part that the treasure is attached to, such as an item corpse.
+                /// </summary>
                 public string TreasurePartName { get; set; }
                 private int TreasurePartIndex;
 
@@ -465,10 +570,19 @@ namespace SoulsFormats
                 /// </summary>
                 public int[] ItemLots { get; private set; }
 
+                /// <summary>
+                /// Whether the treasure is inside a container.
+                /// </summary>
                 public bool InChest { get; set; }
 
+                /// <summary>
+                /// Whether the treasure should be initially hidden, used for items in breakable objects.
+                /// </summary>
                 public bool StartDisabled { get; set; }
 
+                /// <summary>
+                /// Creates a Treasure with default values.
+                /// </summary>
                 public Treasure() : base()
                 {
                     ItemLots = new int[5] { -1, -1, -1, -1, -1 };
@@ -517,6 +631,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// A repeating enemy spawner.
+            /// </summary>
             public class Generator : Event
             {
                 /// <summary>
@@ -524,26 +641,56 @@ namespace SoulsFormats
                 /// </summary>
                 public override EventType Type => EventType.Generator;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short MaxNum { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short LimitNum { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short MinGenNum { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short MaxGenNum { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float MinInterval { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float MaxInterval { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int InitialSpawnCount { get; set; }
 
+                /// <summary>
+                /// Points that enemies may be spawned at.
+                /// </summary>
                 public string[] SpawnPointNames { get; private set; }
                 private int[] SpawnPointIndices;
 
+                /// <summary>
+                /// Enemies to be respawned.
+                /// </summary>
                 public string[] SpawnPartNames { get; private set; }
                 private int[] SpawnPartIndices;
 
+                /// <summary>
+                /// Creates a Generator with default values.
+                /// </summary>
                 public Generator() : base()
                 {
                     SpawnPointNames = new string[4];
@@ -596,6 +743,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// A fixed orange soapstone message.
+            /// </summary>
             public class Message : Event
             {
                 /// <summary>
@@ -603,12 +753,24 @@ namespace SoulsFormats
                 /// </summary>
                 public override EventType Type => EventType.Message;
 
+                /// <summary>
+                /// FMG text ID to display.
+                /// </summary>
                 public short MessageID { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short UnkT02 { get; set; }
 
+                /// <summary>
+                /// Whether the Message requires Seek Guidance to see.
+                /// </summary>
                 public bool Hidden { get; set; }
 
+                /// <summary>
+                /// Creates a Message with default values.
+                /// </summary>
                 public Message() : base() { }
 
                 internal Message(BinaryReaderEx br) : base(br)
@@ -631,6 +793,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Represents an interaction with an object.
+            /// </summary>
             public class ObjAct : Event
             {
                 /// <summary>
@@ -638,17 +803,35 @@ namespace SoulsFormats
                 /// </summary>
                 public override EventType Type => EventType.ObjAct;
 
+                /// <summary>
+                /// Unknown how this differs from the Event EntityID.
+                /// </summary>
                 public int ObjActEntityID { get; set; }
 
+                /// <summary>
+                /// The object that the ObjAct controls.
+                /// </summary>
                 public string ObjActPartName { get; set; }
                 private int ObjActPartIndex;
 
+                /// <summary>
+                /// ID in ObjActParam that configures the ObjAct.
+                /// </summary>
                 public short ObjActParamID { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short UnkT0A { get; set; }
 
+                /// <summary>
+                /// Unknown, probably enables or disables the ObjAct.
+                /// </summary>
                 public int EventFlagID { get; set; }
 
+                /// <summary>
+                /// Creates an ObjAct with default values.
+                /// </summary>
                 public ObjAct() : base()
                 {
                     ObjActEntityID = -1;
@@ -688,6 +871,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown what this accomplishes beyond just having the region.
+            /// </summary>
             public class SpawnPoint : Event
             {
                 /// <summary>
@@ -695,9 +881,15 @@ namespace SoulsFormats
                 /// </summary>
                 public override EventType Type => EventType.SpawnPoint;
 
+                /// <summary>
+                /// Point for the SpawnPoint to spawn at.
+                /// </summary>
                 public string SpawnPointName { get; set; }
                 private int SpawnPointIndex;
 
+                /// <summary>
+                /// Creates a SpawnPoint with default values.
+                /// </summary>
                 public SpawnPoint() : base() { }
 
                 internal SpawnPoint(BinaryReaderEx br) : base(br)
@@ -730,6 +922,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// The origin of the map, already accounted for in MSB positions.
+            /// </summary>
             public class MapOffset : Event
             {
                 /// <summary>
@@ -737,10 +932,19 @@ namespace SoulsFormats
                 /// </summary>
                 public override EventType Type => EventType.MapOffset;
 
+                /// <summary>
+                /// Position of the map.
+                /// </summary>
                 public Vector3 Position { get; set; }
 
+                /// <summary>
+                /// Rotation of the map.
+                /// </summary>
                 public float Degree { get; set; }
 
+                /// <summary>
+                /// Creates a MapOffset with default values.
+                /// </summary>
                 public MapOffset() : base() { }
 
                 internal MapOffset(BinaryReaderEx br) : base(br)
@@ -757,6 +961,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class Navmesh : Event
             {
                 /// <summary>
@@ -764,9 +971,15 @@ namespace SoulsFormats
                 /// </summary>
                 public override EventType Type => EventType.Navmesh;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public string NavmeshRegionName { get; set; }
                 private int NavmeshRegionIndex;
 
+                /// <summary>
+                /// Creates a Navmesh with default values.
+                /// </summary>
                 public Navmesh() : base() { }
 
                 internal Navmesh(BinaryReaderEx br) : base(br)
@@ -799,6 +1012,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class Environment : Event
             {
                 /// <summary>
@@ -806,18 +1022,39 @@ namespace SoulsFormats
                 /// </summary>
                 public override EventType Type => EventType.Environment;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT04 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT08 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT0C { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT10 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT14 { get; set; }
 
+                /// <summary>
+                /// Creates an Environment with default values.
+                /// </summary>
                 public Environment() : base() { }
 
                 internal Environment(BinaryReaderEx br) : base(br)
@@ -846,6 +1083,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// A fake multiplayer session where you enter an NPC's world.
+            /// </summary>
             public class PseudoMultiplayer : Event
             {
                 /// <summary>
@@ -853,13 +1093,25 @@ namespace SoulsFormats
                 /// </summary>
                 public override EventType Type => EventType.PseudoMultiplayer;
 
+                /// <summary>
+                /// The NPC whose world you're entering.
+                /// </summary>
                 public int HostEntityID { get; set; }
 
+                /// <summary>
+                /// Unknown, presumably enables the summoning.
+                /// </summary>
                 public int EventFlagID { get; set; }
 
+                /// <summary>
+                /// Unknown, presumably where you appear in the other world.
+                /// </summary>
                 public string SpawnPointName { get; set; }
                 private int SpawnPointIndex;
 
+                /// <summary>
+                /// Creates a PseudoMultiplayer with default values.
+                /// </summary>
                 public PseudoMultiplayer() : base()
                 {
                     HostEntityID = -1;

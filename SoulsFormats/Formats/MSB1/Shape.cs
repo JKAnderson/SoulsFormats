@@ -21,6 +21,9 @@ namespace SoulsFormats
         /// </summary>
         public abstract class Shape
         {
+            /// <summary>
+            /// The type of this Shape.
+            /// </summary>
             public abstract ShapeType Type { get; }
 
             internal abstract bool HasShapeData { get; }
@@ -35,6 +38,9 @@ namespace SoulsFormats
             /// </summary>
             public class Point : Shape
             {
+                /// <summary>
+                /// ShapeType.Point
+                /// </summary>
                 public override ShapeType Type => ShapeType.Point;
 
                 internal override bool HasShapeData => false;
@@ -45,6 +51,9 @@ namespace SoulsFormats
             /// </summary>
             public class Circle : Shape
             {
+                /// <summary>
+                /// ShapeType.Circle
+                /// </summary>
                 public override ShapeType Type => ShapeType.Circle;
 
                 internal override bool HasShapeData => true;
@@ -75,6 +84,9 @@ namespace SoulsFormats
             /// </summary>
             public class Sphere : Shape
             {
+                /// <summary>
+                /// ShapeType.Sphere
+                /// </summary>
                 public override ShapeType Type => ShapeType.Sphere;
 
                 internal override bool HasShapeData => true;
@@ -105,6 +117,9 @@ namespace SoulsFormats
             /// </summary>
             public class Cylinder : Shape
             {
+                /// <summary>
+                /// ShapeType.Cylinder
+                /// </summary>
                 public override ShapeType Type => ShapeType.Cylinder;
 
                 internal override bool HasShapeData => true;
@@ -142,6 +157,9 @@ namespace SoulsFormats
             /// </summary>
             public class Rect : Shape
             {
+                /// <summary>
+                /// ShapeType.Rect
+                /// </summary>
                 public override ShapeType Type => ShapeType.Rect;
 
                 internal override bool HasShapeData => true;
@@ -179,6 +197,9 @@ namespace SoulsFormats
             /// </summary>
             public class Box : Shape
             {
+                /// <summary>
+                /// ShapeType.Box
+                /// </summary>
                 public override ShapeType Type => ShapeType.Box;
 
                 internal override bool HasShapeData => true;

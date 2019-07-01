@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SoulsFormats
 {
@@ -24,6 +21,9 @@ namespace SoulsFormats
         }
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 
+        /// <summary>
+        /// All instances of concrete things in the map.
+        /// </summary>
         public class PartsParam : Param<Part>
         {
             internal override string Name => "PARTS_PARAM_ST";
@@ -155,59 +155,140 @@ namespace SoulsFormats
             }
         }
 
+        /// <summary>
+        /// Common information for all concrete entities.
+        /// </summary>
         public abstract class Part : Entry
         {
+            /// <summary>
+            /// The type of the Part.
+            /// </summary>
             public abstract PartType Type { get; }
 
+            /// <summary>
+            /// The model of the Part, corresponding to an entry in the ModelParam.
+            /// </summary>
             public string ModelName { get; set; }
             private int ModelIndex;
 
+            /// <summary>
+            /// A path to a .sib file, presumed to be some kind of editor placeholder.
+            /// </summary>
             public string Placeholder { get; set; }
 
+            /// <summary>
+            /// Location of the part.
+            /// </summary>
             public Vector3 Position { get; set; }
 
+            /// <summary>
+            /// Rotation of the part, in degrees.
+            /// </summary>
             public Vector3 Rotation { get; set; }
 
+            /// <summary>
+            /// Scale of the part, only meaningful for map pieces and objects.
+            /// </summary>
             public Vector3 Scale { get; set; }
 
+            /// <summary>
+            /// Controls when the part is visible.
+            /// </summary>
             public uint[] DrawGroups { get; private set; }
 
+            /// <summary>
+            /// Controls when the part is visible.
+            /// </summary>
             public uint[] DispGroups { get; private set; }
 
+            /// <summary>
+            /// Identifies the part in external files.
+            /// </summary>
             public int EntityID { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte LightID { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte FogID { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte ScatterID { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte LensFlareID { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte ShadowID { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte DofID { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte ToneMapID { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte ToneCorrectID { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte LanternID { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte LodParamID { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte IsShadowSrc { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte IsShadowDest { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte IsShadowOnly { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte DrawByReflectCam { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte DrawOnlyReflectCam { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte UseDepthBiasFloat { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte DisablePointLightEffect { get; set; }
 
             internal Part()
@@ -330,6 +411,9 @@ namespace SoulsFormats
                 ModelIndex = FindIndex(entries.Models, ModelName);
             }
 
+            /// <summary>
+            /// A visible but not physical model making up the map.
+            /// </summary>
             public class MapPiece : Part
             {
                 /// <summary>
@@ -337,6 +421,9 @@ namespace SoulsFormats
                 /// </summary>
                 public override PartType Type => PartType.MapPiece;
 
+                /// <summary>
+                /// Creates a MapPiece with default values.
+                /// </summary>
                 public MapPiece() : base() { }
 
                 internal MapPiece(BinaryReaderEx br) : base(br)
@@ -353,6 +440,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// A dynamic or interactible part of the map.
+            /// </summary>
             public class Object : Part
             {
                 /// <summary>
@@ -360,17 +450,35 @@ namespace SoulsFormats
                 /// </summary>
                 public override PartType Type => PartType.Object;
 
+                /// <summary>
+                /// Collision that controls loading of the object.
+                /// </summary>
                 public string CollisionName { get; set; }
                 private int CollisionIndex;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT08 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short UnkT0C { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short UnkT0E { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT10 { get; set; }
 
+                /// <summary>
+                /// Creates an Object with default values.
+                /// </summary>
                 public Object() : base() { }
 
                 internal Object(BinaryReaderEx br) : base(br)
@@ -409,6 +517,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Any living entity besides the player character.
+            /// </summary>
             public class Enemy : Part
             {
                 /// <summary>
@@ -416,26 +527,56 @@ namespace SoulsFormats
                 /// </summary>
                 public override PartType Type => PartType.Enemy;
 
+                /// <summary>
+                /// ID in NPCThinkParam determining AI properties.
+                /// </summary>
                 public int ThinkParamID { get; set; }
 
+                /// <summary>
+                /// ID in NPCParam determining character properties.
+                /// </summary>
                 public int NPCParamID { get; set; }
 
+                /// <summary>
+                /// ID of a talk ESD used by the character.
+                /// </summary>
                 public int TalkID { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT14 { get; set; }
 
+                /// <summary>
+                /// ID in CharaInitParam determining equipment and stats for humans.
+                /// </summary>
                 public int CharaInitID { get; set; }
 
+                /// <summary>
+                /// Collision that controls loading of the enemy.
+                /// </summary>
                 public string CollisionName { get; set; }
                 private int CollisionIndex;
 
+                /// <summary>
+                /// Regions for the enemy to patrol.
+                /// </summary>
                 public string[] MovePointNames { get; private set; }
                 private short[] MovePointIndices;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT38 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT3C { get; set; }
 
+                /// <summary>
+                /// Creates an Enemy with default values.
+                /// </summary>
                 public Enemy() : base()
                 {
                     ThinkParamID = -1;
@@ -501,6 +642,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown exactly what these do.
+            /// </summary>
             public class Player : Part
             {
                 /// <summary>
@@ -508,6 +652,9 @@ namespace SoulsFormats
                 /// </summary>
                 public override PartType Type => PartType.Player;
 
+                /// <summary>
+                /// Creates a Player with default values.
+                /// </summary>
                 public Player() : base() { }
 
                 internal Player(BinaryReaderEx br) : base(br)
@@ -528,6 +675,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Invisible but physical geometry.
+            /// </summary>
             public class Collision : Part
             {
                 /// <summary>
@@ -535,30 +685,69 @@ namespace SoulsFormats
                 /// </summary>
                 public override PartType Type => PartType.Collision;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public byte HitFilterID { get; set; }
 
+                /// <summary>
+                /// Causes sounds to be modulated when standing on the collision.
+                /// </summary>
                 public byte SoundSpaceType { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short EnvLightMapSpotIndex { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float ReflectPlaneHeight { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public uint[] NvmGroups { get; private set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int[] VagrantEntityIDs { get; private set; }
 
+                /// <summary>
+                /// Controls displays of the map name on screen or the loading menu.
+                /// </summary>
                 public short MapNameID { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short DisableStart { get; set; }
 
+                /// <summary>
+                /// If set, disables a bonfire when any enemy is on the collision.
+                /// </summary>
                 public int DisableBonfireEntityID { get; set; }
 
+                /// <summary>
+                /// An ID used for multiplayer eligibility.
+                /// </summary>
                 public int PlayRegionID { get; set; }
 
+                /// <summary>
+                /// ID in LockCamParam determining camera properties.
+                /// </summary>
                 public short LockCamParamID1 { get; set; }
 
+                /// <summary>
+                /// ID in LockCamParam determining camera properties.
+                /// </summary>
                 public short LockCamParamID2 { get; set; }
 
+                /// <summary>
+                /// Creates a Collision with default values.
+                /// </summary>
                 public Collision() : base()
                 {
                     NvmGroups = new uint[4]{
@@ -618,6 +807,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// An AI navigation mesh.
+            /// </summary>
             public class Navmesh : Part
             {
                 /// <summary>
@@ -625,8 +817,14 @@ namespace SoulsFormats
                 /// </summary>
                 public override PartType Type => PartType.Navmesh;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public uint[] NvmGroups { get; private set; }
 
+                /// <summary>
+                /// Creates a Navmesh with default values.
+                /// </summary>
                 public Navmesh() : base()
                 {
                     NvmGroups = new uint[4] {
@@ -653,6 +851,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// A normally invisible object, either unused or for a cutscene.
+            /// </summary>
             public class DummyObject : Object
             {
                 /// <summary>
@@ -660,11 +861,17 @@ namespace SoulsFormats
                 /// </summary>
                 public override PartType Type => PartType.DummyObject;
 
+                /// <summary>
+                /// Creates a DummyObject with default values.
+                /// </summary>
                 public DummyObject() : base() { }
 
                 internal DummyObject(BinaryReaderEx br) : base(br) { }
             }
 
+            /// <summary>
+            /// A normally invisible enemy, either unused or for a cutscene.
+            /// </summary>
             public class DummyEnemy : Enemy
             {
                 /// <summary>
@@ -672,11 +879,17 @@ namespace SoulsFormats
                 /// </summary>
                 public override PartType Type => PartType.DummyEnemy;
 
+                /// <summary>
+                /// Creates a DummyEnemy with default values.
+                /// </summary>
                 public DummyEnemy() : base() { }
 
                 internal DummyEnemy(BinaryReaderEx br) : base(br) { }
             }
 
+            /// <summary>
+            /// Attaches to an actual Collision and causes another map to be loaded when standing on it.
+            /// </summary>
             public class ConnectCollision : Part
             {
                 /// <summary>
@@ -684,11 +897,20 @@ namespace SoulsFormats
                 /// </summary>
                 public override PartType Type => PartType.ConnectCollision;
 
+                /// <summary>
+                /// The collision which will load another map.
+                /// </summary>
                 public string CollisionName { get; set; }
                 private int CollisionIndex;
 
+                /// <summary>
+                /// Four bytes specifying the map ID to load.
+                /// </summary>
                 public byte[] MapID { get; private set; }
 
+                /// <summary>
+                /// Creates a ConnectCollision with default values.
+                /// </summary>
                 public ConnectCollision() : base()
                 {
                     MapID = new byte[4] { 12, 2, 0, 0 };
