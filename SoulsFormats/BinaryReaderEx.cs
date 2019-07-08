@@ -863,20 +863,6 @@ namespace SoulsFormats
         }
 
         /// <summary>
-        /// Reads a length-prefixed Shift JIS string, asserts the specified terminator, and aligns the stream to 0x4.
-        /// </summary>
-        public string ReadShiftJISLengthPrefixed(byte terminator)
-        {
-            int length = ReadInt32();
-            string result = "";
-            if (length > 0)
-                result = ReadChars(ShiftJIS, length);
-            AssertByte(terminator);
-            Pad(4);
-            return result;
-        }
-
-        /// <summary>
         /// Reads a null-terminated Shift JIS string from the specified position without advancing the stream.
         /// </summary>
         public string GetShiftJIS(long offset)

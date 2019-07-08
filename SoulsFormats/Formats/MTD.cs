@@ -72,8 +72,8 @@ namespace SoulsFormats
             br.AssertInt32(4);
             AssertMarker(br, 0xA3);
 
-            ShaderPath = br.ReadShiftJISLengthPrefixed(0xA3);
-            Description = br.ReadShiftJISLengthPrefixed(0x03);
+            ShaderPath = ReadMarkedString(br, 0xA3);
+            Description = ReadMarkedString(br, 0x03);
 
             br.AssertInt32(1);
             br.AssertInt32(0);
@@ -131,8 +131,8 @@ namespace SoulsFormats
             int dataStart = (int)bw.Position;
             WriteMarker(bw, 0xA3);
 
-            bw.WriteShiftJISLengthPrefixed(ShaderPath, 0xA3);
-            bw.WriteShiftJISLengthPrefixed(Description, 0x03);
+            WriteMarkedString(bw, 0xA3, ShaderPath);
+            WriteMarkedString(bw, 0x03, Description);
 
             bw.WriteInt32(1);
             bw.WriteInt32(0);
@@ -222,8 +222,8 @@ namespace SoulsFormats
                 br.AssertInt32(4);
                 br.AssertInt32(4);
                 AssertMarker(br, 0xA3);
-                Name = br.ReadShiftJISLengthPrefixed(0xA3);
-                string type = br.ReadShiftJISLengthPrefixed(0x04);
+                Name = ReadMarkedString(br, 0xA3);
+                string type = ReadMarkedString(br, 0x04);
                 Type = (ParamType)Enum.Parse(typeof(ParamType), type, true);
                 br.AssertInt32(1);
                 br.AssertInt32(0);
@@ -283,8 +283,8 @@ namespace SoulsFormats
                 bw.WriteInt32(4);
                 bw.WriteInt32(4);
                 WriteMarker(bw, 0xA3);
-                bw.WriteShiftJISLengthPrefixed(Name, 0xA3);
-                bw.WriteShiftJISLengthPrefixed(Type.ToString().ToLower(), 0x04);
+                WriteMarkedString(bw, 0xA3, Name);
+                WriteMarkedString(bw, 0x04, Type.ToString().ToLower());
                 bw.WriteInt32(1);
                 bw.WriteInt32(0);
                 bw.ReserveInt32("ValueSize");
@@ -450,7 +450,7 @@ namespace SoulsFormats
                 br.AssertInt32(0x2000);
                 Extended = br.AssertInt32(3, 5) == 5;
                 AssertMarker(br, 0xA3);
-                Type = br.ReadShiftJISLengthPrefixed(0x35);
+                Type = ReadMarkedString(br, 0x35);
                 UVNumber = br.ReadInt32();
                 AssertMarker(br, 0x35);
                 ShaderDataIndex = br.ReadInt32();
@@ -458,7 +458,7 @@ namespace SoulsFormats
                 if (Extended)
                 {
                     br.AssertInt32(0xA3);
-                    Path = br.ReadShiftJISLengthPrefixed(0xBA);
+                    Path = ReadMarkedString(br, 0xBA);
                     int floatCount = br.ReadInt32();
                     UnkFloats = new List<float>(br.ReadSingles(floatCount));
                 }
@@ -476,7 +476,7 @@ namespace SoulsFormats
                 bw.WriteInt32(0x2000);
                 bw.WriteInt32(Extended ? 5 : 3);
                 WriteMarker(bw, 0xA3);
-                bw.WriteShiftJISLengthPrefixed(Type, 0x35);
+                WriteMarkedString(bw, 0x35, Type);
                 bw.WriteInt32(UVNumber);
                 WriteMarker(bw, 0x35);
                 bw.WriteInt32(ShaderDataIndex);
@@ -484,7 +484,7 @@ namespace SoulsFormats
                 if (Extended)
                 {
                     bw.WriteInt32(0xA3);
-                    bw.WriteShiftJISLengthPrefixed(Path, 0xBA);
+                    WriteMarkedString(bw, 0xBA, Path);
                     bw.WriteInt32(UnkFloats.Count);
                     bw.WriteSingles(UnkFloats);
                 }
@@ -541,24 +541,42 @@ namespace SoulsFormats
         }
 
         /// <summary>
-        /// Reads weird markers throughout the file that start with the same byte and then
-        /// have what is almost definitely just uninitialized memory for the next three.
+        /// Asserts the given marker byte and aligns the stream to 4.
         /// </summary>
-        private static void AssertMarker(BinaryReaderEx br, byte start)
+        private static void AssertMarker(BinaryReaderEx br, byte marker)
         {
-            br.AssertByte(start);
-            br.Skip(3);
+            br.AssertByte(marker);
+            br.Pad(4);
         }
 
         /// <summary>
-        /// Writes the given byte and three zeroes.
+        /// Writes the given marker byte and aligns the stream to 4.
         /// </summary>
-        private static void WriteMarker(BinaryWriterEx bw, byte start)
+        private static void WriteMarker(BinaryWriterEx bw, byte marker)
         {
-            bw.WriteByte(start);
-            bw.WriteByte(0);
-            bw.WriteByte(0);
-            bw.WriteByte(0);
+            bw.WriteByte(marker);
+            bw.Pad(4);
+        }
+
+        /// <summary>
+        /// Reads a length-prefixed Shift-JIS string followed by a marker.
+        /// </summary>
+        private static string ReadMarkedString(BinaryReaderEx br, byte marker)
+        {
+            int length = br.ReadInt32();
+            string str = br.ReadShiftJIS(length);
+            AssertMarker(br, marker);
+            return str;
+        }
+
+        /// <summary>
+        /// Writes a length-prefixed Shift-JIS string followed by a marker.
+        /// </summary>
+        private static void WriteMarkedString(BinaryWriterEx bw, byte marker, string str)
+        {
+            bw.WriteInt32(str.Length);
+            bw.WriteShiftJIS(str);
+            WriteMarker(bw, marker);
         }
     }
 }

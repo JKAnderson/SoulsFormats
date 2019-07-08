@@ -605,19 +605,6 @@ namespace SoulsFormats
         }
 
         /// <summary>
-        /// Writes a length-prefixed Shift JIS stream with the specified terminator and aligns the stream to 0x4.
-        /// </summary>
-        public void WriteShiftJISLengthPrefixed(string text, byte terminator)
-        {
-            byte[] bytes = ShiftJIS.GetBytes(text);
-            WriteInt32(bytes.Length);
-            if (bytes.Length > 0)
-                WriteBytes(bytes);
-            WriteByte(terminator);
-            Pad(4);
-        }
-
-        /// <summary>
         /// Writes a UTF-16 string, with null terminator if specified.
         /// </summary>
         public void WriteUTF16(string text, bool terminate = false)
