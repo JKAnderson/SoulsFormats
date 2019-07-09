@@ -1,31 +1,32 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 
 namespace SoulsFormats
 {
     /// <summary>
-    /// A multi-file DDS container used in DS1, DSR, DS2, DS3, DeS, BB, and NB.
+    /// A multi-file texture container used throughout the series. Extension: .tpf
     /// </summary>
-    public partial class TPF : SoulsFile<TPF>
+    public partial class TPF : SoulsFile<TPF>, IEnumerable<TPF.Texture>
     {
         /// <summary>
         /// The textures contained within this TPF.
         /// </summary>
-        public List<Texture> Textures;
+        public List<Texture> Textures { get; set; }
 
         /// <summary>
         /// The platform this TPF will be used on.
         /// </summary>
-        public TPFPlatform Platform;
+        public TPFPlatform Platform { get; set; }
 
         /// <summary>
         /// Indicates encoding used for texture names.
         /// </summary>
-        public byte Encoding;
+        public byte Encoding { get; set; }
 
         /// <summary>
         /// Unknown.
         /// </summary>
-        public byte Flag2;
+        public byte Flag2 { get; set; }
 
         /// <summary>
         /// Creates an empty TPF configured for DS3.
@@ -54,21 +55,19 @@ namespace SoulsFormats
         {
             br.BigEndian = false;
             br.AssertASCII("TPF\0");
-            br.BigEndian = br.GetByte(0xC) == 2;
+            Platform = br.GetEnum8<TPFPlatform>(0xC);
+            br.BigEndian = Platform == TPFPlatform.Xbox360 || Platform == TPFPlatform.PS3;
 
-            int totalFileSize = br.ReadInt32();
+            br.ReadInt32(); // Data length
             int fileCount = br.ReadInt32();
-
-            Platform = br.ReadEnum8<TPFPlatform>();
+            br.Skip(1); // Platform
             Flag2 = br.AssertByte(0, 1, 2, 3);
             Encoding = br.AssertByte(0, 1, 2);
             br.AssertByte(0);
 
             Textures = new List<Texture>(fileCount);
             for (int i = 0; i < fileCount; i++)
-            {
                 Textures.Add(new Texture(br, Platform, Flag2, Encoding));
-            }
         }
 
         /// <summary>
@@ -76,7 +75,7 @@ namespace SoulsFormats
         /// </summary>
         internal override void Write(BinaryWriterEx bw)
         {
-            bw.BigEndian = false;
+            bw.BigEndian = Platform == TPFPlatform.Xbox360 || Platform == TPFPlatform.PS3;
             bw.WriteASCII("TPF\0");
             bw.ReserveInt32("DataSize");
             bw.WriteInt32(Textures.Count);
@@ -86,38 +85,29 @@ namespace SoulsFormats
             bw.WriteByte(0);
 
             for (int i = 0; i < Textures.Count; i++)
-            {
-                Textures[i].Write(bw, i, Platform, Flag2);
-            }
-            bw.Pad(0x10);
+                Textures[i].WriteHeader(bw, i, Platform, Flag2);
 
             for (int i = 0; i < Textures.Count; i++)
-            {
-                Texture texture = Textures[i];
-                bw.FillUInt32($"FileName{i}", (uint)bw.Position);
-                if (Encoding == 1)
-                    bw.WriteUTF16(texture.Name, true);
-                else if (Encoding == 0 || Encoding == 2)
-                    bw.WriteShiftJIS(texture.Name, true);
-            }
+                Textures[i].WriteName(bw, i, Encoding);
 
-            int dataStart = (int)bw.Position;
+            long dataStart = bw.Position;
             for (int i = 0; i < Textures.Count; i++)
             {
-                Texture texture = Textures[i];
-                if (texture.Bytes.Length > 0)
-                    bw.Pad(0x10);
+                // Padding for texture data varies wildly across games,
+                // so don't worry about this too much
+                if (Textures[i].Bytes.Length > 0)
+                    bw.Pad(4);
 
-                bw.FillUInt32($"FileData{i}", (uint)bw.Position);
-
-                byte[] bytes = texture.Bytes;
-                if (texture.Flags1 == 2 || texture.Flags2 == 3)
-                    bytes = DCX.Compress(bytes, DCX.Type.ACEREDGE);
-                bw.FillInt32($"FileSize{i}", bytes.Length);
-                bw.WriteBytes(bytes);
+                Textures[i].WriteData(bw, i);
             }
-            bw.FillInt32("DataSize", (int)bw.Position - dataStart);
+            bw.FillInt32("DataSize", (int)(bw.Position - dataStart));
         }
+
+        /// <summary>
+        /// Returns an enumerator that iterates through the list of Textures.
+        /// </summary>
+        public IEnumerator<Texture> GetEnumerator() => Textures.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         /// <summary>
         /// A DDS texture in a TPF container.
@@ -127,42 +117,57 @@ namespace SoulsFormats
             /// <summary>
             /// The name of the texture; should not include a path or extension.
             /// </summary>
-            public string Name;
+            public string Name { get; set; }
 
             /// <summary>
             /// Indicates format of the texture.
             /// </summary>
-            public byte Format;
+            public byte Format { get; set; }
 
             /// <summary>
             /// Whether this texture is a cubemap.
             /// </summary>
-            public TexType Type;
+            public TexType Type { get; set; }
 
             /// <summary>
             /// Number of mipmap levels in this texture.
             /// </summary>
-            public byte Mipmaps;
+            public byte Mipmaps { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public byte Flags1;
+            public byte Flags1 { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Flags2;
+            public int Flags2 { get; set; }
+
+            /// <summary>
+            /// Unknown, optionally present in PS3 textures.
+            /// </summary>
+            public int Unk20 { get; set; }
+
+            /// <summary>
+            /// Unknown, optionally present in PS3 textures.
+            /// </summary>
+            public int Unk24;
+
+            /// <summary>
+            /// Unknown, optionally present in PS3 textures.
+            /// </summary>
+            public float Unk28 { get; set; }
 
             /// <summary>
             /// The raw data of the texture.
             /// </summary>
-            public byte[] Bytes;
+            public byte[] Bytes { get; set; }
 
             /// <summary>
             /// Extended metadata present in headerless console TPF textures.
             /// </summary>
-            public TexHeader Header;
+            public TexHeader Header { get; set; }
 
             /// <summary>
             /// Create a new PC Texture with the specified information; Cubemap and Mipmaps are determined based on bytes.
@@ -222,6 +227,12 @@ namespace SoulsFormats
                             Header.Unk2 = br.AssertInt32(0, 0xAAE4);
                         nameOffset = br.ReadUInt32();
                         Flags2 = br.AssertInt32(0, 1);
+                        if (Flags2 == 1)
+                        {
+                            Unk20 = br.ReadInt32();
+                            Unk24 = br.ReadInt32();
+                            Unk28 = br.ReadSingle();
+                        }
                     }
                     else if (platform == TPFPlatform.PS4 || platform == TPFPlatform.Xbone)
                     {
@@ -243,7 +254,7 @@ namespace SoulsFormats
                     Name = br.GetShiftJIS(nameOffset);
             }
 
-            internal void Write(BinaryWriterEx bw, int index, TPFPlatform platform, byte flag2)
+            internal void WriteHeader(BinaryWriterEx bw, int index, TPFPlatform platform, byte flag2)
             {
                 if (platform == TPFPlatform.PC)
                 {
@@ -288,6 +299,12 @@ namespace SoulsFormats
                             bw.WriteInt32(Header.Unk2);
                         bw.ReserveUInt32($"FileName{index}");
                         bw.WriteInt32(Flags2);
+                        if (Flags2 == 1)
+                        {
+                            bw.WriteInt32(Unk20);
+                            bw.WriteInt32(Unk24);
+                            bw.WriteSingle(Unk28);
+                        }
                     }
                     else if (platform == TPFPlatform.PS4 || platform == TPFPlatform.Xbone)
                     {
@@ -298,6 +315,27 @@ namespace SoulsFormats
                         bw.WriteInt32(Header.DXGIFormat);
                     }
                 }
+            }
+
+            internal void WriteName(BinaryWriterEx bw, int index, byte encoding)
+            {
+                bw.FillUInt32($"FileName{index}", (uint)bw.Position);
+                if (encoding == 1)
+                    bw.WriteUTF16(Name, true);
+                else if (encoding == 0 || encoding == 2)
+                    bw.WriteShiftJIS(Name, true);
+            }
+
+            internal void WriteData(BinaryWriterEx bw, int index)
+            {
+                bw.FillUInt32($"FileData{index}", (uint)bw.Position);
+
+                byte[] bytes = Bytes;
+                if (Flags1 == 2 || Flags2 == 3)
+                    bytes = DCX.Compress(bytes, DCX.Type.ACEREDGE);
+
+                bw.FillInt32($"FileSize{index}", bytes.Length);
+                bw.WriteBytes(bytes);
             }
 
             /// <summary>
@@ -377,32 +415,32 @@ namespace SoulsFormats
             /// <summary>
             /// Width of the texture, in pixels.
             /// </summary>
-            public short Width;
+            public short Width { get; set; }
 
             /// <summary>
             /// Height of the texture, in pixels.
             /// </summary>
-            public short Height;
+            public short Height { get; set; }
 
             /// <summary>
             /// Number of textures in the array, either 1 for normal textures or 6 for cubemaps.
             /// </summary>
-            public int TextureCount;
+            public int TextureCount { get; set; }
 
             /// <summary>
             /// Unknown; PS3 only.
             /// </summary>
-            public int Unk1;
+            public int Unk1 { get; set; }
 
             /// <summary>
             /// Unknown; 0x0 or 0xAAE4 in DeS, 0xD in DS3.
             /// </summary>
-            public int Unk2;
+            public int Unk2 { get; set; }
 
             /// <summary>
             /// Microsoft DXGI_FORMAT.
             /// </summary>
-            public int DXGIFormat;
+            public int DXGIFormat { get; set; }
         }
     }
 }
