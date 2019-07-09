@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 namespace SoulsFormats
 {
@@ -478,6 +479,7 @@ namespace SoulsFormats
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
         }
 
+        #region Read/Write utilities
         private static byte ReadMarker(BinaryReaderEx br)
         {
             byte marker = br.ReadByte();
@@ -485,9 +487,6 @@ namespace SoulsFormats
             return marker;
         }
 
-        /// <summary>
-        /// Asserts the given marker byte and aligns the stream to 4.
-        /// </summary>
         private static byte AssertMarker(BinaryReaderEx br, byte marker)
         {
             br.AssertByte(marker);
@@ -495,18 +494,12 @@ namespace SoulsFormats
             return marker;
         }
 
-        /// <summary>
-        /// Writes the given marker byte and aligns the stream to 4.
-        /// </summary>
         private static void WriteMarker(BinaryWriterEx bw, byte marker)
         {
             bw.WriteByte(marker);
             bw.Pad(4);
         }
 
-        /// <summary>
-        /// Reads a length-prefixed Shift-JIS string followed by a marker.
-        /// </summary>
         private static string ReadMarkedString(BinaryReaderEx br, byte marker)
         {
             int length = br.ReadInt32();
@@ -523,13 +516,11 @@ namespace SoulsFormats
             return str;
         }
 
-        /// <summary>
-        /// Writes a length-prefixed Shift-JIS string followed by a marker.
-        /// </summary>
         private static void WriteMarkedString(BinaryWriterEx bw, byte marker, string str)
         {
-            bw.WriteInt32(str.Length);
-            bw.WriteShiftJIS(str);
+            byte[] bytes = Encoding.GetEncoding("shift-jis").GetBytes(str);
+            bw.WriteInt32(bytes.Length);
+            bw.WriteBytes(bytes);
             WriteMarker(bw, marker);
         }
 
@@ -578,5 +569,6 @@ namespace SoulsFormats
                 bw.FillUInt32($"Block{Start:X}", Length);
             }
         }
+        #endregion
     }
 }
