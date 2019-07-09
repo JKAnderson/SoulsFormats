@@ -56,7 +56,7 @@ namespace SoulsFormats
                 VertexCount = br.ReadInt32();
                 br.AssertInt32(0);
                 br.AssertInt32(0);
-                br.AssertInt32(VertexSize * VertexCount);
+                br.ReadInt32(); // Buffer length
                 BufferOffset = br.ReadInt32();
             }
 

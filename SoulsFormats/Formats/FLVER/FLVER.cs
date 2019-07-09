@@ -84,13 +84,14 @@ namespace SoulsFormats
             Header.BigEndian = br.AssertASCII("L\0", "B\0") == "B\0";
             br.BigEndian = Header.BigEndian;
 
+            // Gundam Unicorn: 0x20005, 0x2000E
             // DS1: 2000C, 2000D
             // DS2: 20009, 20010
             // SFS: 20010
             // BB:  20013, 20014
             // DS3: 20013, 20014
             // SDT: 2001A, 20016 (test chr)
-            Header.Version = br.AssertInt32(0x20009, 0x2000C, 0x2000D, 0x20010, 0x20013, 0x20014, 0x20016, 0x2001A);
+            Header.Version = br.AssertInt32(0x20005, 0x20009, 0x2000C, 0x2000D, 0x2000E, 0x20010, 0x20013, 0x20014, 0x20016, 0x2001A);
 
             int dataOffset = br.ReadInt32();
             br.ReadInt32(); // Data length
@@ -148,7 +149,7 @@ namespace SoulsFormats
 
             var faceSets = new List<FaceSet>(faceSetCount);
             for (int i = 0; i < faceSetCount; i++)
-                faceSets.Add(new FaceSet(br, dataOffset));
+                faceSets.Add(new FaceSet(br, dataOffset, Header.Version));
 
             var vertexBuffers = new List<VertexBuffer>(vertexBufferCount);
             for (int i = 0; i < vertexBufferCount; i++)
@@ -266,7 +267,7 @@ namespace SoulsFormats
             foreach (Mesh mesh in Meshes)
             {
                 for (int i = 0; i < mesh.FaceSets.Count; i++)
-                    mesh.FaceSets[i].Write(bw, faceSetIndex + i);
+                    mesh.FaceSets[i].Write(bw, faceSetIndex + i, Header.Version);
                 faceSetIndex += mesh.FaceSets.Count;
             }
 

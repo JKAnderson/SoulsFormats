@@ -92,22 +92,24 @@ namespace SoulsFormats
                 Indices = indices;
             }
 
-            internal FaceSet(BinaryReaderEx br, int dataOffset)
+            internal FaceSet(BinaryReaderEx br, int dataOffset, int version)
             {
                 Flags = (FSFlags)br.ReadUInt32();
-
                 TriangleStrip = br.ReadBoolean();
                 CullBackfaces = br.ReadBoolean();
                 Unk06 = br.ReadByte();
                 Unk07 = br.ReadBoolean();
-
                 int indexCount = br.ReadInt32();
                 int indicesOffset = br.ReadInt32();
-                br.ReadInt32(); // Indices size
 
-                br.AssertInt32(0);
-                int indexSize = br.AssertInt32(0, 16, 32);
-                br.AssertInt32(0);
+                int indexSize = 16;
+                if (version > 0x20005)
+                {
+                    br.ReadInt32(); // Indices size
+                    br.AssertInt32(0);
+                    indexSize = br.AssertInt32(0, 16, 32);
+                    br.AssertInt32(0);
+                }
 
                 if (indexSize == 0 || indexSize == 16)
                 {
@@ -121,23 +123,24 @@ namespace SoulsFormats
                 }
             }
 
-            internal void Write(BinaryWriterEx bw, int index)
+            internal void Write(BinaryWriterEx bw, int index, int version)
             {
                 int indexSize = Indices.Any(i => i > ushort.MaxValue) ? 32 : 16;
                 bw.WriteUInt32((uint)Flags);
-
                 bw.WriteBoolean(TriangleStrip);
                 bw.WriteBoolean(CullBackfaces);
                 bw.WriteByte(Unk06);
                 bw.WriteBoolean(Unk07);
-
                 bw.WriteInt32(Indices.Count);
                 bw.ReserveInt32($"FaceSetVertices{index}");
-                bw.WriteInt32(Indices.Count * (indexSize / 8));
 
-                bw.WriteInt32(0);
-                bw.WriteInt32(indexSize == 16 ? 16 : indexSize);
-                bw.WriteInt32(0);
+                if (version > 0x20005)
+                {
+                    bw.WriteInt32(Indices.Count * (indexSize / 8));
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(indexSize == 16 ? 16 : indexSize);
+                    bw.WriteInt32(0);
+                }
             }
 
             internal void WriteVertices(BinaryWriterEx bw, int index, int dataStart)
