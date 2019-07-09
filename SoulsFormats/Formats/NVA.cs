@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 
 namespace SoulsFormats
@@ -11,7 +12,7 @@ namespace SoulsFormats
     public class NVA : SoulsFile<NVA>
     {
         /// <summary>
-        /// Version of the format, except it's useless because the sections have individual versions.
+        /// Version of the overall format.
         /// </summary>
         public enum NVAVersion : uint
         {
@@ -62,11 +63,6 @@ namespace SoulsFormats
         public Section7 Entries7 { get; set; }
 
         /// <summary>
-        /// Unknown.
-        /// </summary>
-        public Section8 Entries8 { get; set; }
-
-        /// <summary>
         /// Creates an empty NVA formatted for DS3.
         /// </summary>
         public NVA()
@@ -77,7 +73,6 @@ namespace SoulsFormats
             Entries2 = new Section2();
             Connectors = new ConnectorSection();
             Entries7 = new Section7();
-            Entries8 = new Section8(1);
         }
 
         internal override bool Is(BinaryReaderEx br)
@@ -102,10 +97,14 @@ namespace SoulsFormats
             var connectorPoints = new ConnectorPointSection(br);
             var connectorConditions = new ConnectorConditionSection(br);
             Entries7 = new Section7(br);
+            MapNodeSection mapNodes;
             if (Version == NVAVersion.OldBloodborne)
-                Entries8 = new Section8(1);
+                mapNodes = new MapNodeSection(1);
             else
-                Entries8 = new Section8(br);
+                mapNodes = new MapNodeSection(br);
+
+            foreach (Navmesh navmesh in Navmeshes)
+                navmesh.TakeMapNodes(mapNodes);
 
             foreach (Connector connector in Connectors)
                 connector.TakePointsAndConds(connectorPoints, connectorConditions);
@@ -117,6 +116,10 @@ namespace SoulsFormats
             var connectorConditions = new ConnectorConditionSection();
             foreach (Connector connector in Connectors)
                 connector.GivePointsAndConds(connectorPoints, connectorConditions);
+
+            var mapNodes = new MapNodeSection(Version == NVAVersion.Sekiro ? 2 : 1);
+            foreach (Navmesh navmesh in Navmeshes)
+                navmesh.GiveMapNodes(mapNodes);
 
             bw.BigEndian = false;
             bw.WriteASCII("NVMA");
@@ -133,7 +136,7 @@ namespace SoulsFormats
             connectorConditions.Write(bw, 6);
             Entries7.Write(bw, 7);
             if (Version != NVAVersion.OldBloodborne)
-                Entries8.Write(bw, 8);
+                mapNodes.Write(bw, 8);
 
             bw.FillUInt32("FileSize", (uint)bw.Position);
         }
@@ -259,19 +262,17 @@ namespace SoulsFormats
             public List<int> NameReferenceIDs { get; set; }
 
             /// <summary>
-            /// Unknown.
+            /// Adjacent nodes in an inter-navmesh graph.
             /// </summary>
-            public short Unk48 { get; set; }
-
-            /// <summary>
-            /// Unknown; Pav says it's a count of something.
-            /// </summary>
-            public short Unk4A { get; set; }
+            public List<MapNode> MapNodes { get; set; }
 
             /// <summary>
             /// Unknown
             /// </summary>
             public bool Unk4C { get; set; }
+
+            private short MapNodesIndex;
+            private short MapNodeCount;
 
             /// <summary>
             /// Creates a Navmesh with default values.
@@ -280,6 +281,7 @@ namespace SoulsFormats
             {
                 Scale = Vector3.One;
                 NameReferenceIDs = new List<int>();
+                MapNodes = new List<MapNode>();
             }
 
             internal Navmesh(BinaryReaderEx br, int version)
@@ -296,8 +298,8 @@ namespace SoulsFormats
                 br.AssertInt32(0);
                 VertexCount = br.ReadInt32();
                 int nameRefCount = br.ReadInt32();
-                Unk48 = br.ReadInt16();
-                Unk4A = br.ReadInt16();
+                MapNodesIndex = br.ReadInt16();
+                MapNodeCount = br.ReadInt16();
                 Unk4C = br.AssertInt32(0, 1) == 1;
 
                 if (version < 4)
@@ -318,6 +320,20 @@ namespace SoulsFormats
                 }
             }
 
+            internal void TakeMapNodes(MapNodeSection entries8)
+            {
+                MapNodes = new List<MapNode>(MapNodeCount);
+                for (int i = 0; i < MapNodeCount; i++)
+                    MapNodes.Add(entries8[MapNodesIndex + i]);
+                MapNodeCount = -1;
+
+                foreach (MapNode mapNode in MapNodes)
+                {
+                    if (mapNode.SiblingDistances.Count > MapNodes.Count)
+                        mapNode.SiblingDistances.RemoveRange(MapNodes.Count, mapNode.SiblingDistances.Count - MapNodes.Count);
+                }
+            }
+
             internal void Write(BinaryWriterEx bw, int version, int index)
             {
                 bw.WriteVector3(Position);
@@ -332,8 +348,8 @@ namespace SoulsFormats
                 bw.WriteInt32(0);
                 bw.WriteInt32(VertexCount);
                 bw.WriteInt32(NameReferenceIDs.Count);
-                bw.WriteInt16(Unk48);
-                bw.WriteInt16(Unk4A);
+                bw.WriteInt16(MapNodesIndex);
+                bw.WriteInt16((short)MapNodes.Count);
                 bw.WriteInt32(Unk4C ? 1 : 0);
 
                 if (version < 4)
@@ -362,12 +378,20 @@ namespace SoulsFormats
                 }
             }
 
+            internal void GiveMapNodes(MapNodeSection mapNodes)
+            {
+                // Sometimes when the map node count is 0 the index is also 0,
+                // but usually this is accurate.
+                MapNodesIndex = (short)mapNodes.Count;
+                mapNodes.AddRange(MapNodes);
+            }
+
             /// <summary>
             /// Returns a string representation of the navmesh.
             /// </summary>
             public override string ToString()
             {
-                return $"{NameID} {Position} {Rotation} [{NameReferenceIDs.Count} References]";
+                return $"{NameID} {Position} {Rotation} [{NameReferenceIDs.Count} References] [{MapNodes.Count} MapNodes]";
             }
         }
 
@@ -948,19 +972,19 @@ namespace SoulsFormats
         /// <summary>
         /// Unknown. Version: 1 for BB and DS3, 2 for Sekiro.
         /// </summary>
-        public class Section8 : Section<Entry8>
+        internal class MapNodeSection : Section<MapNode>
         {
             /// <summary>
             /// Creates an empty Section8 with the given version.
             /// </summary>
-            public Section8(int version) : base(version) { }
+            public MapNodeSection(int version) : base(version) { }
 
-            internal Section8(BinaryReaderEx br) : base(br, 8, 1, 2) { }
+            internal MapNodeSection(BinaryReaderEx br) : base(br, 8, 1, 2) { }
 
             internal override void ReadEntries(BinaryReaderEx br, int count)
             {
                 for (int i = 0; i < count; i++)
-                    Add(new Entry8(br, Version));
+                    Add(new MapNode(br, Version));
             }
 
             internal override void WriteEntries(BinaryWriterEx bw)
@@ -976,7 +1000,7 @@ namespace SoulsFormats
         /// <summary>
         /// Unknown.
         /// </summary>
-        public class Entry8
+        public class MapNode
         {
             /// <summary>
             /// Unknown.
@@ -996,7 +1020,7 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public List<short> SubIDs { get; set; }
+            public List<float> SiblingDistances { get; set; }
 
             /// <summary>
             /// Unknown; only present in Sekiro.
@@ -1006,14 +1030,12 @@ namespace SoulsFormats
             /// <summary>
             /// Creates an Entry8 with default values.
             /// </summary>
-            public Entry8()
+            public MapNode()
             {
-                SubIDs = new List<short>(16);
-                for (int i = 0; i < 16; i++)
-                    SubIDs.Add(-1);
+                SiblingDistances = new List<float>();
             }
 
-            internal Entry8(BinaryReaderEx br, int version)
+            internal MapNode(BinaryReaderEx br, int version)
             {
                 Position = br.ReadVector3();
                 Section0Index = br.ReadInt16();
@@ -1021,7 +1043,8 @@ namespace SoulsFormats
 
                 if (version < 2)
                 {
-                    SubIDs = new List<short>(br.ReadInt16s(16));
+                    SiblingDistances = new List<float>(
+                        br.ReadUInt16s(16).Select(s => s == 0xFFFF ? -1 : s * 0.01f));
                 }
                 else
                 {
@@ -1029,7 +1052,8 @@ namespace SoulsFormats
                     Unk14 = br.ReadInt32();
                     int subIDsOffset = br.ReadInt32();
                     br.AssertInt32(0);
-                    SubIDs = new List<short>(br.GetInt16s(subIDsOffset, subIDCount));
+                    SiblingDistances = new List<float>(
+                        br.GetUInt16s(subIDsOffset, subIDCount).Select(s => s == 0xFFFF ? -1 : s * 0.01f));
                 }
             }
 
@@ -1041,13 +1065,18 @@ namespace SoulsFormats
 
                 if (version < 2)
                 {
-                    if (SubIDs.Count != 16)
-                        throw new InvalidDataException("Sub ID count must be 16 in DS3/BB.");
-                    bw.WriteInt16s(SubIDs);
+                    if (SiblingDistances.Count > 16)
+                        throw new InvalidDataException("MapNode distance count must not exceed 16 in DS3/BB.");
+
+                    foreach (float distance in SiblingDistances)
+                        bw.WriteUInt16((ushort)(distance == -1 ? 0xFFFF : Math.Round(distance * 100)));
+
+                    for (int i = 0; i < 16 - SiblingDistances.Count; i++)
+                        bw.WriteUInt16(0xFFFF);
                 }
                 else
                 {
-                    bw.WriteInt32(SubIDs.Count);
+                    bw.WriteInt32(SiblingDistances.Count);
                     bw.WriteInt32(Unk14);
                     bw.ReserveInt32($"SubIDsOffset{index}");
                     bw.WriteInt32(0);
@@ -1059,7 +1088,8 @@ namespace SoulsFormats
                 if (version >= 2)
                 {
                     bw.FillInt32($"SubIDsOffset{index}", (int)bw.Position);
-                    bw.WriteInt16s(SubIDs);
+                    foreach (float distance in SiblingDistances)
+                        bw.WriteUInt16((ushort)(distance == -1 ? 0xFFFF : Math.Round(distance * 100)));
                 }
             }
 
@@ -1068,7 +1098,7 @@ namespace SoulsFormats
             /// </summary>
             public override string ToString()
             {
-                return $"{Position} {Section0Index} {MainID} [{SubIDs.Count} SubIDs]";
+                return $"{Position} {Section0Index} {MainID} [{SiblingDistances.Count} SubIDs]";
             }
         }
     }
