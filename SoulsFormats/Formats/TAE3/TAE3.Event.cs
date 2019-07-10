@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace SoulsFormats
 {
@@ -152,22 +153,16 @@ namespace SoulsFormats
                 EndTime = endTime;
             }
 
-            internal void WriteTime(BinaryWriterEx bw)
+            internal void WriteHeader(BinaryWriterEx bw, int animIndex, int eventIndex, Dictionary<float, long> timeOffsets)
             {
-                bw.WriteSingle(StartTime);
-                bw.WriteSingle(EndTime);
+                bw.WriteInt64(timeOffsets[StartTime]);
+                bw.WriteInt64(timeOffsets[EndTime]);
+                bw.ReserveInt64($"EventDataOffset{animIndex}:{eventIndex}");
             }
 
-            internal void WriteHeader(BinaryWriterEx bw, int i, int j, long timeStart)
+            internal void WriteData(BinaryWriterEx bw, int animIndex, int eventIndex)
             {
-                bw.WriteInt64(timeStart + j * 8);
-                bw.WriteInt64(timeStart + j * 8 + 4);
-                bw.ReserveInt64($"EventDataOffset{i}:{j}");
-            }
-
-            internal void WriteData(BinaryWriterEx bw, int i, int j)
-            {
-                bw.FillInt64($"EventDataOffset{i}:{j}", bw.Position);
+                bw.FillInt64($"EventDataOffset{animIndex}:{eventIndex}", bw.Position);
                 bw.WriteUInt64((ulong)Type);
                 bw.WriteInt64(bw.Position + 8);
                 WriteSpecific(bw);
@@ -1125,6 +1120,9 @@ namespace SoulsFormats
                 {
                     bw.WriteInt32(SoundType);
                     bw.WriteInt32(SoundID);
+                    // After event version 0x10?
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
                 }
             }
 
@@ -1144,6 +1142,7 @@ namespace SoulsFormats
                     SoundID = br.ReadInt32();
                     Unk08 = br.ReadInt32();
                     Unk0C = br.ReadInt32();
+                    // After event version 0x15?
                     Unk10 = br.ReadInt32();
                     br.AssertInt32(0);
                 }

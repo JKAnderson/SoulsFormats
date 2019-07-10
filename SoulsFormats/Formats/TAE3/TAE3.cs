@@ -54,7 +54,7 @@ namespace SoulsFormats
             br.AssertByte(0);
             br.AssertByte(0xFF);
             int version = br.AssertInt32(0x1000C);
-            int fileSize = br.ReadInt32();
+            br.ReadInt32(); // File size
             br.AssertInt64(0x40);
             br.AssertInt64(1);
             br.AssertInt64(0x50);
@@ -66,10 +66,10 @@ namespace SoulsFormats
             ID = br.ReadInt32();
             int animCount = br.ReadInt32();
             long animsOffset = br.ReadInt64();
-            long animGroupsOffset = br.ReadInt64();
+            br.ReadInt64(); // Anim groups offset
             br.AssertInt64(0xA0);
             br.AssertInt64(animCount);
-            long firstAnimOffset = br.ReadInt64();
+            br.ReadInt64(); // First anim offset
             br.AssertInt64(1);
             br.AssertInt64(0x90);
             br.AssertInt32(ID);
@@ -142,12 +142,19 @@ namespace SoulsFormats
 
             Animations.Sort((a1, a2) => a1.ID.CompareTo(a2.ID));
 
-            bw.FillInt64("AnimsOffset", bw.Position);
             var animOffsets = new List<long>(Animations.Count);
-            for (int i = 0; i < Animations.Count; i++)
+            if (Animations.Count == 0)
             {
-                animOffsets.Add(bw.Position);
-                Animations[i].WriteHeader(bw, i);
+                bw.FillInt64("AnimsOffset", 0);
+            }
+            else
+            {
+                bw.FillInt64("AnimsOffset", bw.Position);
+                for (int i = 0; i < Animations.Count; i++)
+                {
+                    animOffsets.Add(bw.Position);
+                    Animations[i].WriteHeader(bw, i);
+                }
             }
 
             bw.FillInt64("AnimGroupsOffset", bw.Position);
@@ -171,24 +178,26 @@ namespace SoulsFormats
             else
                 bw.FillInt64("AnimGroupsOffset", groupStart);
 
-            bw.FillInt64("FirstAnimOffset", bw.Position);
-            for (int i = 0; i < Animations.Count; i++)
-                Animations[i].WriteBody(bw, i);
+            if (Animations.Count == 0)
+            {
+                bw.FillInt64("FirstAnimOffset", 0);
+            }
+            else
+            {
+                bw.FillInt64("FirstAnimOffset", bw.Position);
+                for (int i = 0; i < Animations.Count; i++)
+                    Animations[i].WriteBody(bw, i);
+            }
 
             for (int i = 0; i < Animations.Count; i++)
             {
-                Animations[i].WriteAnimFile(bw, i);
-
-                long timeStart = bw.Position;
-                Animations[i].WriteTimes(bw, i);
-
-                var eventHeaderOffsets = Animations[i].WriteEventHeaders(bw, i, timeStart);
-
-                Animations[i].WriteEventData(bw, i);
-
-                Animations[i].WriteEventGroupHeaders(bw, i);
-
-                Animations[i].WriteEventGroupData(bw, i, eventHeaderOffsets);
+                Animation anim = Animations[i];
+                anim.WriteAnimFile(bw, i);
+                Dictionary<float, long> timeOffsets = anim.WriteTimes(bw, i);
+                List<long> eventHeaderOffsets = anim.WriteEventHeaders(bw, i, timeOffsets);
+                anim.WriteEventData(bw, i);
+                anim.WriteEventGroupHeaders(bw, i);
+                anim.WriteEventGroupData(bw, i, eventHeaderOffsets);
             }
 
             bw.FillInt32("FileSize", (int)bw.Position);
@@ -217,17 +226,17 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk28;
-
-            /// <summary>
-            /// Unknown.
-            /// </summary>
             public bool AnimFileReference;
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int AnimFileUnk18, AnimFileUnk20;
+            public int AnimFileUnk18;
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public int AnimFileUnk1C;
 
             /// <summary>
             /// Unknown.
@@ -242,38 +251,32 @@ namespace SoulsFormats
                 {
                     long eventHeadersOffset = br.ReadInt64();
                     long eventGroupsOffset = br.ReadInt64();
-                    long timesOffset = br.ReadInt64();
+                    br.ReadInt64(); // Times offset
                     long animFileOffset = br.ReadInt64();
                     int eventCount = br.ReadInt32();
                     int eventGroupCount = br.ReadInt32();
-                    Unk28 = br.ReadInt32();
+                    br.ReadInt32(); // Times count
                     br.AssertInt32(0);
 
                     var eventHeaderOffsets = new List<long>(eventCount);
                     Events = new List<Event>(eventCount);
-                    if (eventHeadersOffset != 0)
+                    br.StepIn(eventHeadersOffset);
                     {
-                        br.StepIn(eventHeadersOffset);
+                        for (int i = 0; i < eventCount; i++)
                         {
-                            for (int i = 0; i < eventCount; i++)
-                            {
-                                eventHeaderOffsets.Add(br.Position);
-                                Events.Add(Event.Read(br));
-                            }
+                            eventHeaderOffsets.Add(br.Position);
+                            Events.Add(Event.Read(br));
                         }
-                        br.StepOut();
                     }
+                    br.StepOut();
 
                     EventGroups = new List<EventGroup>(eventGroupCount);
-                    if (eventGroupsOffset != 0)
+                    br.StepIn(eventGroupsOffset);
                     {
-                        br.StepIn(eventGroupsOffset);
-                        {
-                            for (int i = 0; i < eventGroupCount; i++)
-                                EventGroups.Add(new EventGroup(br, eventHeaderOffsets));
-                        }
-                        br.StepOut();
+                        for (int i = 0; i < eventGroupCount; i++)
+                            EventGroups.Add(new EventGroup(br, eventHeaderOffsets));
                     }
+                    br.StepOut();
 
                     br.StepIn(animFileOffset);
                     {
@@ -281,15 +284,19 @@ namespace SoulsFormats
                         br.AssertInt64(br.Position + 8);
                         long animFileNameOffset = br.ReadInt64();
                         AnimFileUnk18 = br.ReadInt32();
-                        // TODO
-                        AnimFileUnk20 = br.ReadInt32();
+                        AnimFileUnk1C = br.ReadInt32();
                         br.AssertInt64(0);
                         br.AssertInt64(0);
 
-                        if (animFileNameOffset < br.Stream.Length)
+                        if (animFileNameOffset < br.Length)
                             AnimFileName = br.GetUTF16(animFileNameOffset);
                         else
-                            AnimFileName = null;
+                            AnimFileName = "";
+                        // When Reference is false, there's always a filename.
+                        // When true, there's usually not, but sometimes there is, and I cannot figure out why.
+                        // Thus, this stupid hack to achieve byte-perfection.
+                        if (!(AnimFileName.EndsWith(".hkt") || AnimFileName.EndsWith(".hkx")))
+                            AnimFileName = "";
                     }
                     br.StepOut();
                 }
@@ -311,7 +318,7 @@ namespace SoulsFormats
                 bw.ReserveInt64($"AnimFileOffset{i}");
                 bw.WriteInt32(Events.Count);
                 bw.WriteInt32(EventGroups.Count);
-                bw.WriteInt32(Unk28);
+                bw.ReserveInt32($"TimesCount{i}");
                 bw.WriteInt32(0);
             }
 
@@ -322,40 +329,59 @@ namespace SoulsFormats
                 bw.WriteInt64(bw.Position + 8);
                 bw.ReserveInt64("AnimFileNameOffset");
                 bw.WriteInt32(AnimFileUnk18);
-                bw.WriteInt32(AnimFileUnk20);
+                bw.WriteInt32(AnimFileUnk1C);
                 bw.WriteInt64(0);
                 bw.WriteInt64(0);
 
                 bw.FillInt64("AnimFileNameOffset", bw.Position);
-                if (AnimFileName != null)
+                if (AnimFileName != "")
                 {
                     bw.WriteUTF16(AnimFileName, true);
                     bw.Pad(0x10);
                 }
             }
 
-            internal void WriteTimes(BinaryWriterEx bw, int i)
+            internal Dictionary<float, long> WriteTimes(BinaryWriterEx bw, int animIndex)
             {
-                bw.FillInt64($"TimesOffset{i}", bw.Position);
-                for (int j = 0; j < Events.Count; j++)
-                    Events[j].WriteTime(bw);
+                var times = new SortedSet<float>();
+                foreach (Event evt in Events)
+                {
+                    times.Add(evt.StartTime);
+                    times.Add(evt.EndTime);
+                }
+                bw.FillInt32($"TimesCount{animIndex}", times.Count);
+
+                if (times.Count == 0)
+                    bw.FillInt64($"TimesOffset{animIndex}", 0);
+                else
+                    bw.FillInt64($"TimesOffset{animIndex}", bw.Position);
+
+                var timeOffsets = new Dictionary<float, long>();
+                foreach (float time in times)
+                {
+                    timeOffsets[time] = bw.Position;
+                    bw.WriteSingle(time);
+                }
+                bw.Pad(0x10);
+
+                return timeOffsets;
             }
 
-            internal List<long> WriteEventHeaders(BinaryWriterEx bw, int i, long timeStart)
+            internal List<long> WriteEventHeaders(BinaryWriterEx bw, int animIndex, Dictionary<float, long> timeOffsets)
             {
                 var eventHeaderOffsets = new List<long>(Events.Count);
                 if (Events.Count > 0)
                 {
-                    bw.FillInt64($"EventHeadersOffset{i}", bw.Position);
-                    for (int j = 0; j < Events.Count; j++)
+                    bw.FillInt64($"EventHeadersOffset{animIndex}", bw.Position);
+                    for (int i = 0; i < Events.Count; i++)
                     {
                         eventHeaderOffsets.Add(bw.Position);
-                        Events[j].WriteHeader(bw, i, j, timeStart);
+                        Events[i].WriteHeader(bw, animIndex, i, timeOffsets);
                     }
                 }
                 else
                 {
-                    bw.FillInt64($"EventHeadersOffset{i}", 0);
+                    bw.FillInt64($"EventHeadersOffset{animIndex}", 0);
                 }
                 return eventHeaderOffsets;
             }
