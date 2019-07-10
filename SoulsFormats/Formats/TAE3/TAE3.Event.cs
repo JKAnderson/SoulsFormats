@@ -1114,15 +1114,17 @@ namespace SoulsFormats
                 {
                     SoundType = br.ReadInt32();
                     SoundID = br.ReadInt32();
+                    // After event version 0x10?
+                    //br.AssertInt32(0);
+                    //br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(SoundType);
                     bw.WriteInt32(SoundID);
-                    // After event version 0x10?
-                    bw.WriteInt32(0);
-                    bw.WriteInt32(0);
+                    //bw.WriteInt32(0);
+                    //bw.WriteInt32(0);
                 }
             }
 
