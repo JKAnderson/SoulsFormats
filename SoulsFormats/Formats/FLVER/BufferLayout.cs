@@ -29,8 +29,16 @@ namespace SoulsFormats
                 int memberOffset = br.ReadInt32();
 
                 br.StepIn(memberOffset);
-                for (int i = 0; i < memberCount; i++)
-                    Add(new Member(br));
+                {
+                    int structOffset = 0;
+                    Capacity = memberCount;
+                    for (int i = 0; i < memberCount; i++)
+                    {
+                        var member = new Member(br, structOffset);
+                        structOffset += member.Size;
+                        Add(member);
+                    }
+                }
                 br.StepOut();
             }
 
@@ -125,10 +133,10 @@ namespace SoulsFormats
                     Index = index;
                 }
 
-                internal Member(BinaryReaderEx br)
+                internal Member(BinaryReaderEx br, int structOffset)
                 {
                     Unk00 = br.AssertInt32(0, 1, 2);
-                    br.ReadInt32(); // Struct offset
+                    br.AssertInt32(structOffset);
                     Type = br.ReadEnum32<MemberType>();
                     Semantic = br.ReadEnum32<MemberSemantic>();
                     Index = br.ReadInt32();
