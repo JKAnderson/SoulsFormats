@@ -15,6 +15,130 @@ namespace SoulsFormats
     public static class SFUtil
     {
         /// <summary>
+        /// Guesses the extension of a file based on its contents.
+        /// </summary>
+        public static string GuessExtension(byte[] bytes, bool bigEndian = false)
+        {
+            bool dcx = false;
+            if (DCX.Is(bytes))
+            {
+                dcx = true;
+                bytes = DCX.Decompress(bytes);
+            }
+
+            bool checkMsb(BinaryReaderEx br)
+            {
+                if (br.Length < 8)
+                    return false;
+
+                int offset = br.GetInt32(4);
+                if (offset < 0 || offset >= br.Length - 1)
+                    return false;
+
+                try
+                {
+                    return br.GetASCII(offset) == "MODEL_PARAM_ST";
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
+            bool checkParam(BinaryReaderEx br)
+            {
+                if (br.Length < 0x2C)
+                    return false;
+
+                string param = br.GetASCII(0xC, 0x20);
+                return Regex.IsMatch(param, "^[^\0]+\0 *$");
+            }
+
+            bool checkTdf(BinaryReaderEx br)
+            {
+                if (br.Length < 4)
+                    return false;
+
+                if (br.GetASCII(0, 1) != "\"")
+                    return false;
+
+                for (int i = 1; i < br.Length; i++)
+                {
+                    if (br.GetASCII(i, 1) == "\"")
+                    {
+                        return i < br.Length - 2 && br.GetASCII(i + 1, 2) == "\r\n";
+                    }
+                }
+                return false;
+            }
+
+            string ext = "";
+            using (var ms = new MemoryStream(bytes))
+            {
+                var br = new BinaryReaderEx(bigEndian, ms);
+                if (br.Length >= 4 && br.GetASCII(0, 4) == "AISD")
+                    ext = ".aisd";
+                else if (br.Length >= 4 && (br.GetASCII(0, 4) == "BDF3" || br.GetASCII(0, 4) == "BDF4"))
+                    ext = ".bdt";
+                else if (br.Length >= 4 && (br.GetASCII(0, 4) == "BHF3" || br.GetASCII(0, 4) == "BHF4"))
+                    ext = ".bhd";
+                else if (br.Length >= 4 && (br.GetASCII(0, 4) == "BND3" || br.GetASCII(0, 4) == "BND4"))
+                    ext = ".bnd";
+                else if (br.Length >= 4 && br.GetASCII(0, 4) == "DDS ")
+                    ext = ".dds";
+                // ESD or FFX
+                else if (br.Length >= 4 && br.GetASCII(0, 4).ToUpper() == "DLSE")
+                    ext = ".dlse";
+                else if (br.Length >= 4 && (bigEndian && br.GetASCII(0, 4) == "\0BRD" || !bigEndian && br.GetASCII(0, 4) == "DRB\0"))
+                    ext = ".drb";
+                else if (br.Length >= 4 && br.GetASCII(0, 4) == "ENFL")
+                    ext = ".entryfilelist";
+                else if (br.Length >= 4 && br.GetASCII(0, 4).ToUpper() == "FSSL")
+                    ext = ".esd";
+                else if (br.Length >= 3 && br.GetASCII(0, 3) == "FEV" || br.Length >= 0x10 && br.GetASCII(8, 8) == "FEV FMT ")
+                    ext = ".fev";
+                else if (br.Length >= 6 && br.GetASCII(0, 6) == "FLVER\0")
+                    ext = ".flver";
+                else if (br.Length >= 3 && br.GetASCII(0, 3) == "FSB")
+                    ext = ".fsb";
+                else if (br.Length >= 3 && br.GetASCII(0, 3) == "GFX")
+                    ext = ".gfx";
+                else if (br.Length >= 0x19 && br.GetASCII(0xC, 0xE) == "ITLIMITER_INFO")
+                    ext = ".itl";
+                else if (br.Length >= 4 && br.GetASCII(1, 3) == "Lua")
+                    ext = ".lua";
+                else if (checkMsb(br))
+                    ext = ".msb";
+                else if (br.Length >= 0x30 && br.GetASCII(0x2C, 4) == "MTD ")
+                    ext = ".mtd";
+                else if (checkParam(br))
+                    ext = ".param";
+                else if (br.Length >= 4 && br.GetASCII(1, 3) == "PNG")
+                    ext = ".png";
+                else if (br.Length >= 0x2C && br.GetASCII(0x28, 4) == "SIB ")
+                    ext = ".sib";
+                else if (br.Length >= 4 && br.GetASCII(0, 4) == "TAE ")
+                    ext = ".tae";
+                else if (checkTdf(br))
+                    ext = ".tdf";
+                else if (br.Length >= 4 && br.GetASCII(0, 4) == "TPF\0")
+                    ext = ".tpf";
+                else if (br.Length >= 4 && br.GetASCII(0, 4) == "#BOM")
+                    ext = ".txt";
+                else if (br.Length >= 5 && br.GetASCII(0, 5) == "<?xml")
+                    ext = ".xml";
+                // This is pretty sketchy
+                else if (br.Length >= 0xC && br.GetByte(0) == 0 && br.GetByte(3) == 0 && br.GetInt32(4) == br.Length && br.GetInt16(0xA) == 0)
+                    ext = ".fmg";
+            }
+
+            if (dcx)
+                return ext + ".dcx";
+            else
+                return ext;
+        }
+
+        /// <summary>
         /// Reverses the order of bits in a byte, probably very inefficiently.
         /// </summary>
         public static byte ReverseBits(byte value)
