@@ -12,7 +12,12 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public List<Member> Members1, Members2;
+            public List<Member> Members1 { get; set; }
+            
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public List<Member> Members2 { get; set; }
 
             /// <summary>
             /// Creates an empty SekiroUnkStruct.
@@ -86,7 +91,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown; seems to just count up from 0.
                 /// </summary>
-                public int Index;
+                public int Index { get; set; }
 
                 /// <summary>
                 /// Creates a Member with default values.

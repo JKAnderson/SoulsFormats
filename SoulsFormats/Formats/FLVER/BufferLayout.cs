@@ -57,27 +57,27 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int Unk00;
+                public int Unk00 { get; set; }
 
                 /// <summary>
                 /// Offset of this member from the start of a vertex struct.
                 /// </summary>
-                public int StructOffset;
+                public int StructOffset { get; set; }
 
                 /// <summary>
                 /// Format used to store this member.
                 /// </summary>
-                public MemberType Type;
+                public MemberType Type { get; set; }
 
                 /// <summary>
                 /// Vertex property being stored.
                 /// </summary>
-                public MemberSemantic Semantic;
+                public MemberSemantic Semantic { get; set; }
 
                 /// <summary>
                 /// For semantics that may appear more than once such as UVs, which one this member is.
                 /// </summary>
-                public int Index;
+                public int Index { get; set; }
 
                 /// <summary>
                 /// The size of this member's ValueType, in bytes.

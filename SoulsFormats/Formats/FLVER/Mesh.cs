@@ -15,47 +15,42 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public bool Dynamic;
+            public bool Dynamic { get; set; }
 
             /// <summary>
             /// Index of the material used by all triangles in this mesh.
             /// </summary>
-            public int MaterialIndex;
+            public int MaterialIndex { get; set; }
 
             /// <summary>
             /// Apparently does nothing. Usually points to a dummy bone named after the model, possibly just for labelling.
             /// </summary>
-            public int DefaultBoneIndex;
+            public int DefaultBoneIndex { get; set; }
 
             /// <summary>
             /// Indexes of bones in the bone collection which may be used by vertices in this mesh.
             /// </summary>
-            public List<int> BoneIndices;
+            public List<int> BoneIndices { get; set; }
 
             /// <summary>
             /// Triangles in this mesh.
             /// </summary>
-            public List<FaceSet> FaceSets;
+            public List<FaceSet> FaceSets { get; set; }
 
             /// <summary>
             /// Vertex buffers in this mesh.
             /// </summary>
-            public List<VertexBuffer> VertexBuffers;
+            public List<VertexBuffer> VertexBuffers { get; set; }
 
             /// <summary>
             /// Vertices in this mesh.
             /// </summary>
-            public List<Vertex> Vertices;
+            public List<Vertex> Vertices { get; set; }
 
             /// <summary>
             /// Optional bounding box struct; may be null.
             /// </summary>
             public BoundingBoxes BoundingBox { get; set; }
-
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public int Unk1;
 
             private int[] faceSetIndices, vertexBufferIndices;
 

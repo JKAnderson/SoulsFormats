@@ -12,17 +12,17 @@ namespace SoulsFormats
             /// <summary>
             /// Index of this buffer for meshes with vertex data split into two layouts for whatever reason.
             /// </summary>
-            public int BufferIndex;
+            public int BufferIndex { get; set; }
 
             /// <summary>
             /// Index to a layout in the FLVER's layout collection.
             /// </summary>
-            public int LayoutIndex;
+            public int LayoutIndex { get; set; }
 
             /// <summary>
             /// Size of the data for each vertex; -1 means it matches the buffer layout size, which it should, but often doesn't in DSR.
             /// </summary>
-            public int VertexSize;
+            public int VertexSize { get; set; }
 
             internal int VertexCount;
 

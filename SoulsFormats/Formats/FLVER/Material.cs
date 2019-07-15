@@ -13,32 +13,32 @@ namespace SoulsFormats
             /// <summary>
             /// Identifies the mesh that uses this material, may include keywords that determine hideable parts.
             /// </summary>
-            public string Name;
+            public string Name { get; set; }
 
             /// <summary>
             /// Virtual path to an MTD file.
             /// </summary>
-            public string MTD;
+            public string MTD { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Flags;
+            public int Flags { get; set; }
 
             /// <summary>
             /// Textures used by this material.
             /// </summary>
-            public List<Texture> Textures;
+            public List<Texture> Textures { get; set; }
 
             /// <summary>
             /// Index to the flver's list of GX lists.
             /// </summary>
-            public int GXIndex;
+            public int GXIndex { get; set; }
 
             /// <summary>
             /// Unknown; only used in Sekiro.
             /// </summary>
-            public int Unk18;
+            public int Unk18 { get; set; }
 
             private int textureIndex, textureCount;
 

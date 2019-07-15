@@ -410,57 +410,57 @@ namespace SoulsFormats
             /// <summary>
             /// If true FLVER will be written big-endian, if false little-endian.
             /// </summary>
-            public bool BigEndian;
+            public bool BigEndian { get; set; }
 
             /// <summary>
             /// Exact meaning unknown.
             /// </summary>
-            public int Version;
+            public int Version { get; set; }
 
             /// <summary>
             /// Minimum extent of the entire model.
             /// </summary>
-            public Vector3 BoundingBoxMin;
+            public Vector3 BoundingBoxMin { get; set; }
 
             /// <summary>
             /// Maximum extent of the entire model.
             /// </summary>
-            public Vector3 BoundingBoxMax;
+            public Vector3 BoundingBoxMax { get; set; }
 
             /// <summary>
             /// Unknown; seems close to vertex or edge count.
             /// </summary>
-            public int Unk40;
+            public int Unk40 { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public byte VertexIndicesSize;
+            public byte VertexIndicesSize { get; set; }
 
             /// <summary>
             /// If true strings are UTF-16, if false Shift-JIS.
             /// </summary>
-            public bool Unicode;
+            public bool Unicode { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public bool Unk4A;
+            public bool Unk4A { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public short Unk4E;
+            public short Unk4E { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public byte Unk5C;
+            public byte Unk5C { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk68;
+            public int Unk68 { get; set; }
 
             /// <summary>
             /// Creates a FLVERHeader with default values.
