@@ -45,8 +45,12 @@ namespace SoulsFormats
             internal void WriteMembers(BinaryWriterEx bw, int index)
             {
                 bw.FillInt32($"VertexStructLayout{index}", (int)bw.Position);
+                int structOffset = 0;
                 foreach (Member member in this)
-                    member.Write(bw);
+                {
+                    member.Write(bw, structOffset);
+                    structOffset += member.Size;
+                }
             }
 
             /// <summary>
@@ -58,11 +62,6 @@ namespace SoulsFormats
                 /// Unknown.
                 /// </summary>
                 public int Unk00 { get; set; }
-
-                /// <summary>
-                /// Offset of this member from the start of a vertex struct.
-                /// </summary>
-                public int StructOffset { get; set; }
 
                 /// <summary>
                 /// Format used to store this member.
@@ -118,10 +117,9 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new Member with the specified values.
                 /// </summary>
-                public Member(int unk00, int structOffset, MemberType type, MemberSemantic semantic, int index)
+                public Member(int unk00, MemberType type, MemberSemantic semantic, int index)
                 {
                     Unk00 = unk00;
-                    StructOffset = structOffset;
                     Type = type;
                     Semantic = semantic;
                     Index = index;
@@ -130,16 +128,16 @@ namespace SoulsFormats
                 internal Member(BinaryReaderEx br)
                 {
                     Unk00 = br.AssertInt32(0, 1, 2);
-                    StructOffset = br.ReadInt32();
+                    br.ReadInt32(); // Struct offset
                     Type = br.ReadEnum32<MemberType>();
                     Semantic = br.ReadEnum32<MemberSemantic>();
                     Index = br.ReadInt32();
                 }
 
-                internal void Write(BinaryWriterEx bw)
+                internal void Write(BinaryWriterEx bw, int structOffset)
                 {
                     bw.WriteInt32(Unk00);
-                    bw.WriteInt32(StructOffset);
+                    bw.WriteInt32(structOffset);
                     bw.WriteUInt32((uint)Type);
                     bw.WriteUInt32((uint)Semantic);
                     bw.WriteInt32(Index);
