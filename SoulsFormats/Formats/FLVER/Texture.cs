@@ -1,4 +1,6 @@
-﻿namespace SoulsFormats
+﻿using System.Numerics;
+
+namespace SoulsFormats
 {
     public partial class FLVER
     {
@@ -10,37 +12,42 @@
             /// <summary>
             /// The type of texture this is, corresponding to the entries in the MTD.
             /// </summary>
-            public string Type;
+            public string Type { get; set; }
 
             /// <summary>
-            /// The virtual path to the texture file to use.
+            /// Network path to the texture file to use.
             /// </summary>
-            public string Path;
-
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public float ScaleX;
+            public string Path { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public float ScaleY;
+            public Vector2 Scale { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public byte Unk10;
+            public byte Unk10 { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public bool Unk11;
+            public bool Unk11 { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk14, Unk18, Unk1C;
+            public int Unk14 { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public int Unk18 { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public int Unk1C { get; set; }
 
             /// <summary>
             /// Creates a Texture with default values.
@@ -49,19 +56,17 @@
             {
                 Type = "";
                 Path = "";
-                ScaleX = 1;
-                ScaleY = 1;
+                Scale = Vector2.One;
             }
 
             /// <summary>
             /// Creates a new Texture with the specified values.
             /// </summary>
-            public Texture(string type, string path, float scaleX, float scaleY, byte unk10, bool unk11, int unk14, int unk18, int unk1C)
+            public Texture(string type, string path, Vector2 scale, byte unk10, bool unk11, int unk14, int unk18, int unk1C)
             {
                 Type = type;
                 Path = path;
-                ScaleX = scaleX;
-                ScaleY = scaleY;
+                Scale = scale;
                 Unk10 = unk10;
                 Unk11 = unk11;
                 Unk14 = unk14;
@@ -73,8 +78,7 @@
             {
                 int pathOffset = br.ReadInt32();
                 int typeOffset = br.ReadInt32();
-                ScaleX = br.ReadSingle();
-                ScaleY = br.ReadSingle();
+                Scale = br.ReadVector2();
 
                 Unk10 = br.AssertByte(0, 1, 2);
                 Unk11 = br.ReadBoolean();
@@ -101,8 +105,7 @@
             {
                 bw.ReserveInt32($"TexturePath{index}");
                 bw.ReserveInt32($"TextureType{index}");
-                bw.WriteSingle(ScaleX);
-                bw.WriteSingle(ScaleY);
+                bw.WriteVector2(Scale);
 
                 bw.WriteByte(Unk10);
                 bw.WriteBoolean(Unk11);
