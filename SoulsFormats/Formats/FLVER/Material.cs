@@ -66,7 +66,7 @@ namespace SoulsFormats
                 Unk18 = 0;
             }
 
-            internal Material(BinaryReaderEx br, List<List<GXItem>> gxLists, Dictionary<int, int> gxListIndices)
+            internal Material(BinaryReaderEx br, FLVERHeader header, List<List<GXItem>> gxLists, Dictionary<int, int> gxListIndices)
             {
                 int nameOffset = br.ReadInt32();
                 int mtdOffset = br.ReadInt32();
@@ -77,8 +77,16 @@ namespace SoulsFormats
                 Unk18 = br.ReadInt32();
                 br.AssertInt32(0);
 
-                Name = br.GetUTF16(nameOffset);
-                MTD = br.GetUTF16(mtdOffset);
+                if (header.Unicode)
+                {
+                    Name = br.GetUTF16(nameOffset);
+                    MTD = br.GetUTF16(mtdOffset);
+                }
+                else
+                {
+                    Name = br.GetShiftJIS(nameOffset);
+                    MTD = br.GetShiftJIS(mtdOffset);
+                }
 
                 if (gxOffset == 0)
                 {
@@ -140,9 +148,22 @@ namespace SoulsFormats
             {
                 bw.FillInt32($"TextureIndex{index}", textureIndex);
                 for (int i = 0; i < Textures.Count; i++)
-                {
                     Textures[i].Write(bw, textureIndex + i);
-                }
+            }
+
+            internal void WriteStrings(BinaryWriterEx bw, FLVERHeader header, int index)
+            {
+                bw.FillInt32($"MaterialName{index}", (int)bw.Position);
+                if (header.Unicode)
+                    bw.WriteUTF16(Name, true);
+                else
+                    bw.WriteShiftJIS(Name, true);
+
+                bw.FillInt32($"MaterialMTD{index}", (int)bw.Position);
+                if (header.Unicode)
+                    bw.WriteUTF16(MTD, true);
+                else
+                    bw.WriteShiftJIS(MTD, true);
             }
 
             /// <summary>

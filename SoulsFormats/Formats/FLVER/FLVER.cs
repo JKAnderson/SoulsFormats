@@ -86,7 +86,7 @@ namespace SoulsFormats
 
             // Gundam Unicorn: 0x20005, 0x2000E
             // DS1: 2000C, 2000D
-            // DS2: 20009, 20010
+            // DS2: 20010, 20009 (armor 9320)
             // SFS: 20010
             // BB:  20013, 20014
             // DS3: 20013, 20014
@@ -108,7 +108,7 @@ namespace SoulsFormats
             br.ReadInt32(); // Total face count
 
             Header.VertexIndicesSize = br.AssertByte(0x00, 0x10);
-            br.AssertBoolean(true);
+            Header.Unicode = br.ReadBoolean();
             Header.Unk4A = br.ReadBoolean();
             br.AssertByte(0);
 
@@ -131,17 +131,17 @@ namespace SoulsFormats
 
             Dummies = new List<Dummy>(dummyCount);
             for (int i = 0; i < dummyCount; i++)
-                Dummies.Add(new Dummy(br));
+                Dummies.Add(new Dummy(br, Header.Version));
 
             Materials = new List<Material>(materialCount);
             var gxListIndices = new Dictionary<int, int>();
             GXLists = new List<List<GXItem>>();
             for (int i = 0; i < materialCount; i++)
-                Materials.Add(new Material(br, GXLists, gxListIndices));
+                Materials.Add(new Material(br, Header, GXLists, gxListIndices));
 
             Bones = new List<Bone>(boneCount);
             for (int i = 0; i < boneCount; i++)
-                Bones.Add(new Bone(br));
+                Bones.Add(new Bone(br, Header));
 
             Meshes = new List<Mesh>(meshCount);
             for (int i = 0; i < meshCount; i++)
@@ -161,7 +161,7 @@ namespace SoulsFormats
 
             var textures = new List<Texture>(textureCount);
             for (int i = 0; i < textureCount; i++)
-                textures.Add(new Texture(br));
+                textures.Add(new Texture(br, Header));
 
             if (Header.Version >= 0x2001A)
                 SekiroUnk = new SekiroUnkStruct(br);
@@ -223,7 +223,7 @@ namespace SoulsFormats
             bw.WriteInt32(totalFaceCount);
 
             bw.WriteByte(Header.VertexIndicesSize);
-            bw.WriteBoolean(true);
+            bw.WriteBoolean(Header.Unicode);
             bw.WriteBoolean(Header.Unk4A);
             bw.WriteByte(0);
 
@@ -252,7 +252,7 @@ namespace SoulsFormats
             bw.WriteInt32(0);
 
             foreach (Dummy dummy in Dummies)
-                dummy.Write(bw);
+                dummy.Write(bw, Header.Version);
 
             for (int i = 0; i < Materials.Count; i++)
                 Materials[i].Write(bw, i);
@@ -347,27 +347,16 @@ namespace SoulsFormats
             for (int i = 0; i < Materials.Count; i++)
             {
                 Material material = Materials[i];
-                bw.FillInt32($"MaterialName{i}", (int)bw.Position);
-                bw.WriteUTF16(material.Name, true);
-                bw.FillInt32($"MaterialMTD{i}", (int)bw.Position);
-                bw.WriteUTF16(material.MTD, true);
+                material.WriteStrings(bw, Header, i);
 
                 for (int j = 0; j < material.Textures.Count; j++)
-                {
-                    bw.FillInt32($"TexturePath{textureIndex + j}", (int)bw.Position);
-                    bw.WriteUTF16(material.Textures[j].Path, true);
-                    bw.FillInt32($"TextureType{textureIndex + j}", (int)bw.Position);
-                    bw.WriteUTF16(material.Textures[j].Type, true);
-                }
+                    material.Textures[j].WriteStrings(bw, Header, textureIndex + j);
                 textureIndex += material.Textures.Count;
             }
 
             bw.Pad(0x10);
             for (int i = 0; i < Bones.Count; i++)
-            {
-                bw.FillInt32($"BoneName{i}", (int)bw.Position);
-                bw.WriteUTF16(Bones[i].Name, true);
-            }
+                Bones[i].WriteStrings(bw, Header, i);
 
             bw.Pad(0x10);
             int dataStart = (int)bw.Position;
@@ -440,6 +429,11 @@ namespace SoulsFormats
             public byte VertexIndicesSize;
 
             /// <summary>
+            /// If true strings are UTF-16, if false Shift-JIS.
+            /// </summary>
+            public bool Unicode;
+
+            /// <summary>
             /// Unknown.
             /// </summary>
             public bool Unk4A;
@@ -466,6 +460,7 @@ namespace SoulsFormats
             {
                 BigEndian = false;
                 Version = 0x20014;
+                Unicode = true;
             }
         }
     }

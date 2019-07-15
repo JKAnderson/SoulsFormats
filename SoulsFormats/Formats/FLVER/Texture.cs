@@ -69,7 +69,7 @@
                 Unk1C = unk1C;
             }
 
-            internal Texture(BinaryReaderEx br)
+            internal Texture(BinaryReaderEx br, FLVERHeader header)
             {
                 int pathOffset = br.ReadInt32();
                 int typeOffset = br.ReadInt32();
@@ -85,8 +85,16 @@
                 Unk18 = br.ReadInt32();
                 Unk1C = br.ReadInt32();
 
-                Type = br.GetUTF16(typeOffset);
-                Path = br.GetUTF16(pathOffset);
+                if (header.Unicode)
+                {
+                    Type = br.GetUTF16(typeOffset);
+                    Path = br.GetUTF16(pathOffset);
+                }
+                else
+                {
+                    Type = br.GetShiftJIS(typeOffset);
+                    Path = br.GetShiftJIS(pathOffset);
+                }
             }
 
             internal void Write(BinaryWriterEx bw, int index)
@@ -104,6 +112,21 @@
                 bw.WriteInt32(Unk14);
                 bw.WriteInt32(Unk18);
                 bw.WriteInt32(Unk1C);
+            }
+
+            internal void WriteStrings(BinaryWriterEx bw, FLVERHeader header, int index)
+            {
+                bw.FillInt32($"TexturePath{index}", (int)bw.Position);
+                if (header.Unicode)
+                    bw.WriteUTF16(Path, true);
+                else
+                    bw.WriteShiftJIS(Path, true);
+
+                bw.FillInt32($"TextureType{index}", (int)bw.Position);
+                if (header.Unicode)
+                    bw.WriteUTF16(Type, true);
+                else
+                    bw.WriteShiftJIS(Type, true);
             }
 
             /// <summary>

@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Drawing;
+using System.Numerics;
 
 namespace SoulsFormats
 {
@@ -42,13 +43,13 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk0C;
+            public Color Color;
 
             /// <summary>
             /// Unknown.
             /// </summary>
             public bool Flag1;
-            
+
             /// <summary>
             /// If false, the upward vector is not read.
             /// </summary>
@@ -73,10 +74,15 @@ namespace SoulsFormats
                 AttachBoneIndex = -1;
             }
 
-            internal Dummy(BinaryReaderEx br)
+            internal Dummy(BinaryReaderEx br, int version)
             {
                 Position = br.ReadVector3();
-                Unk0C = br.ReadInt32();
+                byte[] color = br.ReadBytes(4);
+                // Not certain about the ordering of RGB here
+                if (version == 0x20010)
+                    Color = Color.FromArgb(color[3], color[2], color[1], color[0]);
+                else
+                    Color = Color.FromArgb(color[0], color[1], color[2], color[3]);
                 Forward = br.ReadVector3();
                 ReferenceID = br.ReadInt16();
                 DummyBoneIndex = br.ReadInt16();
@@ -90,10 +96,23 @@ namespace SoulsFormats
                 br.AssertInt32(0);
             }
 
-            internal void Write(BinaryWriterEx bw)
+            internal void Write(BinaryWriterEx bw, int version)
             {
                 bw.WriteVector3(Position);
-                bw.WriteInt32(Unk0C);
+                if (version == 0x20010)
+                {
+                    bw.WriteByte(Color.B);
+                    bw.WriteByte(Color.G);
+                    bw.WriteByte(Color.R);
+                    bw.WriteByte(Color.A);
+                }
+                else
+                {
+                    bw.WriteByte(Color.A);
+                    bw.WriteByte(Color.R);
+                    bw.WriteByte(Color.G);
+                    bw.WriteByte(Color.B);
+                }
                 bw.WriteVector3(Forward);
                 bw.WriteInt16(ReferenceID);
                 bw.WriteInt16(DummyBoneIndex);

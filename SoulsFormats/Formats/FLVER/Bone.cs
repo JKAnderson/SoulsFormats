@@ -77,7 +77,7 @@ namespace SoulsFormats
                 Scale = Vector3.One;
             }
 
-            internal Bone(BinaryReaderEx br)
+            internal Bone(BinaryReaderEx br, FLVERHeader header)
             {
                 Translation = br.ReadVector3();
                 int nameOffset = br.ReadInt32();
@@ -90,22 +90,12 @@ namespace SoulsFormats
                 BoundingBoxMin = br.ReadVector3();
                 Unk3C = br.ReadInt32();
                 BoundingBoxMax = br.ReadVector3();
+                br.AssertPattern(0x34, 0x00);
 
-                br.AssertInt32(0);
-                br.AssertInt32(0);
-                br.AssertInt32(0);
-                br.AssertInt32(0);
-                br.AssertInt32(0);
-                br.AssertInt32(0);
-                br.AssertInt32(0);
-                br.AssertInt32(0);
-                br.AssertInt32(0);
-                br.AssertInt32(0);
-                br.AssertInt32(0);
-                br.AssertInt32(0);
-                br.AssertInt32(0);
-
-                Name = br.GetUTF16(nameOffset);
+                if (header.Unicode)
+                    Name = br.GetUTF16(nameOffset);
+                else
+                    Name = br.GetShiftJIS(nameOffset);
             }
 
             internal void Write(BinaryWriterEx bw, int index)
@@ -121,20 +111,16 @@ namespace SoulsFormats
                 bw.WriteVector3(BoundingBoxMin);
                 bw.WriteInt32(Unk3C);
                 bw.WriteVector3(BoundingBoxMax);
+                bw.WritePattern(0x34, 0x00);
+            }
 
-                bw.WriteInt32(0);
-                bw.WriteInt32(0);
-                bw.WriteInt32(0);
-                bw.WriteInt32(0);
-                bw.WriteInt32(0);
-                bw.WriteInt32(0);
-                bw.WriteInt32(0);
-                bw.WriteInt32(0);
-                bw.WriteInt32(0);
-                bw.WriteInt32(0);
-                bw.WriteInt32(0);
-                bw.WriteInt32(0);
-                bw.WriteInt32(0);
+            internal void WriteStrings(BinaryWriterEx bw, FLVERHeader header, int index)
+            {
+                bw.FillInt32($"BoneName{index}", (int)bw.Position);
+                if (header.Unicode)
+                    bw.WriteUTF16(Name, true);
+                else
+                    bw.WriteShiftJIS(Name, true);
             }
 
             /// <summary>
