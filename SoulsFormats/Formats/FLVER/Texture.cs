@@ -37,17 +37,17 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk14 { get; set; }
+            public float Unk14 { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk18 { get; set; }
+            public float Unk18 { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk1C { get; set; }
+            public float Unk1C { get; set; }
 
             /// <summary>
             /// Creates a Texture with default values.
@@ -62,7 +62,7 @@ namespace SoulsFormats
             /// <summary>
             /// Creates a new Texture with the specified values.
             /// </summary>
-            public Texture(string type, string path, Vector2 scale, byte unk10, bool unk11, int unk14, int unk18, int unk1C)
+            public Texture(string type, string path, Vector2 scale, byte unk10, bool unk11, int unk14, int unk18, float unk1C)
             {
                 Type = type;
                 Path = path;
@@ -85,9 +85,9 @@ namespace SoulsFormats
                 br.AssertByte(0);
                 br.AssertByte(0);
 
-                Unk14 = br.ReadInt32();
-                Unk18 = br.ReadInt32();
-                Unk1C = br.ReadInt32();
+                Unk14 = br.ReadSingle();
+                Unk18 = br.ReadSingle();
+                Unk1C = br.ReadSingle();
 
                 if (header.Unicode)
                 {
@@ -112,9 +112,9 @@ namespace SoulsFormats
                 bw.WriteByte(0);
                 bw.WriteByte(0);
 
-                bw.WriteInt32(Unk14);
-                bw.WriteInt32(Unk18);
-                bw.WriteInt32(Unk1C);
+                bw.WriteSingle(Unk14);
+                bw.WriteSingle(Unk18);
+                bw.WriteSingle(Unk1C);
             }
 
             internal void WriteStrings(BinaryWriterEx bw, FLVERHeader header, int index)

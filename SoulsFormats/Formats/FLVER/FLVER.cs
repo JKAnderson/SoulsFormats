@@ -119,7 +119,11 @@ namespace SoulsFormats
             int bufferLayoutCount = br.ReadInt32();
             int textureCount = br.ReadInt32();
 
-            Header.Unk5C = br.ReadInt32();
+            Header.Unk5C = br.ReadByte();
+            br.AssertByte(0);
+            br.AssertByte(0);
+            br.AssertByte(0);
+
             br.AssertInt32(0);
             br.AssertInt32(0);
             Header.Unk68 = br.AssertInt32(0, 1, 2, 3, 4);
@@ -241,7 +245,12 @@ namespace SoulsFormats
             foreach (Material material in Materials)
                 textureCount += material.Textures.Count;
             bw.WriteInt32(textureCount);
-            bw.WriteInt32(Header.Unk5C);
+
+            bw.WriteByte(Header.Unk5C);
+            bw.WriteByte(0);
+            bw.WriteByte(0);
+            bw.WriteByte(0);
+
             bw.WriteInt32(0);
             bw.WriteInt32(0);
             bw.WriteInt32(Header.Unk68);
@@ -446,7 +455,7 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk5C;
+            public byte Unk5C;
 
             /// <summary>
             /// Unknown.
