@@ -198,12 +198,18 @@ namespace SoulsFormats
 
         private static bool IsBHD(BinaryReaderEx br)
         {
+            if (br.Length < 4)
+                return false;
+
             string magic = br.GetASCII(0, 4);
             return magic == "BHF3";
         }
 
         private static bool IsBDT(BinaryReaderEx br)
         {
+            if (br.Length < 4)
+                return false;
+
             string magic = br.GetASCII(0, 4);
             return magic == "BDF3";
         }

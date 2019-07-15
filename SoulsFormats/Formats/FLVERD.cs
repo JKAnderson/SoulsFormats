@@ -31,6 +31,9 @@ namespace SoulsFormats
 
         internal override bool Is(BinaryReaderEx br)
         {
+            if (br.Length < 0xC)
+                return false;
+
             string magic = br.ReadASCII(6);
             string endian = br.ReadASCII(2);
             if (endian == "L\0")
@@ -101,14 +104,14 @@ namespace SoulsFormats
 
             public short AttachBoneIndex;
 
-            public int Unk04;
+            public int Unk0C;
 
             public bool Flag1, Flag2;
 
             internal Dummy(BinaryReaderEx br)
             {
                 Position = br.ReadVector3();
-                Unk04 = br.ReadInt32();
+                Unk0C = br.ReadInt32();
                 Forward = br.ReadVector3();
                 ReferenceID = br.ReadInt16();
                 DummyBoneIndex = br.ReadInt16();
