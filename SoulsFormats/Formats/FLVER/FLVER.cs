@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 
 namespace SoulsFormats
@@ -113,7 +114,7 @@ namespace SoulsFormats
             Header.Unk40 = br.ReadInt32();
             br.ReadInt32(); // Total face count
 
-            Header.VertexIndicesSize = br.AssertByte(0x00, 0x10);
+            int vertexIndicesSize = br.AssertByte(0, 16, 32);
             Header.Unicode = br.ReadBoolean();
             Header.Unk4A = br.ReadBoolean();
             br.AssertByte(0);
@@ -126,7 +127,7 @@ namespace SoulsFormats
             int textureCount = br.ReadInt32();
 
             Header.Unk5C = br.ReadByte();
-            br.AssertByte(0);
+            Header.Unk5D = br.ReadByte();
             br.AssertByte(0);
             br.AssertByte(0);
 
@@ -159,7 +160,7 @@ namespace SoulsFormats
 
             var faceSets = new List<FaceSet>(faceSetCount);
             for (int i = 0; i < faceSetCount; i++)
-                faceSets.Add(new FaceSet(br, dataOffset, Header.Version));
+                faceSets.Add(new FaceSet(br, Header, vertexIndicesSize, dataOffset));
 
             var vertexBuffers = new List<VertexBuffer>(vertexBufferCount);
             for (int i = 0; i < vertexBufferCount; i++)
@@ -214,15 +215,9 @@ namespace SoulsFormats
             bw.WriteInt32(Materials.Count);
             bw.WriteInt32(Bones.Count);
             bw.WriteInt32(Meshes.Count);
-
-            int vertexBufferCount = 0;
-            foreach (Mesh mesh in Meshes)
-                vertexBufferCount += mesh.VertexBuffers.Count;
-            bw.WriteInt32(vertexBufferCount);
-
+            bw.WriteInt32(Meshes.Sum(m => m.VertexBuffers.Count));
             bw.WriteVector3(Header.BoundingBoxMin);
             bw.WriteVector3(Header.BoundingBoxMax);
-
             bw.WriteInt32(Header.Unk40);
 
             // I hope this isn't super slow :^)
@@ -232,7 +227,20 @@ namespace SoulsFormats
                     totalFaceCount += faceSet.GetFaces(mesh.Vertices.Count < ushort.MaxValue, true).Count;
             bw.WriteInt32(totalFaceCount);
 
-            bw.WriteByte(Header.VertexIndicesSize);
+            byte vertexIndicesSize = 0;
+            if (Header.Version < 0x20013)
+            {
+                vertexIndicesSize = 16;
+                foreach (Mesh mesh in Meshes)
+                {
+                    foreach (FaceSet fs in mesh.FaceSets)
+                    {
+                        vertexIndicesSize = (byte)Math.Max(vertexIndicesSize, fs.GetVertexIndexSize());
+                    }
+                }
+            }
+
+            bw.WriteByte(vertexIndicesSize);
             bw.WriteBoolean(Header.Unicode);
             bw.WriteBoolean(Header.Unk4A);
             bw.WriteByte(0);
@@ -246,14 +254,10 @@ namespace SoulsFormats
             bw.WriteInt32(faceSetCount);
 
             bw.WriteInt32(BufferLayouts.Count);
-
-            int textureCount = 0;
-            foreach (Material material in Materials)
-                textureCount += material.Textures.Count;
-            bw.WriteInt32(textureCount);
+            bw.WriteInt32(Materials.Sum(m => m.Textures.Count));
 
             bw.WriteByte(Header.Unk5C);
-            bw.WriteByte(0);
+            bw.WriteByte(Header.Unk5D);
             bw.WriteByte(0);
             bw.WriteByte(0);
 
@@ -282,7 +286,13 @@ namespace SoulsFormats
             foreach (Mesh mesh in Meshes)
             {
                 for (int i = 0; i < mesh.FaceSets.Count; i++)
-                    mesh.FaceSets[i].Write(bw, faceSetIndex + i, Header.Version);
+                {
+                    int indexSize = vertexIndicesSize;
+                    if (indexSize == 0)
+                        indexSize = mesh.FaceSets[i].GetVertexIndexSize();
+
+                    mesh.FaceSets[i].Write(bw, Header, indexSize, faceSetIndex + i);
+                }
                 faceSetIndex += mesh.FaceSets.Count;
             }
 
@@ -290,7 +300,7 @@ namespace SoulsFormats
             foreach (Mesh mesh in Meshes)
             {
                 for (int i = 0; i < mesh.VertexBuffers.Count; i++)
-                    mesh.VertexBuffers[i].Write(bw, vertexBufferIndex + i, BufferLayouts, mesh.Vertices.Count);
+                    mesh.VertexBuffers[i].Write(bw, Header, vertexBufferIndex + i, BufferLayouts, mesh.Vertices.Count);
                 vertexBufferIndex += mesh.VertexBuffers.Count;
             }
 
@@ -309,21 +319,16 @@ namespace SoulsFormats
 
             bw.Pad(0x10);
             for (int i = 0; i < BufferLayouts.Count; i++)
-            {
                 BufferLayouts[i].WriteMembers(bw, i);
-            }
 
             bw.Pad(0x10);
             for (int i = 0; i < Meshes.Count; i++)
-            {
                 Meshes[i].WriteBoundingBox(bw, i, Header.Version);
-            }
 
             bw.Pad(0x10);
+            int boneIndicesStart = (int)bw.Position;
             for (int i = 0; i < Meshes.Count; i++)
-            {
-                Meshes[i].WriteBoneIndices(bw, i);
-            }
+                Meshes[i].WriteBoneIndices(bw, i, boneIndicesStart);
 
             bw.Pad(0x10);
             faceSetIndex = 0;
@@ -373,7 +378,8 @@ namespace SoulsFormats
             for (int i = 0; i < Bones.Count; i++)
                 Bones[i].WriteStrings(bw, Header, i);
 
-            bw.Pad(0x10);
+            int alignment = Header.Version <= 0x2000E ? 0x20 : 0x10;
+            bw.Pad(alignment);
             int dataStart = (int)bw.Position;
             bw.FillInt32("DataOffset", dataStart);
 
@@ -384,8 +390,12 @@ namespace SoulsFormats
                 Mesh mesh = Meshes[i];
                 for (int j = 0; j < mesh.FaceSets.Count; j++)
                 {
-                    bw.Pad(0x10);
-                    mesh.FaceSets[j].WriteVertices(bw, faceSetIndex + j, dataStart);
+                    int indexSize = vertexIndicesSize;
+                    if (indexSize == 0)
+                        indexSize = mesh.FaceSets[j].GetVertexIndexSize();
+
+                    bw.Pad(alignment);
+                    mesh.FaceSets[j].WriteVertices(bw, indexSize, faceSetIndex + j, dataStart);
                 }
                 faceSetIndex += mesh.FaceSets.Count;
 
@@ -394,7 +404,7 @@ namespace SoulsFormats
 
                 for (int j = 0; j < mesh.VertexBuffers.Count; j++)
                 {
-                    bw.Pad(0x10);
+                    bw.Pad(alignment);
                     mesh.VertexBuffers[j].WriteBuffer(bw, vertexBufferIndex + j, BufferLayouts, mesh.Vertices, dataStart, Header.Version);
                 }
 
@@ -404,7 +414,7 @@ namespace SoulsFormats
                 vertexBufferIndex += mesh.VertexBuffers.Count;
             }
 
-            bw.Pad(0x10);
+            bw.Pad(alignment);
             bw.FillInt32("DataSize", (int)bw.Position - dataStart);
         }
 
@@ -439,11 +449,6 @@ namespace SoulsFormats
             public int Unk40 { get; set; }
 
             /// <summary>
-            /// Unknown.
-            /// </summary>
-            public byte VertexIndicesSize { get; set; }
-
-            /// <summary>
             /// If true strings are UTF-16, if false Shift-JIS.
             /// </summary>
             public bool Unicode { get; set; }
@@ -462,6 +467,11 @@ namespace SoulsFormats
             /// Unknown.
             /// </summary>
             public byte Unk5C { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public byte Unk5D { get; set; }
 
             /// <summary>
             /// Unknown.

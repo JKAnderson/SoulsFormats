@@ -92,7 +92,7 @@ namespace SoulsFormats
                 Indices = indices;
             }
 
-            internal FaceSet(BinaryReaderEx br, int dataOffset, int version)
+            internal FaceSet(BinaryReaderEx br, FLVERHeader header, int headerIndexSize, int dataOffset)
             {
                 Flags = (FSFlags)br.ReadUInt32();
                 TriangleStrip = br.ReadBoolean();
@@ -102,16 +102,19 @@ namespace SoulsFormats
                 int indexCount = br.ReadInt32();
                 int indicesOffset = br.ReadInt32();
 
-                int indexSize = 16;
-                if (version > 0x20005)
+                int indexSize = 0;
+                if (header.Version > 0x20005)
                 {
-                    br.ReadInt32(); // Indices size
+                    br.ReadInt32(); // Indices length
                     br.AssertInt32(0);
                     indexSize = br.AssertInt32(0, 16, 32);
                     br.AssertInt32(0);
                 }
 
-                if (indexSize == 0 || indexSize == 16)
+                if (indexSize == 0)
+                    indexSize = headerIndexSize;
+
+                if (indexSize == 16)
                 {
                     Indices = new List<int>(indexCount);
                     foreach (ushort index in br.GetUInt16s(dataOffset + indicesOffset, indexCount))
@@ -121,11 +124,14 @@ namespace SoulsFormats
                 {
                     Indices = new List<int>(br.GetInt32s(dataOffset + indicesOffset, indexCount));
                 }
+                else
+                {
+                    throw new NotImplementedException($"Unsupported index size: {indexSize}");
+                }
             }
 
-            internal void Write(BinaryWriterEx bw, int index, int version)
+            internal void Write(BinaryWriterEx bw, FLVERHeader header, int indexSize, int index)
             {
-                int indexSize = Indices.Any(i => i > ushort.MaxValue) ? 32 : 16;
                 bw.WriteUInt32((uint)Flags);
                 bw.WriteBoolean(TriangleStrip);
                 bw.WriteBoolean(CullBackfaces);
@@ -134,23 +140,35 @@ namespace SoulsFormats
                 bw.WriteInt32(Indices.Count);
                 bw.ReserveInt32($"FaceSetVertices{index}");
 
-                if (version > 0x20005)
+                if (header.Version > 0x20005)
                 {
                     bw.WriteInt32(Indices.Count * (indexSize / 8));
                     bw.WriteInt32(0);
-                    bw.WriteInt32(indexSize == 16 ? 16 : indexSize);
+                    bw.WriteInt32(header.Version >= 0x20013 ? indexSize : 0);
                     bw.WriteInt32(0);
                 }
             }
 
-            internal void WriteVertices(BinaryWriterEx bw, int index, int dataStart)
+            internal void WriteVertices(BinaryWriterEx bw, int indexSize, int index, int dataStart)
             {
-                int indexSize = Indices.Any(i => i > ushort.MaxValue) ? 32 : 16;
                 bw.FillInt32($"FaceSetVertices{index}", (int)bw.Position - dataStart);
-                if (indexSize == 0 || indexSize == 16)
-                    bw.WriteUInt16s(Indices.Select(i => (ushort)i).ToArray());
+                if (indexSize == 16)
+                {
+                    foreach (int i in Indices)
+                        bw.WriteUInt16((ushort)i);
+                }
                 else if (indexSize == 32)
+                {
                     bw.WriteInt32s(Indices);
+                }
+            }
+
+            internal int GetVertexIndexSize()
+            {
+                foreach (int index in Indices)
+                    if (index > ushort.MaxValue + 1)
+                        return 32;
+                return 16;
             }
 
             /// <summary>

@@ -208,10 +208,18 @@ namespace SoulsFormats
                 }
             }
 
-            internal void WriteBoneIndices(BinaryWriterEx bw, int index)
+            internal void WriteBoneIndices(BinaryWriterEx bw, int index, int boneIndicesStart)
             {
-                bw.FillInt32($"MeshBoneIndices{index}", (int)bw.Position);
-                bw.WriteInt32s(BoneIndices.ToArray());
+                if (BoneIndices.Count == 0)
+                {
+                    // Just a weird case for byte-perfect writing
+                    bw.FillInt32($"MeshBoneIndices{index}", boneIndicesStart);
+                }
+                else
+                {
+                    bw.FillInt32($"MeshBoneIndices{index}", (int)bw.Position);
+                    bw.WriteInt32s(BoneIndices);
+                }
             }
 
             /// <summary>

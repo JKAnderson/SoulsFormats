@@ -77,7 +77,7 @@ namespace SoulsFormats
                 BufferOffset = -1;
             }
 
-            internal void Write(BinaryWriterEx bw, int index, List<BufferLayout> layouts, int vertexCount)
+            internal void Write(BinaryWriterEx bw, FLVERHeader header, int index, List<BufferLayout> layouts, int vertexCount)
             {
                 BufferLayout layout = layouts[LayoutIndex];
 
@@ -90,7 +90,7 @@ namespace SoulsFormats
                 bw.WriteInt32(vertexCount);
                 bw.WriteInt32(0);
                 bw.WriteInt32(0);
-                bw.WriteInt32(vertexSize * vertexCount);
+                bw.WriteInt32(header.Version > 0x20005 ? vertexSize * vertexCount : 0);
                 bw.ReserveInt32($"VertexBufferOffset{index}");
             }
 
