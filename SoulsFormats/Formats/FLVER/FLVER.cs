@@ -68,8 +68,14 @@ namespace SoulsFormats
         /// </summary>
         internal override bool Is(BinaryReaderEx br)
         {
+            if (br.Length < 0xC)
+                return false;
+
             string magic = br.GetASCII(0, 6);
-            return magic == "FLVER\0";
+            string endian = br.GetASCII(6, 2);
+            br.BigEndian = endian == "B\0";
+            int version = br.GetInt32(8);
+            return magic == "FLVER\0" && version >= 0x20000;
         }
 
         /// <summary>

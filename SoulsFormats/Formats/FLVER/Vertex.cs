@@ -202,6 +202,11 @@ namespace SoulsFormats
                             {
                                 UVs.Add(br.ReadVector3() / uvFactor);
                             }
+                            else if (member.Type == BufferLayout.MemberType.Float4)
+                            {
+                                UVs.Add(new Vector3(br.ReadVector2() / uvFactor, 0));
+                                UVs.Add(new Vector3(br.ReadVector2() / uvFactor, 0));
+                            }
                             else if (member.Type == BufferLayout.MemberType.Byte4A)
                             {
                                 UVs.Add(new Vector3(br.ReadInt16() / uvFactor, br.ReadInt16() / uvFactor, 0));
@@ -436,6 +441,15 @@ namespace SoulsFormats
                             else if (member.Type == BufferLayout.MemberType.Float3)
                             {
                                 bw.WriteVector3(uv);
+                            }
+                            else if (member.Type == BufferLayout.MemberType.Float4)
+                            {
+                                bw.WriteSingle(uv.X);
+                                bw.WriteSingle(uv.Y);
+
+                                uv = uvQueue.Dequeue() * uvFactor;
+                                bw.WriteSingle(uv.X);
+                                bw.WriteSingle(uv.Y);
                             }
                             else if (member.Type == BufferLayout.MemberType.Byte4A)
                             {
