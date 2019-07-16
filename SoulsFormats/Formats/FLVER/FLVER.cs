@@ -380,6 +380,9 @@ namespace SoulsFormats
 
             int alignment = Header.Version <= 0x2000E ? 0x20 : 0x10;
             bw.Pad(alignment);
+            if (Header.Version == 0x20010)
+                bw.Pad(0x20);
+
             int dataStart = (int)bw.Position;
             bw.FillInt32("DataOffset", dataStart);
 
@@ -416,6 +419,8 @@ namespace SoulsFormats
 
             bw.Pad(alignment);
             bw.FillInt32("DataSize", (int)bw.Position - dataStart);
+            if (Header.Version == 0x20010)
+                bw.Pad(0x20);
         }
 
         /// <summary>
