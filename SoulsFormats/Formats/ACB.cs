@@ -3,9 +3,15 @@ using System.Collections.Generic;
 
 namespace SoulsFormats
 {
+    /// <summary>
+    /// An rendering configuration file for various game assets, only used in DS2. Extension: .acb
+    /// </summary>
     public class ACB : SoulsFile<ACB>
     {
-        public List<Entry> Entries { get; set; }
+        /// <summary>
+        /// Assets configured by this ACB.
+        /// </summary>
+        public List<Asset> Assets { get; set; }
 
         internal override bool Is(BinaryReaderEx br)
         {
@@ -20,24 +26,24 @@ namespace SoulsFormats
             br.BigEndian = false;
             br.AssertASCII("ACB\0");
             br.AssertInt32(0x00000102);
-            int entryCount = br.ReadInt32();
+            int assetCount = br.ReadInt32();
             br.ReadInt32(); // Offset index offset
 
-            Entries = new List<Entry>(entryCount);
-            foreach (int entryOffset in br.ReadInt32s(entryCount))
+            Assets = new List<Asset>(assetCount);
+            foreach (int assetOffset in br.ReadInt32s(assetCount))
             {
-                br.Position = entryOffset;
-                EntryType type = br.GetEnum16<EntryType>(br.Position + 8);
-                if (type == EntryType.General)
-                    Entries.Add(new Entry.General(br));
-                else if (type == EntryType.Model)
-                    Entries.Add(new Entry.Model(br));
-                else if (type == EntryType.Texture)
-                    Entries.Add(new Entry.Texture(br));
-                else if (type == EntryType.GITexture)
-                    Entries.Add(new Entry.GITexture(br));
+                br.Position = assetOffset;
+                AssetType type = br.GetEnum16<AssetType>(br.Position + 8);
+                if (type == AssetType.General)
+                    Assets.Add(new Asset.General(br));
+                else if (type == AssetType.Model)
+                    Assets.Add(new Asset.Model(br));
+                else if (type == AssetType.Texture)
+                    Assets.Add(new Asset.Texture(br));
+                else if (type == AssetType.GITexture)
+                    Assets.Add(new Asset.GITexture(br));
                 else
-                    throw new NotImplementedException($"Unsupported entry type: {type}");
+                    throw new NotImplementedException($"Unsupported asset type: {type}");
             }
         }
 
@@ -49,37 +55,37 @@ namespace SoulsFormats
             bw.BigEndian = false;
             bw.WriteASCII("ACB\0");
             bw.WriteInt32(0x00000102);
-            bw.WriteInt32(Entries.Count);
+            bw.WriteInt32(Assets.Count);
             bw.ReserveInt32("OffsetIndexOffset");
 
-            for (int i = 0; i < Entries.Count; i++)
+            for (int i = 0; i < Assets.Count; i++)
             {
                 offsetIndex.Add((int)bw.Position);
-                bw.ReserveInt32($"EntryOffset{i}");
+                bw.ReserveInt32($"AssetOffset{i}");
             }
 
-            for (int i = 0; i < Entries.Count; i++)
+            for (int i = 0; i < Assets.Count; i++)
             {
-                bw.FillInt32($"EntryOffset{i}", (int)bw.Position);
-                Entries[i].Write(bw, i, offsetIndex, memberOffsetsIndex);
+                bw.FillInt32($"AssetOffset{i}", (int)bw.Position);
+                Assets[i].Write(bw, i, offsetIndex, memberOffsetsIndex);
             }
 
-            for (int i = 0; i < Entries.Count; i++)
+            for (int i = 0; i < Assets.Count; i++)
             {
-                if (Entries[i] is Entry.Model model)
+                if (Assets[i] is Asset.Model model)
                 {
                     model.WriteMembers(bw, i, offsetIndex, memberOffsetsIndex);
                 }
             }
 
-            for (int i = 0; i < Entries.Count; i++)
+            for (int i = 0; i < Assets.Count; i++)
             {
-                Entries[i].WritePaths(bw, i);
+                Assets[i].WritePaths(bw, i);
             }
 
-            for (int i = 0; i < Entries.Count; i++)
+            for (int i = 0; i < Assets.Count; i++)
             {
-                if (Entries[i] is Entry.Model model && model.Members != null)
+                if (Assets[i] is Asset.Model model && model.Members != null)
                 {
                     for (int j = 0; j < model.Members.Count; j++)
                     {
@@ -95,29 +101,46 @@ namespace SoulsFormats
                 bw.WriteInt32s(offsets);
         }
 
-        public enum EntryType : ushort
+        /// <summary>
+        /// The specific type of an asset.
+        /// </summary>
+        public enum AssetType : ushort
         {
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
             General = 1,
             Model = 2,
             Texture = 3,
             GITexture = 4,
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
         }
 
-        public abstract class Entry
+        /// <summary>
+        /// A model, texture, or miscellanous asset configuration.
+        /// </summary>
+        public abstract class Asset
         {
-            public abstract EntryType Type { get; }
+            /// <summary>
+            /// The specific type of this asset.
+            /// </summary>
+            public abstract AssetType Type { get; }
 
+            /// <summary>
+            /// Full network path to the source file.
+            /// </summary>
             public string AbsolutePath { get; set; }
 
+            /// <summary>
+            /// Relative path to the source file.
+            /// </summary>
             public string RelativePath { get; set; }
 
-            internal Entry()
+            internal Asset()
             {
                 AbsolutePath = "";
                 RelativePath = "";
             }
 
-            internal Entry(BinaryReaderEx br)
+            internal Asset(BinaryReaderEx br)
             {
                 int absolutePathOffset = br.ReadInt32();
                 int relativePathOffset = br.ReadInt32();
@@ -145,10 +168,27 @@ namespace SoulsFormats
                 bw.WriteUTF16(RelativePath, true);
             }
 
-            public class General : Entry
+            /// <summary>
+            /// Returns a string representation of the entry.
+            /// </summary>
+            public override string ToString()
             {
-                public override EntryType Type => EntryType.General;
+                return $"{Type}: {RelativePath} | {AbsolutePath}";
+            }
 
+            /// <summary>
+            /// Miscellaneous assets including collisions and lighting configs.
+            /// </summary>
+            public class General : Asset
+            {
+                /// <summary>
+                /// AssetType.General
+                /// </summary>
+                public override AssetType Type => AssetType.General;
+
+                /// <summary>
+                /// Creates a General with default values.
+                /// </summary>
                 public General() : base() { }
 
                 internal General(BinaryReaderEx br) : base(br)
@@ -165,31 +205,123 @@ namespace SoulsFormats
                 }
             }
 
-            public class Model : Entry
+            /// <summary>
+            /// Rendering options for 3D models.
+            /// </summary>
+            public class Model : Asset
             {
-                public override EntryType Type => EntryType.Model;
+                /// <summary>
+                /// AssetType.Model
+                /// </summary>
+                public override AssetType Type => AssetType.Model;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short Unk0A { get; set; }
 
+                /// <summary>
+                /// Unknown; may be null.
+                /// </summary>
                 public List<Member> Members { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int Unk10 { get; set; }
 
-                public int Unk1C { get; set; }
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public short Unk1C { get; set; }
 
+                /// <summary>
+                /// Whether the model appears in reflective surfaces like water.
+                /// </summary>
+                public bool Reflectible { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public bool Unk1F { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int Unk20 { get; set; }
 
-                public int Unk24 { get; set; }
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public byte Unk24 { get; set; }
 
+                /// <summary>
+                /// When true, the model does not cast shadows.
+                /// </summary>
+                public bool DisableShadows { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public bool Unk26 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public bool Unk27 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float Unk28 { get; set; }
 
-                public int Unk2C { get; set; }
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public bool Unk2C { get; set; }
 
-                public int Unk30 { get; set; }
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public bool Unk2D { get; set; }
 
-                public int Unk34 { get; set; }
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public bool Unk2E { get; set; }
 
-                public Model() : base() { }
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public short Unk30 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public short Unk32 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public bool Unk35 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public bool Unk36 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public bool Unk37 { get; set; }
+
+                /// <summary>
+                /// Creates a Model with default values.
+                /// </summary>
+                public Model() : base()
+                {
+                    Reflectible = true;
+                }
 
                 internal Model(BinaryReaderEx br) : base(br)
                 {
@@ -198,13 +330,25 @@ namespace SoulsFormats
                     Unk10 = br.ReadInt32();
                     br.AssertInt32(0);
                     br.AssertInt32(0);
-                    Unk1C = br.ReadInt32();
+                    Unk1C = br.ReadInt16();
+                    Reflectible = br.ReadBoolean();
+                    Unk1F = br.ReadBoolean();
                     Unk20 = br.ReadInt32();
-                    Unk24 = br.ReadInt32();
+                    Unk24 = br.ReadByte();
+                    DisableShadows = br.ReadBoolean();
+                    Unk26 = br.ReadBoolean();
+                    Unk27 = br.ReadBoolean();
                     Unk28 = br.ReadSingle();
-                    Unk2C = br.ReadInt32();
-                    Unk30 = br.ReadInt32();
-                    Unk34 = br.ReadInt32();
+                    Unk2C = br.ReadBoolean();
+                    Unk2D = br.ReadBoolean();
+                    Unk2E = br.ReadBoolean();
+                    br.AssertByte(0);
+                    Unk30 = br.ReadInt16();
+                    Unk32 = br.ReadInt16();
+                    br.AssertByte(0);
+                    Unk35 = br.ReadBoolean();
+                    Unk36 = br.ReadBoolean();
+                    Unk37 = br.ReadBoolean();
                     br.AssertPattern(0x18, 0x00);
 
                     if (membersOffset != 0)
@@ -234,13 +378,25 @@ namespace SoulsFormats
                     bw.WriteInt32(Unk10);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
-                    bw.WriteInt32(Unk1C);
+                    bw.WriteInt16(Unk1C);
+                    bw.WriteBoolean(Reflectible);
+                    bw.WriteBoolean(Unk1F);
                     bw.WriteInt32(Unk20);
-                    bw.WriteInt32(Unk24);
+                    bw.WriteByte(Unk24);
+                    bw.WriteBoolean(DisableShadows);
+                    bw.WriteBoolean(Unk26);
+                    bw.WriteBoolean(Unk27);
                     bw.WriteSingle(Unk28);
-                    bw.WriteInt32(Unk2C);
-                    bw.WriteInt32(Unk30);
-                    bw.WriteInt32(Unk34);
+                    bw.WriteBoolean(Unk2C);
+                    bw.WriteBoolean(Unk2D);
+                    bw.WriteBoolean(Unk2E);
+                    bw.WriteByte(0);
+                    bw.WriteInt16(Unk30);
+                    bw.WriteInt16(Unk32);
+                    bw.WriteByte(0);
+                    bw.WriteBoolean(Unk35);
+                    bw.WriteBoolean(Unk36);
+                    bw.WriteBoolean(Unk37);
                     bw.WritePattern(0x18, 0x00);
                 }
 
@@ -274,12 +430,24 @@ namespace SoulsFormats
                     }
                 }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public class Member
                 {
+                    /// <summary>
+                    /// Unknown.
+                    /// </summary>
                     public string Text { get; set; }
 
+                    /// <summary>
+                    /// Unknown.
+                    /// </summary>
                     public int Unk04 { get; set; }
 
+                    /// <summary>
+                    /// Creates a Member with default values.
+                    /// </summary>
                     public Member()
                     {
                         Text = "";
@@ -308,10 +476,19 @@ namespace SoulsFormats
                 }
             }
 
-            public class Texture : Entry
+            /// <summary>
+            /// Diffuse, normal, and specular maps.
+            /// </summary>
+            public class Texture : Asset
             {
-                public override EntryType Type => EntryType.Texture;
+                /// <summary>
+                /// AssetType.Texture
+                /// </summary>
+                public override AssetType Type => AssetType.Texture;
 
+                /// <summary>
+                /// Creates a Texture with default values.
+                /// </summary>
                 public Texture() : base() { }
 
                 internal Texture(BinaryReaderEx br) : base(br)
@@ -328,14 +505,29 @@ namespace SoulsFormats
                 }
             }
 
-            public class GITexture : Entry
+            /// <summary>
+            /// Lightmaps and envmaps.
+            /// </summary>
+            public class GITexture : Asset
             {
-                public override EntryType Type => EntryType.GITexture;
+                /// <summary>
+                /// AssetType.GITexture
+                /// </summary>
+                public override AssetType Type => AssetType.GITexture;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int Unk10 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int Unk14 { get; set; }
 
+                /// <summary>
+                /// Creates a GITexture with default values.
+                /// </summary>
                 public GITexture() : base() { }
 
                 internal GITexture(BinaryReaderEx br) : base(br)
