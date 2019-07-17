@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Binder\BinderFile.cs" />
+    <Compile Include="Formats\ACB.cs" />
     <Compile Include="Formats\BHD5.cs" />
     <Compile Include="Binder\Binder.cs" />
     <Compile Include="Formats\CCM.cs" />
