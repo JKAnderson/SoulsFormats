@@ -123,6 +123,7 @@ namespace SoulsFormats
         /// </summary>
         public void Write(out byte[] bhdBytes, string bdtPath)
         {
+            Directory.CreateDirectory(Path.GetDirectoryName(bdtPath));
             using (FileStream bdtStream = System.IO.File.Create(bdtPath))
             {
                 BinaryWriterEx bhdWriter = new BinaryWriterEx(false);
@@ -138,6 +139,7 @@ namespace SoulsFormats
         /// </summary>
         public void Write(string bhdPath, out byte[] bdtBytes)
         {
+            Directory.CreateDirectory(Path.GetDirectoryName(bhdPath));
             using (FileStream bhdStream = System.IO.File.Create(bhdPath))
             {
                 BinaryWriterEx bhdWriter = new BinaryWriterEx(false, bhdStream);
@@ -153,6 +155,8 @@ namespace SoulsFormats
         /// </summary>
         public void Write(string bhdPath, string bdtPath)
         {
+            Directory.CreateDirectory(Path.GetDirectoryName(bhdPath));
+            Directory.CreateDirectory(Path.GetDirectoryName(bdtPath));
             using (FileStream bhdStream = System.IO.File.Create(bhdPath))
             using (FileStream bdtStream = System.IO.File.Create(bdtPath))
             {
