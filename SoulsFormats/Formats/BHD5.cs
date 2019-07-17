@@ -11,6 +11,16 @@ namespace SoulsFormats
     public class BHD5
     {
         /// <summary>
+        /// Whether the header is big-endian.
+        /// </summary>
+        public bool BigEndian { get; }
+
+        /// <summary>
+        /// Unknown.
+        /// </summary>
+        public bool Unk05 { get; }
+
+        /// <summary>
         /// A salt used to calculate SHA hashes for file data.
         /// </summary>
         public string Salt { get; }
@@ -32,12 +42,13 @@ namespace SoulsFormats
         private BHD5(BinaryReaderEx br, Game game)
         {
             br.AssertASCII("BHD5");
-            br.BigEndian = br.AssertSByte(0, -1) == 0;
-            br.AssertByte(0, 1);
+            BigEndian = br.AssertSByte(0, -1) == 0;
+            br.BigEndian = BigEndian;
+            Unk05 = br.ReadBoolean();
             br.AssertByte(0);
             br.AssertByte(0);
             br.AssertInt32(1);
-            int fileSize = br.ReadInt32();
+            br.ReadInt32(); // File size
             int bucketCount = br.ReadInt32();
             int bucketsOffset = br.ReadInt32();
 
@@ -46,8 +57,10 @@ namespace SoulsFormats
             {
                 int saltLength = br.ReadInt32();
                 Salt = br.ReadASCII(saltLength);
+                // No padding
             }
 
+            br.Position = bucketsOffset;
             Buckets = new List<Bucket>(bucketCount);
             for (int i = 0; i < bucketCount; i++)
                 Buckets.Add(new Bucket(br, game));
@@ -139,8 +152,6 @@ namespace SoulsFormats
                 PaddedFileSize = br.ReadInt32();
                 FileOffset = br.ReadInt64();
 
-                SHAHash = null;
-                AESKey = null;
                 if (game == Game.DarkSouls2 || game == Game.DarkSouls3 || game == Game.Sekiro)
                 {
                     long shaHashOffset = br.ReadInt64();
@@ -261,12 +272,12 @@ namespace SoulsFormats
             /// <summary>
             /// The beginning of the range, inclusive.
             /// </summary>
-            public long StartOffset;
+            public long StartOffset { get; }
 
             /// <summary>
             /// The end of the range, exclusive.
             /// </summary>
-            public long EndOffset;
+            public long EndOffset { get; }
 
             internal Range(BinaryReaderEx br)
             {
