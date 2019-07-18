@@ -256,17 +256,17 @@ namespace SoulsFormats
                 public byte Unk24 { get; set; }
 
                 /// <summary>
-                /// When true, the model does not cast shadows.
+                /// If true, the model does not cast shadows.
                 /// </summary>
-                public bool DisableShadows { get; set; }
+                public bool DisableShadowSource { get; set; }
 
                 /// <summary>
-                /// Unknown.
+                /// If true, shadows will not be cast on the model.
                 /// </summary>
-                public bool Unk26 { get; set; }
+                public bool DisableShadowTarget { get; set; }
 
                 /// <summary>
-                /// Unknown.
+                /// Unknown; makes things render in reverse order or reverses culling or something.
                 /// </summary>
                 public bool Unk27 { get; set; }
 
@@ -281,9 +281,9 @@ namespace SoulsFormats
                 public bool Unk2C { get; set; }
 
                 /// <summary>
-                /// Unknown.
+                /// If true, the model is always centered on the camera position. Used for skyboxes.
                 /// </summary>
-                public bool Unk2D { get; set; }
+                public bool FixToCamera { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -335,12 +335,12 @@ namespace SoulsFormats
                     Unk1F = br.ReadBoolean();
                     Unk20 = br.ReadInt32();
                     Unk24 = br.ReadByte();
-                    DisableShadows = br.ReadBoolean();
-                    Unk26 = br.ReadBoolean();
+                    DisableShadowSource = br.ReadBoolean();
+                    DisableShadowTarget = br.ReadBoolean();
                     Unk27 = br.ReadBoolean();
                     Unk28 = br.ReadSingle();
                     Unk2C = br.ReadBoolean();
-                    Unk2D = br.ReadBoolean();
+                    FixToCamera = br.ReadBoolean();
                     Unk2E = br.ReadBoolean();
                     br.AssertByte(0);
                     Unk30 = br.ReadInt16();
@@ -383,12 +383,12 @@ namespace SoulsFormats
                     bw.WriteBoolean(Unk1F);
                     bw.WriteInt32(Unk20);
                     bw.WriteByte(Unk24);
-                    bw.WriteBoolean(DisableShadows);
-                    bw.WriteBoolean(Unk26);
+                    bw.WriteBoolean(DisableShadowSource);
+                    bw.WriteBoolean(DisableShadowTarget);
                     bw.WriteBoolean(Unk27);
                     bw.WriteSingle(Unk28);
                     bw.WriteBoolean(Unk2C);
-                    bw.WriteBoolean(Unk2D);
+                    bw.WriteBoolean(FixToCamera);
                     bw.WriteBoolean(Unk2E);
                     bw.WriteByte(0);
                     bw.WriteInt16(Unk30);
@@ -516,12 +516,12 @@ namespace SoulsFormats
                 public override AssetType Type => AssetType.GITexture;
 
                 /// <summary>
-                /// Unknown.
+                /// Unknown; probably 4 bytes.
                 /// </summary>
                 public int Unk10 { get; set; }
 
                 /// <summary>
-                /// Unknown.
+                /// Unknown; probably 4 bytes.
                 /// </summary>
                 public int Unk14 { get; set; }
 
