@@ -42,6 +42,8 @@ namespace SoulsFormats
                     Assets.Add(new Asset.Texture(br));
                 else if (type == AssetType.GITexture)
                     Assets.Add(new Asset.GITexture(br));
+                else if (type == AssetType.Motion)
+                    Assets.Add(new Asset.Motion(br));
                 else
                     throw new NotImplementedException($"Unsupported asset type: {type}");
             }
@@ -111,6 +113,7 @@ namespace SoulsFormats
             Model = 2,
             Texture = 3,
             GITexture = 4,
+            Motion = 5,
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
         }
 
@@ -303,6 +306,11 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
+                public byte Unk34 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public bool Unk35 { get; set; }
 
                 /// <summary>
@@ -345,7 +353,7 @@ namespace SoulsFormats
                     br.AssertByte(0);
                     Unk30 = br.ReadInt16();
                     Unk32 = br.ReadInt16();
-                    br.AssertByte(0);
+                    Unk34 = br.ReadByte();
                     Unk35 = br.ReadBoolean();
                     Unk36 = br.ReadBoolean();
                     Unk37 = br.ReadBoolean();
@@ -373,7 +381,8 @@ namespace SoulsFormats
                     base.Write(bw, index, offsetIndex, membersOffsetIndex);
                     bw.WriteInt16(Unk0A);
                     membersOffsetIndex[index] = new List<int>();
-                    membersOffsetIndex[index].Add((int)bw.Position);
+                    if (Members != null)
+                        membersOffsetIndex[index].Add((int)bw.Position);
                     bw.ReserveInt32($"MembersOffset{index}");
                     bw.WriteInt32(Unk10);
                     bw.WriteInt32(0);
@@ -393,7 +402,7 @@ namespace SoulsFormats
                     bw.WriteByte(0);
                     bw.WriteInt16(Unk30);
                     bw.WriteInt16(Unk32);
-                    bw.WriteByte(0);
+                    bw.WriteByte(Unk34);
                     bw.WriteBoolean(Unk35);
                     bw.WriteBoolean(Unk36);
                     bw.WriteBoolean(Unk37);
@@ -545,6 +554,35 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                     bw.WriteInt32(Unk10);
                     bw.WriteInt32(Unk14);
+                }
+            }
+
+            /// <summary>
+            /// Animation files used in cutscenes.
+            /// </summary>
+            public class Motion : Asset
+            {
+                /// <summary>
+                /// AssetType.Motion
+                /// </summary>
+                public override AssetType Type => AssetType.Motion;
+
+                /// <summary>
+                /// Creates a Motion with default values.
+                /// </summary>
+                public Motion() : base() { }
+
+                internal Motion(BinaryReaderEx br) : base(br)
+                {
+                    br.AssertInt16(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void Write(BinaryWriterEx bw, int index, List<int> offsetIndex, SortedDictionary<int, List<int>> membersOffsetIndex)
+                {
+                    base.Write(bw, index, offsetIndex, membersOffsetIndex);
+                    bw.WriteInt16(0);
+                    bw.WriteInt32(0);
                 }
             }
         }
