@@ -257,6 +257,15 @@ namespace SoulsFormats
                 /// </summary>
                 public Vector3 Unk { get; set; }
 
+                /// <summary>
+                /// Creates a BoundingBoxes with default values.
+                /// </summary>
+                public BoundingBoxes()
+                {
+                    Min = new Vector3(float.MinValue);
+                    Max = new Vector3(float.MaxValue);
+                }
+
                 internal BoundingBoxes(BinaryReaderEx br, int version)
                 {
                     Min = br.ReadVector3();
