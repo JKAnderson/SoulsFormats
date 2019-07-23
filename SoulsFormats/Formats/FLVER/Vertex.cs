@@ -42,14 +42,14 @@ namespace SoulsFormats
             public List<Vector4> Tangents;
 
             /// <summary>
-            /// Color of the vertex (if untextured?)
+            /// Data used for alpha, blending, etc.
             /// </summary>
             public List<Color> Colors;
 
             /// <summary>
-            /// Unknown. Must be 4 length.
+            /// Vector pointing perpendicular to the normal and tangent.
             /// </summary>
-            public byte[] UnknownVector4;
+            public Vector4 Bitangent;
 
             /// <summary>
             /// Extra data in the vertex struct not accounted for by the buffer layout. Should be null for none, but often isn't in DSR.
@@ -82,7 +82,7 @@ namespace SoulsFormats
                 Normal = clone.Normal;
                 Tangents = new List<Vector4>(clone.Tangents);
                 Colors = new List<Color>(clone.Colors);
-                UnknownVector4 = (byte[])clone.UnknownVector4?.Clone();
+                Bitangent = clone.Bitangent;
                 ExtraBytes = (byte[])clone.ExtraBytes?.Clone();
             }
 
@@ -267,14 +267,20 @@ namespace SoulsFormats
                                 throw new NotImplementedException();
                             break;
 
-                        case BufferLayout.MemberSemantic.UnknownVector4A:
+                        case BufferLayout.MemberSemantic.Bitangent:
                             if (member.Type == BufferLayout.MemberType.Byte4B)
                             {
-                                UnknownVector4 = br.ReadBytes(4);
+                                float[] floats = new float[4];
+                                for (int i = 0; i < 4; i++)
+                                    floats[i] = (br.ReadByte() - 127) / 127f;
+                                Bitangent = new Vector4(floats[0], floats[1], floats[2], floats[3]);
                             }
                             else if (member.Type == BufferLayout.MemberType.Byte4C)
                             {
-                                UnknownVector4 = br.ReadBytes(4);
+                                float[] floats = new float[4];
+                                for (int i = 0; i < 4; i++)
+                                    floats[i] = (br.ReadByte() - 127) / 127f;
+                                Bitangent = new Vector4(floats[0], floats[1], floats[2], floats[3]);
                             }
                             else
                                 throw new NotImplementedException();
@@ -523,14 +529,20 @@ namespace SoulsFormats
                                 throw new NotImplementedException();
                             break;
 
-                        case BufferLayout.MemberSemantic.UnknownVector4A:
+                        case BufferLayout.MemberSemantic.Bitangent:
                             if (member.Type == BufferLayout.MemberType.Byte4B)
                             {
-                                bw.WriteBytes(UnknownVector4);
+                                bw.WriteByte((byte)Math.Round(Bitangent.X * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Bitangent.Y * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Bitangent.Z * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Bitangent.W * 127 + 127));
                             }
                             else if (member.Type == BufferLayout.MemberType.Byte4C)
                             {
-                                bw.WriteBytes(UnknownVector4);
+                                bw.WriteByte((byte)Math.Round(Bitangent.X * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Bitangent.Y * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Bitangent.Z * 127 + 127));
+                                bw.WriteByte((byte)Math.Round(Bitangent.W * 127 + 127));
                             }
                             else
                                 throw new NotImplementedException();

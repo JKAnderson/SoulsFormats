@@ -239,42 +239,42 @@ namespace SoulsFormats
                 /// <summary>
                 /// Where the vertex is.
                 /// </summary>
-                Position = 0x00,
+                Position = 0,
 
                 /// <summary>
                 /// Weight of the vertex's attachment to bones.
                 /// </summary>
-                BoneWeights = 0x01,
+                BoneWeights = 1,
 
                 /// <summary>
                 /// Bones the vertex is weighted to, indexing the parent mesh's bone indices.
                 /// </summary>
-                BoneIndices = 0x02,
+                BoneIndices = 2,
 
                 /// <summary>
                 /// Orientation of the vertex.
                 /// </summary>
-                Normal = 0x03,
+                Normal = 3,
 
                 /// <summary>
                 /// Texture coordinates of the vertex.
                 /// </summary>
-                UV = 0x05,
+                UV = 5,
 
                 /// <summary>
-                /// Unknown.
+                /// Vector pointing perpendicular to the normal.
                 /// </summary>
-                Tangent = 0x06,
+                Tangent = 6,
 
                 /// <summary>
-                /// Unknown.
+                /// Vector pointing perpendicular to the normal and tangent.
                 /// </summary>
-                UnknownVector4A = 0x07,
+                Bitangent = 7,
 
                 /// <summary>
-                /// Color of the vertex (if untextured?)
+                /// Data used for blending, alpha, etc.
                 /// </summary>
-                VertexColor = 0x0A,
+                VertexColor = 10,
             }
         }
     }
