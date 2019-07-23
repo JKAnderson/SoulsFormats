@@ -59,7 +59,7 @@
     <Compile Include="Formats\FLVER\BufferLayout.cs" />
     <Compile Include="Formats\FLVER\Dummy.cs" />
     <Compile Include="Formats\FLVER\FaceSet.cs" />
-    <Compile Include="Formats\FLVER\GXItem.cs" />
+    <Compile Include="Formats\FLVER\GXList.cs" />
     <Compile Include="Formats\FLVER\Material.cs" />
     <Compile Include="Formats\FLVER\Bone.cs" />
     <Compile Include="Formats\FLVER\Mesh.cs" />
