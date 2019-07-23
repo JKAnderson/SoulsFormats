@@ -99,7 +99,7 @@ namespace SoulsFormats
                         br.StepIn(gxOffset);
                         {
                             gxListIndices[gxOffset] = gxLists.Count;
-                            gxLists.Add(new GXList(br));
+                            gxLists.Add(new GXList(br, header));
                         }
                         br.StepOut();
                     }

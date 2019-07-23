@@ -355,7 +355,7 @@ namespace SoulsFormats
             foreach (GXList gxList in GXLists)
             {
                 gxOffsets.Add((int)bw.Position);
-                gxList.Write(bw);
+                gxList.Write(bw, Header);
             }
             for (int i = 0; i < Materials.Count; i++)
             {

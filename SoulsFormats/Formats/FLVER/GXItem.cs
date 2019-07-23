@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 
 namespace SoulsFormats
 {
@@ -19,10 +21,10 @@ namespace SoulsFormats
             /// </summary>
             public GXList() : base() { }
 
-            internal GXList(BinaryReaderEx br) : base()
+            internal GXList(BinaryReaderEx br, FLVERHeader header) : base()
             {
                 while (br.GetInt32(br.Position) != int.MaxValue)
-                    Add(new GXItem(br));
+                    Add(new GXItem(br, header));
 
                 br.AssertInt32(int.MaxValue);
                 br.AssertInt32(100);
@@ -30,10 +32,10 @@ namespace SoulsFormats
                 br.AssertPattern(TerminatorLength, 0x00);
             }
 
-            internal void Write(BinaryWriterEx bw)
+            internal void Write(BinaryWriterEx bw, FLVERHeader header)
             {
                 foreach (GXItem item in this)
-                    item.Write(bw);
+                    item.Write(bw, header);
 
                 bw.WriteInt32(int.MaxValue);
                 bw.WriteInt32(100);
@@ -43,22 +45,22 @@ namespace SoulsFormats
         }
 
         /// <summary>
-        /// Unknown; some kind of graphics parameters used by materials.
+        /// Rendering parameters used by materials.
         /// </summary>
         public class GXItem
         {
             /// <summary>
             /// In DS2, ID is just a number; in other games, it's 4 ASCII characters.
             /// </summary>
-            public uint ID { get; set; }
+            public string ID { get; set; }
 
             /// <summary>
-            /// Unknown.
+            /// Unknown; typically 100.
             /// </summary>
             public int Unk04 { get; set; }
 
             /// <summary>
-            /// Unknown.
+            /// Raw parameter data, usually just a bunch of floats.
             /// </summary>
             public byte[] Data { get; set; }
 
@@ -67,30 +69,49 @@ namespace SoulsFormats
             /// </summary>
             public GXItem()
             {
+                ID = "0";
+                Unk04 = 100;
                 Data = new byte[0];
             }
 
             /// <summary>
             /// Creates a GXItem with the given values.
             /// </summary>
-            public GXItem(uint id, int unk04, byte[] data)
+            public GXItem(string id, int unk04, byte[] data)
             {
                 ID = id;
                 Unk04 = unk04;
                 Data = data;
             }
 
-            internal GXItem(BinaryReaderEx br)
+            internal GXItem(BinaryReaderEx br, FLVERHeader header)
             {
-                ID = br.ReadUInt32();
+                if (header.Version == 0x20010)
+                {
+                    ID = br.ReadInt32().ToString();
+                }
+                else
+                {
+                    ID = br.ReadFixStr(4);
+                }
                 Unk04 = br.ReadInt32();
                 int length = br.ReadInt32();
                 Data = br.ReadBytes(length - 0xC);
             }
 
-            internal void Write(BinaryWriterEx bw)
+            internal void Write(BinaryWriterEx bw, FLVERHeader header)
             {
-                bw.WriteUInt32(ID);
+                if (header.Version == 0x20010)
+                {
+                    if (int.TryParse(ID, out int id))
+                        bw.WriteInt32(id);
+                    else
+                        throw new FormatException("For Dark Souls 2, GX IDs must be convertible to int.");
+                }
+                else
+                {
+                    bw.WriteFixStr(ID, 4);
+                }
                 bw.WriteInt32(Unk04);
                 bw.WriteInt32(Data.Length + 0xC);
                 bw.WriteBytes(Data);
