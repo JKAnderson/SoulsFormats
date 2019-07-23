@@ -507,6 +507,7 @@ namespace SoulsFormats
 
             bw.FillInt32("DCASize", (int)(bw.Position - dcaStart));
             bw.FillInt32("EGDTSize", (int)(bw.Position - egdtStart));
+            long dataStart = bw.Position;
 
             int compressedSize = 0;
             for (int i = 0; i < chunkCount; i++)
@@ -534,7 +535,7 @@ namespace SoulsFormats
                 }
 
                 compressedSize += chunk.Length;
-                bw.FillInt32($"ChunkOffset{i}", (int)bw.Position);
+                bw.FillInt32($"ChunkOffset{i}", (int)(bw.Position - dataStart);
                 bw.FillInt32($"ChunkSize{i}", chunk.Length);
                 bw.WriteBytes(chunk);
                 bw.Pad(0x10);
