@@ -535,7 +535,7 @@ namespace SoulsFormats
                 }
 
                 compressedSize += chunk.Length;
-                bw.FillInt32($"ChunkOffset{i}", (int)(bw.Position - dataStart);
+                bw.FillInt32($"ChunkOffset{i}", (int)(bw.Position - dataStart));
                 bw.FillInt32($"ChunkSize{i}", chunk.Length);
                 bw.WriteBytes(chunk);
                 bw.Pad(0x10);
