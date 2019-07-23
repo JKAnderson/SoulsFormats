@@ -5,6 +5,44 @@ namespace SoulsFormats
     public partial class FLVER
     {
         /// <summary>
+        /// A collection of items that set various material properties.
+        /// </summary>
+        public class GXList : List<GXItem>
+        {
+            /// <summary>
+            /// The length in bytes of the terminator data block; most likely not important, but varies in original files.
+            /// </summary>
+            public int TerminatorLength { get; set; }
+
+            /// <summary>
+            /// Creates an empty GXList.
+            /// </summary>
+            public GXList() : base() { }
+
+            internal GXList(BinaryReaderEx br) : base()
+            {
+                while (br.GetInt32(br.Position) != int.MaxValue)
+                    Add(new GXItem(br));
+
+                br.AssertInt32(int.MaxValue);
+                br.AssertInt32(100);
+                TerminatorLength = br.ReadInt32() - 0xC;
+                br.AssertPattern(TerminatorLength, 0x00);
+            }
+
+            internal void Write(BinaryWriterEx bw)
+            {
+                foreach (GXItem item in this)
+                    item.Write(bw);
+
+                bw.WriteInt32(int.MaxValue);
+                bw.WriteInt32(100);
+                bw.WriteInt32(TerminatorLength + 0xC);
+                bw.WritePattern(TerminatorLength, 0x00);
+            }
+        }
+
+        /// <summary>
         /// Unknown; some kind of graphics parameters used by materials.
         /// </summary>
         public class GXItem
@@ -56,25 +94,6 @@ namespace SoulsFormats
                 bw.WriteInt32(Unk04);
                 bw.WriteInt32(Data.Length + 0xC);
                 bw.WriteBytes(Data);
-            }
-
-            internal static List<GXItem> ReadList(BinaryReaderEx br)
-            {
-                var items = new List<GXItem>();
-                GXItem item;
-                do
-                {
-                    item = new GXItem(br);
-                    items.Add(item);
-                }
-                while (item.ID != int.MaxValue);
-                return items;
-            }
-
-            internal static void WriteList(BinaryWriterEx bw, List<GXItem> items)
-            {
-                foreach (GXItem item in items)
-                    item.Write(bw);
             }
         }
     }

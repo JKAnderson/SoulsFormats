@@ -28,7 +28,7 @@ namespace SoulsFormats
         /// <summary>
         /// Lists of GX elements referenced by materials in DS2 and beyond.
         /// </summary>
-        public List<List<GXItem>> GXLists { get; set; }
+        public List<GXList> GXLists { get; set; }
 
         /// <summary>
         /// Bones used by this model, may or may not be the full skeleton.
@@ -58,7 +58,7 @@ namespace SoulsFormats
             Header = new FLVERHeader();
             Dummies = new List<Dummy>();
             Materials = new List<Material>();
-            GXLists = new List<List<GXItem>>();
+            GXLists = new List<GXList>();
             Bones = new List<Bone>();
             Meshes = new List<Mesh>();
             BufferLayouts = new List<BufferLayout>();
@@ -146,7 +146,7 @@ namespace SoulsFormats
 
             Materials = new List<Material>(materialCount);
             var gxListIndices = new Dictionary<int, int>();
-            GXLists = new List<List<GXItem>>();
+            GXLists = new List<GXList>();
             for (int i = 0; i < materialCount; i++)
                 Materials.Add(new Material(br, Header, GXLists, gxListIndices));
 
@@ -352,10 +352,10 @@ namespace SoulsFormats
 
             bw.Pad(0x10);
             var gxOffsets = new List<int>();
-            foreach (List<GXItem> gxList in GXLists)
+            foreach (GXList gxList in GXLists)
             {
                 gxOffsets.Add((int)bw.Position);
-                GXItem.WriteList(bw, gxList);
+                gxList.Write(bw);
             }
             for (int i = 0; i < Materials.Count; i++)
             {

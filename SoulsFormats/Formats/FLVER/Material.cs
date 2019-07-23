@@ -66,7 +66,7 @@ namespace SoulsFormats
                 Unk18 = 0;
             }
 
-            internal Material(BinaryReaderEx br, FLVERHeader header, List<List<GXItem>> gxLists, Dictionary<int, int> gxListIndices)
+            internal Material(BinaryReaderEx br, FLVERHeader header, List<GXList> gxLists, Dictionary<int, int> gxListIndices)
             {
                 int nameOffset = br.ReadInt32();
                 int mtdOffset = br.ReadInt32();
@@ -99,8 +99,7 @@ namespace SoulsFormats
                         br.StepIn(gxOffset);
                         {
                             gxListIndices[gxOffset] = gxLists.Count;
-                            List<GXItem> gxList = GXItem.ReadList(br);
-                            gxLists.Add(gxList);
+                            gxLists.Add(new GXList(br));
                         }
                         br.StepOut();
                     }
