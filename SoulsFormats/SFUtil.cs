@@ -178,6 +178,17 @@ namespace SoulsFormats
         }
 
         /// <summary>
+        /// Returns the file name of the specified path, removing both .dcx if present and the actual extension.
+        /// </summary>
+        public static string GetRealFileName(string path)
+        {
+            string name = Path.GetFileNameWithoutExtension(path);
+            if (Path.GetExtension(path) == ".dcx")
+                name = Path.GetFileNameWithoutExtension(name);
+            return name;
+        }
+
+        /// <summary>
         /// Decompresses data and returns a new BinaryReaderEx if necessary.
         /// </summary>
         public static BinaryReaderEx GetDecompressedBR(BinaryReaderEx br, out DCX.Type compression)
