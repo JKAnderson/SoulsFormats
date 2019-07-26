@@ -60,13 +60,17 @@ namespace SoulsFormats
                 BufferOffset = br.ReadInt32();
             }
 
-            internal void ReadBuffer(BinaryReaderEx br, List<BufferLayout> layouts, List<Vertex> vertices, int dataOffset, int version)
+            internal void ReadBuffer(BinaryReaderEx br, List<BufferLayout> layouts, List<Vertex> vertices, int dataOffset, FLVERHeader header)
             {
                 BufferLayout layout = layouts[LayoutIndex];
                 br.StepIn(dataOffset + BufferOffset);
                 {
+                    float uvFactor = 1024;
+                    if (header.Version >= 0x2000F)
+                        uvFactor = 2048;
+
                     for (int i = 0; i < vertices.Count; i++)
-                        vertices[i].Read(br, layout, VertexSize, version);
+                        vertices[i].Read(br, layout, VertexSize, uvFactor);
                 }
                 br.StepOut();
 
@@ -94,14 +98,18 @@ namespace SoulsFormats
                 bw.ReserveInt32($"VertexBufferOffset{index}");
             }
 
-            internal void WriteBuffer(BinaryWriterEx bw, int index, List<BufferLayout> layouts, List<Vertex> Vertices, int dataStart, int version)
+            internal void WriteBuffer(BinaryWriterEx bw, int index, List<BufferLayout> layouts, List<Vertex> Vertices, int dataStart, FLVERHeader header)
             {
                 BufferLayout layout = layouts[LayoutIndex];
                 bw.FillInt32($"VertexBufferOffset{index}", (int)bw.Position - dataStart);
 
+                float uvFactor = 1024;
+                if (header.Version >= 0x2000F)
+                    uvFactor = 2048;
+
                 int vertexSize = VertexSize == -1 ? layout.Size : VertexSize;
                 foreach (Vertex vertex in Vertices)
-                    vertex.Write(bw, layout, vertexSize, version);
+                    vertex.Write(bw, layout, vertexSize, uvFactor);
             }
         }
     }

@@ -93,12 +93,13 @@ namespace SoulsFormats
 
             // Gundam Unicorn: 0x20005, 0x2000E
             // DS1: 2000C, 2000D
+            // DS2 NT: 2000F, 20010
             // DS2: 20010, 20009 (armor 9320)
             // SFS: 20010
             // BB:  20013, 20014
             // DS3: 20013, 20014
             // SDT: 2001A, 20016 (test chr)
-            Header.Version = br.AssertInt32(0x20005, 0x20009, 0x2000C, 0x2000D, 0x2000E, 0x20010, 0x20013, 0x20014, 0x20016, 0x2001A);
+            Header.Version = br.AssertInt32(0x20005, 0x20009, 0x2000C, 0x2000D, 0x2000E, 0x2000F, 0x20010, 0x20013, 0x20014, 0x20016, 0x2001A);
 
             int dataOffset = br.ReadInt32();
             br.ReadInt32(); // Data length
@@ -142,7 +143,7 @@ namespace SoulsFormats
 
             Dummies = new List<Dummy>(dummyCount);
             for (int i = 0; i < dummyCount; i++)
-                Dummies.Add(new Dummy(br, Header.Version));
+                Dummies.Add(new Dummy(br, Header));
 
             Materials = new List<Material>(materialCount);
             var gxListIndices = new Dictionary<int, int>();
@@ -156,7 +157,7 @@ namespace SoulsFormats
 
             Meshes = new List<Mesh>(meshCount);
             for (int i = 0; i < meshCount; i++)
-                Meshes.Add(new Mesh(br, Header.Version));
+                Meshes.Add(new Mesh(br, Header));
 
             var faceSets = new List<FaceSet>(faceSetCount);
             for (int i = 0; i < faceSetCount; i++)
@@ -191,7 +192,7 @@ namespace SoulsFormats
             {
                 mesh.TakeFaceSets(faceSetDict);
                 mesh.TakeVertexBuffers(vertexBufferDict, BufferLayouts);
-                mesh.ReadVertices(br, dataOffset, BufferLayouts, Header.Version);
+                mesh.ReadVertices(br, dataOffset, BufferLayouts, Header);
             }
             if (faceSetDict.Count != 0)
                 throw new NotSupportedException("Orphaned face sets found.");
@@ -271,7 +272,7 @@ namespace SoulsFormats
             bw.WriteInt32(0);
 
             foreach (Dummy dummy in Dummies)
-                dummy.Write(bw, Header.Version);
+                dummy.Write(bw, Header);
 
             for (int i = 0; i < Materials.Count; i++)
                 Materials[i].Write(bw, i);
@@ -280,7 +281,7 @@ namespace SoulsFormats
                 Bones[i].Write(bw, i);
 
             for (int i = 0; i < Meshes.Count; i++)
-                Meshes[i].Write(bw, i, Header.Version);
+                Meshes[i].Write(bw, i);
 
             int faceSetIndex = 0;
             foreach (Mesh mesh in Meshes)
@@ -323,7 +324,7 @@ namespace SoulsFormats
 
             bw.Pad(0x10);
             for (int i = 0; i < Meshes.Count; i++)
-                Meshes[i].WriteBoundingBox(bw, i, Header.Version);
+                Meshes[i].WriteBoundingBox(bw, i, Header);
 
             bw.Pad(0x10);
             int boneIndicesStart = (int)bw.Position;
@@ -380,7 +381,7 @@ namespace SoulsFormats
 
             int alignment = Header.Version <= 0x2000E ? 0x20 : 0x10;
             bw.Pad(alignment);
-            if (Header.Version == 0x20010)
+            if (Header.Version == 0x2000F || Header.Version == 0x20010)
                 bw.Pad(0x20);
 
             int dataStart = (int)bw.Position;
@@ -408,7 +409,7 @@ namespace SoulsFormats
                 for (int j = 0; j < mesh.VertexBuffers.Count; j++)
                 {
                     bw.Pad(alignment);
-                    mesh.VertexBuffers[j].WriteBuffer(bw, vertexBufferIndex + j, BufferLayouts, mesh.Vertices, dataStart, Header.Version);
+                    mesh.VertexBuffers[j].WriteBuffer(bw, vertexBufferIndex + j, BufferLayouts, mesh.Vertices, dataStart, Header);
                 }
 
                 foreach (Vertex vertex in mesh.Vertices)
@@ -419,7 +420,7 @@ namespace SoulsFormats
 
             bw.Pad(alignment);
             bw.FillInt32("DataSize", (int)bw.Position - dataStart);
-            if (Header.Version == 0x20010)
+            if (Header.Version == 0x2000F || Header.Version == 0x20010)
                 bw.Pad(0x20);
         }
 

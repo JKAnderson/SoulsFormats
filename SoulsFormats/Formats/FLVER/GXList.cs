@@ -86,7 +86,7 @@ namespace SoulsFormats
 
             internal GXItem(BinaryReaderEx br, FLVERHeader header)
             {
-                if (header.Version == 0x20010)
+                if (header.Version <= 0x20010)
                 {
                     ID = br.ReadInt32().ToString();
                 }
@@ -101,7 +101,7 @@ namespace SoulsFormats
 
             internal void Write(BinaryWriterEx bw, FLVERHeader header)
             {
-                if (header.Version == 0x20010)
+                if (header.Version <= 0x20010)
                 {
                     if (int.TryParse(ID, out int id))
                         bw.WriteInt32(id);

@@ -74,12 +74,12 @@ namespace SoulsFormats
                 AttachBoneIndex = -1;
             }
 
-            internal Dummy(BinaryReaderEx br, int version)
+            internal Dummy(BinaryReaderEx br, FLVERHeader header)
             {
                 Position = br.ReadVector3();
                 byte[] color = br.ReadBytes(4);
                 // Not certain about the ordering of RGB here
-                if (version == 0x20010)
+                if (header.Version == 0x20010)
                     Color = Color.FromArgb(color[3], color[2], color[1], color[0]);
                 else
                     Color = Color.FromArgb(color[0], color[1], color[2], color[3]);
@@ -96,10 +96,10 @@ namespace SoulsFormats
                 br.AssertInt32(0);
             }
 
-            internal void Write(BinaryWriterEx bw, int version)
+            internal void Write(BinaryWriterEx bw, FLVERHeader header)
             {
                 bw.WriteVector3(Position);
-                if (version == 0x20010)
+                if (header.Version == 0x20010)
                 {
                     bw.WriteByte(Color.B);
                     bw.WriteByte(Color.G);

@@ -68,7 +68,7 @@ namespace SoulsFormats
                 Vertices = new List<Vertex>();
             }
 
-            internal Mesh(BinaryReaderEx br, int version)
+            internal Mesh(BinaryReaderEx br, FLVERHeader header)
             {
                 Dynamic = br.ReadBoolean();
                 br.AssertByte(0);
@@ -91,7 +91,7 @@ namespace SoulsFormats
                 {
                     br.StepIn(boundingBoxOffset);
                     {
-                        BoundingBox = new BoundingBoxes(br, version);
+                        BoundingBox = new BoundingBoxes(br, header);
                     }
                     br.StepOut();
                 }
@@ -159,7 +159,7 @@ namespace SoulsFormats
                 }
             }
 
-            internal void ReadVertices(BinaryReaderEx br, int dataOffset, List<BufferLayout> layouts, int version)
+            internal void ReadVertices(BinaryReaderEx br, int dataOffset, List<BufferLayout> layouts, FLVERHeader header)
             {
                 var layoutMembers = layouts.SelectMany(l => l);
                 int uvCap = layoutMembers.Where(m => m.Semantic == BufferLayout.MemberSemantic.UV).Count();
@@ -172,10 +172,10 @@ namespace SoulsFormats
                     Vertices.Add(new Vertex(uvCap, tanCap, colorCap));
 
                 foreach (VertexBuffer buffer in VertexBuffers)
-                    buffer.ReadBuffer(br, layouts, Vertices, dataOffset, version);
+                    buffer.ReadBuffer(br, layouts, Vertices, dataOffset, header);
             }
 
-            internal void Write(BinaryWriterEx bw, int index, int version)
+            internal void Write(BinaryWriterEx bw, int index)
             {
                 bw.WriteBoolean(Dynamic);
                 bw.WriteByte(0);
@@ -195,7 +195,7 @@ namespace SoulsFormats
                 bw.ReserveInt32($"MeshVertexBufferIndices{index}");
             }
 
-            internal void WriteBoundingBox(BinaryWriterEx bw, int index, int version)
+            internal void WriteBoundingBox(BinaryWriterEx bw, int index, FLVERHeader header)
             {
                 if (BoundingBox == null)
                 {
@@ -204,7 +204,7 @@ namespace SoulsFormats
                 else
                 {
                     bw.FillInt32($"MeshBoundingBox{index}", (int)bw.Position);
-                    BoundingBox.Write(bw, version);
+                    BoundingBox.Write(bw, header);
                 }
             }
 
@@ -266,19 +266,19 @@ namespace SoulsFormats
                     Max = new Vector3(float.MaxValue);
                 }
 
-                internal BoundingBoxes(BinaryReaderEx br, int version)
+                internal BoundingBoxes(BinaryReaderEx br, FLVERHeader header)
                 {
                     Min = br.ReadVector3();
                     Max = br.ReadVector3();
-                    if (version >= 0x2001A)
+                    if (header.Version >= 0x2001A)
                         Unk = br.ReadVector3();
                 }
 
-                internal void Write(BinaryWriterEx bw, int version)
+                internal void Write(BinaryWriterEx bw, FLVERHeader header)
                 {
                     bw.WriteVector3(Min);
                     bw.WriteVector3(Max);
-                    if (version >= 0x2001A)
+                    if (header.Version >= 0x2001A)
                         bw.WriteVector3(Unk);
                 }
             }
