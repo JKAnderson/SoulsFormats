@@ -75,6 +75,16 @@
     <Compile Include="Formats\MSB1\ModelParam.cs" />
     <Compile Include="Formats\MSB1\MSB1.cs" />
     <Compile Include="Formats\MSB1\Shape.cs" />
+    <Compile Include="Formats\MSB2\ModelParam.cs" />
+    <Compile Include="Formats\MSB2\MapstudioBoneName.cs" />
+    <Compile Include="Formats\MSB2\MapstudioPartsPose.cs" />
+    <Compile Include="Formats\MSB2\PointParam.cs" />
+    <Compile Include="Formats\MSB2\PartsParam.cs" />
+    <Compile Include="Formats\MSB2\LayerParam.cs" />
+    <Compile Include="Formats\MSB2\RouteParam.cs" />
+    <Compile Include="Formats\MSB2\EventParam.cs" />
+    <Compile Include="Formats\MSB2\MSB2.cs" />
+    <Compile Include="Formats\MSB2\Shape.cs" />
     <Compile Include="Formats\MSB3\Shape.cs" />
     <Compile Include="Formats\MSBS\EventParam.cs" />
     <Compile Include="Formats\MSBS\ModelParam.cs" />
@@ -110,9 +120,6 @@
     <Compile Include="Formats\Other\MSBD\MSBD.cs" />
     <Compile Include="Formats\Other\MSBD\MSBD.ModelSection.cs" />
     <Compile Include="Formats\Other\MSBD\MSBD.PartsSection.cs" />
-    <Compile Include="Formats\Other\MSB2\MSB2.cs" />
-    <Compile Include="Formats\Other\MSB2\MSB2.ModelSection.cs" />
-    <Compile Include="Formats\Other\MSB2\MSB2.PartsSection.cs" />
     <Compile Include="Formats\MSB3\MSB3.cs" />
     <Compile Include="Formats\MSB3\MapstudioBoneName.cs" />
     <Compile Include="Formats\MSB3\MapstudioPartsPose.cs" />
