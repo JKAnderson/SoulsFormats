@@ -193,6 +193,14 @@ namespace SoulsFormats
             internal abstract void WriteTypeData(BinaryWriterEx bw);
 
             /// <summary>
+            /// Returns a string representation of the event.
+            /// </summary>
+            public override string ToString()
+            {
+                return $"[ID {EventID}] {Type} \"{Name}\"";
+            }
+
+            /// <summary>
             /// Unknown if this does anything.
             /// </summary>
             public class Light : Event

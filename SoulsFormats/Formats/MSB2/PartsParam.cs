@@ -273,6 +273,14 @@ namespace SoulsFormats
             }
 
             /// <summary>
+            /// Returns a string representation of the part.
+            /// </summary>
+            public override string ToString()
+            {
+                return $"{Type} \"{Name}\"";
+            }
+
+            /// <summary>
             /// A visible but intangible model.
             /// </summary>
             public class MapPiece : Part

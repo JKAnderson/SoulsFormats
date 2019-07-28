@@ -167,6 +167,14 @@ namespace SoulsFormats
                 Type = type;
                 Index = index;
             }
+
+            /// <summary>
+            /// Returns a string representation of the model.
+            /// </summary>
+            public override string ToString()
+            {
+                return $"{Name}";
+            }
         }
     }
 }

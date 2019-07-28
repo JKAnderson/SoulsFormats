@@ -320,6 +320,14 @@ namespace SoulsFormats
             }
 
             /// <summary>
+            /// Returns a string representation of the region.
+            /// </summary>
+            public override string ToString()
+            {
+                return $"{Type} {Shape.Type} \"{Name}\"";
+            }
+
+            /// <summary>
             /// Unknown, names always seem to mention enemies; possibly walk points.
             /// </summary>
             public class Region0 : Region

@@ -166,6 +166,9 @@ namespace SoulsFormats
                     NameIndex = FindIndex(lookups.BoneNames, Name);
                 }
 
+                /// <summary>
+                /// Returns a string representation of the bone.
+                /// </summary>
                 public override string ToString()
                 {
                     return $"{Name} [Trans {Translation:F2} | Rot {Rotation:F2} | Scale {Scale:F2}]";
