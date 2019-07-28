@@ -30,15 +30,28 @@ namespace SoulsFormats
             }
         }
 
+        /// <summary>
+        /// A set of bone transforms to pose a rigged object.
+        /// </summary>
         public class PartPose : Entry
         {
+            /// <summary>
+            /// The name of the part to be posed.
+            /// </summary>
             public string PartName { get; set; }
             private short PartIndex;
 
+            /// <summary>
+            /// Transforms for each bone in the object.
+            /// </summary>
             public List<Bone> Bones { get; set; }
 
-            public PartPose()
+            /// <summary>
+            /// Creates an empty PartPose.
+            /// </summary>
+            public PartPose(string partName = null)
             {
+                PartName = partName;
                 Bones = new List<Bone>();
             }
 
@@ -79,17 +92,43 @@ namespace SoulsFormats
                     bone.GetIndices(lookups, entries);
             }
 
+            /// <summary>
+            /// Returns a string representation of the pose.
+            /// </summary>
+            public override string ToString()
+            {
+                return $"{PartName} [{Bones?.Count} Bones]";
+            }
+
+            /// <summary>
+            /// A transform for a single bone in an object.
+            /// </summary>
             public class Bone
             {
+                /// <summary>
+                /// The name of the bone to transform.
+                /// </summary>
                 public string Name { get; set; }
                 private int NameIndex;
 
+                /// <summary>
+                /// Translation of the bone.
+                /// </summary>
                 public Vector3 Translation { get; set; }
 
+                /// <summary>
+                /// Rotation of the bone, in radians.
+                /// </summary>
                 public Vector3 Rotation { get; set; }
 
+                /// <summary>
+                /// Scale of the bone.
+                /// </summary>
                 public Vector3 Scale { get; set; }
 
+                /// <summary>
+                /// Creates a Bone with default values.
+                /// </summary>
                 public Bone(string name = "")
                 {
                     Name = name;
@@ -125,6 +164,11 @@ namespace SoulsFormats
                         entries.BoneNames.Add(new BoneName(Name));
                     }
                     NameIndex = FindIndex(lookups.BoneNames, Name);
+                }
+
+                public override string ToString()
+                {
+                    return $"{Name} [Trans {Translation:F2} | Rot {Rotation:F2} | Scale {Scale:F2}]";
                 }
             }
         }

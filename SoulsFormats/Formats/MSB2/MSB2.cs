@@ -1,25 +1,43 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace SoulsFormats
 {
+    /// <summary>
+    /// A map layout file used in DS2: SotFS. Extension: .msb
+    /// </summary>
     public partial class MSB2 : SoulsFile<MSB2>
     {
+        /// <summary>
+        /// Model files available for parts to use.
+        /// </summary>
         public ModelParam Models { get; set; }
 
+        /// <summary>
+        /// Abstract entities that set map properties or control behaviors.
+        /// </summary>
         public EventParam Events { get; set; }
 
+        /// <summary>
+        /// Points or volumes that trigger certain behaviors.
+        /// </summary>
         public PointParam Regions { get; set; }
 
+        /// <summary>
+        /// Concrete entities in the map.
+        /// </summary>
         public PartsParam Parts { get; set; }
 
+        /// <summary>
+        /// Predetermined poses applied to objects such as corpses.
+        /// </summary>
         public List<PartPose> PartPoses { get; set; }
 
+        /// <summary>
+        /// Creates an empty MSB2.
+        /// </summary>
         public MSB2()
         {
             Models = new ModelParam();
@@ -143,16 +161,28 @@ namespace SoulsFormats
             public Dictionary<string, int> BoneNames;
         }
 
+        /// <summary>
+        /// A generic entry in an MSB param.
+        /// </summary>
         public abstract class Entry
         {
             internal abstract void Write(BinaryWriterEx bw, int index);
         }
 
+        /// <summary>
+        /// A generic entry in an MSB param that has a name.
+        /// </summary>
         public abstract class NamedEntry : Entry
         {
+            /// <summary>
+            /// The name of this entry; should generally be unique.
+            /// </summary>
             public string Name { get; set; }
         }
 
+        /// <summary>
+        /// A collection of entries in the MSB that share common properties.
+        /// </summary>
         public abstract class Param<T> where T : Entry
         {
             internal abstract string Name { get; }
@@ -212,6 +242,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Returns every entry in the order they'll be written.
+            /// </summary>
             public abstract List<T> GetEntries();
         }
 
@@ -253,13 +286,13 @@ namespace SoulsFormats
                 return list[index].Name;
         }
 
-        private static string[] FindNames<T>(List<T> list, int[] indices) where T : NamedEntry
-        {
-            var names = new string[indices.Length];
-            for (int i = 0; i < indices.Length; i++)
-                names[i] = FindName(list, indices[i]);
-            return names;
-        }
+        //private static string[] FindNames<T>(List<T> list, int[] indices) where T : NamedEntry
+        //{
+        //    var names = new string[indices.Length];
+        //    for (int i = 0; i < indices.Length; i++)
+        //        names[i] = FindName(list, indices[i]);
+        //    return names;
+        //}
 
         private static int FindIndex(Dictionary<string, int> lookup, string name)
         {
@@ -275,13 +308,13 @@ namespace SoulsFormats
             }
         }
 
-        private static int[] FindIndices(Dictionary<string, int> lookup, string[] names)
-        {
-            var indices = new int[names.Length];
-            for (int i = 0; i < names.Length; i++)
-                indices[i] = FindIndex(lookup, names[i]);
-            return indices;
-        }
+        //private static int[] FindIndices(Dictionary<string, int> lookup, string[] names)
+        //{
+        //    var indices = new int[names.Length];
+        //    for (int i = 0; i < names.Length; i++)
+        //        indices[i] = FindIndex(lookup, names[i]);
+        //    return indices;
+        //}
 
         private static Dictionary<string, int> MakeNameLookup<T>(List<T> list) where T : NamedEntry
         {

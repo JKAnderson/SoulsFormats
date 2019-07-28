@@ -6,6 +6,9 @@ namespace SoulsFormats
 {
     public partial class MSB2
     {
+        /// <summary>
+        /// Types of part used in DS2.
+        /// </summary>
         public enum PartType : ushort
         {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
@@ -17,21 +20,42 @@ namespace SoulsFormats
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
         }
 
+        /// <summary>
+        /// Concrete map elements.
+        /// </summary>
         public class PartsParam : Param<Part>
         {
             internal override string Name => "PARTS_PARAM_ST";
             internal override int Version => 5;
 
+            /// <summary>
+            /// Visible but intangible models.
+            /// </summary>
             public List<Part.MapPiece> MapPieces { get; set; }
 
+            /// <summary>
+            /// Dynamic or interactible elements.
+            /// </summary>
             public List<Part.Object> Objects { get; set; }
 
+            /// <summary>
+            /// Invisible but physical surfaces.
+            /// </summary>
             public List<Part.Collision> Collisions { get; set; }
 
+            /// <summary>
+            /// AI navigation meshes.
+            /// </summary>
             public List<Part.Navmesh> Navmeshes { get; set; }
 
+            /// <summary>
+            /// Connections to other maps.
+            /// </summary>
             public List<Part.ConnectCollision> ConnectCollisions { get; set; }
 
+            /// <summary>
+            /// Creates an empty PartsParam.
+            /// </summary>
             public PartsParam()
             {
                 MapPieces = new List<Part.MapPiece>();
@@ -76,6 +100,10 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Returns every Part in the order they'll be written.
+            /// </summary>
+            /// <returns></returns>
             public override List<Part> GetEntries()
             {
                 return SFUtil.ConcatAll<Part>(
@@ -83,35 +111,80 @@ namespace SoulsFormats
             }
         }
 
+        /// <summary>
+        /// A concrete map element.
+        /// </summary>
         public abstract class Part : NamedEntry
         {
+            /// <summary>
+            /// The specific type of this part.
+            /// </summary>
             public abstract PartType Type { get; }
 
+            /// <summary>
+            /// The name of the part's model, referencing ModelParam.
+            /// </summary>
             public string ModelName { get; set; }
             private int ModelIndex;
 
+            /// <summary>
+            /// Location of the part.
+            /// </summary>
             public Vector3 Position { get; set; }
 
+            /// <summary>
+            /// Rotation of the part, in degrees.
+            /// </summary>
             public Vector3 Rotation { get; set; }
 
+            /// <summary>
+            /// Scale of the part; only supported for map pieces and objects.
+            /// </summary>
             public Vector3 Scale { get; set; }
 
+            /// <summary>
+            /// Not confirmed; determines when the part is loaded.
+            /// </summary>
             public uint[] DrawGroups { get; private set; }
 
+            /// <summary>
+            /// Unknown; possibly nvm groups.
+            /// </summary>
             public int Unk44 { get; set; }
 
+            /// <summary>
+            /// Unknown; possibly nvm groups.
+            /// </summary>
             public int Unk48 { get; set; }
 
+            /// <summary>
+            /// Unknown; possibly nvm groups.
+            /// </summary>
             public int Unk4C { get; set; }
 
+            /// <summary>
+            /// Unknown; possibly nvm groups.
+            /// </summary>
             public int Unk50 { get; set; }
 
+            /// <summary>
+            /// Not confirmed; determines when the part is visible.
+            /// </summary>
             public uint[] DispGroups { get; private set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public int Unk64 { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public int Unk68 { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public int Unk6C { get; set; }
 
             internal Part(string name = "")
@@ -199,6 +272,9 @@ namespace SoulsFormats
                 ModelIndex = FindIndex(lookups.Models, ModelName);
             }
 
+            /// <summary>
+            /// A visible but intangible model.
+            /// </summary>
             public class MapPiece : Part
             {
                 /// <summary>
@@ -206,8 +282,14 @@ namespace SoulsFormats
                 /// </summary>
                 public override PartType Type => PartType.MapPiece;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short UnkT00 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short UnkT02 { get; set; }
 
                 /// <summary>
@@ -232,6 +314,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// A dynamic or interactible element.
+            /// </summary>
             public class Object : Part
             {
                 /// <summary>
@@ -239,8 +324,14 @@ namespace SoulsFormats
                 /// </summary>
                 public override PartType Type => PartType.Object;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT04 { get; set; }
 
                 /// <summary>
@@ -267,6 +358,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// An invisible but physical surface that controls map loading and graphics settings, among other things.
+            /// </summary>
             public class Collision : Part
             {
                 /// <summary>
@@ -274,50 +368,119 @@ namespace SoulsFormats
                 /// </summary>
                 public override PartType Type => PartType.Collision;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT04 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT08 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT0C { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short UnkT10 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public byte UnkT12 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public byte UnkT13 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT14 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT18 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT1C { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT20 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short UnkT24 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short UnkT26 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT28 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short UnkT2C { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short UnkT2E { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT30 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short UnkT34 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short UnkT36 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT38 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT3C { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT40 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT44 { get; set; }
 
                 /// <summary>
@@ -384,6 +547,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// An AI navigation mesh.
+            /// </summary>
             public class Navmesh : Part
             {
                 /// <summary>
@@ -391,12 +557,24 @@ namespace SoulsFormats
                 /// </summary>
                 public override PartType Type => PartType.Navmesh;
 
+                /// <summary>
+                /// Unknown; possibly nvm groups.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// Unknown; possibly nvm groups.
+                /// </summary>
                 public int UnkT04 { get; set; }
 
+                /// <summary>
+                /// Unknown; possibly nvm groups.
+                /// </summary>
                 public int UnkT08 { get; set; }
 
+                /// <summary>
+                /// Unknown; possibly nvm groups.
+                /// </summary>
                 public int UnkT0C { get; set; }
 
                 /// <summary>
@@ -425,6 +603,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Causes another map to be loaded when standing on the referenced collision.
+            /// </summary>
             public class ConnectCollision : Part
             {
                 /// <summary>
@@ -432,19 +613,40 @@ namespace SoulsFormats
                 /// </summary>
                 public override PartType Type => PartType.ConnectCollision;
 
+                /// <summary>
+                /// Name of the referenced collision part.
+                /// </summary>
                 public string CollisionName { get; set; }
                 private int CollisionIndex;
 
+                /// <summary>
+                /// First part of the map ID to load.
+                /// </summary>
                 public byte MapID1 { get; set; }
 
+                /// <summary>
+                /// Second part of the map ID to load.
+                /// </summary>
                 public byte MapID2 { get; set; }
 
+                /// <summary>
+                /// Third part of the map ID to load.
+                /// </summary>
                 public byte MapID3 { get; set; }
 
+                /// <summary>
+                /// Fourth part of the map ID to load.
+                /// </summary>
                 public byte MapID4 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT08 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT0C { get; set; }
 
                 /// <summary>

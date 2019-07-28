@@ -15,19 +15,37 @@ namespace SoulsFormats
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
         }
 
+        /// <summary>
+        /// Models available for parts in the map to use.
+        /// </summary>
         public class ModelParam : Param<Model>
         {
             internal override string Name => "MODEL_PARAM_ST";
             internal override int Version => 5;
 
+            /// <summary>
+            /// Models for static visual elements.
+            /// </summary>
             public List<Model> MapPieces { get; set; }
 
+            /// <summary>
+            /// Models for dynamic or interactible elements.
+            /// </summary>
             public List<Model> Objects { get; set; }
 
+            /// <summary>
+            /// Models for invisible but physical surfaces.
+            /// </summary>
             public List<Model> Collisions { get; set; }
 
+            /// <summary>
+            /// Models for AI navigation.
+            /// </summary>
             public List<Model> Navmeshes { get; set; }
 
+            /// <summary>
+            /// Creates an empty ModelParam.
+            /// </summary>
             public ModelParam()
             {
                 MapPieces = new List<Model>();
@@ -62,6 +80,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Returns every Model in the order they'll be written.
+            /// </summary>
             public override List<Model> GetEntries()
             {
                 return SFUtil.ConcatAll(
@@ -81,11 +102,17 @@ namespace SoulsFormats
             }
         }
 
+        /// <summary>
+        /// A model file available for parts to reference.
+        /// </summary>
         public class Model : NamedEntry
         {
             internal ModelType Type;
             internal short Index;
 
+            /// <summary>
+            /// Creates a Model with the given name.
+            /// </summary>
             public Model(string name = "")
             {
                 Name = name;

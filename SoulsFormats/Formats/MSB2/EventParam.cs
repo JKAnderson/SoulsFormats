@@ -7,6 +7,9 @@ namespace SoulsFormats
 {
     public partial class MSB2
     {
+        /// <summary>
+        /// Types of event used in DS2.
+        /// </summary>
         public enum EventType : ushort
         {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
@@ -20,23 +23,47 @@ namespace SoulsFormats
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
         }
 
+        /// <summary>
+        /// Abstract entities that control map properties or behaviors.
+        /// </summary>
         public class EventParam : Param<Event>
         {
             internal override string Name => "EVENT_PARAM_ST";
             internal override int Version => 5;
 
+            /// <summary>
+            /// Unknown if these do anything.
+            /// </summary>
             public List<Event.Light> Lights { get; set; }
 
+            /// <summary>
+            /// Unknown if these do anything.
+            /// </summary>
             public List<Event.Shadow> Shadows { get; set; }
 
+            /// <summary>
+            /// Unknown if these do anything.
+            /// </summary>
             public List<Event.Fog> Fogs { get; set; }
 
+            /// <summary>
+            /// Sets the background color when no models are in the way. Should only be one per map.
+            /// </summary>
             public List<Event.BGColor> BGColors { get; set; }
 
+            /// <summary>
+            /// Sets the origin of the map; already factored into MSB positions, but affects BTL. Should only be one per map.
+            /// </summary>
             public List<Event.MapOffset> MapOffsets { get; set; }
 
+            /// <summary>
+            /// Unknown exactly what this is for.
+            /// </summary>
             public List<Event.Warp> Warps { get; set; }
 
+            /// <summary>
+            /// Unknown if these do anything.
+            /// </summary>
             public List<Event.CheapMode> CheapModes { get; set; }
 
             /// <summary>
@@ -109,10 +136,19 @@ namespace SoulsFormats
             }
         }
 
+        /// <summary>
+        /// An abstract entity that controls map properties or behaviors.
+        /// </summary>
         public abstract class Event : NamedEntry
         {
+            /// <summary>
+            /// Specific type of this event.
+            /// </summary>
             public abstract EventType Type { get; }
 
+            /// <summary>
+            /// Uniquely identifies the event in the map.
+            /// </summary>
             public int EventID { get; set; }
 
             internal Event(string name = "")
@@ -156,6 +192,9 @@ namespace SoulsFormats
 
             internal abstract void WriteTypeData(BinaryWriterEx bw);
 
+            /// <summary>
+            /// Unknown if this does anything.
+            /// </summary>
             public class Light : Event
             {
                 /// <summary>
@@ -163,32 +202,74 @@ namespace SoulsFormats
                 /// </summary>
                 public override EventType Type => EventType.Light;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short UnkT00 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT04 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT08 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public Color ColorT0C { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public Color ColorT10 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT1C { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT20 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public Color ColorT24 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public Color ColorT28 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public Color ColorT34 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public Color ColorT38 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public Color ColorT3C { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT40 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT44 { get; set; }
 
                 /// <summary>
@@ -247,6 +328,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown if this does anything.
+            /// </summary>
             public class Shadow : Event
             {
                 /// <summary>
@@ -254,24 +338,54 @@ namespace SoulsFormats
                 /// </summary>
                 public override EventType Type => EventType.Shadow;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT04 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT08 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT0C { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT10 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public Color ColorT14 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT18 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT1C { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT20 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public Color ColorT24 { get; set; }
 
                 /// <summary>
@@ -312,6 +426,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown if this does anything.
+            /// </summary>
             public class Fog : Event
             {
                 /// <summary>
@@ -319,16 +436,34 @@ namespace SoulsFormats
                 /// </summary>
                 public override EventType Type => EventType.Fog;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public Color ColorT04 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT08 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT0C { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT10 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT14 { get; set; }
 
                 /// <summary>
@@ -361,6 +496,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Sets the background color of the map when no models are in the way.
+            /// </summary>
             public class BGColor : Event
             {
                 /// <summary>
@@ -368,6 +506,9 @@ namespace SoulsFormats
                 /// </summary>
                 public override EventType Type => EventType.BGColor;
 
+                /// <summary>
+                /// The background color.
+                /// </summary>
                 public Color Color { get; set; }
 
                 /// <summary>
@@ -390,6 +531,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Sets the origin of the map; already factored into MSB positions but affects BTL.
+            /// </summary>
             public class MapOffset : Event
             {
                 /// <summary>
@@ -397,6 +541,9 @@ namespace SoulsFormats
                 /// </summary>
                 public override EventType Type => EventType.MapOffset;
 
+                /// <summary>
+                /// The origin of the map.
+                /// </summary>
                 public Vector3 Translation { get; set; }
 
                 /// <summary>
@@ -419,6 +566,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown exactly what this is for.
+            /// </summary>
             public class Warp : Event
             {
                 /// <summary>
@@ -426,8 +576,14 @@ namespace SoulsFormats
                 /// </summary>
                 public override EventType Type => EventType.Warp;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// Presumably the position to be warped to.
+                /// </summary>
                 public Vector3 Position { get; set; }
 
                 /// <summary>
@@ -450,6 +606,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown if this does anything.
+            /// </summary>
             public class CheapMode : Event
             {
                 /// <summary>
@@ -457,6 +616,9 @@ namespace SoulsFormats
                 /// </summary>
                 public override EventType Type => EventType.CheapMode;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
                 /// <summary>

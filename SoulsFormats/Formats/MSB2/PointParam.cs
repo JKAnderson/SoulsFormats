@@ -7,6 +7,9 @@ namespace SoulsFormats
 {
     public partial class MSB2
     {
+        /// <summary>
+        /// Types of region used in DS2.
+        /// </summary>
         public enum RegionType : byte
         {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
@@ -21,27 +24,57 @@ namespace SoulsFormats
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
         }
 
+        /// <summary>
+        /// Points or volumes that trigger some behavior.
+        /// </summary>
         public class PointParam : Param<Region>
         {
             internal override string Name => "POINT_PARAM_ST";
             internal override int Version => 5;
 
+            /// <summary>
+            /// Unknown, possibly walk points for enemies.
+            /// </summary>
             public List<Region.Region0> Region0s { get; set; }
 
+            /// <summary>
+            /// Unknown if these do anything.
+            /// </summary>
             public List<Region.Light> Lights { get; set; }
 
+            /// <summary>
+            /// Unknown, presumably the default position for spawning into the map.
+            /// </summary>
             public List<Region.StartPoint> StartPoints { get; set; }
 
+            /// <summary>
+            /// Sound effects that play in certain areas.
+            /// </summary>
             public List<Region.Sound> Sounds { get; set; }
 
+            /// <summary>
+            /// Special effects that play at certain areas.
+            /// </summary>
             public List<Region.SFX> SFXs { get; set; }
 
+            /// <summary>
+            /// Unknown, presumably set wind speed/direction.
+            /// </summary>
             public List<Region.Wind> Winds { get; set; }
 
+            /// <summary>
+            /// Unknown, names mention lightmaps and GI.
+            /// </summary>
             public List<Region.EnvLight> EnvLights { get; set; }
 
+            /// <summary>
+            /// Unknown if these do anything.
+            /// </summary>
             public List<Region.Fog> Fogs { get; set; }
 
+            /// <summary>
+            /// Creates an empty PointParam.
+            /// </summary>
             public PointParam()
             {
                 Region0s = new List<Region.Region0>();
@@ -115,20 +148,41 @@ namespace SoulsFormats
             }
         }
 
+        /// <summary>
+        /// A point or volume that triggers some behavior.
+        /// </summary>
         public abstract class Region : NamedEntry
         {
+            /// <summary>
+            /// The specific type of this region.
+            /// </summary>
             public abstract RegionType Type { get; }
 
             internal abstract bool HasTypeData { get; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public short Unk08 { get; set; }
 
+            /// <summary>
+            /// Describes the space encompassed by the region.
+            /// </summary>
             public Shape Shape { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public short Unk0E { get; set; }
 
+            /// <summary>
+            /// Location of the region.
+            /// </summary>
             public Vector3 Position { get; set; }
 
+            /// <summary>
+            /// Rotation of the region, in degrees.
+            /// </summary>
             public Vector3 Rotation { get; set; }
 
             internal Region(string name = "")
@@ -265,6 +319,9 @@ namespace SoulsFormats
                 throw new InvalidOperationException("Type data should not be written for regions with no type data.");
             }
 
+            /// <summary>
+            /// Unknown, names always seem to mention enemies; possibly walk points.
+            /// </summary>
             public class Region0 : Region
             {
                 /// <summary>
@@ -282,6 +339,9 @@ namespace SoulsFormats
                 internal Region0(BinaryReaderEx br) : base(br) { }
             }
 
+            /// <summary>
+            /// Unknown if this does anything.
+            /// </summary>
             public class Light : Region
             {
                 /// <summary>
@@ -291,12 +351,24 @@ namespace SoulsFormats
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public Color ColorT04 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public Color ColorT08 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT0C { get; set; }
 
                 /// <summary>
@@ -325,6 +397,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown, presumably the default spawn location for a map.
+            /// </summary>
             public class StartPoint : Region
             {
                 /// <summary>
@@ -342,6 +417,9 @@ namespace SoulsFormats
                 internal StartPoint(BinaryReaderEx br) : base(br) { }
             }
 
+            /// <summary>
+            /// A sound effect that plays in a certain area.
+            /// </summary>
             public class Sound : Region
             {
                 /// <summary>
@@ -351,10 +429,19 @@ namespace SoulsFormats
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown; possibly sound type.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// ID of the sound to play.
+                /// </summary>
                 public int SoundID { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT08 { get; set; }
 
                 /// <summary>
@@ -381,6 +468,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// A special effect that plays at a certain region.
+            /// </summary>
             public class SFX : Region
             {
                 /// <summary>
@@ -390,8 +480,14 @@ namespace SoulsFormats
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// The effect to play at this region.
+                /// </summary>
                 public int EffectID { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT04 { get; set; }
 
                 /// <summary>
@@ -416,6 +512,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown, presumably sets wind speed/direction.
+            /// </summary>
             public class Wind : Region
             {
                 /// <summary>
@@ -425,18 +524,39 @@ namespace SoulsFormats
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT04 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT08 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT0C { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT10 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT14 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT18 { get; set; }
 
                 /// <summary>
@@ -471,6 +591,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown, names mention lightmaps and GI.
+            /// </summary>
             public class EnvLight : Region
             {
                 /// <summary>
@@ -480,10 +603,19 @@ namespace SoulsFormats
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT04 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT08 { get; set; }
 
                 /// <summary>
@@ -510,6 +642,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown if this does anything.
+            /// </summary>
             public class Fog : Region
             {
                 /// <summary>
@@ -519,8 +654,14 @@ namespace SoulsFormats
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT04 { get; set; }
 
                 /// <summary>
