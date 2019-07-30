@@ -120,8 +120,7 @@ namespace SoulsFormats
             Header.Unk4A = br.ReadBoolean();
             br.AssertByte(0);
 
-            br.AssertInt16(0);
-            Header.Unk4E = br.AssertInt16(0, -1);
+            Header.Unk4C = br.ReadInt32();
 
             int faceSetCount = br.ReadInt32();
             int bufferLayoutCount = br.ReadInt32();
@@ -246,8 +245,7 @@ namespace SoulsFormats
             bw.WriteBoolean(Header.Unk4A);
             bw.WriteByte(0);
 
-            bw.WriteInt16(0);
-            bw.WriteInt16(Header.Unk4E);
+            bw.WriteInt32(Header.Unk4C);
 
             int faceSetCount = 0;
             foreach (Mesh mesh in Meshes)
@@ -435,7 +433,7 @@ namespace SoulsFormats
             public bool BigEndian { get; set; }
 
             /// <summary>
-            /// Exact meaning unknown.
+            /// Version of the format indicating presence of various features.
             /// </summary>
             public int Version { get; set; }
 
@@ -465,9 +463,9 @@ namespace SoulsFormats
             public bool Unk4A { get; set; }
 
             /// <summary>
-            /// Unknown.
+            /// Unknown; I believe this is the primitive restart constant, but I'm not certain.
             /// </summary>
-            public short Unk4E { get; set; }
+            public int Unk4C { get; set; }
 
             /// <summary>
             /// Unknown.
