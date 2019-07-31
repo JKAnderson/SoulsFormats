@@ -19,7 +19,15 @@ namespace SoulsFormats
 
         public Vector3 BoundingBoxMax;
 
-        public int Unk40, Unk48, Unk4C;
+        public byte VertexIndexSize;
+
+        public bool Unicode;
+
+        public byte Unk4A;
+
+        public byte Unk4B;
+
+        public int Unk4C;
 
         public List<Dummy> Dummies;
 
@@ -50,19 +58,22 @@ namespace SoulsFormats
             BigEndian = br.AssertASCII("L\0", "B\0") == "B\0";
             br.BigEndian = BigEndian;
 
-            int version = br.AssertInt32(0x0E, 0x0F, 0x10, 0x12, 0x13, 0x14, 0x15);
+            Version = br.AssertInt32(0x0E, 0x0F, 0x10, 0x12, 0x13, 0x14, 0x15);
             int dataOffset = br.ReadInt32();
-            int dataSize = br.ReadInt32();
+            br.ReadInt32(); // Data length
             int dummyCount = br.ReadInt32();
             int materialCount = br.ReadInt32();
             int boneCount = br.ReadInt32();
             int meshCount = br.ReadInt32();
-            br.AssertInt32(meshCount);
+            br.AssertInt32(meshCount); // Vertex buffer count
             BoundingBoxMin = br.ReadVector3();
             BoundingBoxMax = br.ReadVector3();
-            Unk40 = br.ReadInt32();
-            int totalFaceCount = br.ReadInt32();
-            Unk48 = br.ReadInt32();
+            br.ReadInt32(); // Face count not including motion blur meshes or degenerate faces
+            br.ReadInt32(); // Total face count
+            VertexIndexSize = br.ReadByte();
+            Unicode = br.ReadBoolean();
+            Unk4A = br.ReadByte();
+            Unk4B = br.ReadByte();
             Unk4C = br.ReadInt32();
 
             for (int i = 0; i < 12; i++)
@@ -74,11 +85,11 @@ namespace SoulsFormats
 
             Materials = new List<Material>(materialCount);
             for (int i = 0; i < materialCount; i++)
-                Materials.Add(new Material(br));
+                Materials.Add(new Material(br, this));
 
             Bones = new List<Bone>(boneCount);
             for (int i = 0; i < boneCount; i++)
-                Bones.Add(new Bone(br));
+                Bones.Add(new Bone(br, this));
 
             Meshes = new List<Mesh>(meshCount);
             for (int i = 0; i < meshCount; i++)
@@ -136,19 +147,19 @@ namespace SoulsFormats
 
             public List<BufferLayout> Layouts;
 
-            internal Material(BinaryReaderEx br)
+            internal Material(BinaryReaderEx br, FLVERD flv)
             {
                 int nameOffset = br.ReadInt32();
                 int mtdOffset = br.ReadInt32();
                 int texturesOffset = br.ReadInt32();
                 int layoutsOffset = br.ReadInt32();
-                int dataSize = br.ReadInt32(); // From name offset to end of buffer layouts
+                br.ReadInt32(); // Data length from name offset to end of buffer layouts
                 int layoutHeaderOffset = br.ReadInt32();
                 br.AssertInt32(0);
                 br.AssertInt32(0);
 
-                Name = br.BigEndian ? br.GetUTF16(nameOffset) : br.GetShiftJIS(nameOffset);
-                MTD = br.BigEndian ? br.GetUTF16(mtdOffset) : br.GetShiftJIS(mtdOffset);
+                Name = flv.Unicode ? br.GetUTF16(nameOffset) : br.GetShiftJIS(nameOffset);
+                MTD = flv.Unicode ? br.GetUTF16(mtdOffset) : br.GetShiftJIS(mtdOffset);
 
                 br.StepIn(texturesOffset);
                 {
@@ -162,7 +173,7 @@ namespace SoulsFormats
 
                     Textures = new List<Texture>(textureCount);
                     for (int i = 0; i < textureCount; i++)
-                        Textures.Add(new Texture(br));
+                        Textures.Add(new Texture(br, flv));
                 }
                 br.StepOut();
 
@@ -205,16 +216,16 @@ namespace SoulsFormats
 
             public string Path;
 
-            internal Texture(BinaryReaderEx br)
+            internal Texture(BinaryReaderEx br, FLVERD flv)
             {
                 int pathOffset = br.ReadInt32();
                 int typeOffset = br.ReadInt32();
                 br.AssertInt32(0);
                 br.AssertInt32(0);
 
-                Path = br.BigEndian ? br.GetUTF16(pathOffset) : br.GetShiftJIS(pathOffset);
+                Path = flv.Unicode ? br.GetUTF16(pathOffset) : br.GetShiftJIS(pathOffset);
                 if (typeOffset > 0)
-                    Type = br.BigEndian ? br.GetUTF16(typeOffset) : br.GetShiftJIS(typeOffset);
+                    Type = flv.Unicode ? br.GetUTF16(typeOffset) : br.GetShiftJIS(typeOffset);
                 else
                     Type = null;
             }
@@ -438,7 +449,7 @@ namespace SoulsFormats
 
             public short PreviousSiblingIndex;
 
-            internal Bone(BinaryReaderEx br)
+            internal Bone(BinaryReaderEx br, FLVERD flv)
             {
                 Translation = br.ReadVector3();
                 int nameOffset = br.ReadInt32();
@@ -455,7 +466,7 @@ namespace SoulsFormats
                 for (int i = 0; i < 13; i++)
                     br.AssertInt32(0);
 
-                Name = br.BigEndian ? br.GetUTF16(nameOffset) : br.GetShiftJIS(nameOffset);
+                Name = flv.Unicode ? br.GetUTF16(nameOffset) : br.GetShiftJIS(nameOffset);
             }
         }
 
