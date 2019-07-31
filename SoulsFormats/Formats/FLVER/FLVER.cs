@@ -112,7 +112,7 @@ namespace SoulsFormats
             Header.BoundingBoxMin = br.ReadVector3();
             Header.BoundingBoxMax = br.ReadVector3();
 
-            Header.Unk40 = br.ReadInt32();
+            br.ReadInt32(); // Face count not including motion blur meshes or degenerate faces
             br.ReadInt32(); // Total face count
 
             int vertexIndicesSize = br.AssertByte(0, 16, 32);
@@ -218,13 +218,18 @@ namespace SoulsFormats
             bw.WriteInt32(Meshes.Sum(m => m.VertexBuffers.Count));
             bw.WriteVector3(Header.BoundingBoxMin);
             bw.WriteVector3(Header.BoundingBoxMax);
-            bw.WriteInt32(Header.Unk40);
 
-            // I hope this isn't super slow :^)
+            int trueFaceCount = 0;
             int totalFaceCount = 0;
             foreach (Mesh mesh in Meshes)
+            {
+                bool allowPrimitiveRestarts = mesh.Vertices.Count < ushort.MaxValue;
                 foreach (FaceSet faceSet in mesh.FaceSets)
-                    totalFaceCount += faceSet.GetFaces(mesh.Vertices.Count < ushort.MaxValue, true).Count;
+                {
+                    faceSet.AddFaceCounts(allowPrimitiveRestarts, ref trueFaceCount, ref totalFaceCount);
+                }
+            }
+            bw.WriteInt32(trueFaceCount);
             bw.WriteInt32(totalFaceCount);
 
             byte vertexIndicesSize = 0;
@@ -247,11 +252,7 @@ namespace SoulsFormats
 
             bw.WriteInt32(Header.Unk4C);
 
-            int faceSetCount = 0;
-            foreach (Mesh mesh in Meshes)
-                faceSetCount += mesh.FaceSets.Count;
-            bw.WriteInt32(faceSetCount);
-
+            bw.WriteInt32(Meshes.Sum(m => m.FaceSets.Count));
             bw.WriteInt32(BufferLayouts.Count);
             bw.WriteInt32(Materials.Sum(m => m.Textures.Count));
 
@@ -446,11 +447,6 @@ namespace SoulsFormats
             /// Maximum extent of the entire model.
             /// </summary>
             public Vector3 BoundingBoxMax { get; set; }
-
-            /// <summary>
-            /// Unknown; seems close to vertex or edge count.
-            /// </summary>
-            public int Unk40 { get; set; }
 
             /// <summary>
             /// If true strings are UTF-16, if false Shift-JIS.

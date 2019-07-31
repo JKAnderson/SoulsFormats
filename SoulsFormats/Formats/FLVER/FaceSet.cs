@@ -171,14 +171,43 @@ namespace SoulsFormats
                 return 16;
             }
 
-            /// <summary>
-            /// Returns a list of arrays of 3 vertex indices, each representing one triangle in a mesh.
-            /// </summary>
-            public List<int[]> GetFaces(bool allowPrimitiveRestarts, bool includeDegenerateFaces = false)
+            internal void AddFaceCounts(bool allowPrimitiveRestarts, ref int trueFaceCount, ref int totalFaceCount)
             {
-                var faces = new List<int[]>();
                 if (TriangleStrip)
                 {
+                    for (int i = 0; i < Indices.Count - 2; i++)
+                    {
+                        int vi1 = Indices[i];
+                        int vi2 = Indices[i + 1];
+                        int vi3 = Indices[i + 2];
+
+                        if (!allowPrimitiveRestarts || vi1 != 0xFFFF && vi2 != 0xFFFF && vi3 != 0xFFFF)
+                        {
+                            totalFaceCount++;
+                            if ((Flags & FSFlags.MotionBlur) == 0 && vi1 != vi2 && vi2 != vi3 && vi3 != vi1)
+                            {
+                                trueFaceCount++;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    totalFaceCount += Indices.Count / 3;
+                    trueFaceCount += Indices.Count / 3;
+                }
+            }
+
+            /// <summary>
+            /// Converts the faceset's indices to a triangle list; if they already are a triangle list, a copy is returned.
+            /// </summary>
+            /// <param name="allowPrimitiveRestarts">Whether indices of 0xFFFF will restart the strip; use when the parent mesh has fewer than that many vertices.</param>
+            /// <param name="includeDegenerateFaces">Whether to include faces with repeated indices in the output.</param>
+            public List<int> Triangulate(bool allowPrimitiveRestarts, bool includeDegenerateFaces = false)
+            {
+                if (TriangleStrip)
+                {
+                    var triangles = new List<int>();
                     bool flip = false;
                     for (int i = 0; i < Indices.Count - 2; i++)
                     {
@@ -192,26 +221,30 @@ namespace SoulsFormats
                         }
                         else
                         {
-                            bool degenerate = vi1 == vi2 || vi2 == vi3 || vi1 == vi3;
-                            if ((!degenerate) || includeDegenerateFaces)
+                            if (includeDegenerateFaces || vi1 != vi2 && vi2 != vi3 && vi3 != vi1)
                             {
-                                if (!flip)
-                                    faces.Add(new int[] { vi1, vi2, vi3 });
+                                if (flip)
+                                {
+                                    triangles.Add(vi3);
+                                    triangles.Add(vi2);
+                                    triangles.Add(vi1);
+                                }
                                 else
-                                    faces.Add(new int[] { vi3, vi2, vi1 });
+                                {
+                                    triangles.Add(vi1);
+                                    triangles.Add(vi2);
+                                    triangles.Add(vi3);
+                                }
                             }
                             flip = !flip;
                         }
                     }
+                    return triangles;
                 }
                 else
                 {
-                    for (int i = 0; i < Indices.Count - 2; i += 3)
-                    {
-                        faces.Add(new int[] { Indices[i], Indices[i + 1], Indices[i + 2] });
-                    }
+                    return new List<int>(Indices);
                 }
-                return faces;
             }
         }
     }

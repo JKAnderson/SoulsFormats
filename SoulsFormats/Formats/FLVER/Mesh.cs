@@ -229,12 +229,24 @@ namespace SoulsFormats
             /// </summary>
             public List<Vertex[]> GetFaces(FaceSet.FSFlags fsFlags = FaceSet.FSFlags.None)
             {
-                FaceSet faceset = FaceSets.Find(fs => fs.Flags == fsFlags) ?? FaceSets[0];
-                List<int[]> indices = faceset.GetFaces(Vertices.Count < ushort.MaxValue);
-                var vertices = new List<Vertex[]>(indices.Count);
-                foreach (int[] face in indices)
-                    vertices.Add(new Vertex[] { Vertices[face[0]], Vertices[face[1]], Vertices[face[2]] });
-                return vertices;
+                if (FaceSets.Count == 0)
+                {
+                    return new List<Vertex[]>();
+                }
+                else
+                {
+                    FaceSet faceSet = FaceSets.Find(fs => fs.Flags == fsFlags) ?? FaceSets[0];
+                    List<int> indices = faceSet.Triangulate(Vertices.Count < ushort.MaxValue);
+                    var vertices = new List<Vertex[]>(indices.Count);
+                    for (int i = 0; i < indices.Count - 2; i += 3)
+                    {
+                        int vi1 = indices[i];
+                        int vi2 = indices[i + 1];
+                        int vi3 = indices[i + 2];
+                        vertices.Add(new Vertex[] { Vertices[vi1], Vertices[vi2], Vertices[vi3] });
+                    }
+                    return vertices;
+                }
             }
 
             /// <summary>
