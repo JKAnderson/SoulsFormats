@@ -300,7 +300,7 @@ namespace SoulsFormats
             foreach (Mesh mesh in Meshes)
             {
                 for (int i = 0; i < mesh.VertexBuffers.Count; i++)
-                    mesh.VertexBuffers[i].Write(bw, Header, vertexBufferIndex + i, BufferLayouts, mesh.Vertices.Count);
+                    mesh.VertexBuffers[i].Write(bw, Header, vertexBufferIndex + i, i, BufferLayouts, mesh.Vertices.Count);
                 vertexBufferIndex += mesh.VertexBuffers.Count;
             }
 
