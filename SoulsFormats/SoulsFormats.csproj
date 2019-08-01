@@ -56,6 +56,12 @@
     <Compile Include="Formats\EMEVD.cs" />
     <Compile Include="Formats\ESD.cs" />
     <Compile Include="Formats\F2TR.cs" />
+    <Compile Include="Formats\FLVER\FLVER0\BufferLayout.cs" />
+    <Compile Include="Formats\FLVER\FLVER0\Dummy.cs" />
+    <Compile Include="Formats\FLVER\FLVER0\Mesh.cs" />
+    <Compile Include="Formats\FLVER\FLVER0\Texture.cs" />
+    <Compile Include="Formats\FLVER\FLVER0\Material.cs" />
+    <Compile Include="Formats\FLVER\FLVER0\Bone.cs" />
     <Compile Include="Formats\FLVER\FLVER2\BufferLayout.cs" />
     <Compile Include="Formats\FLVER\FLVER2\Dummy.cs" />
     <Compile Include="Formats\FLVER\FLVER2\FaceSet.cs" />
