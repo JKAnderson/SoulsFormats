@@ -151,11 +151,7 @@ namespace SoulsFormats
                 {
                     VertexBuffer buffer = VertexBuffers[i];
                     if (buffer.BufferIndex != i)
-                        throw new FormatException("Unexpected vertex buffer indices.");
-
-                    BufferLayout layout = layouts[buffer.LayoutIndex];
-                    if (layout.Size != buffer.VertexSize)
-                        throw new FormatException("Mismatched vertex sizes are not supported for split buffers.");
+                        throw new FormatException("Unexpected vertex buffer index.");
                 }
             }
 

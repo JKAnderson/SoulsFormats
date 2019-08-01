@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 
 namespace SoulsFormats
 {
@@ -14,22 +15,17 @@ namespace SoulsFormats
             /// </summary>
             public int LayoutIndex { get; set; }
 
-            /// <summary>
-            /// Size of the data for each vertex; -1 means it matches the buffer layout size, which it should, but often doesn't in DSR.
-            /// </summary>
-            public int VertexSize { get; set; }
-
+            internal int VertexSize;
             internal int BufferIndex;
             internal int VertexCount;
             internal int BufferOffset;
 
             /// <summary>
-            /// Creates a VertexBuffer with the specified layout and vertex size; leave size -1 for automatic.
+            /// Creates a VertexBuffer with the specified layout.
             /// </summary>
-            public VertexBuffer(int layoutIndex, int vertexSize = -1)
+            public VertexBuffer(int layoutIndex)
             {
                 LayoutIndex = layoutIndex;
-                VertexSize = vertexSize;
             }
 
             internal VertexBuffer(BinaryReaderEx br)
@@ -47,6 +43,9 @@ namespace SoulsFormats
             internal void ReadBuffer(BinaryReaderEx br, List<BufferLayout> layouts, List<FLVER.Vertex> vertices, int dataOffset, FLVERHeader header)
             {
                 BufferLayout layout = layouts[LayoutIndex];
+                if (VertexSize != layout.Size)
+                    throw new InvalidDataException($"Mismatched vertex buffer and buffer layout sizes.");
+
                 br.StepIn(dataOffset + BufferOffset);
                 {
                     float uvFactor = 1024;
@@ -54,13 +53,11 @@ namespace SoulsFormats
                         uvFactor = 2048;
 
                     for (int i = 0; i < vertices.Count; i++)
-                        vertices[i].Read(br, layout, VertexSize, uvFactor);
+                        vertices[i].Read(br, layout, uvFactor);
                 }
                 br.StepOut();
 
-                if (VertexSize == layout.Size)
-                    VertexSize = -1;
-
+                VertexSize = -1;
                 BufferIndex = -1;
                 VertexCount = -1;
                 BufferOffset = -1;
@@ -69,15 +66,14 @@ namespace SoulsFormats
             internal void Write(BinaryWriterEx bw, FLVERHeader header, int index, int bufferIndex, List<BufferLayout> layouts, int vertexCount)
             {
                 BufferLayout layout = layouts[LayoutIndex];
-                int vertexSize = VertexSize == -1 ? layout.Size : VertexSize;
 
                 bw.WriteInt32(bufferIndex);
                 bw.WriteInt32(LayoutIndex);
-                bw.WriteInt32(vertexSize);
+                bw.WriteInt32(layout.Size);
                 bw.WriteInt32(vertexCount);
                 bw.WriteInt32(0);
                 bw.WriteInt32(0);
-                bw.WriteInt32(header.Version > 0x20005 ? vertexSize * vertexCount : 0);
+                bw.WriteInt32(header.Version > 0x20005 ? layout.Size * vertexCount : 0);
                 bw.ReserveInt32($"VertexBufferOffset{index}");
             }
 
@@ -90,9 +86,8 @@ namespace SoulsFormats
                 if (header.Version >= 0x2000F)
                     uvFactor = 2048;
 
-                int vertexSize = VertexSize == -1 ? layout.Size : VertexSize;
                 foreach (FLVER.Vertex vertex in Vertices)
-                    vertex.Write(bw, layout, vertexSize, uvFactor);
+                    vertex.Write(bw, layout, uvFactor);
             }
         }
     }

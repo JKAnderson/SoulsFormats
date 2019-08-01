@@ -20,19 +20,14 @@ namespace SoulsFormats
             public Vector3 Position;
 
             /// <summary>
-            /// Bones the vertex is weighted to, indexing the parent mesh's bone indices; must be 4 length.
-            /// </summary>
-            public int[] BoneIndices;
-
-            /// <summary>
             /// Weight of the vertex's attachment to bones; must be 4 length.
             /// </summary>
             public float[] BoneWeights;
 
             /// <summary>
-            /// Texture coordinates of the vertex.
+            /// Bones the vertex is weighted to, indexing the parent mesh's bone indices; must be 4 length.
             /// </summary>
-            public List<Vector3> UVs;
+            public int[] BoneIndices;
 
             /// <summary>
             /// Vector pointing away from the surface.
@@ -40,14 +35,14 @@ namespace SoulsFormats
             public Vector4 Normal;
 
             /// <summary>
+            /// Texture coordinates of the vertex.
+            /// </summary>
+            public List<Vector3> UVs;
+
+            /// <summary>
             /// Vector pointing perpendicular to the normal.
             /// </summary>
             public List<Vector4> Tangents;
-
-            /// <summary>
-            /// Data used for alpha, blending, etc.
-            /// </summary>
-            public List<FLVER.VertexColor> Colors;
 
             /// <summary>
             /// Vector pointing perpendicular to the normal and tangent.
@@ -55,13 +50,13 @@ namespace SoulsFormats
             public Vector4 Bitangent;
 
             /// <summary>
-            /// Extra data in the vertex struct not accounted for by the buffer layout. Should be null for none, but often isn't in DSR.
+            /// Data used for alpha, blending, etc.
             /// </summary>
-            public byte[] ExtraBytes;
+            public List<VertexColor> Colors;
 
             private Queue<Vector3> uvQueue;
             private Queue<Vector4> tangentQueue;
-            private Queue<FLVER.VertexColor> colorQueue;
+            private Queue<VertexColor> colorQueue;
 
             /// <summary>
             /// Create a Vertex with null or empty values.
@@ -70,7 +65,7 @@ namespace SoulsFormats
             {
                 UVs = new List<Vector3>(uvCapacity);
                 Tangents = new List<Vector4>(tangentCapacity);
-                Colors = new List<FLVER.VertexColor>(colorCapacity);
+                Colors = new List<VertexColor>(colorCapacity);
             }
 
             /// <summary>
@@ -79,14 +74,13 @@ namespace SoulsFormats
             public Vertex(Vertex clone)
             {
                 Position = clone.Position;
-                BoneIndices = (int[])clone.BoneIndices?.Clone();
                 BoneWeights = (float[])clone.BoneWeights?.Clone();
-                UVs = new List<Vector3>(clone.UVs);
+                BoneIndices = (int[])clone.BoneIndices?.Clone();
                 Normal = clone.Normal;
+                UVs = new List<Vector3>(clone.UVs);
                 Tangents = new List<Vector4>(clone.Tangents);
-                Colors = new List<FLVER.VertexColor>(clone.Colors);
                 Bitangent = clone.Bitangent;
-                ExtraBytes = (byte[])clone.ExtraBytes?.Clone();
+                Colors = new List<VertexColor>(clone.Colors);
             }
 
             /// <summary>
@@ -94,9 +88,9 @@ namespace SoulsFormats
             /// </summary>
             internal void PrepareWrite()
             {
-                tangentQueue = new Queue<Vector4>(Tangents);
-                colorQueue = new Queue<FLVER.VertexColor>(Colors);
                 uvQueue = new Queue<Vector3>(UVs);
+                tangentQueue = new Queue<Vector4>(Tangents);
+                colorQueue = new Queue<VertexColor>(Colors);
             }
 
             /// <summary>
@@ -104,21 +98,15 @@ namespace SoulsFormats
             /// </summary>
             internal void FinishWrite()
             {
+                uvQueue = null;
                 tangentQueue = null;
                 colorQueue = null;
-                uvQueue = null;
             }
 
-            internal void Read(BinaryReaderEx br, List<LayoutMember> layout, int vertexSize, float uvFactor)
+            internal void Read(BinaryReaderEx br, List<LayoutMember> layout, float uvFactor)
             {
-                int currentSize = 0;
                 foreach (LayoutMember member in layout)
                 {
-                    if (currentSize + member.Size > vertexSize)
-                        break;
-                    else
-                        currentSize += member.Size;
-
                     switch (member.Semantic)
                     {
                         case LayoutSemantic.Position:
@@ -391,21 +379,12 @@ namespace SoulsFormats
                             throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
                     }
                 }
-
-                if (currentSize < vertexSize)
-                    ExtraBytes = br.ReadBytes(vertexSize - currentSize);
             }
 
-            internal void Write(BinaryWriterEx bw, List<LayoutMember> layout, int vertexSize, float uvFactor)
+            internal void Write(BinaryWriterEx bw, List<LayoutMember> layout, float uvFactor)
             {
-                int currentSize = 0;
                 foreach (LayoutMember member in layout)
                 {
-                    if (currentSize + member.Size > vertexSize)
-                        break;
-                    else
-                        currentSize += member.Size;
-
                     switch (member.Semantic)
                     {
                         case LayoutSemantic.Position:
@@ -698,9 +677,6 @@ namespace SoulsFormats
                             throw new NotImplementedException($"Write not implemented for {member.Type} {member.Semantic}.");
                     }
                 }
-
-                if (currentSize < vertexSize)
-                    bw.WriteBytes(ExtraBytes);
             }
         }
     }

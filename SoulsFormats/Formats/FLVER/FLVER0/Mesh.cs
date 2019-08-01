@@ -61,7 +61,7 @@ namespace SoulsFormats
                     for (int i = 0; i < vertexCount; i++)
                     {
                         var vert = new FLVER.Vertex();
-                        vert.Read(br, layout, layout.Size, uvFactor);
+                        vert.Read(br, layout, uvFactor);
                         Vertices.Add(vert);
                     }
                 }
