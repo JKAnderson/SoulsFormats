@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace SoulsFormats
 {
-    public partial class FLVER
+    public partial class FLVER2
     {
         /// <summary>
         /// Determines which properties of a vertex are read and written, and in what order and format.

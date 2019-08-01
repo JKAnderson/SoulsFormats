@@ -4,7 +4,7 @@ using System.IO;
 
 namespace SoulsFormats
 {
-    public partial class FLVER
+    public partial class FLVER2
     {
         /// <summary>
         /// A collection of items that set various material properties.

@@ -4,7 +4,7 @@ using System.Numerics;
 
 namespace SoulsFormats
 {
-    public partial class FLVER
+    public partial class FLVER2
     {
         /// <summary>
         /// A single point in a mesh.

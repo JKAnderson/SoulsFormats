@@ -2,7 +2,7 @@
 
 namespace SoulsFormats
 {
-    public partial class FLVER
+    public partial class FLVER2
     {
         /// <summary>
         /// Bones available for vertices to be weighted to.

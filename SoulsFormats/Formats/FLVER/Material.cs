@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace SoulsFormats
 {
-    public partial class FLVER
+    public partial class FLVER2
     {
         /// <summary>
         /// A reference to an MTD file, specifying textures to use.

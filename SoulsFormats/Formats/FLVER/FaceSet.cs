@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace SoulsFormats
 {
-    public partial class FLVER
+    public partial class FLVER2
     {
         /// <summary>
         /// Determines how vertices in a mesh are connected to form triangles.

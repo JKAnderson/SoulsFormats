@@ -8,7 +8,7 @@ namespace SoulsFormats
     /// <summary>
     /// Demon's Souls models; read-only.
     /// </summary>
-    public class FLVERD : SoulsFile<FLVERD>
+    public class FLVER0 : SoulsFile<FLVER0>
     {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         public bool BigEndian;
@@ -147,7 +147,7 @@ namespace SoulsFormats
 
             public List<BufferLayout> Layouts;
 
-            internal Material(BinaryReaderEx br, FLVERD flv)
+            internal Material(BinaryReaderEx br, FLVER0 flv)
             {
                 int nameOffset = br.ReadInt32();
                 int mtdOffset = br.ReadInt32();
@@ -216,7 +216,7 @@ namespace SoulsFormats
 
             public string Path;
 
-            internal Texture(BinaryReaderEx br, FLVERD flv)
+            internal Texture(BinaryReaderEx br, FLVER0 flv)
             {
                 int pathOffset = br.ReadInt32();
                 int typeOffset = br.ReadInt32();
@@ -449,7 +449,7 @@ namespace SoulsFormats
 
             public short PreviousSiblingIndex;
 
-            internal Bone(BinaryReaderEx br, FLVERD flv)
+            internal Bone(BinaryReaderEx br, FLVER0 flv)
             {
                 Translation = br.ReadVector3();
                 int nameOffset = br.ReadInt32();

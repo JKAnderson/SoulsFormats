@@ -3,7 +3,7 @@ using System.Numerics;
 
 namespace SoulsFormats
 {
-    public partial class FLVER
+    public partial class FLVER2
     {
         /// <summary>
         /// "Dummy polygons" used for hit detection, particle effect locations, and much more.

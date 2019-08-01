@@ -8,7 +8,7 @@ namespace SoulsFormats
     /// <summary>
     /// A model format used throughout the series.
     /// </summary>
-    public partial class FLVER : SoulsFile<FLVER>
+    public partial class FLVER2 : SoulsFile<FLVER2>
     {
         /// <summary>
         /// General values for this model.
@@ -53,7 +53,7 @@ namespace SoulsFormats
         /// <summary>
         /// Creates a FLVER with a default header and empty lists.
         /// </summary>
-        public FLVER()
+        public FLVER2()
         {
             Header = new FLVERHeader();
             Dummies = new List<Dummy>();

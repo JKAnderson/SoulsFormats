@@ -2,7 +2,7 @@
 
 namespace SoulsFormats
 {
-    public partial class FLVER
+    public partial class FLVER2
     {
         /// <summary>
         /// Represents a block of vertex data.

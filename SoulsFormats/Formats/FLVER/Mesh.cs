@@ -5,7 +5,7 @@ using System.Numerics;
 
 namespace SoulsFormats
 {
-    public partial class FLVER
+    public partial class FLVER2
     {
         /// <summary>
         /// An individual chunk of a model.
