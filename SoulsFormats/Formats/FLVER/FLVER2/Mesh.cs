@@ -129,16 +129,16 @@ namespace SoulsFormats
                 vertexBufferIndices = null;
 
                 // Make sure no semantics repeat that aren't known to
-                var semantics = new List<FLVER.MemberSemantic>();
+                var semantics = new List<FLVER.LayoutSemantic>();
                 foreach (VertexBuffer buffer in VertexBuffers)
                 {
                     foreach (var member in layouts[buffer.LayoutIndex])
                     {
-                        if (member.Semantic != FLVER.MemberSemantic.UV
-                            && member.Semantic != FLVER.MemberSemantic.Tangent
-                            && member.Semantic != FLVER.MemberSemantic.VertexColor
-                            && member.Semantic != FLVER.MemberSemantic.Position
-                            && member.Semantic != FLVER.MemberSemantic.Normal)
+                        if (member.Semantic != FLVER.LayoutSemantic.UV
+                            && member.Semantic != FLVER.LayoutSemantic.Tangent
+                            && member.Semantic != FLVER.LayoutSemantic.VertexColor
+                            && member.Semantic != FLVER.LayoutSemantic.Position
+                            && member.Semantic != FLVER.LayoutSemantic.Normal)
                         {
                             if (semantics.Contains(member.Semantic))
                                 throw new NotImplementedException("Unexpected semantic list.");
@@ -162,9 +162,9 @@ namespace SoulsFormats
             internal void ReadVertices(BinaryReaderEx br, int dataOffset, List<BufferLayout> layouts, FLVERHeader header)
             {
                 var layoutMembers = layouts.SelectMany(l => l);
-                int uvCap = layoutMembers.Where(m => m.Semantic == FLVER.MemberSemantic.UV).Count();
-                int tanCap = layoutMembers.Where(m => m.Semantic == FLVER.MemberSemantic.Tangent).Count();
-                int colorCap = layoutMembers.Where(m => m.Semantic == FLVER.MemberSemantic.VertexColor).Count();
+                int uvCap = layoutMembers.Where(m => m.Semantic == FLVER.LayoutSemantic.UV).Count();
+                int tanCap = layoutMembers.Where(m => m.Semantic == FLVER.LayoutSemantic.Tangent).Count();
+                int colorCap = layoutMembers.Where(m => m.Semantic == FLVER.LayoutSemantic.VertexColor).Count();
 
                 int vertexCount = VertexBuffers[0].VertexCount;
                 Vertices = new List<FLVER.Vertex>(vertexCount);

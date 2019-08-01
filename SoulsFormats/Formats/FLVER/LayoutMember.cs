@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SoulsFormats
 {
@@ -14,19 +10,19 @@ namespace SoulsFormats
         public class LayoutMember
         {
             /// <summary>
-            /// Unknown.
+            /// Unknown; 0, 1, or 2.
             /// </summary>
             public int Unk00 { get; set; }
 
             /// <summary>
             /// Format used to store this member.
             /// </summary>
-            public MemberType Type { get; set; }
+            public LayoutType Type { get; set; }
 
             /// <summary>
             /// Vertex property being stored.
             /// </summary>
-            public MemberSemantic Semantic { get; set; }
+            public LayoutSemantic Semantic { get; set; }
 
             /// <summary>
             /// For semantics that may appear more than once such as UVs, which one this member is.
@@ -42,37 +38,37 @@ namespace SoulsFormats
                 {
                     switch (Type)
                     {
-                        case MemberType.Byte4A:
-                        case MemberType.Byte4B:
-                        case MemberType.Short2toFloat2:
-                        case MemberType.Byte4C:
-                        case MemberType.UV:
-                        case MemberType.Byte4E:
+                        case LayoutType.Byte4A:
+                        case LayoutType.Byte4B:
+                        case LayoutType.Short2toFloat2:
+                        case LayoutType.Byte4C:
+                        case LayoutType.UV:
+                        case LayoutType.Byte4E:
                             return 4;
 
-                        case MemberType.Float2:
-                        case MemberType.UVPair:
-                        case MemberType.ShortBoneIndices:
-                        case MemberType.Short4toFloat4A:
-                        case MemberType.Short4toFloat4B:
+                        case LayoutType.Float2:
+                        case LayoutType.UVPair:
+                        case LayoutType.ShortBoneIndices:
+                        case LayoutType.Short4toFloat4A:
+                        case LayoutType.Short4toFloat4B:
                             return 8;
 
-                        case MemberType.Float3:
+                        case LayoutType.Float3:
                             return 12;
 
-                        case MemberType.Float4:
+                        case LayoutType.Float4:
                             return 16;
 
                         default:
-                            throw new NotImplementedException();
+                            throw new NotImplementedException($"No size defined for buffer layout type: {Type}");
                     }
                 }
             }
 
             /// <summary>
-            /// Creates a new Member with the specified values.
+            /// Creates a LayoutMember with the specified values.
             /// </summary>
-            public LayoutMember(int unk00, MemberType type, MemberSemantic semantic, int index)
+            public LayoutMember(LayoutType type, LayoutSemantic semantic, int index = 0, int unk00 = 0)
             {
                 Unk00 = unk00;
                 Type = type;
@@ -82,10 +78,10 @@ namespace SoulsFormats
 
             internal LayoutMember(BinaryReaderEx br, int structOffset)
             {
-                Unk00 = br.AssertInt32(0, 1, 2);
+                Unk00 = br.ReadInt32();
                 br.AssertInt32(structOffset);
-                Type = br.ReadEnum32<MemberType>();
-                Semantic = br.ReadEnum32<MemberSemantic>();
+                Type = br.ReadEnum32<LayoutType>();
+                Semantic = br.ReadEnum32<LayoutSemantic>();
                 Index = br.ReadInt32();
             }
 
@@ -110,7 +106,7 @@ namespace SoulsFormats
         /// <summary>
         /// Format of a vertex property.
         /// </summary>
-        public enum MemberType : uint
+        public enum LayoutType : uint
         {
             /// <summary>
             /// Two single-precision floats.
@@ -181,10 +177,10 @@ namespace SoulsFormats
         /// <summary>
         /// Property of a vertex.
         /// </summary>
-        public enum MemberSemantic : uint
+        public enum LayoutSemantic : uint
         {
             /// <summary>
-            /// Where the vertex is.
+            /// Location of the vertex.
             /// </summary>
             Position = 0,
 
