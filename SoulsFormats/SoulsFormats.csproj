@@ -68,6 +68,7 @@
     <Compile Include="Formats\FLVER\LayoutMember.cs" />
     <Compile Include="Formats\FLVER\Vertex.cs" />
     <Compile Include="Formats\FLVER\FLVER2\VertexBuffer.cs" />
+    <Compile Include="Formats\FLVER\VertexColor.cs" />
     <Compile Include="Formats\LUAGNL.cs" />
     <Compile Include="Formats\LUAINFO.cs" />
     <Compile Include="Formats\MSB1\PointParam.cs" />

@@ -335,7 +335,7 @@ namespace SoulsFormats
                 int vertexIndicesOffset = br.ReadInt32();
                 int bufferSize = br.ReadInt32();
                 int bufferOffset = br.ReadInt32();
-                int bufferHeaderOffset = br.ReadInt32();
+                br.ReadInt32(); // Buffers header offset
                 br.AssertInt32(0);
                 br.AssertInt32(0);
 

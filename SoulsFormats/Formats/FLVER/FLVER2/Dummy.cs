@@ -77,12 +77,11 @@ namespace SoulsFormats
             internal Dummy(BinaryReaderEx br, FLVERHeader header)
             {
                 Position = br.ReadVector3();
-                byte[] color = br.ReadBytes(4);
                 // Not certain about the ordering of RGB here
                 if (header.Version == 0x20010)
-                    Color = Color.FromArgb(color[3], color[2], color[1], color[0]);
+                    Color = br.ReadBGRA();
                 else
-                    Color = Color.FromArgb(color[0], color[1], color[2], color[3]);
+                    Color = br.ReadARGB();
                 Forward = br.ReadVector3();
                 ReferenceID = br.ReadInt16();
                 DummyBoneIndex = br.ReadInt16();
@@ -100,19 +99,9 @@ namespace SoulsFormats
             {
                 bw.WriteVector3(Position);
                 if (header.Version == 0x20010)
-                {
-                    bw.WriteByte(Color.B);
-                    bw.WriteByte(Color.G);
-                    bw.WriteByte(Color.R);
-                    bw.WriteByte(Color.A);
-                }
+                    bw.WriteBGRA(Color);
                 else
-                {
-                    bw.WriteByte(Color.A);
-                    bw.WriteByte(Color.R);
-                    bw.WriteByte(Color.G);
-                    bw.WriteByte(Color.B);
-                }
+                    bw.WriteARGB(Color);
                 bw.WriteVector3(Forward);
                 bw.WriteInt16(ReferenceID);
                 bw.WriteInt16(DummyBoneIndex);

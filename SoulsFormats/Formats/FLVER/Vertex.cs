@@ -47,7 +47,7 @@ namespace SoulsFormats
             /// <summary>
             /// Data used for alpha, blending, etc.
             /// </summary>
-            public List<Color> Colors;
+            public List<FLVER.VertexColor> Colors;
 
             /// <summary>
             /// Vector pointing perpendicular to the normal and tangent.
@@ -61,7 +61,7 @@ namespace SoulsFormats
 
             private Queue<Vector3> uvQueue;
             private Queue<Vector4> tangentQueue;
-            private Queue<Color> colorQueue;
+            private Queue<FLVER.VertexColor> colorQueue;
 
             /// <summary>
             /// Create a Vertex with null or empty values.
@@ -70,7 +70,7 @@ namespace SoulsFormats
             {
                 UVs = new List<Vector3>(uvCapacity);
                 Tangents = new List<Vector4>(tangentCapacity);
-                Colors = new List<Color>(colorCapacity);
+                Colors = new List<FLVER.VertexColor>(colorCapacity);
             }
 
             /// <summary>
@@ -84,7 +84,7 @@ namespace SoulsFormats
                 UVs = new List<Vector3>(clone.UVs);
                 Normal = clone.Normal;
                 Tangents = new List<Vector4>(clone.Tangents);
-                Colors = new List<Color>(clone.Colors);
+                Colors = new List<FLVER.VertexColor>(clone.Colors);
                 Bitangent = clone.Bitangent;
                 ExtraBytes = (byte[])clone.ExtraBytes?.Clone();
             }
@@ -95,7 +95,7 @@ namespace SoulsFormats
             internal void PrepareWrite()
             {
                 tangentQueue = new Queue<Vector4>(Tangents);
-                colorQueue = new Queue<Color>(Colors);
+                colorQueue = new Queue<FLVER.VertexColor>(Colors);
                 uvQueue = new Queue<Vector3>(UVs);
             }
 
@@ -132,7 +132,7 @@ namespace SoulsFormats
                                 br.AssertSingle(0);
                             }
                             else
-                                throw new NotImplementedException();
+                                throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
                             break;
 
                         case LayoutSemantic.BoneWeights:
@@ -161,7 +161,7 @@ namespace SoulsFormats
                                     BoneWeights[i] = br.ReadInt16() / (float)short.MaxValue;
                             }
                             else
-                                throw new NotImplementedException();
+                                throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
                             break;
 
                         case LayoutSemantic.BoneIndices:
@@ -184,7 +184,7 @@ namespace SoulsFormats
                                     BoneIndices[i] = br.ReadByte();
                             }
                             else
-                                throw new NotImplementedException();
+                                throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
                             break;
 
                         case LayoutSemantic.Normal:
@@ -239,7 +239,7 @@ namespace SoulsFormats
                                 Normal = new Vector4(floats[0], floats[1], floats[2], floats[3]);
                             }
                             else
-                                throw new NotImplementedException();
+                                throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
                             break;
 
                         case LayoutSemantic.UV:
@@ -287,7 +287,7 @@ namespace SoulsFormats
                                 br.AssertInt16(0);
                             }
                             else
-                                throw new NotImplementedException();
+                                throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
                             break;
 
                         case LayoutSemantic.Tangent:
@@ -331,7 +331,7 @@ namespace SoulsFormats
                                 Tangents.Add(new Vector4(floats[0], floats[1], floats[2], floats[3]));
                             }
                             else
-                                throw new NotImplementedException();
+                                throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
                             break;
 
                         case LayoutSemantic.Bitangent:
@@ -364,31 +364,31 @@ namespace SoulsFormats
                                 Bitangent = new Vector4(floats[0], floats[1], floats[2], floats[3]);
                             }
                             else
-                                throw new NotImplementedException();
+                                throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
                             break;
 
                         case LayoutSemantic.VertexColor:
                             if (member.Type == LayoutType.Float4)
                             {
                                 float[] floats = br.ReadSingles(4);
-                                Colors.Add(new Color(floats[3], floats[0], floats[1], floats[2]));
+                                Colors.Add(new VertexColor(floats[3], floats[0], floats[1], floats[2]));
                             }
                             else if (member.Type == LayoutType.Byte4A)
                             {
                                 byte[] bytes = br.ReadBytes(4);
-                                Colors.Add(new Color(bytes[0], bytes[1], bytes[2], bytes[3]));
+                                Colors.Add(new VertexColor(bytes[0], bytes[1], bytes[2], bytes[3]));
                             }
                             else if (member.Type == LayoutType.Byte4C)
                             {
                                 byte[] bytes = br.ReadBytes(4);
-                                Colors.Add(new Color(bytes[3], bytes[0], bytes[1], bytes[2]));
+                                Colors.Add(new VertexColor(bytes[3], bytes[0], bytes[1], bytes[2]));
                             }
                             else
-                                throw new NotImplementedException();
+                                throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
                             break;
 
                         default:
-                            throw new NotImplementedException();
+                            throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
                     }
                 }
 
@@ -419,7 +419,7 @@ namespace SoulsFormats
                                 bw.WriteSingle(0);
                             }
                             else
-                                throw new NotImplementedException();
+                                throw new NotImplementedException($"Write not implemented for {member.Type} {member.Semantic}.");
                             break;
 
                         case LayoutSemantic.BoneWeights:
@@ -444,7 +444,7 @@ namespace SoulsFormats
                                     bw.WriteInt16((short)Math.Round(BoneWeights[i] * short.MaxValue));
                             }
                             else
-                                throw new NotImplementedException();
+                                throw new NotImplementedException($"Write not implemented for {member.Type} {member.Semantic}.");
                             break;
 
                         case LayoutSemantic.BoneIndices:
@@ -464,7 +464,7 @@ namespace SoulsFormats
                                     bw.WriteByte((byte)BoneIndices[i]);
                             }
                             else
-                                throw new NotImplementedException();
+                                throw new NotImplementedException($"Write not implemented for {member.Type} {member.Semantic}.");
                             break;
 
                         case LayoutSemantic.Normal:
@@ -521,7 +521,7 @@ namespace SoulsFormats
                                 bw.WriteByte((byte)Math.Round(Normal.W * 127 + 127));
                             }
                             else
-                                throw new NotImplementedException();
+                                throw new NotImplementedException($"Write not implemented for {member.Type} {member.Semantic}.");
                             break;
 
                         case LayoutSemantic.UV:
@@ -586,7 +586,7 @@ namespace SoulsFormats
                                 bw.WriteInt16(0);
                             }
                             else
-                                throw new NotImplementedException();
+                                throw new NotImplementedException($"Write not implemented for {member.Type} {member.Semantic}.");
                             break;
 
                         case LayoutSemantic.Tangent:
@@ -631,7 +631,7 @@ namespace SoulsFormats
                                 bw.WriteByte((byte)Math.Round(tangent.W * 127 + 127));
                             }
                             else
-                                throw new NotImplementedException();
+                                throw new NotImplementedException($"Write not implemented for {member.Type} {member.Semantic}.");
                             break;
 
                         case LayoutSemantic.Bitangent:
@@ -664,11 +664,11 @@ namespace SoulsFormats
                                 bw.WriteByte((byte)Math.Round(Bitangent.W * 127 + 127));
                             }
                             else
-                                throw new NotImplementedException();
+                                throw new NotImplementedException($"Write not implemented for {member.Type} {member.Semantic}.");
                             break;
 
                         case LayoutSemantic.VertexColor:
-                            Color color = colorQueue.Dequeue();
+                            FLVER.VertexColor color = colorQueue.Dequeue();
                             if (member.Type == LayoutType.Float4)
                             {
                                 bw.WriteSingle(color.R);
@@ -691,76 +691,16 @@ namespace SoulsFormats
                                 bw.WriteByte((byte)Math.Round(color.A * 255));
                             }
                             else
-                                throw new NotImplementedException();
+                                throw new NotImplementedException($"Write not implemented for {member.Type} {member.Semantic}.");
                             break;
 
                         default:
-                            throw new NotImplementedException();
+                            throw new NotImplementedException($"Write not implemented for {member.Type} {member.Semantic}.");
                     }
                 }
 
                 if (currentSize < vertexSize)
                     bw.WriteBytes(ExtraBytes);
-            }
-
-            /// <summary>
-            /// A vertex color with ARGB components, typically from 0 to 1.
-            /// Used instead of System.Drawing.Color because some FLVERs use float colors with negative or >1 values.
-            /// </summary>
-            public class Color
-            {
-                /// <summary>
-                /// Alpha component of the color.
-                /// </summary>
-                public float A { get; set; }
-
-                /// <summary>
-                /// Red component of the color.
-                /// </summary>
-                public float R { get; set; }
-
-                /// <summary>
-                /// Green component of the color.
-                /// </summary>
-                public float G { get; set; }
-
-                /// <summary>
-                /// Blue component of the color.
-                /// </summary>
-                public float B { get; set; }
-
-                /// <summary>
-                /// Creates a pure white Color.
-                /// </summary>
-                public Color()
-                {
-                    A = 1;
-                    R = 1;
-                    G = 1;
-                    B = 1;
-                }
-
-                /// <summary>
-                /// Creates a Color with the given ARGB values.
-                /// </summary>
-                public Color(float a, float r, float g, float b)
-                {
-                    A = a;
-                    R = r;
-                    G = g;
-                    B = b;
-                }
-
-                /// <summary>
-                /// Creates a Color with the given ARGB values divided by 255.
-                /// </summary>
-                public Color(byte a, byte r, byte g, byte b)
-                {
-                    A = a / 255f;
-                    R = r / 255f;
-                    G = g / 255f;
-                    B = b / 255f;
-                }
             }
         }
     }
