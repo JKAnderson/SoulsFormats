@@ -402,7 +402,7 @@ namespace SoulsFormats
                 }
                 faceSetIndex += mesh.FaceSets.Count;
 
-                foreach (Vertex vertex in mesh.Vertices)
+                foreach (FLVER.Vertex vertex in mesh.Vertices)
                     vertex.PrepareWrite();
 
                 for (int j = 0; j < mesh.VertexBuffers.Count; j++)
@@ -411,7 +411,7 @@ namespace SoulsFormats
                     mesh.VertexBuffers[j].WriteBuffer(bw, vertexBufferIndex + j, BufferLayouts, mesh.Vertices, dataStart, Header);
                 }
 
-                foreach (Vertex vertex in mesh.Vertices)
+                foreach (FLVER.Vertex vertex in mesh.Vertices)
                     vertex.FinishWrite();
 
                 vertexBufferIndex += mesh.VertexBuffers.Count;

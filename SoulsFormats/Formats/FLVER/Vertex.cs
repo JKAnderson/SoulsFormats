@@ -4,7 +4,10 @@ using System.Numerics;
 
 namespace SoulsFormats
 {
-    public partial class FLVER2
+    /// <summary>
+    /// Common classes for FLVER0 and FLVER2.
+    /// </summary>
+    public static partial class FLVER
     {
         /// <summary>
         /// A single point in a mesh.
@@ -86,10 +89,10 @@ namespace SoulsFormats
                 ExtraBytes = (byte[])clone.ExtraBytes?.Clone();
             }
 
-            internal void Read(BinaryReaderEx br, BufferLayout layout, int vertexSize, float uvFactor)
+            internal void Read(BinaryReaderEx br, List<LayoutMember> layout, int vertexSize, float uvFactor)
             {
                 int currentSize = 0;
-                foreach (BufferLayout.Member member in layout)
+                foreach (LayoutMember member in layout)
                 {
                     if (currentSize + member.Size > vertexSize)
                         break;
@@ -98,12 +101,12 @@ namespace SoulsFormats
 
                     switch (member.Semantic)
                     {
-                        case BufferLayout.MemberSemantic.Position:
-                            if (member.Type == BufferLayout.MemberType.Float3)
+                        case MemberSemantic.Position:
+                            if (member.Type == MemberType.Float3)
                             {
                                 Position = br.ReadVector3();
                             }
-                            else if (member.Type == BufferLayout.MemberType.Float4)
+                            else if (member.Type == MemberType.Float4)
                             {
                                 Position = br.ReadVector3();
                                 br.AssertSingle(0);
@@ -112,20 +115,26 @@ namespace SoulsFormats
                                 throw new NotImplementedException();
                             break;
 
-                        case BufferLayout.MemberSemantic.BoneWeights:
-                            if (member.Type == BufferLayout.MemberType.Byte4A)
+                        case MemberSemantic.BoneWeights:
+                            if (member.Type == MemberType.Byte4A)
                             {
                                 BoneWeights = new float[4];
                                 for (int i = 0; i < 4; i++)
                                     BoneWeights[i] = br.ReadSByte() / (float)sbyte.MaxValue;
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4C)
+                            else if (member.Type == MemberType.Byte4C)
                             {
                                 BoneWeights = new float[4];
                                 for (int i = 0; i < 4; i++)
                                     BoneWeights[i] = br.ReadSByte() / (float)sbyte.MaxValue;
                             }
-                            else if (member.Type == BufferLayout.MemberType.Short4toFloat4A)
+                            else if (member.Type == MemberType.UVPair)
+                            {
+                                BoneWeights = new float[4];
+                                for (int i = 0; i < 4; i++)
+                                    BoneWeights[i] = br.ReadInt16() / (float)short.MaxValue;
+                            }
+                            else if (member.Type == MemberType.Short4toFloat4A)
                             {
                                 BoneWeights = new float[4];
                                 for (int i = 0; i < 4; i++)
@@ -135,20 +144,20 @@ namespace SoulsFormats
                                 throw new NotImplementedException();
                             break;
 
-                        case BufferLayout.MemberSemantic.BoneIndices:
-                            if (member.Type == BufferLayout.MemberType.Byte4B)
+                        case MemberSemantic.BoneIndices:
+                            if (member.Type == MemberType.Byte4B)
                             {
                                 BoneIndices = new int[4];
                                 for (int i = 0; i < 4; i++)
                                     BoneIndices[i] = br.ReadByte();
                             }
-                            else if (member.Type == BufferLayout.MemberType.ShortBoneIndices)
+                            else if (member.Type == MemberType.ShortBoneIndices)
                             {
                                 BoneIndices = new int[4];
                                 for (int i = 0; i < 4; i++)
                                     BoneIndices[i] = br.ReadUInt16();
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4E)
+                            else if (member.Type == MemberType.Byte4E)
                             {
                                 BoneIndices = new int[4];
                                 for (int i = 0; i < 4; i++)
@@ -158,40 +167,51 @@ namespace SoulsFormats
                                 throw new NotImplementedException();
                             break;
 
-                        case BufferLayout.MemberSemantic.Normal:
-                            if (member.Type == BufferLayout.MemberType.Float4)
+                        case MemberSemantic.Normal:
+                            if (member.Type == MemberType.Float3)
+                            {
+                                Normal = new Vector4(br.ReadVector3(), 0);
+                            }
+                            else if (member.Type == MemberType.Float4)
                             {
                                 Normal = br.ReadVector4();
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4A)
+                            else if (member.Type == MemberType.Byte4A)
                             {
                                 float[] floats = new float[4];
                                 for (int i = 0; i < 4; i++)
                                     floats[i] = (br.ReadByte() - 127) / 127f;
                                 Normal = new Vector4(floats[0], floats[1], floats[2], floats[3]);
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4B)
+                            else if (member.Type == MemberType.Byte4B)
                             {
                                 float[] floats = new float[4];
                                 for (int i = 0; i < 4; i++)
                                     floats[i] = (br.ReadByte() - 127) / 127f;
                                 Normal = new Vector4(floats[0], floats[1], floats[2], floats[3]);
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4C)
+                            else if (member.Type == MemberType.Byte4C)
                             {
                                 float[] floats = new float[4];
                                 for (int i = 0; i < 4; i++)
                                     floats[i] = (br.ReadByte() - 127) / 127f;
                                 Normal = new Vector4(floats[0], floats[1], floats[2], floats[3]);
                             }
-                            else if (member.Type == BufferLayout.MemberType.Short4toFloat4B)
+                            else if (member.Type == MemberType.Short4toFloat4A)
+                            {
+                                float[] floats = new float[4];
+                                for (int i = 0; i < 4; i++)
+                                    floats[i] = br.ReadInt16() / 32767f;
+                                Normal = new Vector4(floats[0], floats[1], floats[2], floats[3]);
+                            }
+                            else if (member.Type == MemberType.Short4toFloat4B)
                             {
                                 float[] floats = new float[4];
                                 for (int i = 0; i < 4; i++)
                                     floats[i] = (br.ReadUInt16() - 32767) / 32767f;
                                 Normal = new Vector4(floats[0], floats[1], floats[2], floats[3]);
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4E)
+                            else if (member.Type == MemberType.Byte4E)
                             {
                                 float[] floats = new float[4];
                                 for (int i = 0; i < 4; i++)
@@ -202,46 +222,46 @@ namespace SoulsFormats
                                 throw new NotImplementedException();
                             break;
 
-                        case BufferLayout.MemberSemantic.UV:
-                            if (member.Type == BufferLayout.MemberType.Float2)
+                        case MemberSemantic.UV:
+                            if (member.Type == MemberType.Float2)
                             {
                                 UVs.Add(new Vector3(br.ReadVector2() / uvFactor, 0));
                             }
-                            else if (member.Type == BufferLayout.MemberType.Float3)
+                            else if (member.Type == MemberType.Float3)
                             {
                                 UVs.Add(br.ReadVector3() / uvFactor);
                             }
-                            else if (member.Type == BufferLayout.MemberType.Float4)
+                            else if (member.Type == MemberType.Float4)
                             {
                                 UVs.Add(new Vector3(br.ReadVector2() / uvFactor, 0));
                                 UVs.Add(new Vector3(br.ReadVector2() / uvFactor, 0));
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4A)
+                            else if (member.Type == MemberType.Byte4A)
                             {
                                 UVs.Add(new Vector3(br.ReadInt16() / uvFactor, br.ReadInt16() / uvFactor, 0));
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4B)
+                            else if (member.Type == MemberType.Byte4B)
                             {
                                 UVs.Add(new Vector3(br.ReadInt16() / uvFactor, br.ReadInt16() / uvFactor, 0));
                             }
-                            else if (member.Type == BufferLayout.MemberType.Short2toFloat2)
+                            else if (member.Type == MemberType.Short2toFloat2)
                             {
                                 UVs.Add(new Vector3(br.ReadInt16() / uvFactor, br.ReadInt16() / uvFactor, 0));
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4C)
+                            else if (member.Type == MemberType.Byte4C)
                             {
                                 UVs.Add(new Vector3(br.ReadInt16() / uvFactor, br.ReadInt16() / uvFactor, 0));
                             }
-                            else if (member.Type == BufferLayout.MemberType.UV)
+                            else if (member.Type == MemberType.UV)
                             {
                                 UVs.Add(new Vector3(br.ReadInt16() / uvFactor, br.ReadInt16() / uvFactor, 0));
                             }
-                            else if (member.Type == BufferLayout.MemberType.UVPair)
+                            else if (member.Type == MemberType.UVPair)
                             {
                                 UVs.Add(new Vector3(br.ReadInt16() / uvFactor, br.ReadInt16() / uvFactor, 0));
                                 UVs.Add(new Vector3(br.ReadInt16() / uvFactor, br.ReadInt16() / uvFactor, 0));
                             }
-                            else if (member.Type == BufferLayout.MemberType.Short4toFloat4B)
+                            else if (member.Type == MemberType.Short4toFloat4B)
                             {
                                 UVs.Add(new Vector3(br.ReadInt16() / uvFactor, br.ReadInt16() / uvFactor, br.ReadInt16() / uvFactor));
                                 br.AssertInt16(0);
@@ -250,29 +270,40 @@ namespace SoulsFormats
                                 throw new NotImplementedException();
                             break;
 
-                        case BufferLayout.MemberSemantic.Tangent:
-                            if (member.Type == BufferLayout.MemberType.Byte4A)
+                        case MemberSemantic.Tangent:
+                            if (member.Type == MemberType.Float4)
+                            {
+                                Tangents.Add(br.ReadVector4());
+                            }
+                            else if (member.Type == MemberType.Byte4A)
                             {
                                 float[] floats = new float[4];
                                 for (int i = 0; i < 4; i++)
                                     floats[i] = (br.ReadByte() - 127) / 127f;
                                 Tangents.Add(new Vector4(floats[0], floats[1], floats[2], floats[3]));
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4B)
+                            else if (member.Type == MemberType.Byte4B)
                             {
                                 float[] floats = new float[4];
                                 for (int i = 0; i < 4; i++)
                                     floats[i] = (br.ReadByte() - 127) / 127f;
                                 Tangents.Add(new Vector4(floats[0], floats[1], floats[2], floats[3]));
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4C)
+                            else if (member.Type == MemberType.Byte4C)
                             {
                                 float[] floats = new float[4];
                                 for (int i = 0; i < 4; i++)
                                     floats[i] = (br.ReadByte() - 127) / 127f;
                                 Tangents.Add(new Vector4(floats[0], floats[1], floats[2], floats[3]));
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4E)
+                            else if (member.Type == MemberType.Short4toFloat4A)
+                            {
+                                float[] floats = new float[4];
+                                for (int i = 0; i < 4; i++)
+                                    floats[i] = br.ReadInt16() / 32767f;
+                                Tangents.Add(new Vector4(floats[0], floats[1], floats[2], floats[3]));
+                            }
+                            else if (member.Type == MemberType.Byte4E)
                             {
                                 float[] floats = new float[4];
                                 for (int i = 0; i < 4; i++)
@@ -283,29 +314,29 @@ namespace SoulsFormats
                                 throw new NotImplementedException();
                             break;
 
-                        case BufferLayout.MemberSemantic.Bitangent:
-                            if (member.Type == BufferLayout.MemberType.Byte4A)
+                        case MemberSemantic.Bitangent:
+                            if (member.Type == MemberType.Byte4A)
                             {
                                 float[] floats = new float[4];
                                 for (int i = 0; i < 4; i++)
                                     floats[i] = (br.ReadByte() - 127) / 127f;
                                 Bitangent = new Vector4(floats[0], floats[1], floats[2], floats[3]);
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4B)
+                            else if (member.Type == MemberType.Byte4B)
                             {
                                 float[] floats = new float[4];
                                 for (int i = 0; i < 4; i++)
                                     floats[i] = (br.ReadByte() - 127) / 127f;
                                 Bitangent = new Vector4(floats[0], floats[1], floats[2], floats[3]);
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4C)
+                            else if (member.Type == MemberType.Byte4C)
                             {
                                 float[] floats = new float[4];
                                 for (int i = 0; i < 4; i++)
                                     floats[i] = (br.ReadByte() - 127) / 127f;
                                 Bitangent = new Vector4(floats[0], floats[1], floats[2], floats[3]);
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4E)
+                            else if (member.Type == MemberType.Byte4E)
                             {
                                 float[] floats = new float[4];
                                 for (int i = 0; i < 4; i++)
@@ -316,18 +347,18 @@ namespace SoulsFormats
                                 throw new NotImplementedException();
                             break;
 
-                        case BufferLayout.MemberSemantic.VertexColor:
-                            if (member.Type == BufferLayout.MemberType.Float4)
+                        case MemberSemantic.VertexColor:
+                            if (member.Type == MemberType.Float4)
                             {
                                 float[] floats = br.ReadSingles(4);
                                 Colors.Add(new Color(floats[3], floats[0], floats[1], floats[2]));
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4A)
+                            else if (member.Type == MemberType.Byte4A)
                             {
                                 byte[] bytes = br.ReadBytes(4);
                                 Colors.Add(new Color(bytes[0], bytes[1], bytes[2], bytes[3]));
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4C)
+                            else if (member.Type == MemberType.Byte4C)
                             {
                                 byte[] bytes = br.ReadBytes(4);
                                 Colors.Add(new Color(bytes[3], bytes[0], bytes[1], bytes[2]));
@@ -365,10 +396,10 @@ namespace SoulsFormats
                 uvQueue = null;
             }
 
-            internal void Write(BinaryWriterEx bw, BufferLayout layout, int vertexSize, float uvFactor)
+            internal void Write(BinaryWriterEx bw, List<LayoutMember> layout, int vertexSize, float uvFactor)
             {
                 int currentSize = 0;
-                foreach (BufferLayout.Member member in layout)
+                foreach (LayoutMember member in layout)
                 {
                     if (currentSize + member.Size > vertexSize)
                         break;
@@ -377,12 +408,12 @@ namespace SoulsFormats
 
                     switch (member.Semantic)
                     {
-                        case BufferLayout.MemberSemantic.Position:
-                            if (member.Type == BufferLayout.MemberType.Float3)
+                        case MemberSemantic.Position:
+                            if (member.Type == MemberType.Float3)
                             {
                                 bw.WriteVector3(Position);
                             }
-                            else if (member.Type == BufferLayout.MemberType.Float4)
+                            else if (member.Type == MemberType.Float4)
                             {
                                 bw.WriteVector3(Position);
                                 bw.WriteSingle(0);
@@ -391,18 +422,23 @@ namespace SoulsFormats
                                 throw new NotImplementedException();
                             break;
 
-                        case BufferLayout.MemberSemantic.BoneWeights:
-                            if (member.Type == BufferLayout.MemberType.Byte4A)
+                        case MemberSemantic.BoneWeights:
+                            if (member.Type == MemberType.Byte4A)
                             {
                                 for (int i = 0; i < 4; i++)
                                     bw.WriteSByte((sbyte)Math.Round(BoneWeights[i] * sbyte.MaxValue));
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4C)
+                            else if (member.Type == MemberType.Byte4C)
                             {
                                 for (int i = 0; i < 4; i++)
                                     bw.WriteSByte((sbyte)Math.Round(BoneWeights[i] * sbyte.MaxValue));
                             }
-                            else if (member.Type == BufferLayout.MemberType.Short4toFloat4A)
+                            else if (member.Type == MemberType.UVPair)
+                            {
+                                for (int i = 0; i < 4; i++)
+                                    bw.WriteInt16((short)Math.Round(BoneWeights[i] * short.MaxValue));
+                            }
+                            else if (member.Type == MemberType.Short4toFloat4A)
                             {
                                 for (int i = 0; i < 4; i++)
                                     bw.WriteInt16((short)Math.Round(BoneWeights[i] * short.MaxValue));
@@ -411,18 +447,18 @@ namespace SoulsFormats
                                 throw new NotImplementedException();
                             break;
 
-                        case BufferLayout.MemberSemantic.BoneIndices:
-                            if (member.Type == BufferLayout.MemberType.Byte4B)
+                        case MemberSemantic.BoneIndices:
+                            if (member.Type == MemberType.Byte4B)
                             {
                                 for (int i = 0; i < 4; i++)
                                     bw.WriteByte((byte)BoneIndices[i]);
                             }
-                            else if (member.Type == BufferLayout.MemberType.ShortBoneIndices)
+                            else if (member.Type == MemberType.ShortBoneIndices)
                             {
                                 for (int i = 0; i < 4; i++)
                                     bw.WriteUInt16((ushort)BoneIndices[i]);
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4E)
+                            else if (member.Type == MemberType.Byte4E)
                             {
                                 for (int i = 0; i < 4; i++)
                                     bw.WriteByte((byte)BoneIndices[i]);
@@ -431,40 +467,53 @@ namespace SoulsFormats
                                 throw new NotImplementedException();
                             break;
 
-                        case BufferLayout.MemberSemantic.Normal:
-                            if (member.Type == BufferLayout.MemberType.Float4)
+                        case MemberSemantic.Normal:
+                            if (member.Type == MemberType.Float3)
+                            {
+                                bw.WriteSingle(Normal.X);
+                                bw.WriteSingle(Normal.Y);
+                                bw.WriteSingle(Normal.Z);
+                            }
+                            else if (member.Type == MemberType.Float4)
                             {
                                 bw.WriteVector4(Normal);
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4A)
+                            else if (member.Type == MemberType.Byte4A)
                             {
                                 bw.WriteByte((byte)Math.Round(Normal.X * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(Normal.Y * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(Normal.Z * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(Normal.W * 127 + 127));
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4B)
+                            else if (member.Type == MemberType.Byte4B)
                             {
                                 bw.WriteByte((byte)Math.Round(Normal.X * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(Normal.Y * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(Normal.Z * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(Normal.W * 127 + 127));
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4C)
+                            else if (member.Type == MemberType.Byte4C)
                             {
                                 bw.WriteByte((byte)Math.Round(Normal.X * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(Normal.Y * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(Normal.Z * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(Normal.W * 127 + 127));
                             }
-                            else if (member.Type == BufferLayout.MemberType.Short4toFloat4B)
+                            else if (member.Type == MemberType.Short4toFloat4A)
                             {
-                                bw.WriteInt16((short)Math.Round(Normal.X * 32767 + 32767));
-                                bw.WriteInt16((short)Math.Round(Normal.Y * 32767 + 32767));
-                                bw.WriteInt16((short)Math.Round(Normal.Z * 32767 + 32767));
-                                bw.WriteInt16((short)Math.Round(Normal.W * 32767 + 32767));
+                                bw.WriteInt16((short)Math.Round(Normal.X * 32767));
+                                bw.WriteInt16((short)Math.Round(Normal.Y * 32767));
+                                bw.WriteInt16((short)Math.Round(Normal.Z * 32767));
+                                bw.WriteInt16((short)Math.Round(Normal.W * 32767));
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4E)
+                            else if (member.Type == MemberType.Short4toFloat4B)
+                            {
+                                bw.WriteUInt16((ushort)Math.Round(Normal.X * 32767 + 32767));
+                                bw.WriteUInt16((ushort)Math.Round(Normal.Y * 32767 + 32767));
+                                bw.WriteUInt16((ushort)Math.Round(Normal.Z * 32767 + 32767));
+                                bw.WriteUInt16((ushort)Math.Round(Normal.W * 32767 + 32767));
+                            }
+                            else if (member.Type == MemberType.Byte4E)
                             {
                                 bw.WriteByte((byte)Math.Round(Normal.X * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(Normal.Y * 127 + 127));
@@ -475,18 +524,18 @@ namespace SoulsFormats
                                 throw new NotImplementedException();
                             break;
 
-                        case BufferLayout.MemberSemantic.UV:
+                        case MemberSemantic.UV:
                             Vector3 uv = uvQueue.Dequeue() * uvFactor;
-                            if (member.Type == BufferLayout.MemberType.Float2)
+                            if (member.Type == MemberType.Float2)
                             {
                                 bw.WriteSingle(uv.X);
                                 bw.WriteSingle(uv.Y);
                             }
-                            else if (member.Type == BufferLayout.MemberType.Float3)
+                            else if (member.Type == MemberType.Float3)
                             {
                                 bw.WriteVector3(uv);
                             }
-                            else if (member.Type == BufferLayout.MemberType.Float4)
+                            else if (member.Type == MemberType.Float4)
                             {
                                 bw.WriteSingle(uv.X);
                                 bw.WriteSingle(uv.Y);
@@ -495,32 +544,32 @@ namespace SoulsFormats
                                 bw.WriteSingle(uv.X);
                                 bw.WriteSingle(uv.Y);
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4A)
+                            else if (member.Type == MemberType.Byte4A)
                             {
                                 bw.WriteInt16((short)Math.Round(uv.X));
                                 bw.WriteInt16((short)Math.Round(uv.Y));
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4B)
+                            else if (member.Type == MemberType.Byte4B)
                             {
                                 bw.WriteInt16((short)Math.Round(uv.X));
                                 bw.WriteInt16((short)Math.Round(uv.Y));
                             }
-                            else if (member.Type == BufferLayout.MemberType.Short2toFloat2)
+                            else if (member.Type == MemberType.Short2toFloat2)
                             {
                                 bw.WriteInt16((short)Math.Round(uv.X));
                                 bw.WriteInt16((short)Math.Round(uv.Y));
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4C)
+                            else if (member.Type == MemberType.Byte4C)
                             {
                                 bw.WriteInt16((short)Math.Round(uv.X));
                                 bw.WriteInt16((short)Math.Round(uv.Y));
                             }
-                            else if (member.Type == BufferLayout.MemberType.UV)
+                            else if (member.Type == MemberType.UV)
                             {
                                 bw.WriteInt16((short)Math.Round(uv.X));
                                 bw.WriteInt16((short)Math.Round(uv.Y));
                             }
-                            else if (member.Type == BufferLayout.MemberType.UVPair)
+                            else if (member.Type == MemberType.UVPair)
                             {
                                 bw.WriteInt16((short)Math.Round(uv.X));
                                 bw.WriteInt16((short)Math.Round(uv.Y));
@@ -529,7 +578,7 @@ namespace SoulsFormats
                                 bw.WriteInt16((short)Math.Round(uv.X));
                                 bw.WriteInt16((short)Math.Round(uv.Y));
                             }
-                            else if (member.Type == BufferLayout.MemberType.Short4toFloat4B)
+                            else if (member.Type == MemberType.Short4toFloat4B)
                             {
                                 bw.WriteInt16((short)Math.Round(uv.X));
                                 bw.WriteInt16((short)Math.Round(uv.Y));
@@ -540,30 +589,41 @@ namespace SoulsFormats
                                 throw new NotImplementedException();
                             break;
 
-                        case BufferLayout.MemberSemantic.Tangent:
+                        case MemberSemantic.Tangent:
                             Vector4 tangent = tangentQueue.Dequeue();
-                            if (member.Type == BufferLayout.MemberType.Byte4A)
+                            if (member.Type == MemberType.Float4)
+                            {
+                                bw.WriteVector4(tangent);
+                            }
+                            else if (member.Type == MemberType.Byte4A)
                             {
                                 bw.WriteByte((byte)Math.Round(tangent.X * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(tangent.Y * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(tangent.Z * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(tangent.W * 127 + 127));
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4B)
+                            else if (member.Type == MemberType.Byte4B)
                             {
                                 bw.WriteByte((byte)Math.Round(tangent.X * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(tangent.Y * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(tangent.Z * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(tangent.W * 127 + 127));
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4C)
+                            else if (member.Type == MemberType.Byte4C)
                             {
                                 bw.WriteByte((byte)Math.Round(tangent.X * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(tangent.Y * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(tangent.Z * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(tangent.W * 127 + 127));
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4E)
+                            else if (member.Type == MemberType.Short4toFloat4A)
+                            {
+                                bw.WriteInt16((short)Math.Round(tangent.X * 32767));
+                                bw.WriteInt16((short)Math.Round(tangent.Y * 32767));
+                                bw.WriteInt16((short)Math.Round(tangent.Z * 32767));
+                                bw.WriteInt16((short)Math.Round(tangent.W * 32767));
+                            }
+                            else if (member.Type == MemberType.Byte4E)
                             {
                                 bw.WriteByte((byte)Math.Round(tangent.X * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(tangent.Y * 127 + 127));
@@ -574,29 +634,29 @@ namespace SoulsFormats
                                 throw new NotImplementedException();
                             break;
 
-                        case BufferLayout.MemberSemantic.Bitangent:
-                            if (member.Type == BufferLayout.MemberType.Byte4A)
+                        case MemberSemantic.Bitangent:
+                            if (member.Type == MemberType.Byte4A)
                             {
                                 bw.WriteByte((byte)Math.Round(Bitangent.X * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(Bitangent.Y * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(Bitangent.Z * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(Bitangent.W * 127 + 127));
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4B)
+                            else if (member.Type == MemberType.Byte4B)
                             {
                                 bw.WriteByte((byte)Math.Round(Bitangent.X * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(Bitangent.Y * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(Bitangent.Z * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(Bitangent.W * 127 + 127));
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4C)
+                            else if (member.Type == MemberType.Byte4C)
                             {
                                 bw.WriteByte((byte)Math.Round(Bitangent.X * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(Bitangent.Y * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(Bitangent.Z * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(Bitangent.W * 127 + 127));
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4E)
+                            else if (member.Type == MemberType.Byte4E)
                             {
                                 bw.WriteByte((byte)Math.Round(Bitangent.X * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(Bitangent.Y * 127 + 127));
@@ -607,23 +667,23 @@ namespace SoulsFormats
                                 throw new NotImplementedException();
                             break;
 
-                        case BufferLayout.MemberSemantic.VertexColor:
+                        case MemberSemantic.VertexColor:
                             Color color = colorQueue.Dequeue();
-                            if (member.Type == BufferLayout.MemberType.Float4)
+                            if (member.Type == MemberType.Float4)
                             {
                                 bw.WriteSingle(color.R);
                                 bw.WriteSingle(color.G);
                                 bw.WriteSingle(color.B);
                                 bw.WriteSingle(color.A);
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4A)
+                            else if (member.Type == MemberType.Byte4A)
                             {
                                 bw.WriteByte((byte)Math.Round(color.A * 255));
                                 bw.WriteByte((byte)Math.Round(color.R * 255));
                                 bw.WriteByte((byte)Math.Round(color.G * 255));
                                 bw.WriteByte((byte)Math.Round(color.B * 255));
                             }
-                            else if (member.Type == BufferLayout.MemberType.Byte4C)
+                            else if (member.Type == MemberType.Byte4C)
                             {
                                 bw.WriteByte((byte)Math.Round(color.R * 255));
                                 bw.WriteByte((byte)Math.Round(color.G * 255));

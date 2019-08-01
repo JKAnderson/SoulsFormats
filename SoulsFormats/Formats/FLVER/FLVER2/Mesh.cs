@@ -45,7 +45,7 @@ namespace SoulsFormats
             /// <summary>
             /// Vertices in this mesh.
             /// </summary>
-            public List<Vertex> Vertices { get; set; }
+            public List<FLVER.Vertex> Vertices { get; set; }
 
             /// <summary>
             /// Optional bounding box struct; may be null.
@@ -65,7 +65,7 @@ namespace SoulsFormats
                 BoneIndices = new List<int>();
                 FaceSets = new List<FaceSet>();
                 VertexBuffers = new List<VertexBuffer>();
-                Vertices = new List<Vertex>();
+                Vertices = new List<FLVER.Vertex>();
             }
 
             internal Mesh(BinaryReaderEx br, FLVERHeader header)
@@ -129,16 +129,16 @@ namespace SoulsFormats
                 vertexBufferIndices = null;
 
                 // Make sure no semantics repeat that aren't known to
-                var semantics = new List<BufferLayout.MemberSemantic>();
+                var semantics = new List<FLVER.MemberSemantic>();
                 foreach (VertexBuffer buffer in VertexBuffers)
                 {
                     foreach (var member in layouts[buffer.LayoutIndex])
                     {
-                        if (member.Semantic != BufferLayout.MemberSemantic.UV
-                            && member.Semantic != BufferLayout.MemberSemantic.Tangent
-                            && member.Semantic != BufferLayout.MemberSemantic.VertexColor
-                            && member.Semantic != BufferLayout.MemberSemantic.Position
-                            && member.Semantic != BufferLayout.MemberSemantic.Normal)
+                        if (member.Semantic != FLVER.MemberSemantic.UV
+                            && member.Semantic != FLVER.MemberSemantic.Tangent
+                            && member.Semantic != FLVER.MemberSemantic.VertexColor
+                            && member.Semantic != FLVER.MemberSemantic.Position
+                            && member.Semantic != FLVER.MemberSemantic.Normal)
                         {
                             if (semantics.Contains(member.Semantic))
                                 throw new NotImplementedException("Unexpected semantic list.");
@@ -162,14 +162,14 @@ namespace SoulsFormats
             internal void ReadVertices(BinaryReaderEx br, int dataOffset, List<BufferLayout> layouts, FLVERHeader header)
             {
                 var layoutMembers = layouts.SelectMany(l => l);
-                int uvCap = layoutMembers.Where(m => m.Semantic == BufferLayout.MemberSemantic.UV).Count();
-                int tanCap = layoutMembers.Where(m => m.Semantic == BufferLayout.MemberSemantic.Tangent).Count();
-                int colorCap = layoutMembers.Where(m => m.Semantic == BufferLayout.MemberSemantic.VertexColor).Count();
+                int uvCap = layoutMembers.Where(m => m.Semantic == FLVER.MemberSemantic.UV).Count();
+                int tanCap = layoutMembers.Where(m => m.Semantic == FLVER.MemberSemantic.Tangent).Count();
+                int colorCap = layoutMembers.Where(m => m.Semantic == FLVER.MemberSemantic.VertexColor).Count();
 
                 int vertexCount = VertexBuffers[0].VertexCount;
-                Vertices = new List<Vertex>(vertexCount);
+                Vertices = new List<FLVER.Vertex>(vertexCount);
                 for (int i = 0; i < vertexCount; i++)
-                    Vertices.Add(new Vertex(uvCap, tanCap, colorCap));
+                    Vertices.Add(new FLVER.Vertex(uvCap, tanCap, colorCap));
 
                 foreach (VertexBuffer buffer in VertexBuffers)
                     buffer.ReadBuffer(br, layouts, Vertices, dataOffset, header);
@@ -227,23 +227,23 @@ namespace SoulsFormats
             /// Faces are taken from the first FaceSet in the mesh with the given flags,
             /// using None by default for the highest detail mesh. If not found, the first FaceSet is used.
             /// </summary>
-            public List<Vertex[]> GetFaces(FaceSet.FSFlags fsFlags = FaceSet.FSFlags.None)
+            public List<FLVER.Vertex[]> GetFaces(FaceSet.FSFlags fsFlags = FaceSet.FSFlags.None)
             {
                 if (FaceSets.Count == 0)
                 {
-                    return new List<Vertex[]>();
+                    return new List<FLVER.Vertex[]>();
                 }
                 else
                 {
                     FaceSet faceSet = FaceSets.Find(fs => fs.Flags == fsFlags) ?? FaceSets[0];
                     List<int> indices = faceSet.Triangulate(Vertices.Count < ushort.MaxValue);
-                    var vertices = new List<Vertex[]>(indices.Count);
+                    var vertices = new List<FLVER.Vertex[]>(indices.Count);
                     for (int i = 0; i < indices.Count - 2; i += 3)
                     {
                         int vi1 = indices[i];
                         int vi2 = indices[i + 1];
                         int vi3 = indices[i + 2];
-                        vertices.Add(new Vertex[] { Vertices[vi1], Vertices[vi2], Vertices[vi3] });
+                        vertices.Add(new FLVER.Vertex[] { Vertices[vi1], Vertices[vi2], Vertices[vi3] });
                     }
                     return vertices;
                 }
