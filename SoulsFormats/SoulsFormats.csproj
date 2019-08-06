@@ -106,7 +106,7 @@
     <Compile Include="Formats\Other\AC4\Zero3.cs" />
     <Compile Include="Formats\Other\ACE3\BND0.cs" />
     <Compile Include="Formats\FLVER\FLVER0\FLVER0.cs" />
-    <Compile Include="Formats\Other\EnchantedArms\MDL4.cs" />
+    <Compile Include="Formats\Other\MDL4.cs" />
     <Compile Include="Formats\Other\KF1\MDO.cs" />
     <Compile Include="Formats\Other\KF4\DAT.cs" />
     <Compile Include="Formats\Other\Kuon\DVDBND0.cs" />
@@ -141,7 +141,7 @@
     <Compile Include="Formats\Other\MSBN\MSBN.ModelSection.cs" />
     <Compile Include="Formats\Other\MSBN\MSBN.PartsSection.cs" />
     <Compile Include="Formats\MTD.cs" />
-    <Compile Include="Formats\Other\Otogi\MDL.cs" />
+    <Compile Include="Formats\Other\MDL.cs" />
     <Compile Include="Formats\PARAM\Enum.cs" />
     <Compile Include="Formats\PARAM\PARAM.cs" />
     <Compile Include="Formats\PARAM\PARAM.Layout.cs" />

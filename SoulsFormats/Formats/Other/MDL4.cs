@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
 
-namespace SoulsFormats.EnchantedArms
+namespace SoulsFormats.Other
 {
     /// <summary>
-    /// A 3D model format used in Enchanted Arms. Extension: .mdl
+    /// A 3D model format used in early PS3/X360 games. Extension: .mdl
     /// </summary>
     public class MDL4 : SoulsFile<MDL4>
     {

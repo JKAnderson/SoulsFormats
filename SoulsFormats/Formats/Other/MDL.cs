@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Numerics;
 
-namespace SoulsFormats.Otogi
+namespace SoulsFormats.Other
 {
     /// <summary>
-    /// A model format used in Otogi 2.
+    /// A 3D model format used in Xbox games. Extension: .mdl
     /// </summary>
     public class MDL : SoulsFile<MDL>
     {
