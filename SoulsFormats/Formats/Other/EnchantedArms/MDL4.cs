@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Numerics;
 
 namespace SoulsFormats.EnchantedArms
@@ -10,15 +11,17 @@ namespace SoulsFormats.EnchantedArms
     public class MDL4 : SoulsFile<MDL4>
     {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+        public int Version;
+        public int Unk20;
+        public Vector3 BoundingBoxMin;
+        public Vector3 BoundingBoxMax;
+        public int TrueFaceCount;
+        public int TotalFaceCount;
+
         public List<Dummy> Dummies;
         public List<Material> Materials;
         public List<Bone> Bones;
         public List<Mesh> Meshes;
-
-        public int Version;
-        public int Unk20;
-        public Vector3 BoundingBoxMin, BoundingBoxMax;
-        public int Unk3C, Unk40;
 
         internal override bool Is(BinaryReaderEx br)
         {
@@ -32,7 +35,7 @@ namespace SoulsFormats.EnchantedArms
             br.AssertASCII("MDL4");
             Version = br.AssertInt32(0x40001, 0x40002);
             int dataStart = br.ReadInt32();
-            int dataSize = br.ReadInt32();
+            br.ReadInt32(); // Data length
             int dummyCount = br.ReadInt32();
             int materialCount = br.ReadInt32();
             int boneCount = br.ReadInt32();
@@ -40,11 +43,9 @@ namespace SoulsFormats.EnchantedArms
             Unk20 = br.ReadInt32();
             BoundingBoxMin = br.ReadVector3();
             BoundingBoxMax = br.ReadVector3();
-            Unk3C = br.ReadInt32();
-            Unk40 = br.ReadInt32();
-
-            for (int i = 0; i < 15; i++)
-                br.AssertInt32(0);
+            TrueFaceCount = br.ReadInt32();
+            TotalFaceCount = br.ReadInt32();
+            br.AssertPattern(0x3C, 0x00);
 
             Dummies = new List<Dummy>(dummyCount);
             for (int i = 0; i < dummyCount; i++)
@@ -70,16 +71,23 @@ namespace SoulsFormats.EnchantedArms
 
         public class Dummy
         {
-            public Vector3 Unk00, Unk0C;
-            public int Unk18, Unk1C, Unk20;
+            public Vector3 Forward;
+            public Vector3 Upward;
+            public Color Color;
+            public short ID;
+            public short Unk1E;
+            public short Unk20;
+            public short Unk22;
 
             internal Dummy(BinaryReaderEx br)
             {
-                Unk00 = br.ReadVector3();
-                Unk0C = br.ReadVector3();
-                Unk18 = br.ReadInt32();
-                Unk1C = br.ReadInt32();
-                Unk20 = br.ReadInt32();
+                Forward = br.ReadVector3();
+                Upward = br.ReadVector3();
+                Color = br.ReadRGBA();
+                ID = br.ReadInt16();
+                Unk1E = br.ReadInt16();
+                Unk20 = br.ReadInt16();
+                Unk22 = br.ReadInt16();
                 br.AssertInt32(0);
                 br.AssertInt32(0);
                 br.AssertInt32(0);
@@ -90,12 +98,13 @@ namespace SoulsFormats.EnchantedArms
         {
             public string Name;
             public string Shader;
-            public byte Unk3C, Unk3D, Unk3E;
+            public byte Unk3C;
+            public byte Unk3D;
+            public byte Unk3E;
             public List<Param> Params;
 
             internal Material(BinaryReaderEx br)
             {
-                long start = br.Position;
                 Name = br.ReadFixStr(0x1F);
                 Shader = br.ReadFixStr(0x1D);
                 Unk3C = br.ReadByte();
@@ -103,11 +112,11 @@ namespace SoulsFormats.EnchantedArms
                 Unk3E = br.ReadByte();
                 byte paramCount = br.ReadByte();
 
+                long paramsStart = br.Position;
                 Params = new List<Param>(paramCount);
                 for (int i = 0; i < paramCount; i++)
                     Params.Add(new Param(br));
-
-                br.Position = start + 0x840;
+                br.Position = paramsStart + 0x800;
             }
 
             public class Param
@@ -124,21 +133,10 @@ namespace SoulsFormats.EnchantedArms
 
                     switch (Type)
                     {
-                        case ParamType.Int:
-                            Value = br.ReadInt32();
-                            break;
-
-                        case ParamType.Float:
-                            Value = br.ReadSingle();
-                            break;
-
-                        case ParamType.Float4:
-                            Value = br.ReadSingles(4);
-                            break;
-
-                        case ParamType.String:
-                            Value = br.ReadShiftJIS();
-                            break;
+                        case ParamType.Int: Value = br.ReadInt32(); break;
+                        case ParamType.Float: Value = br.ReadSingle(); break;
+                        case ParamType.Float4: Value = br.ReadSingles(4); break;
+                        case ParamType.String: Value = br.ReadShiftJIS(); break;
 
                         default:
                             throw new NotImplementedException("Unknown param type: " + Type);
@@ -163,8 +161,13 @@ namespace SoulsFormats.EnchantedArms
             public Vector3 Translation;
             public Vector3 Rotation;
             public Vector3 Scale;
-            public byte[] Unk44;
-            public short[] Unk70;
+            public Vector3 BoundingBoxMin;
+            public Vector3 BoundingBoxMax;
+            public short ParentIndex;
+            public short ChildIndex;
+            public short NextSiblingIndex;
+            public short PreviousSiblingIndex;
+            public short[] UnkIndices;
 
             internal Bone(BinaryReaderEx br)
             {
@@ -172,11 +175,16 @@ namespace SoulsFormats.EnchantedArms
                 Translation = br.ReadVector3();
                 Rotation = br.ReadVector3();
                 Scale = br.ReadVector3();
-                Unk44 = br.ReadBytes(0x20);
+                BoundingBoxMin = br.ReadVector3();
+                BoundingBoxMax = br.ReadVector3();
+                ParentIndex = br.ReadInt16();
+                ChildIndex = br.ReadInt16();
+                NextSiblingIndex = br.ReadInt16();
+                PreviousSiblingIndex = br.ReadInt16();
                 br.AssertInt32(0);
                 br.AssertInt32(0);
                 br.AssertInt32(0);
-                Unk70 = br.ReadInt16s(16);
+                UnkIndices = br.ReadInt16s(16);
             }
         }
 
@@ -184,12 +192,13 @@ namespace SoulsFormats.EnchantedArms
         {
             public byte VertexFormat;
             public byte MaterialIndex;
-            public bool Unk02, Unk03;
+            public bool Unk02;
+            public bool Unk03;
             public short Unk08;
             public short[] BoneIndices;
             public ushort[] VertexIndices;
             public List<Vertex> Vertices;
-            public int[] UnkFormat2;
+            public byte[][] UnkBlocks;
 
             internal Mesh(BinaryReaderEx br, int dataStart, int version)
             {
@@ -200,13 +209,21 @@ namespace SoulsFormats.EnchantedArms
                 ushort vertexIndexCount = br.ReadUInt16();
                 Unk08 = br.ReadInt16();
                 BoneIndices = br.ReadInt16s(28);
-                int vertexIndicesSize = br.ReadInt32();
+                br.ReadInt32(); // Vertex indices length
                 int vertexIndicesOffset = br.ReadInt32();
-                int bufferSize = br.ReadInt32();
+                int bufferLength = br.ReadInt32();
                 int bufferOffset = br.ReadInt32();
 
                 if (VertexFormat == 2)
-                    UnkFormat2 = br.ReadInt32s(0x20);
+                {
+                    UnkBlocks = new byte[16][];
+                    for (int i = 0; i < 16; i++)
+                    {
+                        int length = br.ReadInt32();
+                        int offset = br.ReadInt32();
+                        UnkBlocks[i] = br.GetBytes(dataStart + offset, length);
+                    }
+                }
 
                 VertexIndices = br.GetUInt16s(dataStart + vertexIndicesOffset, vertexIndexCount);
 
@@ -227,7 +244,7 @@ namespace SoulsFormats.EnchantedArms
                         if (VertexFormat == 0)
                             vertexSize = 0x28;
                     }
-                    int vertexCount = bufferSize / vertexSize;
+                    int vertexCount = bufferLength / vertexSize;
                     Vertices = new List<Vertex>(vertexCount);
                     for (int i = 0; i < vertexCount; i++)
                         Vertices.Add(new Vertex(br, version, VertexFormat));
@@ -293,9 +310,8 @@ namespace SoulsFormats.EnchantedArms
         {
             public Vector3 Position;
             public Vector4 Normal;
-            public int Unk0C;
-            public int Unk10;
-            public int Unk14;
+            public Vector4 Tangent;
+            public Vector4 Bitangent;
             public byte[] Color;
             public List<Vector2> UVs;
             public short[] BoneIndices;
@@ -310,9 +326,9 @@ namespace SoulsFormats.EnchantedArms
                     if (format == 0)
                     {
                         Position = br.ReadVector3();
-                        Unk0C = br.ReadInt32();
-                        Unk10 = br.ReadInt32();
-                        Unk14 = br.ReadInt32();
+                        Normal = Read10BitVector4(br);
+                        Tangent = Read10BitVector4(br);
+                        Bitangent = Read10BitVector4(br);
                         Color = br.ReadBytes(4);
                         UVs.Add(br.ReadVector2());
                         UVs.Add(br.ReadVector2());
@@ -323,9 +339,9 @@ namespace SoulsFormats.EnchantedArms
                     else if (format == 1)
                     {
                         Position = br.ReadVector3();
-                        Unk0C = br.ReadInt32();
-                        Unk10 = br.ReadInt32();
-                        Unk14 = br.ReadInt32();
+                        Normal = Read10BitVector4(br);
+                        Tangent = Read10BitVector4(br);
+                        Bitangent = Read10BitVector4(br);
                         Color = br.ReadBytes(4);
                         UVs.Add(br.ReadVector2());
                         UVs.Add(br.ReadVector2());
@@ -351,7 +367,7 @@ namespace SoulsFormats.EnchantedArms
                     {
                         Position = br.ReadVector3();
                         Normal = ReadSByteVector4(br);
-                        Unk10 = br.ReadInt32();
+                        Tangent = ReadSByteVector4(br);
                         Color = br.ReadBytes(4);
                         UVs.Add(ReadShortUV(br));
                         UVs.Add(ReadShortUV(br));
@@ -363,14 +379,20 @@ namespace SoulsFormats.EnchantedArms
 
             private Vector4 ReadByteVector4(BinaryReaderEx br)
             {
-                byte[] bytes = br.ReadBytes(4);
-                return new Vector4((bytes[3] - 127) / 127f, (bytes[2] - 127) / 127f, (bytes[1] - 127) / 127f, (bytes[0] - 127) / 127f);
+                byte w = br.ReadByte();
+                byte z = br.ReadByte();
+                byte y = br.ReadByte();
+                byte x = br.ReadByte();
+                return new Vector4((x - 127) / 127f, (y - 127) / 127f, (z - 127) / 127f, (w - 127) / 127f);
             }
 
             private Vector4 ReadSByteVector4(BinaryReaderEx br)
             {
-                sbyte[] bytes = br.ReadSBytes(4);
-                return new Vector4(bytes[3] / 127f, bytes[2] / 127f, bytes[1] / 127f, bytes[0] / 127f);
+                sbyte w = br.ReadSByte();
+                sbyte z = br.ReadSByte();
+                sbyte y = br.ReadSByte();
+                sbyte x = br.ReadSByte();
+                return new Vector4(x / 127f, y / 127f, z / 127f, w / 127f);
             }
 
             private Vector2 ReadShortUV(BinaryReaderEx br)
@@ -378,6 +400,16 @@ namespace SoulsFormats.EnchantedArms
                 short u = br.ReadInt16();
                 short v = br.ReadInt16();
                 return new Vector2(u / 2048f, v / 2048f);
+            }
+
+            private Vector4 Read10BitVector4(BinaryReaderEx br)
+            {
+                int vector = br.ReadInt32();
+                int x = vector << 22 >> 22;
+                int y = vector << 12 >> 22;
+                int z = vector << 2 >> 22;
+                int w = vector << 0 >> 30;
+                return new Vector4(x / 511f, y / 511f, z / 511f, w);
             }
         }
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
