@@ -377,7 +377,7 @@ namespace SoulsFormats.Other
                 }
             }
 
-            private Vector4 ReadByteVector4(BinaryReaderEx br)
+            private static Vector4 ReadByteVector4(BinaryReaderEx br)
             {
                 byte w = br.ReadByte();
                 byte z = br.ReadByte();
@@ -386,7 +386,7 @@ namespace SoulsFormats.Other
                 return new Vector4((x - 127) / 127f, (y - 127) / 127f, (z - 127) / 127f, (w - 127) / 127f);
             }
 
-            private Vector4 ReadSByteVector4(BinaryReaderEx br)
+            private static Vector4 ReadSByteVector4(BinaryReaderEx br)
             {
                 sbyte w = br.ReadSByte();
                 sbyte z = br.ReadSByte();
@@ -395,14 +395,14 @@ namespace SoulsFormats.Other
                 return new Vector4(x / 127f, y / 127f, z / 127f, w / 127f);
             }
 
-            private Vector2 ReadShortUV(BinaryReaderEx br)
+            private static Vector2 ReadShortUV(BinaryReaderEx br)
             {
                 short u = br.ReadInt16();
                 short v = br.ReadInt16();
                 return new Vector2(u / 2048f, v / 2048f);
             }
 
-            private Vector4 Read10BitVector4(BinaryReaderEx br)
+            private static Vector4 Read10BitVector4(BinaryReaderEx br)
             {
                 int vector = br.ReadInt32();
                 int x = vector << 22 >> 22;
