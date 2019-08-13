@@ -142,6 +142,9 @@
     <Compile Include="Formats\Other\MSBN\MSBN.PartsSection.cs" />
     <Compile Include="Formats\MTD.cs" />
     <Compile Include="Formats\Other\MDL.cs" />
+    <Compile Include="Formats\Other\MWC\MDAT.cs" />
+    <Compile Include="Formats\Other\MWC\TDAT.cs" />
+    <Compile Include="Formats\Other\Otogi2\DAT.cs" />
     <Compile Include="Formats\PARAM\Enum.cs" />
     <Compile Include="Formats\PARAM\PARAM.cs" />
     <Compile Include="Formats\PARAM\PARAM.Layout.cs" />
