@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SoulsFormats
 {
@@ -22,10 +19,12 @@ namespace SoulsFormats
                 /// No effect upon resting.
                 /// </summary>
                 Default = 0,
+
                 /// <summary>
                 /// Event restarts upon resting.
                 /// </summary>
                 Restart = 1,
+
                 /// <summary>
                 /// Event is terminated upon resting.
                 /// </summary>
@@ -41,10 +40,12 @@ namespace SoulsFormats
             /// Behavior of this event when resting.
             /// </summary>
             public RestBehaviorType RestBehavior { get; set; }
+
             /// <summary>
             /// Instructions to execute for this event.
             /// </summary>
             public List<Instruction> Instructions { get; set; }
+
             /// <summary>
             /// Parameters to be passed to this event.
             /// </summary>
@@ -73,24 +74,12 @@ namespace SoulsFormats
             }
 
             internal Event(BinaryReaderEx br, GameType game, OffsetsContainer offsets)
-                : this()
             {
-                ID = (game != GameType.DS1) ? br.ReadInt64() : br.ReadInt32();
-
-                long instructionCount = (game != GameType.DS1) ? br.ReadInt64() : br.ReadInt32();
-                long instructionOffset = (game != GameType.DS1) ? br.ReadInt64() : br.ReadInt32();
-
-                br.StepIn(offsets.InstructionsOffset + instructionOffset);
-                {
-                    for (int i = 0; i < instructionCount; i++)
-                    {
-                        Instructions.Add(new Instruction(br, game, offsets));
-                    }
-                }
-                br.StepOut();
-
-                long parametersCount = (game != GameType.DS1) ? br.ReadInt64() : br.ReadInt32();
-                long parametersOffset = -1;
+                ID = ReadIntW(br, game != GameType.DS1);
+                long instructionCount = ReadIntW(br, game != GameType.DS1);
+                long instructionOffset = ReadIntW(br, game != GameType.DS1);
+                long parametersCount = ReadIntW(br, game != GameType.DS1);
+                long parametersOffset;
 
                 if (game == GameType.DS1)
                 {
@@ -110,10 +99,24 @@ namespace SoulsFormats
                     throw new NotImplementedException("Sekiro \"futureproof\".");
                 }
 
-                if (parametersOffset >= 0)
+                RestBehavior = br.ReadEnum32<RestBehaviorType>();
+                br.AssertInt32(0);
+
+                br.StepIn(offsets.InstructionsOffset + instructionOffset);
+                {
+                    Instructions = new List<Instruction>((int)instructionCount);
+                    for (int i = 0; i < instructionCount; i++)
+                    {
+                        Instructions.Add(new Instruction(br, game, offsets));
+                    }
+                }
+                br.StepOut();
+
+                if (parametersOffset > 0)
                 {
                     br.StepIn(offsets.ParametersOffset + parametersOffset);
                     {
+                        Parameters = new List<Parameter>((int)parametersCount);
                         for (int i = 0; i < parametersCount; i++)
                         {
                             Parameters.Add(new Parameter(br, game));
@@ -121,24 +124,20 @@ namespace SoulsFormats
                     }
                     br.StepOut();
                 }
-
-                RestBehavior = br.ReadEnum32<RestBehaviorType>();
-
-                br.AssertInt32(0);
             }
 
-            internal void Write(BinaryWriterEx bw, GameType game, int i)
+            internal void Write(BinaryWriterEx bw, GameType game, int index)
             {
                 if (game != GameType.DS1)
                 {
                     bw.WriteInt64(ID);
                     bw.WriteInt64(Instructions.Count);
-                    bw.ReserveInt64($"EventInstructionsOffset{i}");
+                    bw.ReserveInt64($"EventInstructionsOffset{index}");
                     bw.WriteInt64(Parameters.Count);
                     if (game == GameType.BB)
                     {
                         if (Parameters.Count > 0)
-                            bw.ReserveInt32($"EventParametersOffset{i}");
+                            bw.ReserveInt32($"EventParametersOffset{index}");
                         else
                             bw.WriteInt32(-1);
                         bw.WriteInt32(0);
@@ -146,20 +145,19 @@ namespace SoulsFormats
                     else
                     {
                         if (Parameters.Count > 0)
-                            bw.ReserveInt64($"EventParametersOffset{i}");
+                            bw.ReserveInt64($"EventParametersOffset{index}");
                         else
                             bw.WriteInt64(-1);
                     }
-
                 }
                 else
                 {
                     bw.WriteInt32((int)ID);
                     bw.WriteInt32(Instructions.Count);
-                    bw.ReserveInt32($"EventInstructionsOffset{i}");
+                    bw.ReserveInt32($"EventInstructionsOffset{index}");
                     bw.WriteInt32(Parameters.Count);
                     if (Parameters.Count > 0)
-                        bw.ReserveInt32($"EventParametersOffset{i}");
+                        bw.ReserveInt32($"EventParametersOffset{index}");
                     else
                         bw.WriteInt32(-1);
                 }
@@ -168,7 +166,6 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
 
                 bw.WriteInt32((int)RestBehavior);
-
                 bw.WriteInt32(0);
             }
         }

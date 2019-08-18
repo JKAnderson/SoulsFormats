@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SoulsFormats
+﻿namespace SoulsFormats
 {
     public partial class EMEVD : SoulsFile<EMEVD>
     {
@@ -57,10 +51,10 @@ namespace SoulsFormats
 
             internal Parameter(BinaryReaderEx br, GameType game)
             {
-                InstructionIndex = (game != GameType.DS1) ? br.ReadInt64() : br.ReadInt32();
-                TargetStartByte = (game != GameType.DS1) ? br.ReadInt64() : br.ReadInt32();
-                SourceStartByte = (game != GameType.DS1) ? br.ReadInt64() : br.ReadInt32();
-                ByteCount = (game != GameType.DS1) ? br.ReadInt64() : br.ReadInt32();
+                InstructionIndex = ReadIntW(br, game != GameType.DS1);
+                TargetStartByte = ReadIntW(br, game != GameType.DS1);
+                SourceStartByte = ReadIntW(br, game != GameType.DS1);
+                ByteCount = ReadIntW(br, game != GameType.DS1);
 
                 if (game == GameType.DS1)
                     br.AssertInt32(0);

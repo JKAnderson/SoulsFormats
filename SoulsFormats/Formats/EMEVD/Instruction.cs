@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SoulsFormats
+﻿namespace SoulsFormats
 {
     public partial class EMEVD : SoulsFile<EMEVD>
     {
@@ -71,8 +65,14 @@ namespace SoulsFormats
                 Bank = br.ReadInt32();
                 ID = br.ReadInt32();
 
-                long argsLength = (game != GameType.DS1) ? br.ReadInt64() : br.ReadInt32();
+                long argsLength = ReadIntW(br, game != GameType.DS1);
                 long argsOffset = br.ReadInt32();
+
+                if (game != GameType.DS1)
+                    br.AssertInt32(0);
+
+                if (game != GameType.DS3)
+                    br.AssertInt32(0);
 
                 br.StepIn(offsets.ArgsBlockOffset + argsOffset);
                 {
@@ -80,10 +80,7 @@ namespace SoulsFormats
                 }
                 br.StepOut();
 
-                if (game != GameType.DS1)
-                    br.AssertInt32(0);
-
-                long layerOffset = (game == GameType.DS3) ? br.ReadInt64() : br.ReadInt32();
+                long layerOffset = ReadIntW(br, game != GameType.DS1);
                 if (layerOffset != -1)
                 {
                     br.StepIn(offsets.EventLayersOffset + layerOffset);
@@ -92,9 +89,6 @@ namespace SoulsFormats
                     }
                     br.StepOut();
                 }
-
-                if (game != GameType.DS3)
-                    br.AssertInt32(0);
             }
 
             internal void Write(BinaryWriterEx bw, GameType game, int i, int j)
@@ -130,7 +124,6 @@ namespace SoulsFormats
                         bw.ReserveInt32($"InstructionLayerOffset{i}:{j}");
                     bw.WriteInt32(0);
                 }
-
             }
         }
     }

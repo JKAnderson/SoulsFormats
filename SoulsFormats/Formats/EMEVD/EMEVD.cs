@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.IO;
 
 namespace SoulsFormats
 {
@@ -20,17 +17,19 @@ namespace SoulsFormats
             /// Dark Souls: Prepare to Die Edition and Dark Souls Remastered
             /// </summary>
             DS1,
+
             /// <summary>
             /// Bloodborne
             /// </summary>
             BB,
+
             /// <summary>
             /// Dark Souls III
             /// </summary>
             DS3,
         }
 
-        internal class OffsetsContainer
+        internal struct OffsetsContainer
         {
             public long EventsOffset;
             public long InstructionsOffset;
@@ -63,7 +62,11 @@ namespace SoulsFormats
 
         internal override bool Is(BinaryReaderEx br)
         {
-            return br.ReadASCII(4) == "EVD\0";
+            if (br.Length < 4)
+                return false;
+
+            string magic = br.GetASCII(0, 4);
+            return magic == "EVD\0";
         }
 
         /// <summary>
@@ -91,66 +94,55 @@ namespace SoulsFormats
             else if (versionA == 0x1FF00 && versionB == 0xCD)
                 Game = GameType.DS3;
             else
-                throw new System.IO.InvalidDataException($"Invalid pair of version values in EMEVD header: 0x{versionA:X8}, 0x{versionB:X8}.");
+                throw new InvalidDataException($"Invalid pair of version values in EMEVD header: 0x{versionA:X8}, 0x{versionB:X8}.");
 
             if (Game == GameType.BB)
                 br.AssertInt64(br.Length);
             else
                 br.AssertInt32((int)br.Length);
 
-            var offsets = new OffsetsContainer();
-
-            long eventsCount = (Game != GameType.DS1) ? br.ReadInt64() : br.ReadInt32();
-            offsets.EventsOffset = (Game != GameType.DS1) ? br.ReadInt64() : br.ReadInt32();
-            long instructionsCount = (Game != GameType.DS1) ? br.ReadInt64() : br.ReadInt32();
-            offsets.InstructionsOffset = (Game != GameType.DS1) ? br.ReadInt64() : br.ReadInt32();
-            long dummiesCount = (Game != GameType.DS1) ? br.ReadInt64() : br.ReadInt32();
-            long dummiesOffset = (Game != GameType.DS1) ? br.ReadInt64() : br.ReadInt32();
-            long eventLayersCount = (Game != GameType.DS1) ? br.ReadInt64() : br.ReadInt32();
-            offsets.EventLayersOffset = (Game != GameType.DS1) ? br.ReadInt64() : br.ReadInt32();
-            long parametersCount = (Game != GameType.DS1) ? br.ReadInt64() : br.ReadInt32();
-            offsets.ParametersOffset = (Game != GameType.DS1) ? br.ReadInt64() : br.ReadInt32();
-            long linkedFilesCount = (Game != GameType.DS1) ? br.ReadInt64() : br.ReadInt32();
-            offsets.LinkedFilesOffset = (Game != GameType.DS1) ? br.ReadInt64() : br.ReadInt32();
-            long argsBlockSize = (Game != GameType.DS1) ? br.ReadInt64() : br.ReadInt32();
-            offsets.ArgsBlockOffset = (Game != GameType.DS1) ? br.ReadInt64() : br.ReadInt32();
-            long stringsBlockSize = (Game != GameType.DS1) ? br.ReadInt64() : br.ReadInt32();
-            offsets.StringsBlockOffset = (Game != GameType.DS1) ? br.ReadInt64() : br.ReadInt32();
+            OffsetsContainer offsets;
+            long eventsCount = ReadIntW(br, Game != GameType.DS1);
+            offsets.EventsOffset = ReadIntW(br, Game != GameType.DS1);
+            ReadIntW(br, Game != GameType.DS1); // Instruction count
+            offsets.InstructionsOffset = ReadIntW(br, Game != GameType.DS1);
+            AssertIntW(br, Game != GameType.DS1, 0); // Unknown count 
+            ReadIntW(br, Game != GameType.DS1); // Unknown offset
+            ReadIntW(br, Game != GameType.DS1); // Event layer count
+            offsets.EventLayersOffset = ReadIntW(br, Game != GameType.DS1);
+            ReadIntW(br, Game != GameType.DS1); // Parameter count
+            offsets.ParametersOffset = ReadIntW(br, Game != GameType.DS1);
+            long linkedFilesCount = ReadIntW(br, Game != GameType.DS1);
+            offsets.LinkedFilesOffset = ReadIntW(br, Game != GameType.DS1);
+            ReadIntW(br, Game != GameType.DS1); // Args length
+            offsets.ArgsBlockOffset = ReadIntW(br, Game != GameType.DS1);
+            long stringsBlockSize = ReadIntW(br, Game != GameType.DS1);
+            offsets.StringsBlockOffset = ReadIntW(br, Game != GameType.DS1);
 
             if (Game == GameType.DS1)
                 br.AssertInt32(0);
 
-            br.StepIn(offsets.EventsOffset);
-            {
-                for (int i = 0; i < eventsCount; i++)
-                    Events.Add(new Event(br, Game, offsets));
-            }
-            br.StepOut();
+            br.Position = offsets.EventsOffset;
+            Events = new List<Event>((int)eventsCount);
+            for (int i = 0; i < eventsCount; i++)
+                Events.Add(new Event(br, Game, offsets));
 
+            br.Position = offsets.StringsBlockOffset;
             var stringOffsets = new List<long>();
-
-            br.StepIn(offsets.StringsBlockOffset);
+            while (br.Position < offsets.StringsBlockOffset + stringsBlockSize)
             {
-                while (br.Position < offsets.StringsBlockOffset + stringsBlockSize)
-                {
-                    long strOffset = br.Position - offsets.StringsBlockOffset;
-                    stringOffsets.Add(strOffset);
-                    var str = br.ReadUTF16();
-                    StringTable.Add(str);
-                }
+                long strOffset = br.Position - offsets.StringsBlockOffset;
+                stringOffsets.Add(strOffset);
+                var str = br.ReadUTF16();
+                StringTable.Add(str);
             }
-            br.StepOut();
 
-            br.StepIn(offsets.LinkedFilesOffset);
+            br.Position = offsets.LinkedFilesOffset;
+            for (int i = 0; i < linkedFilesCount; i++)
             {
-                for (int i = 0; i < linkedFilesCount; i++)
-                {
-                    long strOffset = (Game != GameType.DS1) ? br.ReadInt64() : br.ReadInt32();
-                    LinkedFileStringIndices.Add(stringOffsets.IndexOf(strOffset));
-                }
-                
+                long strOffset = (Game != GameType.DS1) ? br.ReadInt64() : br.ReadInt32();
+                LinkedFileStringIndices.Add(stringOffsets.IndexOf(strOffset));
             }
-            br.StepOut();
         }
 
         internal override void Write(BinaryWriterEx bw)
@@ -291,17 +283,14 @@ namespace SoulsFormats
 
             if (Game == GameType.DS1)
             {
-                //bw.WriteInt32(0);
-                while (((bw.Position - argsBlockOffset) % 16) > 0)
-                {
-                    bw.WriteByte(0);
-                }
+                if ((bw.Position - argsBlockOffset) % 16 > 0)
+                    bw.WritePattern(16 - (int)(bw.Position - argsBlockOffset) % 16, 0x00);
             }
             else
             {
                 bw.Pad(16);
             }
-            
+
             FillIntW("ArgsBlockSize", bw.Position - argsBlockOffset);
 
             // Parameters
@@ -353,6 +342,22 @@ namespace SoulsFormats
                 bw.FillInt64("FileLength", bw.Position);
             else
                 bw.FillInt32("FileLength", (int)bw.Position);
+        }
+
+        private static long ReadIntW(BinaryReaderEx br, bool wide)
+        {
+            if (wide)
+                return br.ReadInt64();
+            else
+                return br.ReadInt32();
+        }
+
+        private static void AssertIntW(BinaryReaderEx br, bool wide, int value)
+        {
+            if (wide)
+                br.AssertInt64(value);
+            else
+                br.AssertInt32(value);
         }
     }
 }
