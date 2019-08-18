@@ -1352,10 +1352,10 @@ namespace SoulsFormats
                 public GparamConfig Gparam { get; set; }
 
                 /// <summary>
-                /// Unknown.
+                /// Reference to a map piece or collision; believed to determine when the object is loaded.
                 /// </summary>
-                public string CollisionPartName1 { get; set; }
-                private int CollisionPartIndex1;
+                public string ObjPartName1 { get; set; }
+                private int ObjPartIndex1;
 
                 /// <summary>
                 /// Unknown.
@@ -1393,15 +1393,16 @@ namespace SoulsFormats
                 public short UnkT1A { get; set; }
 
                 /// <summary>
-                /// Unknown.
+                /// Reference to a collision; believed to be involved with loading when grappling to the object.
                 /// </summary>
-                public int UnkT20 { get; set; }
+                public string ObjPartName2 { get; set; }
+                private int ObjPartIndex2;
 
                 /// <summary>
-                /// Unknown.
+                /// Reference to a collision; believed to be involved with loading when grappling to the object.
                 /// </summary>
-                public string CollisionPartName2 { get; set; }
-                private int CollisionPartIndex2;
+                public string ObjPartName3 { get; set; }
+                private int ObjPartIndex3;
 
                 /// <summary>
                 /// Creates a DummyObject with default values.
@@ -1417,7 +1418,7 @@ namespace SoulsFormats
                 public DummyObject(DummyObject clone) : base(clone)
                 {
                     Gparam = new GparamConfig(clone.Gparam);
-                    CollisionPartName1 = clone.CollisionPartName1;
+                    ObjPartName1 = clone.ObjPartName1;
                     UnkT0C = clone.UnkT0C;
                     EnableObjAnimNetSyncStructure = clone.EnableObjAnimNetSyncStructure;
                     UnkT0E = clone.UnkT0E;
@@ -1425,15 +1426,15 @@ namespace SoulsFormats
                     AnimID = clone.AnimID;
                     UnkT18 = clone.UnkT18;
                     UnkT1A = clone.UnkT1A;
-                    UnkT20 = clone.UnkT20;
-                    CollisionPartName2 = clone.CollisionPartName2;
+                    ObjPartName2 = clone.ObjPartName2;
+                    ObjPartName3 = clone.ObjPartName3;
                 }
 
                 internal DummyObject(BinaryReaderEx br) : base(br)
                 {
                     br.AssertInt32(0);
                     br.AssertInt32(0);
-                    CollisionPartIndex1 = br.ReadInt32();
+                    ObjPartIndex1 = br.ReadInt32();
                     UnkT0C = br.ReadByte();
                     EnableObjAnimNetSyncStructure = br.ReadBoolean();
                     UnkT0E = br.ReadByte();
@@ -1444,8 +1445,8 @@ namespace SoulsFormats
                     UnkT18 = br.ReadInt16();
                     UnkT1A = br.ReadInt16();
                     br.AssertInt32(-1);
-                    UnkT20 = br.ReadInt32();
-                    CollisionPartIndex2 = br.ReadInt32();
+                    ObjPartIndex2 = br.ReadInt32();
+                    ObjPartIndex3 = br.ReadInt32();
                 }
 
                 internal override void ReadGparamConfig(BinaryReaderEx br) => Gparam = new GparamConfig(br);
@@ -1454,7 +1455,7 @@ namespace SoulsFormats
                 {
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
-                    bw.WriteInt32(CollisionPartIndex1);
+                    bw.WriteInt32(ObjPartIndex1);
                     bw.WriteByte(UnkT0C);
                     bw.WriteBoolean(EnableObjAnimNetSyncStructure);
                     bw.WriteByte(UnkT0E);
@@ -1465,8 +1466,8 @@ namespace SoulsFormats
                     bw.WriteInt16(UnkT18);
                     bw.WriteInt16(UnkT1A);
                     bw.WriteInt32(-1);
-                    bw.WriteInt32(UnkT20);
-                    bw.WriteInt32(CollisionPartIndex2);
+                    bw.WriteInt32(ObjPartIndex2);
+                    bw.WriteInt32(ObjPartIndex3);
                 }
 
                 internal override void WriteGparamConfig(BinaryWriterEx bw) => Gparam.Write(bw);
@@ -1474,15 +1475,17 @@ namespace SoulsFormats
                 internal override void GetNames(MSBS msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    CollisionPartName1 = FindName(entries.Parts, CollisionPartIndex1);
-                    CollisionPartName2 = FindName(entries.Parts, CollisionPartIndex2);
+                    ObjPartName1 = FindName(entries.Parts, ObjPartIndex1);
+                    ObjPartName2 = FindName(entries.Parts, ObjPartIndex2);
+                    ObjPartName3 = FindName(entries.Parts, ObjPartIndex3);
                 }
 
                 internal override void GetIndices(MSBS msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    CollisionPartIndex1 = FindIndex(entries.Parts, CollisionPartName1);
-                    CollisionPartIndex2 = FindIndex(entries.Parts, CollisionPartName2);
+                    ObjPartIndex1 = FindIndex(entries.Parts, ObjPartName1);
+                    ObjPartIndex2 = FindIndex(entries.Parts, ObjPartName2);
+                    ObjPartIndex3 = FindIndex(entries.Parts, ObjPartName3);
                 }
             }
 
