@@ -351,6 +351,109 @@ namespace SoulsFormats
             return dict;
         }
 
+        /// <summary>
+        /// Converts a hex string in format "AA BB CC DD" to a byte array.
+        /// </summary>
+        public static byte[] ParseHexString(string str)
+        {
+            string[] strings = str.Split(' ');
+            byte[] bytes = new byte[strings.Length];
+            for (int i = 0; i < strings.Length; i++)
+                bytes[i] = Convert.ToByte(strings[i], 16);
+            return bytes;
+        }
+
+        /// <summary>
+        /// Returns a copy of the key used for encrypting original DS2 save files on PC.
+        /// </summary>
+        public static byte[] GetDS2SaveKey()
+        {
+            return (byte[])ds2SaveKey.Clone();
+        }
+        private static byte[] ds2SaveKey = ParseHexString("B7 FD 46 3E 4A 9C 11 02 DF 17 39 E5 F3 B2 A5 0F");
+
+        /// <summary>
+        /// Returns a copy of the key used for encrypting DS2 SotFS save files on PC.
+        /// </summary>
+        public static byte[] GetScholarSaveKey()
+        {
+            return (byte[])scholarSaveKey.Clone();
+        }
+        private static byte[] scholarSaveKey = ParseHexString("FD 46 4D 69 5E 69 A3 9A 10 E3 19 A7 AC E8 B7 FA");
+
+        /// <summary>
+        /// Returns a copy of the key used for encrypting DS3 save files on PC.
+        /// </summary>
+        public static byte[] GetDS3SaveKey()
+        {
+            return (byte[])ds3SaveKey.Clone();
+        }
+        private static byte[] ds3SaveKey = ParseHexString("FD 46 4D 69 5E 69 A3 9A 10 E3 19 A7 AC E8 B7 FA");
+
+        /// <summary>
+        /// Decrypts a file from a DS2/DS3 SL2. Do not remove the hash and IV before calling.
+        /// </summary>
+        public static byte[] DecryptSL2File(byte[] encrypted, byte[] key)
+        {
+            // Just leaving this here for documentation
+            //byte[] hash = new byte[16];
+            //Buffer.BlockCopy(encrypted, 0, hash, 0, 16);
+
+            byte[] iv = new byte[16];
+            Buffer.BlockCopy(encrypted, 16, iv, 0, 16);
+
+            using (Aes aes = Aes.Create())
+            {
+                aes.Mode = CipherMode.CBC;
+                aes.BlockSize = 128;
+                // PKCS7-style padding is used, but they don't include the minimum padding
+                // so it can't be stripped safely
+                aes.Padding = PaddingMode.None;
+                aes.Key = key;
+                aes.IV = iv;
+
+                ICryptoTransform decryptor = aes.CreateDecryptor();
+                using (var encStream = new MemoryStream(encrypted, 32, encrypted.Length - 32))
+                using (var cryptoStream = new CryptoStream(encStream, decryptor, CryptoStreamMode.Read))
+                using (var decStream = new MemoryStream())
+                {
+                    cryptoStream.CopyTo(decStream);
+                    return decStream.ToArray();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Encrypts a file for a DS2/DS3 SL2. Result includes the hash and IV.
+        /// </summary>
+        public static byte[] EncryptSL2File(byte[] decrypted, byte[] key)
+        {
+            using (Aes aes = Aes.Create())
+            {
+                aes.Mode = CipherMode.CBC;
+                aes.BlockSize = 128;
+                aes.Padding = PaddingMode.None;
+                aes.Key = key;
+                aes.GenerateIV();
+
+                ICryptoTransform encryptor = aes.CreateEncryptor();
+                using (var decStream = new MemoryStream(decrypted))
+                using (var cryptoStream = new CryptoStream(decStream, encryptor, CryptoStreamMode.Read))
+                using (var encStream = new MemoryStream())
+                using (var md5 = MD5.Create())
+                {
+                    encStream.Write(aes.IV, 0, 16);
+                    cryptoStream.CopyTo(encStream);
+                    byte[] encrypted = new byte[encStream.Length + 16];
+                    encStream.Position = 0;
+                    encStream.Read(encrypted, 16, (int)encStream.Length);
+                    byte[] hash = md5.ComputeHash(encrypted, 16, encrypted.Length - 16);
+                    Buffer.BlockCopy(hash, 0, encrypted, 0, 16);
+                    return encrypted;
+                }
+            }
+        }
+
         private static byte[] ds3RegulationKey = Encoding.ASCII.GetBytes("ds3#jn/8_7(rsY9pg55GFN7VFL#+3n/)");
 
         /// <summary>
