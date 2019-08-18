@@ -13,6 +13,9 @@ namespace SoulsFormats
         /// </summary>
         public class Instruction
         {
+            /// <summary>
+            /// Value type of an argument.
+            /// </summary>
             public enum ArgType
             {
                 /// <summary>
@@ -106,12 +109,9 @@ namespace SoulsFormats
             /// <summary>
             /// Unpacks an args byte array according to the structure definition provided.
             /// </summary>
-            /// <param name="args"></param>
-            /// <param name="argStruct"></param>
-            /// <returns></returns>
             public static IEnumerable<object> UnpackArgs(byte[] args, IEnumerable<ArgType> argStruct)
             {
-                List<object> result = new List<object>();
+                var result = new List<object>();
 
                 using (var memStream = new System.IO.MemoryStream(args))
                 {
@@ -228,14 +228,47 @@ namespace SoulsFormats
             }
 
             /// <summary>
-            /// Creates a new Instruction with the specified bank, id, layer mask, and (optionally) args.
+            /// Creates a new Instruction with the specified bank, ID, and args.
             /// </summary>
-            public Instruction(int bank, int id, uint layerMask, byte[] args = null)
+            public Instruction(int bank, int id, params object[] args)
+            {
+                Bank = bank;
+                ID = id;
+                Layer = null;
+                Args = PackArgs(args);
+            }
+
+            /// <summary>
+            /// Creates a new Instruction with the specified bank, id, layer mask, and args bytes.
+            /// </summary>
+            public Instruction(int bank, int id, uint layerMask, byte[] args)
             {
                 Bank = bank;
                 ID = id;
                 Layer = new EventLayer(layerMask);
                 Args = args;
+            }
+
+            /// <summary>
+            /// Creates a new Instruction with the specified bank, id, layer mask, and args.
+            /// </summary>
+            public Instruction(int bank, int id, uint layerMask, IEnumerable<object> args)
+            {
+                Bank = bank;
+                ID = id;
+                Layer = new EventLayer(layerMask);
+                Args = PackArgs(args);
+            }
+
+            /// <summary>
+            /// Creates a new Instruction with the specified bank, id, layer mask, and args.
+            /// </summary>
+            public Instruction(int bank, int id, uint layerMask, params object[] args)
+            {
+                Bank = bank;
+                ID = id;
+                Layer = new EventLayer(layerMask);
+                Args = PackArgs(args);
             }
 
             internal Instruction(BinaryReaderEx br, GameType game, OffsetsContainer offsets)
