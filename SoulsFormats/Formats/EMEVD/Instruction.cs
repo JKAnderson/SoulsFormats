@@ -109,7 +109,7 @@ namespace SoulsFormats
             /// <summary>
             /// Unpacks an args byte array according to the structure definition provided.
             /// </summary>
-            public static IEnumerable<object> UnpackArgs(byte[] args, IEnumerable<ArgType> argStruct)
+            public static List<object> UnpackArgs(byte[] args, IEnumerable<ArgType> argStruct)
             {
                 var result = new List<object>();
 
