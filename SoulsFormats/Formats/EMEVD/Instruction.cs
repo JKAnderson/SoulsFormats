@@ -1,4 +1,8 @@
-﻿namespace SoulsFormats
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+
+namespace SoulsFormats
 {
     public partial class EMEVD : SoulsFile<EMEVD>
     {
@@ -16,145 +20,41 @@
                 /// Unsigned 8-bit integer.
                 /// </summary>
                 Byte = 0,
+
                 /// <summary>
                 /// Unsigned 16-bit integer.
                 /// </summary>
                 UInt16 = 1,
+
                 /// <summary>
                 /// Unsigned 32-bit integer.
                 /// </summary>
                 UInt32 = 2,
+
                 /// <summary>
                 /// Signed 8-bit integer.
                 /// </summary>
                 SByte = 3,
+
                 /// <summary>
                 /// Signed 16-bit integer.
                 /// </summary>
                 Int16 = 4,
+
                 /// <summary>
                 /// Signed 32-bit integer.
                 /// </summary>
                 Int32 = 5,
+
                 /// <summary>
                 /// 32-bit floating point number.
                 /// </summary>
                 Single = 6,
+
                 /// <summary>
                 /// 64-bit integer (not sure if signed or unsigned), usually used for string table offsets.
                 /// </summary>
-                Long = 7,
-            }
-
-            /// <summary>
-            /// Packs an enumeration of arg values into a byte array for use in an instruction.
-            /// </summary>
-            public static byte[] PackArgs(IEnumerable<object> args)
-            {
-                using (var memStream = new System.IO.MemoryStream())
-                {
-                    var bw = new BinaryWriterEx(bigEndian: false, memStream);
-                    foreach (var arg in args)
-                    {
-                        var argType = arg.GetType();
-                        if (argType == typeof(byte))
-                        {
-                            bw.WriteByte((byte)arg);
-                        }
-                        else if (argType == typeof(ushort))
-                        {
-                            bw.Pad(sizeof(ushort));
-                            bw.WriteUInt16((ushort)arg);
-                        }
-                        else if (argType == typeof(uint))
-                        {
-                            bw.Pad(sizeof(uint));
-                            bw.WriteUInt32((uint)arg);
-                        }
-                        else if (argType == typeof(sbyte))
-                        {
-                            bw.WriteSByte((sbyte)arg);
-                        }
-                        else if (argType == typeof(short))
-                        {
-                            bw.Pad(sizeof(short));
-                            bw.WriteInt16((short)arg);
-                        }
-                        else if (argType == typeof(int))
-                        {
-                            bw.Pad(sizeof(int));
-                            bw.WriteInt32((int)arg);
-                        }
-                        else if (argType == typeof(float))
-                        {
-                            bw.Pad(sizeof(float));
-                            bw.WriteSingle((float)arg);
-                        }
-                        else if (argType == typeof(long))
-                        {
-                            bw.Pad(sizeof(long));
-                            bw.WriteSingle((long)arg);
-                        }
-                    }
-                    return memStream.ToArray();
-                }
-            }
-
-            /// <summary>
-            /// Unpacks an args byte array according to the structure definition provided.
-            /// </summary>
-            public static List<object> UnpackArgs(byte[] args, IEnumerable<ArgType> argStruct)
-            {
-                var result = new List<object>();
-
-                using (var memStream = new System.IO.MemoryStream(args))
-                {
-                    var br = new BinaryReaderEx(bigEndian: false, memStream);
-
-                    foreach (var arg in argStruct)
-                    {
-                        if (arg == ArgType.Byte)
-                        {
-                            result.Add(br.ReadByte());
-                        }
-                        else if (arg == ArgType.UInt16)
-                        {
-                            br.Pad(sizeof(ushort));
-                            result.Add(br.ReadUInt16());
-                        }
-                        else if (arg == ArgType.UInt32)
-                        {
-                            br.Pad(sizeof(uint));
-                            result.Add(br.ReadUInt32());
-                        }
-                        else if (arg == ArgType.SByte)
-                        {
-                            result.Add(br.ReadSByte());
-                        }
-                        else if (arg == ArgType.Int16)
-                        {
-                            br.Pad(sizeof(short));
-                            result.Add(br.ReadInt16());
-                        }
-                        else if (arg == ArgType.Int32)
-                        {
-                            br.Pad(sizeof(int));
-                            result.Add(br.ReadInt32());
-                        }
-                        else if (arg == ArgType.Single)
-                        {
-                            br.Pad(sizeof(float));
-                            result.Add(br.ReadSingle());
-                        }
-                        else if (arg == ArgType.Long)
-                        {
-                            br.Pad(sizeof(long));
-                            result.Add(br.ReadInt64());
-                        }
-                    }
-
-                    return result;
-                }   
+                Int64 = 7,
             }
 
             /// <summary>
@@ -218,7 +118,7 @@
                 Bank = bank;
                 ID = id;
                 Layer = null;
-                Args = PackArgs(args);
+                PackArgs(args);
             }
 
             /// <summary>
@@ -229,7 +129,7 @@
                 Bank = bank;
                 ID = id;
                 Layer = null;
-                Args = PackArgs(args);
+                PackArgs(args);
             }
 
             /// <summary>
@@ -251,7 +151,7 @@
                 Bank = bank;
                 ID = id;
                 Layer = new EventLayer(layerMask);
-                Args = PackArgs(args);
+                PackArgs(args);
             }
 
             /// <summary>
@@ -262,7 +162,7 @@
                 Bank = bank;
                 ID = id;
                 Layer = new EventLayer(layerMask);
-                Args = PackArgs(args);
+                PackArgs(args);
             }
 
             internal Instruction(BinaryReaderEx br, GameType game, OffsetsContainer offsets)
@@ -296,7 +196,7 @@
                 }
             }
 
-            internal void Write(BinaryWriterEx bw, GameType game, int i, int j)
+            internal void Write(BinaryWriterEx bw, GameType game, int eventIndex, int instructionIndex)
             {
                 bw.WriteInt32(Bank);
                 bw.WriteInt32(ID);
@@ -309,7 +209,7 @@
                 if (Args.Length == 0)
                     bw.WriteInt32(-1);
                 else
-                    bw.ReserveInt32($"InstructionArgsOffset{i}:{j}");
+                    bw.ReserveInt32($"InstructionArgsOffset{eventIndex}:{instructionIndex}");
 
                 if (game != GameType.DS1)
                     bw.WriteInt32(0);
@@ -319,16 +219,106 @@
                     if (Layer == null)
                         bw.WriteInt64(-1);
                     else
-                        bw.ReserveInt64($"InstructionLayerOffset{i}:{j}");
+                        bw.ReserveInt64($"InstructionLayerOffset{eventIndex}:{instructionIndex}");
                 }
                 else
                 {
                     if (Layer == null)
                         bw.WriteInt32(-1);
                     else
-                        bw.ReserveInt32($"InstructionLayerOffset{i}:{j}");
+                        bw.ReserveInt32($"InstructionLayerOffset{eventIndex}:{instructionIndex}");
                     bw.WriteInt32(0);
                 }
+            }
+
+            /// <summary>
+            /// Packs an enumeration of arg values into a byte array for use in an instruction.
+            /// </summary>
+            public void PackArgs(IEnumerable<object> args)
+            {
+                using (var memStream = new MemoryStream())
+                {
+                    var bw = new BinaryWriterEx(bigEndian: false, memStream);
+                    foreach (object arg in args)
+                    {
+                        switch (arg)
+                        {
+                            case byte ub:
+                                bw.WriteByte(ub); break;
+                            case ushort us:
+                                bw.Pad(2);
+                                bw.WriteUInt16(us); break;
+                            case uint ui:
+                                bw.Pad(4);
+                                bw.WriteUInt32(ui); break;
+                            case sbyte sb:
+                                bw.WriteSByte(sb); break;
+                            case short ss:
+                                bw.Pad(2);
+                                bw.WriteInt16(ss); break;
+                            case int si:
+                                bw.Pad(4);
+                                bw.WriteInt32(si); break;
+                            case float f:
+                                bw.Pad(4);
+                                bw.WriteSingle(f); break;
+                            case long sl:
+                                bw.Pad(8);
+                                bw.WriteInt64(sl); break;
+
+                            default:
+                                throw new NotSupportedException($"Unsupported argument type: {arg.GetType()}");
+                        }
+                    }
+                    Args = bw.FinishBytes();
+                }
+            }
+
+            /// <summary>
+            /// Unpacks an args byte array according to the structure definition provided.
+            /// </summary>
+            public List<object> UnpackArgs(IEnumerable<ArgType> argStruct)
+            {
+                var result = new List<object>();
+
+                using (var memStream = new MemoryStream(Args))
+                {
+                    var br = new BinaryReaderEx(bigEndian: false, memStream);
+
+                    foreach (ArgType arg in argStruct)
+                    {
+                        switch (arg)
+                        {
+                            case ArgType.Byte:
+                                result.Add(br.ReadByte()); break;
+                            case ArgType.UInt16:
+                                br.Pad(2);
+                                result.Add(br.ReadUInt16()); break;
+                            case ArgType.UInt32:
+                                br.Pad(4);
+                                result.Add(br.ReadUInt32()); break;
+                            case ArgType.SByte:
+                                result.Add(br.ReadSByte()); break;
+                            case ArgType.Int16:
+                                br.Pad(2);
+                                result.Add(br.ReadInt16()); break;
+                            case ArgType.Int32:
+                                br.Pad(4);
+                                result.Add(br.ReadInt32()); break;
+                            case ArgType.Single:
+                                br.Pad(4);
+                                result.Add(br.ReadSingle()); break;
+                            case ArgType.Int64:
+                                br.Pad(8);
+                                result.Add(br.ReadInt64()); break;
+
+                            default:
+                                throw new NotImplementedException($"Unimplemented argument type: {arg}");
+                        }
+                    }
+                }
+
+                return result;
             }
         }
     }
