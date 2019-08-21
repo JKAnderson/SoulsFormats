@@ -379,7 +379,7 @@ namespace SoulsFormats
         {
             return (byte[])scholarSaveKey.Clone();
         }
-        private static byte[] scholarSaveKey = ParseHexString("FD 46 4D 69 5E 69 A3 9A 10 E3 19 A7 AC E8 B7 FA");
+        private static byte[] scholarSaveKey = ParseHexString("59 9F 9B 69 96 40 A5 52 36 EE 2D 70 83 5E C7 44");
 
         /// <summary>
         /// Returns a copy of the key used for encrypting DS3 save files on PC.
