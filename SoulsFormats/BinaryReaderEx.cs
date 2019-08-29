@@ -27,6 +27,16 @@ namespace SoulsFormats
         public bool BigEndian { get; set; }
 
         /// <summary>
+        /// Varints are read as Int64 if set, otherwise Int32.
+        /// </summary>
+        public bool VarintLong { get; set; }
+
+        /// <summary>
+        /// Current size of varints in bytes.
+        /// </summary>
+        public int VarintSize => VarintLong ? 8 : 4;
+
+        /// <summary>
         /// The underlying stream.
         /// </summary>
         public Stream Stream { get; private set; }
@@ -574,6 +584,62 @@ namespace SoulsFormats
         public ulong AssertUInt64(params ulong[] options)
         {
             return AssertValue(ReadUInt64(), "UInt64", "0x{0:X}", options);
+        }
+        #endregion
+
+        #region Varint
+        /// <summary>
+        /// Reads either a four or eight-byte signed integer depending on VarintLong.
+        /// </summary>
+        public long ReadVarint()
+        {
+            if (VarintLong)
+                return ReadInt64();
+            else
+                return ReadInt32();
+        }
+
+        /// <summary>
+        /// Reads an array of either four or eight-byte signed integers depending on VarintLong.
+        /// </summary>
+        public long[] ReadVarints(int count)
+        {
+            long[] result = new long[count];
+            for (int i = 0; i < count; i++)
+            {
+                if (VarintLong)
+                    result[i] = ReadInt64();
+                else
+                    result[i] = ReadInt32();
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// Reads either a four or eight-byte signed integer depending on VarintLong from the specified position without advancing the stream.
+        /// </summary>
+        public long GetVarint(long offset)
+        {
+            if (VarintLong)
+                return GetInt64(offset);
+            else
+                return GetInt32(offset);
+        }
+
+        /// <summary>
+        /// Reads an array of either four or eight-byte signed integers depending on VarintLong from the specified position without advancing the stream.
+        /// </summary>
+        public long[] GetVarints(long offset, int count)
+        {
+            return GetValues(ReadVarints, offset, count);
+        }
+
+        /// <summary>
+        /// Reads either a four or eight-byte signed integer depending on VarintLong and throws an exception if it does not match any of the specified options.
+        /// </summary>
+        public long AssertVarint(params long[] options)
+        {
+            return AssertValue(ReadVarint(), VarintLong ? "Varint64" : "Varint32", "0x{0:X}", options);
         }
         #endregion
 
