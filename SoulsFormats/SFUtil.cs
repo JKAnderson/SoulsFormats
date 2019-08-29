@@ -76,25 +76,35 @@ namespace SoulsFormats
             using (var ms = new MemoryStream(bytes))
             {
                 var br = new BinaryReaderEx(bigEndian, ms);
-                if (br.Length >= 4 && br.GetASCII(0, 4) == "AISD")
+                string magic = null;
+                if (br.Length >= 4)
+                    magic = br.ReadASCII(4);
+
+                if (magic == "AISD")
                     ext = ".aisd";
-                else if (br.Length >= 4 && (br.GetASCII(0, 4) == "BDF3" || br.GetASCII(0, 4) == "BDF4"))
+                else if (magic == "BDF3" || magic == "BDF4")
                     ext = ".bdt";
-                else if (br.Length >= 4 && (br.GetASCII(0, 4) == "BHF3" || br.GetASCII(0, 4) == "BHF4"))
+                else if (magic == "BHF3" || magic == "BHF4")
                     ext = ".bhd";
-                else if (br.Length >= 4 && (br.GetASCII(0, 4) == "BND3" || br.GetASCII(0, 4) == "BND4"))
+                else if (magic == "BND3" || magic == "BND4")
                     ext = ".bnd";
-                else if (br.Length >= 4 && br.GetASCII(0, 4) == "DDS ")
+                else if (magic == "DDS ")
                     ext = ".dds";
                 // ESD or FFX
-                else if (br.Length >= 4 && br.GetASCII(0, 4).ToUpper() == "DLSE")
+                else if (magic != null && magic.ToUpper() == "DLSE")
                     ext = ".dlse";
-                else if (br.Length >= 4 && (bigEndian && br.GetASCII(0, 4) == "\0BRD" || !bigEndian && br.GetASCII(0, 4) == "DRB\0"))
+                else if (bigEndian && magic == "\0BRD" || !bigEndian && magic == "DRB\0")
                     ext = ".drb";
-                else if (br.Length >= 4 && br.GetASCII(0, 4) == "ENFL")
+                else if (magic == "EDF\0")
+                    ext = ".edf";
+                else if (magic == "ELD\0")
+                    ext = ".eld";
+                else if (magic == "ENFL")
                     ext = ".entryfilelist";
-                else if (br.Length >= 4 && br.GetASCII(0, 4).ToUpper() == "FSSL")
+                else if (magic != null && magic.ToUpper() == "FSSL")
                     ext = ".esd";
+                else if (magic == "EVD\0")
+                    ext = ".evd";
                 else if (br.Length >= 3 && br.GetASCII(0, 3) == "FEV" || br.Length >= 0x10 && br.GetASCII(8, 8) == "FEV FMT ")
                     ext = ".fev";
                 else if (br.Length >= 6 && br.GetASCII(0, 6) == "FLVER\0")
@@ -111,19 +121,21 @@ namespace SoulsFormats
                     ext = ".msb";
                 else if (br.Length >= 0x30 && br.GetASCII(0x2C, 4) == "MTD ")
                     ext = ".mtd";
+                else if (magic == "DFPN")
+                    ext = ".nfd";
                 else if (checkParam(br))
                     ext = ".param";
                 else if (br.Length >= 4 && br.GetASCII(1, 3) == "PNG")
                     ext = ".png";
                 else if (br.Length >= 0x2C && br.GetASCII(0x28, 4) == "SIB ")
                     ext = ".sib";
-                else if (br.Length >= 4 && br.GetASCII(0, 4) == "TAE ")
+                else if (magic == "TAE ")
                     ext = ".tae";
                 else if (checkTdf(br))
                     ext = ".tdf";
-                else if (br.Length >= 4 && br.GetASCII(0, 4) == "TPF\0")
+                else if (magic == "TPF\0")
                     ext = ".tpf";
-                else if (br.Length >= 4 && br.GetASCII(0, 4) == "#BOM")
+                else if (magic == "#BOM")
                     ext = ".txt";
                 else if (br.Length >= 5 && br.GetASCII(0, 5) == "<?xml")
                     ext = ".xml";
@@ -158,11 +170,11 @@ namespace SoulsFormats
         /// <summary>
         /// Makes a backup of a file if not already found, and returns the backed-up path.
         /// </summary>
-        public static string Backup(string file)
+        public static string Backup(string file, bool overwrite = false)
         {
             string bak = file + ".bak";
-            if (!File.Exists(bak))
-                File.Copy(file, bak);
+            if (overwrite || !File.Exists(bak))
+                File.Copy(file, bak, overwrite);
             return bak;
         }
 
