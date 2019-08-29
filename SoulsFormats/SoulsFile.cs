@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 namespace SoulsFormats
 {
@@ -80,6 +81,15 @@ namespace SoulsFormats
         }
 
         /// <summary>
+        /// Checks the object for any fatal problems; Write will throw the returned exception on failure.
+        /// </summary>
+        public virtual bool Validate(out Exception ex)
+        {
+            ex = null;
+            return true;
+        }
+
+        /// <summary>
         /// Writes file data to a BinaryWriterEx.
         /// </summary>
         internal abstract void Write(BinaryWriterEx bw);
@@ -89,6 +99,9 @@ namespace SoulsFormats
         /// </summary>
         private void Write(BinaryWriterEx bw, DCX.Type compression)
         {
+            if (!Validate(out Exception ex))
+                throw ex;
+
             if (compression == DCX.Type.None)
             {
                 Write(bw);
