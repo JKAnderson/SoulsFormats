@@ -53,11 +53,6 @@
     <Compile Include="Formats\CLM2.cs" />
     <Compile Include="Formats\DRB.cs" />
     <Compile Include="Formats\EDGE.cs" />
-    <Compile Include="Formats\EMEVD\EMEVD.cs" />
-    <Compile Include="Formats\EMEVD\Event.cs" />
-    <Compile Include="Formats\EMEVD\Instruction.cs" />
-    <Compile Include="Formats\EMEVD\Layer.cs" />
-    <Compile Include="Formats\EMEVD\Parameter.cs" />
     <Compile Include="Formats\ESD.cs" />
     <Compile Include="Formats\F2TR.cs" />
     <Compile Include="Formats\FLVER\FLVER0\BufferLayout.cs" />
@@ -167,5 +162,6 @@
   <ItemGroup>
     <Compile Include="Formats\TAE3\TAE3.Event.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
