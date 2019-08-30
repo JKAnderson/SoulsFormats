@@ -30,6 +30,11 @@ namespace SoulsFormats
             public RestBehaviorType RestBehavior { get; set; }
 
             /// <summary>
+            /// Optional name for the event, stored separately in an EMELD file.
+            /// </summary>
+            public string Name { get; set; }
+
+            /// <summary>
             /// Creates an empty Event with the given values.
             /// </summary>
             public Event(long id = 0, RestBehaviorType restBehavior = RestBehaviorType.Default)

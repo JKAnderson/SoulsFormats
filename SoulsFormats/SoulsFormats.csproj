@@ -53,6 +53,7 @@
     <Compile Include="Formats\CLM2.cs" />
     <Compile Include="Formats\DRB.cs" />
     <Compile Include="Formats\EDGE.cs" />
+    <Compile Include="Formats\EMELD.cs" />
     <Compile Include="Formats\EMEVD\EMEVD.cs" />
     <Compile Include="Formats\EMEVD\Event.cs" />
     <Compile Include="Formats\EMEVD\Parameter.cs" />

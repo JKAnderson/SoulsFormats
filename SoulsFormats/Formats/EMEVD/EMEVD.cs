@@ -45,6 +45,36 @@ namespace SoulsFormats
             StringData = new byte[0];
         }
 
+        /// <summary>
+        /// Imports event names from an EMELD file, overwriting existing names if specified.
+        /// </summary>
+        public void ImportEMELD(EMELD eld, bool overwrite = false)
+        {
+            var names = new Dictionary<long, string>(eld.Events.Count);
+            foreach (EMELD.Event evt in eld.Events)
+                names[evt.ID] = evt.Name;
+
+            foreach (Event evt in Events)
+            {
+                if ((overwrite || evt.Name == null) && names.ContainsKey(evt.ID))
+                    evt.Name = names[evt.ID];
+            }
+        }
+
+        /// <summary>
+        /// Exports event names to an EMELD file.
+        /// </summary>
+        public EMELD ExportEMELD()
+        {
+            var eld = new EMELD(Format);
+            foreach (Event evt in Events)
+            {
+                if (evt.Name != null)
+                    eld.Events.Add(new EMELD.Event(evt.ID, evt.Name));
+            }
+            return eld;
+        }
+
         internal override bool Is(BinaryReaderEx br)
         {
             if (br.Length < 4)
