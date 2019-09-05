@@ -84,7 +84,7 @@ namespace SoulsFormats
                 bw.WriteVarint(Instructions.Count);
                 bw.ReserveVarint($"Event{eventIndex}InstrsOffset");
                 bw.WriteVarint(Parameters.Count);
-                if (format < Game.Scholar)
+                if (format < Game.Bloodborne)
                 {
                     bw.ReserveInt32($"Event{eventIndex}ParamsOffset");
                 }

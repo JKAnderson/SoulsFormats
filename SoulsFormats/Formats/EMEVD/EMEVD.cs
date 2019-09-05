@@ -89,7 +89,7 @@ namespace SoulsFormats
             br.AssertASCII("EVD\0");
             bool bigEndian = br.ReadBoolean();
             bool is64Bit = br.AssertSByte(0, -1) == -1;
-            bool unicode = br.ReadBoolean();
+            bool unk06 = br.ReadBoolean();
             bool unk07 = br.AssertSByte(0, -1) == -1;
             br.BigEndian = bigEndian;
             br.VarintLong = is64Bit;
@@ -97,20 +97,18 @@ namespace SoulsFormats
             int version = br.AssertInt32(0xCC, 0xCD);
             br.ReadInt32(); // File size
 
-            if (!bigEndian && !is64Bit && !unicode && !unk07 && version == 0xCC)
+            if (!bigEndian && !is64Bit && !unk06 && !unk07 && version == 0xCC)
                 Format = Game.DarkSouls1;
-            else if (bigEndian && !is64Bit && !unicode && !unk07 && version == 0xCC)
+            else if (bigEndian && !is64Bit && !unk06 && !unk07 && version == 0xCC)
                 Format = Game.DarkSouls1BE;
-            else if (!bigEndian && is64Bit && !unicode && !unk07 && version == 0xCC)
-                Format = Game.Scholar;
-            else if (!bigEndian && is64Bit && unicode && !unk07 && version == 0xCC)
+            else if (!bigEndian && is64Bit && !unk06 && !unk07 && version == 0xCC)
                 Format = Game.Bloodborne;
-            else if (!bigEndian && is64Bit && unicode && !unk07 && version == 0xCD)
+            else if (!bigEndian && is64Bit && unk06 && !unk07 && version == 0xCD)
                 Format = Game.DarkSouls3;
-            else if (!bigEndian && is64Bit && unicode && unk07 && version == 0xCD)
+            else if (!bigEndian && is64Bit && unk06 && unk07 && version == 0xCD)
                 Format = Game.Sekiro;
             else
-                throw new NotSupportedException($"Unknown EMEVD format: BigEndian={bigEndian} Is64Bit={is64Bit} Unicode={unicode} Unk07={unk07} Version=0x{version:X}");
+                throw new NotSupportedException($"Unknown EMEVD format: BigEndian={bigEndian} Is64Bit={is64Bit} Unicode={unk06} Unk07={unk07} Version=0x{version:X}");
 
             Offsets offsets;
             long eventCount = br.ReadVarint();
@@ -147,8 +145,8 @@ namespace SoulsFormats
         internal override void Write(BinaryWriterEx bw)
         {
             bool bigEndian = Format == Game.DarkSouls1BE;
-            bool is64Bit = Format >= Game.Scholar;
-            bool unicode = Format >= Game.Bloodborne;
+            bool is64Bit = Format >= Game.Bloodborne;
+            bool unk06 = Format >= Game.DarkSouls3;
             bool unk07 = Format >= Game.Sekiro;
             int version = Format < Game.DarkSouls3 ? 0xCC : 0xCD;
 
@@ -165,7 +163,7 @@ namespace SoulsFormats
             bw.WriteASCII("EVD\0");
             bw.WriteBoolean(bigEndian);
             bw.WriteSByte((sbyte)(is64Bit ? -1 : 0));
-            bw.WriteBoolean(unicode);
+            bw.WriteBoolean(unk06);
             bw.WriteSByte((sbyte)(unk07 ? -1 : 0));
             bw.BigEndian = bigEndian;
             bw.VarintLong = is64Bit;
@@ -267,12 +265,7 @@ namespace SoulsFormats
             DarkSouls1BE,
 
             /// <summary>
-            /// DS2: Scholar of the First Sin on all platforms.
-            /// </summary>
-            Scholar,
-
-            /// <summary>
-            /// Bloodborne.
+            /// Bloodborne and SotFS on all platforms.
             /// </summary>
             Bloodborne,
 

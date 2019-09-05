@@ -87,7 +87,7 @@ namespace SoulsFormats
         internal override void Write(BinaryWriterEx bw)
         {
             bool bigEndian = Format == EMEVD.Game.DarkSouls1BE;
-            bool is64Bit = Format >= EMEVD.Game.Scholar;
+            bool is64Bit = Format >= EMEVD.Game.Bloodborne;
 
             bw.WriteASCII("ELD\0");
             bw.WriteBoolean(bigEndian);
@@ -161,7 +161,7 @@ namespace SoulsFormats
             {
                 ID = br.ReadVarint();
                 long nameOffset = br.ReadVarint();
-                if (format < EMEVD.Game.Scholar)
+                if (format < EMEVD.Game.Bloodborne)
                     br.AssertInt32(0);
 
                 Name = br.GetUTF16(stringsOffset + nameOffset);
@@ -171,7 +171,7 @@ namespace SoulsFormats
             {
                 bw.WriteVarint(ID);
                 bw.ReserveVarint($"Event{index}NameOffset");
-                if (format < EMEVD.Game.Scholar)
+                if (format < EMEVD.Game.Bloodborne)
                     bw.WriteInt32(0);
             }
 

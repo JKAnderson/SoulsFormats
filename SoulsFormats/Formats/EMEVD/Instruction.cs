@@ -156,7 +156,7 @@ namespace SoulsFormats
                 bw.WriteInt32(Bank);
                 bw.WriteInt32(ID);
                 bw.WriteVarint(ArgData.Length);
-                if (format < Game.Scholar)
+                if (format < Game.Bloodborne)
                 {
                     bw.ReserveInt32($"Event{eventIndex}Instr{instrIndex}ArgsOffset");
                 }
@@ -240,11 +240,6 @@ namespace SoulsFormats
                 /// 32-bit floating point number.
                 /// </summary>
                 Single = 6,
-
-                /// <summary>
-                /// 64-bit integer (not sure if signed or unsigned), usually used for string table offsets.
-                /// </summary>
-                Int64 = 7,
             }
 
             /// <summary>
@@ -278,9 +273,6 @@ namespace SoulsFormats
                             case float f:
                                 bw.Pad(4);
                                 bw.WriteSingle(f); break;
-                            case long sl:
-                                bw.Pad(8);
-                                bw.WriteInt64(sl); break;
 
                             default:
                                 throw new NotSupportedException($"Unsupported argument type: {arg.GetType()}");
@@ -322,9 +314,6 @@ namespace SoulsFormats
                             case ArgType.Single:
                                 br.Pad(4);
                                 result.Add(br.ReadSingle()); break;
-                            case ArgType.Int64:
-                                br.Pad(8);
-                                result.Add(br.ReadInt64()); break;
 
                             default:
                                 throw new NotImplementedException($"Unimplemented argument type: {arg}");
