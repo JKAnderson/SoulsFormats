@@ -28,6 +28,16 @@ namespace SoulsFormats
         /// </summary>
         public List<MachineDesc> Machines { get; set; }
 
+        /// <summary>
+        /// Unknown.
+        /// </summary>
+        public int Unk80 { get; set; }
+
+        /// <summary>
+        /// Unknown.
+        /// </summary>
+        public int[] UnkB0 { get; private set; }
+
         private List<string> Strings;
 
         /// <summary>
@@ -81,7 +91,7 @@ namespace SoulsFormats
             int stringsOffset = br.ReadInt32();
             br.AssertInt32(0);
             br.AssertInt32(stringsOffset);
-            int unk80 = br.ReadInt32();
+            Unk80 = br.ReadInt32();
             br.AssertInt32(dataSize);
             br.AssertInt32(0);
             br.AssertInt32(dataSize);
@@ -95,7 +105,7 @@ namespace SoulsFormats
             br.AssertVarint(functionSpecCount);
             long machineOffset = br.ReadVarint();
             br.AssertInt32(machineCount);
-            int[] UnkB0 = br.ReadInt32s(4);
+            UnkB0 = br.ReadInt32s(4);
             if (LongFormat)
             {
                 br.AssertInt32(0);
