@@ -119,7 +119,7 @@ namespace SoulsFormats
                 long stringOffset = br.ReadVarint();
                 long charCount = br.ReadVarint();
                 br.StepIn(dataStart + stringOffset);
-                string str = br.ReadFixStrW((int)(charCount));
+                string str = br.ReadFixStrW((int)(charCount * 2));
                 br.StepOut();
                 Strings.Add(str);
             }
@@ -290,8 +290,8 @@ namespace SoulsFormats
 
         /// <summary>
         /// A description of commands in the pass command block of a condition. This appears to
-        /// ignore the pass block if only contains the 'return' command, bank 7 id -1, so it
-        /// appears very little in DS2.
+        /// ignore the pass block if only contains the 'return' command, bank 7 id -1, so this
+        /// annotation is uncommon in DS2.
         /// </summary>
         public class PassCommandDesc
         {
@@ -407,10 +407,10 @@ namespace SoulsFormats
             public short Unk06 { get; set; }
 
             /// <summary>
-            /// Additional text usually describing the sequence of events in the machine.
+            /// Text description of params to the machine, when it is callable by other machines.
             /// </summary>
-            public string[] Text { get; private set; }
-            private short[] TextIndices;
+            public string[] ParamNames { get; private set; }
+            private short[] ParamIndices;
 
             /// <summary>
             /// Descriptions of the machine's states.
@@ -422,7 +422,7 @@ namespace SoulsFormats
                 ID = br.ReadInt32();
                 NameIndex = br.ReadInt16();
                 Unk06 = br.ReadInt16();
-                TextIndices = br.ReadInt16s(8);
+                ParamIndices = br.ReadInt16s(8);
                 br.AssertVarint(-1);
                 br.AssertVarint(0);
                 br.AssertVarint(-1);
@@ -432,12 +432,12 @@ namespace SoulsFormats
                 States = GetUniqueOffsetList(stateOffset, stateCount, states, stateSize);
 
                 Name = strings[NameIndex];
-                Text = new string[8];
+                ParamNames = new string[8];
                 for (int i = 0; i < 8; i++)
                 {
-                    if (TextIndices[i] >= 0)
+                    if (ParamIndices[i] >= 0)
                     {
-                        Text[i] = strings[TextIndices[i]];
+                        ParamNames[i] = strings[ParamIndices[i]];
                     }
                 }
             }
@@ -450,7 +450,7 @@ namespace SoulsFormats
             {
                 if (!offsets.ContainsKey(offset))
                 {
-                    throw new FormatException($"Non-existent or reused {typeof(T)} at index {i}/{count} of offset {offset}");
+                    throw new FormatException($"Nonexistent or reused {typeof(T)} at index {i}/{count}, offset {offset}");
                 }
                 objs.Add(offsets[offset]);
                 offsets.Remove(offset);
