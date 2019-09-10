@@ -124,9 +124,7 @@ namespace SoulsFormats
                 long stringOffset = br.ReadVarint();
                 // Char count not needed as all strings are null-terminated
                 br.ReadVarint();
-                br.StepIn(dataStart + stringOffset);
-                string str = br.ReadUTF16();
-                br.StepOut();
+                string str = br.GetUTF16(dataStart + stringOffset);
                 strings.Add(str);
             }
 
@@ -184,7 +182,7 @@ namespace SoulsFormats
             {
                 Machines.Add(new MachineDesc(br, strings, states, stateSize));
             }
-            
+
             if (conditions.Count > 0 || commands.Count > 0 || passCommands.Count > 0 || states.Count > 0)
             {
                 throw new FormatException("Orphaned ESD descriptions found");
@@ -346,7 +344,6 @@ namespace SoulsFormats
             {
                 int commandOffset = br.ReadInt32();
                 int commandCount = br.ReadInt32();
-                long offset = commandOffset;
                 PassCommands = GetUniqueOffsetList(commandOffset, commandCount, commands, commandSize);
             }
         }
