@@ -11,7 +11,7 @@ namespace SoulsFormats
         /// <summary>
         /// Whether the EDD is in 64-bit or 32-bit format.
         /// </summary>
-        public bool LongFormat { get; private set; }
+        public bool LongFormat { get; set; }
 
         /// <summary>
         /// Descriptions of built-in functions which can be used in the ESD file.
@@ -38,12 +38,17 @@ namespace SoulsFormats
         /// </summary>
         public int[] UnkB0 { get; private set; }
 
-        private List<string> Strings;
-
         /// <summary>
         /// Creates a new EDD with no data.
         /// </summary>
-        public EDD() {}
+        public EDD()
+        {
+            LongFormat = false;
+            FunctionSpecs = new List<FunctionSpec>();
+            CommandSpecs = new List<CommandSpec>();
+            Machines = new List<MachineDesc>();
+            UnkB0 = new int[4];
+        }
 
         internal override bool Is(BinaryReaderEx br)
         {
@@ -113,21 +118,22 @@ namespace SoulsFormats
             br.AssertVarint(LongFormat ? 0x58 : 0x34);
             br.AssertVarint(stringCount);
 
-            Strings = new List<string>();
+            List<string> strings = new List<string>();
             for (int i = 0; i < stringCount; i++)
             {
                 long stringOffset = br.ReadVarint();
-                long charCount = br.ReadVarint();
+                // Char count not needed as all strings are null-terminated
+                br.ReadVarint();
                 br.StepIn(dataStart + stringOffset);
-                string str = br.ReadFixStrW((int)(charCount * 2));
+                string str = br.ReadUTF16();
                 br.StepOut();
-                Strings.Add(str);
+                strings.Add(str);
             }
 
             FunctionSpecs = new List<FunctionSpec>();
             for (int i = 0; i < functionSpecCount; i++)
             {
-                FunctionSpecs.Add(new FunctionSpec(br, Strings));
+                FunctionSpecs.Add(new FunctionSpec(br, strings));
             }
 
             Dictionary<long, ConditionDesc> conditions = new Dictionary<long, ConditionDesc>();
@@ -140,14 +146,14 @@ namespace SoulsFormats
             CommandSpecs = new List<CommandSpec>();
             for (int i = 0; i < commandSpecCount; i++)
             {
-                CommandSpecs.Add(new CommandSpec(br, Strings));
+                CommandSpecs.Add(new CommandSpec(br, strings));
             }
 
             Dictionary<long, CommandDesc> commands = new Dictionary<long, CommandDesc>();
             for (int i = 0; i < commandCount; i++)
             {
                 long offset = br.Position - dataStart;
-                commands[offset] = new CommandDesc(br, Strings);
+                commands[offset] = new CommandDesc(br, strings);
             }
             if (LongFormat)
             {
@@ -170,13 +176,13 @@ namespace SoulsFormats
             for (int i = 0; i < stateCount; i++)
             {
                 long offset = br.Position - dataStart;
-                states[offset] = new StateDesc(br, Strings, dataStart, conditions, conditionSize, commands, commandSize, passCommands, passCommandSize);
+                states[offset] = new StateDesc(br, strings, dataStart, conditions, conditionSize, commands, commandSize, passCommands, passCommandSize);
             }
 
             Machines = new List<MachineDesc>();
             for (int i = 0; i < machineCount; i++)
             {
-                Machines.Add(new MachineDesc(br, Strings, states, stateSize));
+                Machines.Add(new MachineDesc(br, strings, states, stateSize));
             }
             
             if (conditions.Count > 0 || commands.Count > 0 || passCommands.Count > 0 || states.Count > 0)
@@ -199,7 +205,6 @@ namespace SoulsFormats
             /// Description of the function.
             /// </summary>
             public string Name { get; set; }
-            private short NameIndex;
 
             /// <summary>
             /// Unknown.
@@ -211,14 +216,23 @@ namespace SoulsFormats
             /// </summary>
             public byte Unk07 { get; set; }
 
+            /// <summary>
+            /// Creates a function spec with the given function ID and description, or defaults if not provided.
+            /// </summary>
+            public FunctionSpec(int id = 0, string name = null)
+            {
+                ID = id;
+                Name = name;
+            }
+
             internal FunctionSpec(BinaryReaderEx br, List<string> strings)
             {
                 ID = br.ReadInt32();
-                NameIndex = br.ReadInt16();
+                short nameIndex = br.ReadInt16();
                 Unk06 = br.ReadByte();
                 Unk07 = br.ReadByte();
 
-                Name = strings[NameIndex];
+                Name = strings[nameIndex];
             }
         }
 
@@ -227,6 +241,11 @@ namespace SoulsFormats
         /// </summary>
         public class ConditionDesc
         {
+            /// <summary>
+            /// Creates a condition with no data.
+            /// </summary>
+            public ConditionDesc() { }
+
             internal ConditionDesc(BinaryReaderEx br)
             {
                 br.AssertVarint(-1);
@@ -248,22 +267,30 @@ namespace SoulsFormats
             /// Description of the command.
             /// </summary>
             public string Name { get; set; }
-            private short NameIndex;
 
             /// <summary>
             /// Unknown.
             /// </summary>
             public short Unk0E { get; set; }
 
+            /// <summary>
+            /// Creates a command spec with the given command ID and description, or defaults if not provided.
+            /// </summary>
+            public CommandSpec(long id = 0, string name = null)
+            {
+                ID = id;
+                Name = name;
+            }
+
             internal CommandSpec(BinaryReaderEx br, List<string> strings)
             {
                 ID = br.ReadVarint();
                 br.AssertVarint(-1);
                 br.AssertInt32(0);
-                NameIndex = br.ReadInt16();
+                short nameIndex = br.ReadInt16();
                 Unk0E = br.ReadInt16();
 
-                Name = strings[NameIndex];
+                Name = strings[nameIndex];
             }
         }
 
@@ -276,15 +303,22 @@ namespace SoulsFormats
             /// Description text. This often matches the command specification text, but is sometimes overridden.
             /// </summary>
             public string Name { get; set; }
-            private short NameIndex;
+
+            /// <summary>
+            /// Creates a command description with the given name, or default if not provided.
+            /// </summary>
+            public CommandDesc(string name = null)
+            {
+                Name = name;
+            }
 
             internal CommandDesc(BinaryReaderEx br, List<string> strings)
             {
-                NameIndex = br.ReadInt16();
+                short nameIndex = br.ReadInt16();
                 br.AssertByte(1);
                 br.AssertByte(0xFF);
 
-                Name = strings[NameIndex];
+                Name = strings[nameIndex];
             }
         }
 
@@ -300,13 +334,20 @@ namespace SoulsFormats
             /// </summary>
             public List<CommandDesc> PassCommands { get; set; }
 
+            /// <summary>
+            /// Creates a new empty pass command description.
+            /// </summary>
+            public PassCommandDesc()
+            {
+                PassCommands = new List<CommandDesc>();
+            }
+
             internal PassCommandDesc(BinaryReaderEx br, Dictionary<long, CommandDesc> commands, int commandSize)
             {
                 int commandOffset = br.ReadInt32();
                 int commandCount = br.ReadInt32();
                 long offset = commandOffset;
                 PassCommands = GetUniqueOffsetList(commandOffset, commandCount, commands, commandSize);
-                return;
             }
         }
 
@@ -324,7 +365,6 @@ namespace SoulsFormats
             /// Description text.
             /// </summary>
             public string Name { get; set; }
-            private short NameIndex;
 
             /// <summary>
             /// Descriptions for commands in the entry block.
@@ -351,6 +391,20 @@ namespace SoulsFormats
             /// </summary>
             public List<ConditionDesc> Conditions { get; set; }
 
+            /// <summary>
+            /// Creates a new state description with the given id and name, or defaults if not provided.
+            /// </summary>
+            public StateDesc(long id = 0, string name = null)
+            {
+                ID = id;
+                Name = name;
+                EntryCommands = new List<CommandDesc>();
+                ExitCommands = new List<CommandDesc>();
+                WhileCommands = new List<CommandDesc>();
+                PassCommands = new List<PassCommandDesc>();
+                Conditions = new List<ConditionDesc>();
+            }
+
             internal StateDesc(
                 BinaryReaderEx br, List<string> strings, long dataStart,
                 Dictionary<long, ConditionDesc> conditions, int conditionSize,
@@ -362,26 +416,24 @@ namespace SoulsFormats
                 br.AssertVarint(1);
                 long entryCommandOffset = br.ReadVarint();
                 long entryCommandCount = br.ReadVarint();
-                EntryCommands = GetUniqueOffsetList(entryCommandOffset, entryCommandCount, commands, commandSize);
                 long exitCommandOffset = br.ReadVarint();
                 long exitCommandCount = br.ReadVarint();
-                ExitCommands = GetUniqueOffsetList(exitCommandOffset, exitCommandCount, commands, commandSize);
                 long whileCommandOffset = br.ReadVarint();
                 long whileCommandCount = br.ReadVarint();
-                WhileCommands = GetUniqueOffsetList(whileCommandOffset, whileCommandCount, commands, commandSize);
                 long passCommandOffset = br.ReadVarint();
                 long passCommandCount = br.ReadVarint();
-                PassCommands = GetUniqueOffsetList(passCommandOffset, passCommandCount, passCommands, passCommandSize);
                 long conditionOffset = br.ReadVarint();
                 long conditionCount = br.ReadVarint();
-                Conditions = GetUniqueOffsetList(conditionOffset, conditionCount, conditions, conditionSize);
                 br.AssertVarint(-1);
                 br.AssertVarint(0);
 
-                br.StepIn(dataStart + nameIndexOffset);
-                NameIndex = br.ReadInt16();
-                br.StepOut();
-                Name = strings[NameIndex];
+                short nameIndex = br.GetInt16(dataStart + nameIndexOffset);
+                Name = strings[nameIndex];
+                EntryCommands = GetUniqueOffsetList(entryCommandOffset, entryCommandCount, commands, commandSize);
+                ExitCommands = GetUniqueOffsetList(exitCommandOffset, exitCommandCount, commands, commandSize);
+                WhileCommands = GetUniqueOffsetList(whileCommandOffset, whileCommandCount, commands, commandSize);
+                PassCommands = GetUniqueOffsetList(passCommandOffset, passCommandCount, passCommands, passCommandSize);
+                Conditions = GetUniqueOffsetList(conditionOffset, conditionCount, conditions, conditionSize);
             }
         }
 
@@ -399,7 +451,6 @@ namespace SoulsFormats
             /// Text description.
             /// </summary>
             public string Name { get; set; }
-            private short NameIndex;
 
             /// <summary>
             /// Unknown.
@@ -410,19 +461,29 @@ namespace SoulsFormats
             /// Text description of params to the machine, when it is callable by other machines.
             /// </summary>
             public string[] ParamNames { get; private set; }
-            private short[] ParamIndices;
 
             /// <summary>
             /// Descriptions of the machine's states.
             /// </summary>
             public List<StateDesc> States { get; set; }
 
+            /// <summary>
+            /// Creates a new machine description with the given id and name, or defaults if not provided.
+            /// </summary>
+            public MachineDesc(int id = 0, string name = null)
+            {
+                ID = id;
+                Name = name;
+                ParamNames = new string[8];
+                States = new List<StateDesc>();
+            }
+
             internal MachineDesc(BinaryReaderEx br, List<string> strings, Dictionary<long, StateDesc> states, int stateSize)
             {
                 ID = br.ReadInt32();
-                NameIndex = br.ReadInt16();
+                short nameIndex = br.ReadInt16();
                 Unk06 = br.ReadInt16();
-                ParamIndices = br.ReadInt16s(8);
+                short[] paramIndices = br.ReadInt16s(8);
                 br.AssertVarint(-1);
                 br.AssertVarint(0);
                 br.AssertVarint(-1);
@@ -431,13 +492,13 @@ namespace SoulsFormats
                 long stateCount = br.ReadVarint();
                 States = GetUniqueOffsetList(stateOffset, stateCount, states, stateSize);
 
-                Name = strings[NameIndex];
+                Name = strings[nameIndex];
                 ParamNames = new string[8];
                 for (int i = 0; i < 8; i++)
                 {
-                    if (ParamIndices[i] >= 0)
+                    if (paramIndices[i] >= 0)
                     {
-                        ParamNames[i] = strings[ParamIndices[i]];
+                        ParamNames[i] = strings[paramIndices[i]];
                     }
                 }
             }
