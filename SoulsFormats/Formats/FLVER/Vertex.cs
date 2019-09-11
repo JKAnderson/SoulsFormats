@@ -134,7 +134,7 @@ namespace SoulsFormats
                             {
                                 BoneWeights = new float[4];
                                 for (int i = 0; i < 4; i++)
-                                    BoneWeights[i] = br.ReadSByte() / (float)sbyte.MaxValue;
+                                    BoneWeights[i] = br.ReadByte() / (float)byte.MaxValue;
                             }
                             else if (member.Type == LayoutType.UVPair)
                             {
@@ -410,7 +410,7 @@ namespace SoulsFormats
                             else if (member.Type == LayoutType.Byte4C)
                             {
                                 for (int i = 0; i < 4; i++)
-                                    bw.WriteSByte((sbyte)Math.Round(BoneWeights[i] * sbyte.MaxValue));
+                                    bw.WriteByte((byte)Math.Round(BoneWeights[i] * byte.MaxValue));
                             }
                             else if (member.Type == LayoutType.UVPair)
                             {
