@@ -16,6 +16,8 @@ namespace SoulsFormats
 
             public byte Unk03;
 
+            public short DefaultBoneIndex;
+
             public short[] BoneIndices;
 
             public ushort[] VertexIndices;
@@ -31,7 +33,8 @@ namespace SoulsFormats
 
                 int vertexIndexCount = br.ReadInt32();
                 int vertexCount = br.ReadInt32();
-                BoneIndices = br.ReadInt16s(29);
+                DefaultBoneIndex = br.ReadInt16();
+                BoneIndices = br.ReadInt16s(28);
                 br.AssertInt16(0);
                 br.AssertInt32(vertexIndexCount * 2);
                 int vertexIndicesOffset = br.ReadInt32();
