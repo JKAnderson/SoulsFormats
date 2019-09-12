@@ -200,6 +200,21 @@ namespace SoulsFormats
             public float Unk14 { get; set; }
 
             /// <summary>
+            /// Unknown.
+            /// </summary>
+            public float Unk18 { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public float Unk1C { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public float Unk20 { get; set; }
+
+            /// <summary>
             /// Creates a Struct2 with default values.
             /// </summary>
             public Struct2() { }
@@ -212,9 +227,9 @@ namespace SoulsFormats
                 Unk0C = br.ReadSingle();
                 Unk10 = br.ReadSingle();
                 Unk14 = br.ReadSingle();
-                br.AssertInt32(0);
-                br.AssertInt32(0);
-                br.AssertInt32(0);
+                Unk18 = br.ReadSingle();
+                Unk1C = br.ReadSingle();
+                Unk20 = br.ReadSingle();
             }
 
             internal void Write(BinaryWriterEx bw)
@@ -225,9 +240,9 @@ namespace SoulsFormats
                 bw.WriteSingle(Unk0C);
                 bw.WriteSingle(Unk10);
                 bw.WriteSingle(Unk14);
-                bw.WriteInt32(0);
-                bw.WriteInt32(0);
-                bw.WriteInt32(0);
+                bw.WriteSingle(Unk18);
+                bw.WriteSingle(Unk1C);
+                bw.WriteSingle(Unk20);
             }
         }
 
