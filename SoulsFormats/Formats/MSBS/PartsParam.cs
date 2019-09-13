@@ -860,9 +860,9 @@ namespace SoulsFormats
                 public int Unk04 { get; set; }
 
                 /// <summary>
-                /// Unknown.
+                /// ID in GrassTypeParam determining properties of dynamic grass on a map piece.
                 /// </summary>
-                public int Unk08 { get; set; }
+                public int GrassTypeParamID { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -888,7 +888,7 @@ namespace SoulsFormats
                 {
                     Unk00 = br.ReadInt32();
                     Unk04 = br.ReadInt32();
-                    Unk08 = br.ReadInt32();
+                    GrassTypeParamID = br.ReadInt32();
                     Unk0C = br.ReadInt32();
                     Unk10 = br.ReadInt32();
                     Unk14 = br.ReadInt32();
@@ -900,7 +900,7 @@ namespace SoulsFormats
                 {
                     bw.WriteInt32(Unk00);
                     bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
+                    bw.WriteInt32(GrassTypeParamID);
                     bw.WriteInt32(Unk0C);
                     bw.WriteInt32(Unk10);
                     bw.WriteInt32(Unk14);
