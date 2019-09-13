@@ -1,41 +1,36 @@
 ﻿using System.Collections.Generic;
+using System.Numerics;
 
 namespace SoulsFormats
 {
     /// <summary>
-    /// Unknown model companion format used in Sekiro. Extension: .grass
+    /// Defines a dynamic grass mesh attached to a model; only used in Sekiro. Extension: .grass
     /// </summary>
     public class GRASS : SoulsFile<GRASS>
     {
         /// <summary>
-        /// Unknown.
+        /// A recursive subdivision of space for efficient culling or collision testing.
         /// </summary>
-        public List<Struct1> Struct1s { get; set; }
+        public List<Volume> BoundingVolumeHierarchy { get; set; }
 
         /// <summary>
-        /// Unknown.
+        /// Points making up the grass mesh.
         /// </summary>
-        public List<Struct2> Struct2s { get; set; }
+        public List<Vertex> Vertices { get; set; }
 
         /// <summary>
-        /// Unknown.
+        /// Triangular patches of grass.
         /// </summary>
-        public List<Struct3> Struct3s { get; set; }
-
-        /// <summary>
-        /// Unknown.
-        /// </summary>
-        public List<Struct4> Struct4s { get; set; }
+        public List<Face> Faces { get; set; }
 
         /// <summary>
         /// Creates an empty GRASS.
         /// </summary>
         public GRASS()
         {
-            Struct1s = new List<Struct1>();
-            Struct2s = new List<Struct2>();
-            Struct3s = new List<Struct3>();
-            Struct4s = new List<Struct4>();
+            BoundingVolumeHierarchy = new List<Volume>();
+            Vertices = new List<Vertex>();
+            Faces = new List<Face>();
         }
 
         internal override bool Is(BinaryReaderEx br)
@@ -45,42 +40,42 @@ namespace SoulsFormats
 
             int version = br.GetInt32(0);
             int headerSize = br.GetInt32(4);
-            int size1 = br.GetInt32(8);
-            int size2 = br.GetInt32(0x10);
-            int size3 = br.GetInt32(0x18);
-            int size4 = br.GetInt32(0x20);
-            return version == 1 && headerSize == 0x28 && size1 == 0x14 && size2 == 0x24 && size3 == 0x18 && size4 == 0x18;
+            int volumeSize = br.GetInt32(8);
+            int vertexSize = br.GetInt32(0x10);
+            int faceSize = br.GetInt32(0x18);
+            int boundingBoxSize = br.GetInt32(0x20);
+            return version == 1 && headerSize == 0x28
+                && volumeSize == 0x14 && vertexSize == 0x24 && faceSize == 0x18 && boundingBoxSize == 0x18;
         }
 
         internal override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
-            br.AssertInt32(1);
-            br.AssertInt32(0x28);
-            br.AssertInt32(0x14);
-            int count1 = br.ReadInt32();
-            br.AssertInt32(0x24);
-            int count2 = br.ReadInt32();
-            br.AssertInt32(0x18);
-            int count3 = br.ReadInt32();
-            br.AssertInt32(0x18);
-            int count4 = br.ReadInt32();
+            br.AssertInt32(1); // Version?
+            br.AssertInt32(0x28); // Header size
+            br.AssertInt32(0x14); // Struct 1 size
+            int volumeCount = br.ReadInt32();
+            br.AssertInt32(0x24); // Vertex size
+            int vertexCount = br.ReadInt32();
+            br.AssertInt32(0x18); // Face size
+            int faceCount = br.ReadInt32();
+            br.AssertInt32(0x18); // Bounding box size
+            br.AssertInt32(volumeCount); // Bounding box count
 
-            Struct1s = new List<Struct1>(count1);
-            for (int i = 0; i < count1; i++)
-                Struct1s.Add(new Struct1(br));
+            BoundingVolumeHierarchy = new List<Volume>(volumeCount);
+            for (int i = 0; i < volumeCount; i++)
+                BoundingVolumeHierarchy.Add(new Volume(br));
 
-            Struct2s = new List<Struct2>(count2);
-            for (int i = 0; i < count2; i++)
-                Struct2s.Add(new Struct2(br));
+            Vertices = new List<Vertex>(vertexCount);
+            for (int i = 0; i < vertexCount; i++)
+                Vertices.Add(new Vertex(br));
 
-            Struct3s = new List<Struct3>(count3);
-            for (int i = 0; i < count3; i++)
-                Struct3s.Add(new Struct3(br));
+            Faces = new List<Face>(faceCount);
+            for (int i = 0; i < faceCount; i++)
+                Faces.Add(new Face(br));
 
-            Struct4s = new List<Struct4>(count4);
-            for (int i = 0; i < count4; i++)
-                Struct4s.Add(new Struct4(br));
+            for (int i = 0; i < volumeCount; i++)
+                BoundingVolumeHierarchy[i].BoundingBox = new BoundingBox(br);
         }
 
         internal override void Write(BinaryWriterEx bw)
@@ -89,51 +84,51 @@ namespace SoulsFormats
             bw.WriteInt32(1);
             bw.WriteInt32(0x28);
             bw.WriteInt32(0x14);
-            bw.WriteInt32(Struct1s.Count);
+            bw.WriteInt32(BoundingVolumeHierarchy.Count);
             bw.WriteInt32(0x24);
-            bw.WriteInt32(Struct2s.Count);
+            bw.WriteInt32(Vertices.Count);
             bw.WriteInt32(0x18);
-            bw.WriteInt32(Struct3s.Count);
+            bw.WriteInt32(Faces.Count);
             bw.WriteInt32(0x18);
-            bw.WriteInt32(Struct4s.Count);
+            bw.WriteInt32(BoundingVolumeHierarchy.Count);
 
-            foreach (Struct1 struct1 in Struct1s)
-                struct1.Write(bw);
+            foreach (Volume volume in BoundingVolumeHierarchy)
+                volume.Write(bw);
 
-            foreach (Struct2 struct2 in Struct2s)
-                struct2.Write(bw);
+            foreach (Vertex vertex in Vertices)
+                vertex.Write(bw);
 
-            foreach (Struct3 struct3 in Struct3s)
-                struct3.Write(bw);
+            foreach (Face face in Faces)
+                face.Write(bw);
 
-            foreach (Struct4 struct4 in Struct4s)
-                struct4.Write(bw);
+            foreach (Volume volume in BoundingVolumeHierarchy)
+                volume.BoundingBox.Write(bw);
         }
 
         /// <summary>
-        /// Unknown.
+        /// A volume of space in the bounding volume hierarchy.
         /// </summary>
-        public class Struct1
+        public class Volume
         {
             /// <summary>
-            /// Unknown.
+            /// Index of first child volume.
             /// </summary>
-            public int Unk00 { get; set; }
+            public int StartChildIndex { get; set; }
 
             /// <summary>
-            /// Unknown.
+            /// Index of last child volume, exclusive.
             /// </summary>
-            public int Unk04 { get; set; }
+            public int EndChildIndex { get; set; }
 
             /// <summary>
-            /// Unknown.
+            /// Index of first contained face.
             /// </summary>
-            public int Unk08 { get; set; }
+            public int StartFaceIndex { get; set; }
 
             /// <summary>
-            /// Unknown.
+            /// Index of last contained face, exclusive.
             /// </summary>
-            public int Unk0C { get; set; }
+            public int EndFaceIndex { get; set; }
 
             /// <summary>
             /// Unknown.
@@ -141,230 +136,159 @@ namespace SoulsFormats
             public int Unk10 { get; set; }
 
             /// <summary>
-            /// Creates a Struct1 with default values.
+            /// Space contained within the volume.
             /// </summary>
-            public Struct1() { }
+            public BoundingBox BoundingBox { get; set; }
 
-            internal Struct1(BinaryReaderEx br)
+            /// <summary>
+            /// Creates a Volume with default values.
+            /// </summary>
+            public Volume() { }
+
+            internal Volume(BinaryReaderEx br)
             {
-                Unk00 = br.ReadInt32();
-                Unk04 = br.ReadInt32();
-                Unk08 = br.ReadInt32();
-                Unk0C = br.ReadInt32();
+                StartChildIndex = br.ReadInt32();
+                EndChildIndex = br.ReadInt32();
+                StartFaceIndex = br.ReadInt32();
+                EndFaceIndex = br.ReadInt32();
                 Unk10 = br.ReadInt32();
             }
 
             internal void Write(BinaryWriterEx bw)
             {
-                bw.WriteInt32(Unk00);
-                bw.WriteInt32(Unk04);
-                bw.WriteInt32(Unk08);
-                bw.WriteInt32(Unk0C);
+                bw.WriteInt32(StartChildIndex);
+                bw.WriteInt32(EndChildIndex);
+                bw.WriteInt32(StartFaceIndex);
+                bw.WriteInt32(EndFaceIndex);
                 bw.WriteInt32(Unk10);
             }
         }
 
         /// <summary>
-        /// Unknown.
+        /// A point in the grass mesh with weights for each grass type.
         /// </summary>
-        public class Struct2
+        public class Vertex
         {
             /// <summary>
-            /// Unknown.
+            /// Position of the vertex, relative to the parent model.
             /// </summary>
-            public float Unk00 { get; set; }
+            public Vector3 Position { get; set; }
 
             /// <summary>
-            /// Unknown.
+            /// Densities of the six possible grass types; usual range is 0 to 1 but higher is supported.
             /// </summary>
-            public float Unk04 { get; set; }
+            public float[] GrassDensities { get; private set; }
 
             /// <summary>
-            /// Unknown.
+            /// Creates a Vertex with default values.
             /// </summary>
-            public float Unk08 { get; set; }
-
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public float Unk0C { get; set; }
-
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public float Unk10 { get; set; }
-
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public float Unk14 { get; set; }
-
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public float Unk18 { get; set; }
-
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public float Unk1C { get; set; }
-
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public float Unk20 { get; set; }
-
-            /// <summary>
-            /// Creates a Struct2 with default values.
-            /// </summary>
-            public Struct2() { }
-
-            internal Struct2(BinaryReaderEx br)
+            public Vertex()
             {
-                Unk00 = br.ReadSingle();
-                Unk04 = br.ReadSingle();
-                Unk08 = br.ReadSingle();
-                Unk0C = br.ReadSingle();
-                Unk10 = br.ReadSingle();
-                Unk14 = br.ReadSingle();
-                Unk18 = br.ReadSingle();
-                Unk1C = br.ReadSingle();
-                Unk20 = br.ReadSingle();
+                GrassDensities = new float[6];
+            }
+
+            internal Vertex(BinaryReaderEx br)
+            {
+                Position = br.ReadVector3();
+                GrassDensities = br.ReadSingles(6);
             }
 
             internal void Write(BinaryWriterEx bw)
             {
-                bw.WriteSingle(Unk00);
-                bw.WriteSingle(Unk04);
-                bw.WriteSingle(Unk08);
-                bw.WriteSingle(Unk0C);
-                bw.WriteSingle(Unk10);
-                bw.WriteSingle(Unk14);
-                bw.WriteSingle(Unk18);
-                bw.WriteSingle(Unk1C);
-                bw.WriteSingle(Unk20);
+                bw.WriteVector3(Position);
+                bw.WriteSingles(GrassDensities);
             }
         }
 
         /// <summary>
-        /// Unknown.
+        /// A triangular patch of grass.
         /// </summary>
-        public class Struct3
+        public class Face
         {
             /// <summary>
-            /// Unknown.
+            /// Unknown; affects direction/rotation somehow, components range from -1 to 1.
             /// </summary>
-            public float Unk00 { get; set; }
+            public Vector3 Unk00 { get; set; }
 
             /// <summary>
-            /// Unknown.
+            /// Index of the first vertex in the triangle.
             /// </summary>
-            public float Unk04 { get; set; }
+            public int VertexIndexA { get; set; }
 
             /// <summary>
-            /// Unknown.
+            /// Index of the second vertex in the triangle.
             /// </summary>
-            public float Unk08 { get; set; }
+            public int VertexIndexB { get; set; }
 
             /// <summary>
-            /// Unknown.
+            /// Index of the third vertex in the triangle.
             /// </summary>
-            public int Unk0C { get; set; }
+            public int VertexIndexC { get; set; }
 
             /// <summary>
-            /// Unknown.
+            /// Creates a Face with default values.
             /// </summary>
-            public int Unk10 { get; set; }
+            public Face() { }
 
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public int Unk14 { get; set; }
-
-            /// <summary>
-            /// Creates a Struct3 with default values.
-            /// </summary>
-            public Struct3() { }
-
-            internal Struct3(BinaryReaderEx br)
+            internal Face(BinaryReaderEx br)
             {
-                Unk00 = br.ReadSingle();
-                Unk04 = br.ReadSingle();
-                Unk08 = br.ReadSingle();
-                Unk0C = br.ReadInt32();
-                Unk10 = br.ReadInt32();
-                Unk14 = br.ReadInt32();
+                Unk00 = br.ReadVector3();
+                VertexIndexA = br.ReadInt32();
+                VertexIndexB = br.ReadInt32();
+                VertexIndexC = br.ReadInt32();
             }
 
             internal void Write(BinaryWriterEx bw)
             {
-                bw.WriteSingle(Unk00);
-                bw.WriteSingle(Unk04);
-                bw.WriteSingle(Unk08);
-                bw.WriteInt32(Unk0C);
-                bw.WriteInt32(Unk10);
-                bw.WriteInt32(Unk14);
+                bw.WriteVector3(Unk00);
+                bw.WriteInt32(VertexIndexA);
+                bw.WriteInt32(VertexIndexB);
+                bw.WriteInt32(VertexIndexC);
             }
         }
 
         /// <summary>
-        /// Unknown.
+        /// Defines the space contained by a Volume.
         /// </summary>
-        public class Struct4
+        public struct BoundingBox
         {
             /// <summary>
-            /// Unknown.
+            /// Minimum extent of the box.
             /// </summary>
-            public float Unk00 { get; set; }
+            public Vector3 Min { get; set; }
 
             /// <summary>
-            /// Unknown.
+            /// Maximum extent of the box.
             /// </summary>
-            public float Unk04 { get; set; }
+            public Vector3 Max { get; set; }
 
             /// <summary>
-            /// Unknown.
+            /// Creates a BoundingBox with the given bounds.
             /// </summary>
-            public float Unk08 { get; set; }
-
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public float Unk0C { get; set; }
-
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public float Unk10 { get; set; }
-
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public float Unk14 { get; set; }
-
-            /// <summary>
-            /// Creates a Struct4 with default values.
-            /// </summary>
-            public Struct4() { }
-
-            internal Struct4(BinaryReaderEx br)
+            public BoundingBox(Vector3 min, Vector3 max)
             {
-                Unk00 = br.ReadSingle();
-                Unk04 = br.ReadSingle();
-                Unk08 = br.ReadSingle();
-                Unk0C = br.ReadSingle();
-                Unk10 = br.ReadSingle();
-                Unk14 = br.ReadSingle();
+                Min = min;
+                Max = max;
+            }
+
+            internal BoundingBox(BinaryReaderEx br)
+            {
+                Min = br.ReadVector3();
+                Max = br.ReadVector3();
             }
 
             internal void Write(BinaryWriterEx bw)
             {
-                bw.WriteSingle(Unk00);
-                bw.WriteSingle(Unk04);
-                bw.WriteSingle(Unk08);
-                bw.WriteSingle(Unk0C);
-                bw.WriteSingle(Unk10);
-                bw.WriteSingle(Unk14);
+                bw.WriteVector3(Min);
+                bw.WriteVector3(Max);
+            }
+
+            /// <summary>
+            /// Returns the bounds of the box as a string.
+            /// </summary>
+            public override string ToString()
+            {
+                return $"{Min:F3} - {Max:F3}";
             }
         }
     }
