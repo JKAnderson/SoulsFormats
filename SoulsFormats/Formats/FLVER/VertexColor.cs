@@ -1,4 +1,6 @@
-﻿namespace SoulsFormats
+﻿using System;
+
+namespace SoulsFormats
 {
     public static partial class FLVER
     {
@@ -48,6 +50,57 @@
                 R = r / 255f;
                 G = g / 255f;
                 B = b / 255f;
+            }
+
+            internal static VertexColor ReadFloatRGBA(BinaryReaderEx br)
+            {
+                float r = br.ReadSingle();
+                float g = br.ReadSingle();
+                float b = br.ReadSingle();
+                float a = br.ReadSingle();
+                return new VertexColor(a, r, g, b);
+            }
+
+            internal static VertexColor ReadByteARGB(BinaryReaderEx br)
+            {
+                byte a = br.ReadByte();
+                byte r = br.ReadByte();
+                byte g = br.ReadByte();
+                byte b = br.ReadByte();
+                return new VertexColor(a, r, g, b);
+            }
+
+            internal static VertexColor ReadByteRGBA(BinaryReaderEx br)
+            {
+                byte r = br.ReadByte();
+                byte g = br.ReadByte();
+                byte b = br.ReadByte();
+                byte a = br.ReadByte();
+                return new VertexColor(a, r, g, b);
+            }
+
+            internal void WriteFloatRGBA(BinaryWriterEx bw)
+            {
+                bw.WriteSingle(R);
+                bw.WriteSingle(G);
+                bw.WriteSingle(B);
+                bw.WriteSingle(A);
+            }
+
+            internal void WriteByteARGB(BinaryWriterEx bw)
+            {
+                bw.WriteByte((byte)Math.Round(A * 255));
+                bw.WriteByte((byte)Math.Round(R * 255));
+                bw.WriteByte((byte)Math.Round(G * 255));
+                bw.WriteByte((byte)Math.Round(B * 255));
+            }
+
+            internal void WriteByteRGBA(BinaryWriterEx bw)
+            {
+                bw.WriteByte((byte)Math.Round(R * 255));
+                bw.WriteByte((byte)Math.Round(G * 255));
+                bw.WriteByte((byte)Math.Round(B * 255));
+                bw.WriteByte((byte)Math.Round(A * 255));
             }
         }
     }

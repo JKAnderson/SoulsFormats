@@ -80,6 +80,8 @@
     <Compile Include="Formats\FLVER\LayoutMember.cs" />
     <Compile Include="Formats\FLVER\Vertex.cs" />
     <Compile Include="Formats\FLVER\FLVER2\VertexBuffer.cs" />
+    <Compile Include="Formats\FLVER\VertexBoneIndices.cs" />
+    <Compile Include="Formats\FLVER\VertexBoneWeights.cs" />
     <Compile Include="Formats\FLVER\VertexColor.cs" />
     <Compile Include="Formats\GRASS.cs" />
     <Compile Include="Formats\LUAGNL.cs" />
