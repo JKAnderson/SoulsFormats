@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Numerics;
 
 namespace SoulsFormats
@@ -32,7 +33,12 @@ namespace SoulsFormats
             /// <summary>
             /// Vector pointing away from the surface.
             /// </summary>
-            public Vector4 Normal;
+            public Vector3 Normal;
+
+            /// <summary>
+            /// Fourth component of the normal, read without transforming into a float; used as a bone index for binding to a single bone.
+            /// </summary>
+            public int NormalW;
 
             /// <summary>
             /// Texture coordinates of the vertex.
@@ -178,53 +184,63 @@ namespace SoulsFormats
                         case LayoutSemantic.Normal:
                             if (member.Type == LayoutType.Float3)
                             {
-                                Normal = new Vector4(br.ReadVector3(), 0);
+                                Normal = br.ReadVector3();
                             }
                             else if (member.Type == LayoutType.Float4)
                             {
-                                Normal = br.ReadVector4();
+                                Normal = br.ReadVector3();
+                                float w = br.ReadSingle();
+                                if (w != Math.Floor(w))
+                                    throw new InvalidDataException($"Float4 Normal W was not a whole number: {w}");
+                                NormalW = (int)w;
                             }
                             else if (member.Type == LayoutType.Byte4A)
                             {
-                                float[] floats = new float[4];
-                                for (int i = 0; i < 4; i++)
+                                float[] floats = new float[3];
+                                for (int i = 0; i < 3; i++)
                                     floats[i] = (br.ReadByte() - 127) / 127f;
-                                Normal = new Vector4(floats[0], floats[1], floats[2], floats[3]);
+                                Normal = new Vector3(floats[0], floats[1], floats[2]);
+                                NormalW = br.ReadByte();
                             }
                             else if (member.Type == LayoutType.Byte4B)
                             {
-                                float[] floats = new float[4];
-                                for (int i = 0; i < 4; i++)
+                                float[] floats = new float[3];
+                                for (int i = 0; i < 3; i++)
                                     floats[i] = (br.ReadByte() - 127) / 127f;
-                                Normal = new Vector4(floats[0], floats[1], floats[2], floats[3]);
+                                Normal = new Vector3(floats[0], floats[1], floats[2]);
+                                NormalW = br.ReadByte();
                             }
                             else if (member.Type == LayoutType.Byte4C)
                             {
-                                float[] floats = new float[4];
-                                for (int i = 0; i < 4; i++)
+                                float[] floats = new float[3];
+                                for (int i = 0; i < 3; i++)
                                     floats[i] = (br.ReadByte() - 127) / 127f;
-                                Normal = new Vector4(floats[0], floats[1], floats[2], floats[3]);
+                                Normal = new Vector3(floats[0], floats[1], floats[2]);
+                                NormalW = br.ReadByte();
                             }
                             else if (member.Type == LayoutType.Short4toFloat4A)
                             {
-                                float[] floats = new float[4];
-                                for (int i = 0; i < 4; i++)
+                                float[] floats = new float[3];
+                                for (int i = 0; i < 3; i++)
                                     floats[i] = br.ReadInt16() / 32767f;
-                                Normal = new Vector4(floats[0], floats[1], floats[2], floats[3]);
+                                Normal = new Vector3(floats[0], floats[1], floats[2]);
+                                NormalW = br.ReadInt16();
                             }
                             else if (member.Type == LayoutType.Short4toFloat4B)
                             {
-                                float[] floats = new float[4];
-                                for (int i = 0; i < 4; i++)
+                                float[] floats = new float[3];
+                                for (int i = 0; i < 3; i++)
                                     floats[i] = (br.ReadUInt16() - 32767) / 32767f;
-                                Normal = new Vector4(floats[0], floats[1], floats[2], floats[3]);
+                                Normal = new Vector3(floats[0], floats[1], floats[2]);
+                                NormalW = br.ReadInt16();
                             }
                             else if (member.Type == LayoutType.Byte4E)
                             {
-                                float[] floats = new float[4];
-                                for (int i = 0; i < 4; i++)
+                                float[] floats = new float[3];
+                                for (int i = 0; i < 3; i++)
                                     floats[i] = (br.ReadByte() - 127) / 127f;
-                                Normal = new Vector4(floats[0], floats[1], floats[2], floats[3]);
+                                Normal = new Vector3(floats[0], floats[1], floats[2]);
+                                NormalW = br.ReadByte();
                             }
                             else
                                 throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
@@ -449,55 +465,54 @@ namespace SoulsFormats
                         case LayoutSemantic.Normal:
                             if (member.Type == LayoutType.Float3)
                             {
-                                bw.WriteSingle(Normal.X);
-                                bw.WriteSingle(Normal.Y);
-                                bw.WriteSingle(Normal.Z);
+                                bw.WriteVector3(Normal);
                             }
                             else if (member.Type == LayoutType.Float4)
                             {
-                                bw.WriteVector4(Normal);
+                                bw.WriteVector3(Normal);
+                                bw.WriteSingle(NormalW);
                             }
                             else if (member.Type == LayoutType.Byte4A)
                             {
                                 bw.WriteByte((byte)Math.Round(Normal.X * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(Normal.Y * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(Normal.Z * 127 + 127));
-                                bw.WriteByte((byte)Math.Round(Normal.W * 127 + 127));
+                                bw.WriteByte((byte)NormalW);
                             }
                             else if (member.Type == LayoutType.Byte4B)
                             {
                                 bw.WriteByte((byte)Math.Round(Normal.X * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(Normal.Y * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(Normal.Z * 127 + 127));
-                                bw.WriteByte((byte)Math.Round(Normal.W * 127 + 127));
+                                bw.WriteByte((byte)NormalW);
                             }
                             else if (member.Type == LayoutType.Byte4C)
                             {
                                 bw.WriteByte((byte)Math.Round(Normal.X * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(Normal.Y * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(Normal.Z * 127 + 127));
-                                bw.WriteByte((byte)Math.Round(Normal.W * 127 + 127));
+                                bw.WriteByte((byte)NormalW);
                             }
                             else if (member.Type == LayoutType.Short4toFloat4A)
                             {
                                 bw.WriteInt16((short)Math.Round(Normal.X * 32767));
                                 bw.WriteInt16((short)Math.Round(Normal.Y * 32767));
                                 bw.WriteInt16((short)Math.Round(Normal.Z * 32767));
-                                bw.WriteInt16((short)Math.Round(Normal.W * 32767));
+                                bw.WriteInt16((short)NormalW);
                             }
                             else if (member.Type == LayoutType.Short4toFloat4B)
                             {
                                 bw.WriteUInt16((ushort)Math.Round(Normal.X * 32767 + 32767));
                                 bw.WriteUInt16((ushort)Math.Round(Normal.Y * 32767 + 32767));
                                 bw.WriteUInt16((ushort)Math.Round(Normal.Z * 32767 + 32767));
-                                bw.WriteUInt16((ushort)Math.Round(Normal.W * 32767 + 32767));
+                                bw.WriteInt16((short)NormalW);
                             }
                             else if (member.Type == LayoutType.Byte4E)
                             {
                                 bw.WriteByte((byte)Math.Round(Normal.X * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(Normal.Y * 127 + 127));
                                 bw.WriteByte((byte)Math.Round(Normal.Z * 127 + 127));
-                                bw.WriteByte((byte)Math.Round(Normal.W * 127 + 127));
+                                bw.WriteByte((byte)NormalW);
                             }
                             else
                                 throw new NotImplementedException($"Write not implemented for {member.Type} {member.Semantic}.");
