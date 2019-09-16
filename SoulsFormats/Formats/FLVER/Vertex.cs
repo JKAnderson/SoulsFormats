@@ -113,232 +113,229 @@ namespace SoulsFormats
             {
                 foreach (LayoutMember member in layout)
                 {
-                    switch (member.Semantic)
+                    if (member.Semantic == LayoutSemantic.Position)
                     {
-                        case LayoutSemantic.Position:
-                            if (member.Type == LayoutType.Float3)
-                            {
-                                Position = br.ReadVector3();
-                            }
-                            else if (member.Type == LayoutType.Float4)
-                            {
-                                Position = br.ReadVector3();
-                                br.AssertSingle(0);
-                            }
-                            else
-                                throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
-                            break;
-
-                        case LayoutSemantic.BoneWeights:
-                            if (member.Type == LayoutType.Byte4A)
-                            {
-                                for (int i = 0; i < 4; i++)
-                                    BoneWeights[i] = br.ReadSByte() / 127f;
-                            }
-                            else if (member.Type == LayoutType.Byte4C)
-                            {
-                                for (int i = 0; i < 4; i++)
-                                    BoneWeights[i] = br.ReadByte() / 255f;
-                            }
-                            else if (member.Type == LayoutType.UVPair)
-                            {
-                                for (int i = 0; i < 4; i++)
-                                    BoneWeights[i] = br.ReadInt16() / 32767f;
-                            }
-                            else if (member.Type == LayoutType.Short4toFloat4A)
-                            {
-                                for (int i = 0; i < 4; i++)
-                                    BoneWeights[i] = br.ReadInt16() / 32767f;
-                            }
-                            else
-                                throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
-                            break;
-
-                        case LayoutSemantic.BoneIndices:
-                            if (member.Type == LayoutType.Byte4B)
-                            {
-                                for (int i = 0; i < 4; i++)
-                                    BoneIndices[i] = br.ReadByte();
-                            }
-                            else if (member.Type == LayoutType.ShortBoneIndices)
-                            {
-                                for (int i = 0; i < 4; i++)
-                                    BoneIndices[i] = br.ReadUInt16();
-                            }
-                            else if (member.Type == LayoutType.Byte4E)
-                            {
-                                for (int i = 0; i < 4; i++)
-                                    BoneIndices[i] = br.ReadByte();
-                            }
-                            else
-                                throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
-                            break;
-
-                        case LayoutSemantic.Normal:
-                            if (member.Type == LayoutType.Float3)
-                            {
-                                Normal = br.ReadVector3();
-                            }
-                            else if (member.Type == LayoutType.Float4)
-                            {
-                                Normal = br.ReadVector3();
-                                float w = br.ReadSingle();
-                                NormalW = (int)w;
-                                if (w != NormalW)
-                                    throw new InvalidDataException($"Float4 Normal W was not a whole number: {w}");
-                            }
-                            else if (member.Type == LayoutType.Byte4A)
-                            {
-                                Normal = ReadByteNormVector3(br);
-                                NormalW = br.ReadByte();
-                            }
-                            else if (member.Type == LayoutType.Byte4B)
-                            {
-                                Normal = ReadByteNormVector3(br);
-                                NormalW = br.ReadByte();
-                            }
-                            else if (member.Type == LayoutType.Byte4C)
-                            {
-                                Normal = ReadByteNormVector3(br);
-                                NormalW = br.ReadByte();
-                            }
-                            else if (member.Type == LayoutType.Short4toFloat4A)
-                            {
-                                Normal = ReadShortNormVector3(br);
-                                NormalW = br.ReadInt16();
-                            }
-                            else if (member.Type == LayoutType.Short4toFloat4B)
-                            {
-                                Normal = ReadUShortNormVector3(br);
-                                NormalW = br.ReadInt16();
-                            }
-                            else if (member.Type == LayoutType.Byte4E)
-                            {
-                                Normal = ReadByteNormVector3(br);
-                                NormalW = br.ReadByte();
-                            }
-                            else
-                                throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
-                            break;
-
-                        case LayoutSemantic.UV:
-                            if (member.Type == LayoutType.Float2)
-                            {
-                                UVs.Add(new Vector3(br.ReadVector2(), 0) / uvFactor);
-                            }
-                            else if (member.Type == LayoutType.Float3)
-                            {
-                                UVs.Add(br.ReadVector3() / uvFactor);
-                            }
-                            else if (member.Type == LayoutType.Float4)
-                            {
-                                UVs.Add(new Vector3(br.ReadVector2(), 0) / uvFactor);
-                                UVs.Add(new Vector3(br.ReadVector2(), 0) / uvFactor);
-                            }
-                            else if (member.Type == LayoutType.Byte4A)
-                            {
-                                UVs.Add(new Vector3(br.ReadInt16(), br.ReadInt16(), 0) / uvFactor);
-                            }
-                            else if (member.Type == LayoutType.Byte4B)
-                            {
-                                UVs.Add(new Vector3(br.ReadInt16(), br.ReadInt16(), 0) / uvFactor);
-                            }
-                            else if (member.Type == LayoutType.Short2toFloat2)
-                            {
-                                UVs.Add(new Vector3(br.ReadInt16(), br.ReadInt16(), 0) / uvFactor);
-                            }
-                            else if (member.Type == LayoutType.Byte4C)
-                            {
-                                UVs.Add(new Vector3(br.ReadInt16(), br.ReadInt16(), 0) / uvFactor);
-                            }
-                            else if (member.Type == LayoutType.UV)
-                            {
-                                UVs.Add(new Vector3(br.ReadInt16(), br.ReadInt16(), 0) / uvFactor);
-                            }
-                            else if (member.Type == LayoutType.UVPair)
-                            {
-                                UVs.Add(new Vector3(br.ReadInt16(), br.ReadInt16(), 0) / uvFactor);
-                                UVs.Add(new Vector3(br.ReadInt16(), br.ReadInt16(), 0) / uvFactor);
-                            }
-                            else if (member.Type == LayoutType.Short4toFloat4B)
-                            {
-                                UVs.Add(new Vector3(br.ReadInt16(), br.ReadInt16(), br.ReadInt16()) / uvFactor);
-                                br.AssertInt16(0);
-                            }
-                            else
-                                throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
-                            break;
-
-                        case LayoutSemantic.Tangent:
-                            if (member.Type == LayoutType.Float4)
-                            {
-                                Tangents.Add(br.ReadVector4());
-                            }
-                            else if (member.Type == LayoutType.Byte4A)
-                            {
-                                Tangents.Add(ReadByteNormVector4(br));
-                            }
-                            else if (member.Type == LayoutType.Byte4B)
-                            {
-                                Tangents.Add(ReadByteNormVector4(br));
-                            }
-                            else if (member.Type == LayoutType.Byte4C)
-                            {
-                                Tangents.Add(ReadByteNormVector4(br));
-                            }
-                            else if (member.Type == LayoutType.Short4toFloat4A)
-                            {
-                                Tangents.Add(ReadShortNormVector4(br));
-                            }
-                            else if (member.Type == LayoutType.Byte4E)
-                            {
-                                Tangents.Add(ReadByteNormVector4(br));
-                            }
-                            else
-                                throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
-                            break;
-
-                        case LayoutSemantic.Bitangent:
-                            if (member.Type == LayoutType.Byte4A)
-                            {
-                                Bitangent = ReadByteNormVector4(br);
-                            }
-                            else if (member.Type == LayoutType.Byte4B)
-                            {
-                                Bitangent = ReadByteNormVector4(br);
-                            }
-                            else if (member.Type == LayoutType.Byte4C)
-                            {
-                                Bitangent = ReadByteNormVector4(br);
-                            }
-                            else if (member.Type == LayoutType.Byte4E)
-                            {
-                                Bitangent = ReadByteNormVector4(br);
-                            }
-                            else
-                                throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
-                            break;
-
-                        case LayoutSemantic.VertexColor:
-                            if (member.Type == LayoutType.Float4)
-                            {
-                                Colors.Add(VertexColor.ReadFloatRGBA(br));
-                            }
-                            else if (member.Type == LayoutType.Byte4A)
-                            {
-                                Colors.Add(VertexColor.ReadByteARGB(br));
-                            }
-                            else if (member.Type == LayoutType.Byte4C)
-                            {
-                                Colors.Add(VertexColor.ReadByteRGBA(br));
-                            }
-                            else
-                                throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
-                            break;
-
-                        default:
+                        if (member.Type == LayoutType.Float3)
+                        {
+                            Position = br.ReadVector3();
+                        }
+                        else if (member.Type == LayoutType.Float4)
+                        {
+                            Position = br.ReadVector3();
+                            br.AssertSingle(0);
+                        }
+                        else
                             throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
                     }
+                    else if (member.Semantic == LayoutSemantic.BoneWeights)
+                    {
+                        if (member.Type == LayoutType.Byte4A)
+                        {
+                            for (int i = 0; i < 4; i++)
+                                BoneWeights[i] = br.ReadSByte() / 127f;
+                        }
+                        else if (member.Type == LayoutType.Byte4C)
+                        {
+                            for (int i = 0; i < 4; i++)
+                                BoneWeights[i] = br.ReadByte() / 255f;
+                        }
+                        else if (member.Type == LayoutType.UVPair)
+                        {
+                            for (int i = 0; i < 4; i++)
+                                BoneWeights[i] = br.ReadInt16() / 32767f;
+                        }
+                        else if (member.Type == LayoutType.Short4toFloat4A)
+                        {
+                            for (int i = 0; i < 4; i++)
+                                BoneWeights[i] = br.ReadInt16() / 32767f;
+                        }
+                        else
+                            throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
+                    }
+                    else if (member.Semantic == LayoutSemantic.BoneIndices)
+                    {
+                        if (member.Type == LayoutType.Byte4B)
+                        {
+                            for (int i = 0; i < 4; i++)
+                                BoneIndices[i] = br.ReadByte();
+                        }
+                        else if (member.Type == LayoutType.ShortBoneIndices)
+                        {
+                            for (int i = 0; i < 4; i++)
+                                BoneIndices[i] = br.ReadUInt16();
+                        }
+                        else if (member.Type == LayoutType.Byte4E)
+                        {
+                            for (int i = 0; i < 4; i++)
+                                BoneIndices[i] = br.ReadByte();
+                        }
+                        else
+                            throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
+                    }
+                    else if (member.Semantic == LayoutSemantic.Normal)
+                    {
+                        if (member.Type == LayoutType.Float3)
+                        {
+                            Normal = br.ReadVector3();
+                        }
+                        else if (member.Type == LayoutType.Float4)
+                        {
+                            Normal = br.ReadVector3();
+                            float w = br.ReadSingle();
+                            NormalW = (int)w;
+                            if (w != NormalW)
+                                throw new InvalidDataException($"Float4 Normal W was not a whole number: {w}");
+                        }
+                        else if (member.Type == LayoutType.Byte4A)
+                        {
+                            Normal = ReadByteNormVector3(br);
+                            NormalW = br.ReadByte();
+                        }
+                        else if (member.Type == LayoutType.Byte4B)
+                        {
+                            Normal = ReadByteNormVector3(br);
+                            NormalW = br.ReadByte();
+                        }
+                        else if (member.Type == LayoutType.Byte4C)
+                        {
+                            Normal = ReadByteNormVector3(br);
+                            NormalW = br.ReadByte();
+                        }
+                        else if (member.Type == LayoutType.Short4toFloat4A)
+                        {
+                            Normal = ReadShortNormVector3(br);
+                            NormalW = br.ReadInt16();
+                        }
+                        else if (member.Type == LayoutType.Short4toFloat4B)
+                        {
+                            Normal = ReadUShortNormVector3(br);
+                            NormalW = br.ReadInt16();
+                        }
+                        else if (member.Type == LayoutType.Byte4E)
+                        {
+                            Normal = ReadByteNormVector3(br);
+                            NormalW = br.ReadByte();
+                        }
+                        else
+                            throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
+                    }
+                    else if (member.Semantic == LayoutSemantic.UV)
+                    {
+                        if (member.Type == LayoutType.Float2)
+                        {
+                            UVs.Add(new Vector3(br.ReadVector2(), 0) / uvFactor);
+                        }
+                        else if (member.Type == LayoutType.Float3)
+                        {
+                            UVs.Add(br.ReadVector3() / uvFactor);
+                        }
+                        else if (member.Type == LayoutType.Float4)
+                        {
+                            UVs.Add(new Vector3(br.ReadVector2(), 0) / uvFactor);
+                            UVs.Add(new Vector3(br.ReadVector2(), 0) / uvFactor);
+                        }
+                        else if (member.Type == LayoutType.Byte4A)
+                        {
+                            UVs.Add(new Vector3(br.ReadInt16(), br.ReadInt16(), 0) / uvFactor);
+                        }
+                        else if (member.Type == LayoutType.Byte4B)
+                        {
+                            UVs.Add(new Vector3(br.ReadInt16(), br.ReadInt16(), 0) / uvFactor);
+                        }
+                        else if (member.Type == LayoutType.Short2toFloat2)
+                        {
+                            UVs.Add(new Vector3(br.ReadInt16(), br.ReadInt16(), 0) / uvFactor);
+                        }
+                        else if (member.Type == LayoutType.Byte4C)
+                        {
+                            UVs.Add(new Vector3(br.ReadInt16(), br.ReadInt16(), 0) / uvFactor);
+                        }
+                        else if (member.Type == LayoutType.UV)
+                        {
+                            UVs.Add(new Vector3(br.ReadInt16(), br.ReadInt16(), 0) / uvFactor);
+                        }
+                        else if (member.Type == LayoutType.UVPair)
+                        {
+                            UVs.Add(new Vector3(br.ReadInt16(), br.ReadInt16(), 0) / uvFactor);
+                            UVs.Add(new Vector3(br.ReadInt16(), br.ReadInt16(), 0) / uvFactor);
+                        }
+                        else if (member.Type == LayoutType.Short4toFloat4B)
+                        {
+                            UVs.Add(new Vector3(br.ReadInt16(), br.ReadInt16(), br.ReadInt16()) / uvFactor);
+                            br.AssertInt16(0);
+                        }
+                        else
+                            throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
+                    }
+                    else if (member.Semantic == LayoutSemantic.Tangent)
+                    {
+                        if (member.Type == LayoutType.Float4)
+                        {
+                            Tangents.Add(br.ReadVector4());
+                        }
+                        else if (member.Type == LayoutType.Byte4A)
+                        {
+                            Tangents.Add(ReadByteNormVector4(br));
+                        }
+                        else if (member.Type == LayoutType.Byte4B)
+                        {
+                            Tangents.Add(ReadByteNormVector4(br));
+                        }
+                        else if (member.Type == LayoutType.Byte4C)
+                        {
+                            Tangents.Add(ReadByteNormVector4(br));
+                        }
+                        else if (member.Type == LayoutType.Short4toFloat4A)
+                        {
+                            Tangents.Add(ReadShortNormVector4(br));
+                        }
+                        else if (member.Type == LayoutType.Byte4E)
+                        {
+                            Tangents.Add(ReadByteNormVector4(br));
+                        }
+                        else
+                            throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
+                    }
+                    else if (member.Semantic == LayoutSemantic.Bitangent)
+                    {
+                        if (member.Type == LayoutType.Byte4A)
+                        {
+                            Bitangent = ReadByteNormVector4(br);
+                        }
+                        else if (member.Type == LayoutType.Byte4B)
+                        {
+                            Bitangent = ReadByteNormVector4(br);
+                        }
+                        else if (member.Type == LayoutType.Byte4C)
+                        {
+                            Bitangent = ReadByteNormVector4(br);
+                        }
+                        else if (member.Type == LayoutType.Byte4E)
+                        {
+                            Bitangent = ReadByteNormVector4(br);
+                        }
+                        else
+                            throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
+                    }
+                    else if (member.Semantic == LayoutSemantic.VertexColor)
+                    {
+                        if (member.Type == LayoutType.Float4)
+                        {
+                            Colors.Add(VertexColor.ReadFloatRGBA(br));
+                        }
+                        else if (member.Type == LayoutType.Byte4A)
+                        {
+                            Colors.Add(VertexColor.ReadByteARGB(br));
+                        }
+                        else if (member.Type == LayoutType.Byte4C)
+                        {
+                            Colors.Add(VertexColor.ReadByteRGBA(br));
+                        }
+                        else
+                            throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
+                    }
+                    else
+                        throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
                 }
             }
 
@@ -372,248 +369,245 @@ namespace SoulsFormats
             {
                 foreach (LayoutMember member in layout)
                 {
-                    switch (member.Semantic)
+                    if (member.Semantic == LayoutSemantic.Position)
                     {
-                        case LayoutSemantic.Position:
-                            if (member.Type == LayoutType.Float3)
-                            {
-                                bw.WriteVector3(Position);
-                            }
-                            else if (member.Type == LayoutType.Float4)
-                            {
-                                bw.WriteVector3(Position);
-                                bw.WriteSingle(0);
-                            }
-                            else
-                                throw new NotImplementedException($"Write not implemented for {member.Type} {member.Semantic}.");
-                            break;
-
-                        case LayoutSemantic.BoneWeights:
-                            if (member.Type == LayoutType.Byte4A)
-                            {
-                                for (int i = 0; i < 4; i++)
-                                    bw.WriteSByte((sbyte)Math.Round(BoneWeights[i] * 127));
-                            }
-                            else if (member.Type == LayoutType.Byte4C)
-                            {
-                                for (int i = 0; i < 4; i++)
-                                    bw.WriteByte((byte)Math.Round(BoneWeights[i] * 255));
-                            }
-                            else if (member.Type == LayoutType.UVPair)
-                            {
-                                for (int i = 0; i < 4; i++)
-                                    bw.WriteInt16((short)Math.Round(BoneWeights[i] * 32767));
-                            }
-                            else if (member.Type == LayoutType.Short4toFloat4A)
-                            {
-                                for (int i = 0; i < 4; i++)
-                                    bw.WriteInt16((short)Math.Round(BoneWeights[i] * 32767));
-                            }
-                            else
-                                throw new NotImplementedException($"Write not implemented for {member.Type} {member.Semantic}.");
-                            break;
-
-                        case LayoutSemantic.BoneIndices:
-                            if (member.Type == LayoutType.Byte4B)
-                            {
-                                for (int i = 0; i < 4; i++)
-                                    bw.WriteByte((byte)BoneIndices[i]);
-                            }
-                            else if (member.Type == LayoutType.ShortBoneIndices)
-                            {
-                                for (int i = 0; i < 4; i++)
-                                    bw.WriteUInt16((ushort)BoneIndices[i]);
-                            }
-                            else if (member.Type == LayoutType.Byte4E)
-                            {
-                                for (int i = 0; i < 4; i++)
-                                    bw.WriteByte((byte)BoneIndices[i]);
-                            }
-                            else
-                                throw new NotImplementedException($"Write not implemented for {member.Type} {member.Semantic}.");
-                            break;
-
-                        case LayoutSemantic.Normal:
-                            if (member.Type == LayoutType.Float3)
-                            {
-                                bw.WriteVector3(Normal);
-                            }
-                            else if (member.Type == LayoutType.Float4)
-                            {
-                                bw.WriteVector3(Normal);
-                                bw.WriteSingle(NormalW);
-                            }
-                            else if (member.Type == LayoutType.Byte4A)
-                            {
-                                WriteByteNormVector3(bw, Normal);
-                                bw.WriteByte((byte)NormalW);
-                            }
-                            else if (member.Type == LayoutType.Byte4B)
-                            {
-                                WriteByteNormVector3(bw, Normal);
-                                bw.WriteByte((byte)NormalW);
-                            }
-                            else if (member.Type == LayoutType.Byte4C)
-                            {
-                                WriteByteNormVector3(bw, Normal);
-                                bw.WriteByte((byte)NormalW);
-                            }
-                            else if (member.Type == LayoutType.Short4toFloat4A)
-                            {
-                                WriteShortNormVector3(bw, Normal);
-                                bw.WriteInt16((short)NormalW);
-                            }
-                            else if (member.Type == LayoutType.Short4toFloat4B)
-                            {
-                                WriteUShortNormVector3(bw, Normal);
-                                bw.WriteInt16((short)NormalW);
-                            }
-                            else if (member.Type == LayoutType.Byte4E)
-                            {
-                                WriteByteNormVector3(bw, Normal);
-                                bw.WriteByte((byte)NormalW);
-                            }
-                            else
-                                throw new NotImplementedException($"Write not implemented for {member.Type} {member.Semantic}.");
-                            break;
-
-                        case LayoutSemantic.UV:
-                            Vector3 uv = uvQueue.Dequeue() * uvFactor;
-                            if (member.Type == LayoutType.Float2)
-                            {
-                                bw.WriteSingle(uv.X);
-                                bw.WriteSingle(uv.Y);
-                            }
-                            else if (member.Type == LayoutType.Float3)
-                            {
-                                bw.WriteVector3(uv);
-                            }
-                            else if (member.Type == LayoutType.Float4)
-                            {
-                                bw.WriteSingle(uv.X);
-                                bw.WriteSingle(uv.Y);
-
-                                uv = uvQueue.Dequeue() * uvFactor;
-                                bw.WriteSingle(uv.X);
-                                bw.WriteSingle(uv.Y);
-                            }
-                            else if (member.Type == LayoutType.Byte4A)
-                            {
-                                bw.WriteInt16((short)Math.Round(uv.X));
-                                bw.WriteInt16((short)Math.Round(uv.Y));
-                            }
-                            else if (member.Type == LayoutType.Byte4B)
-                            {
-                                bw.WriteInt16((short)Math.Round(uv.X));
-                                bw.WriteInt16((short)Math.Round(uv.Y));
-                            }
-                            else if (member.Type == LayoutType.Short2toFloat2)
-                            {
-                                bw.WriteInt16((short)Math.Round(uv.X));
-                                bw.WriteInt16((short)Math.Round(uv.Y));
-                            }
-                            else if (member.Type == LayoutType.Byte4C)
-                            {
-                                bw.WriteInt16((short)Math.Round(uv.X));
-                                bw.WriteInt16((short)Math.Round(uv.Y));
-                            }
-                            else if (member.Type == LayoutType.UV)
-                            {
-                                bw.WriteInt16((short)Math.Round(uv.X));
-                                bw.WriteInt16((short)Math.Round(uv.Y));
-                            }
-                            else if (member.Type == LayoutType.UVPair)
-                            {
-                                bw.WriteInt16((short)Math.Round(uv.X));
-                                bw.WriteInt16((short)Math.Round(uv.Y));
-
-                                uv = uvQueue.Dequeue() * uvFactor;
-                                bw.WriteInt16((short)Math.Round(uv.X));
-                                bw.WriteInt16((short)Math.Round(uv.Y));
-                            }
-                            else if (member.Type == LayoutType.Short4toFloat4B)
-                            {
-                                bw.WriteInt16((short)Math.Round(uv.X));
-                                bw.WriteInt16((short)Math.Round(uv.Y));
-                                bw.WriteInt16((short)Math.Round(uv.Z));
-                                bw.WriteInt16(0);
-                            }
-                            else
-                                throw new NotImplementedException($"Write not implemented for {member.Type} {member.Semantic}.");
-                            break;
-
-                        case LayoutSemantic.Tangent:
-                            Vector4 tangent = tangentQueue.Dequeue();
-                            if (member.Type == LayoutType.Float4)
-                            {
-                                bw.WriteVector4(tangent);
-                            }
-                            else if (member.Type == LayoutType.Byte4A)
-                            {
-                                WriteByteNormVector4(bw, tangent);
-                            }
-                            else if (member.Type == LayoutType.Byte4B)
-                            {
-                                WriteByteNormVector4(bw, tangent);
-                            }
-                            else if (member.Type == LayoutType.Byte4C)
-                            {
-                                WriteByteNormVector4(bw, tangent);
-                            }
-                            else if (member.Type == LayoutType.Short4toFloat4A)
-                            {
-                                WriteShortNormVector4(bw, tangent);
-                            }
-                            else if (member.Type == LayoutType.Byte4E)
-                            {
-                                WriteByteNormVector4(bw, tangent);
-                            }
-                            else
-                                throw new NotImplementedException($"Write not implemented for {member.Type} {member.Semantic}.");
-                            break;
-
-                        case LayoutSemantic.Bitangent:
-                            if (member.Type == LayoutType.Byte4A)
-                            {
-                                WriteByteNormVector4(bw, Bitangent);
-                            }
-                            else if (member.Type == LayoutType.Byte4B)
-                            {
-                                WriteByteNormVector4(bw, Bitangent);
-                            }
-                            else if (member.Type == LayoutType.Byte4C)
-                            {
-                                WriteByteNormVector4(bw, Bitangent);
-                            }
-                            else if (member.Type == LayoutType.Byte4E)
-                            {
-                                WriteByteNormVector4(bw, Bitangent);
-                            }
-                            else
-                                throw new NotImplementedException($"Write not implemented for {member.Type} {member.Semantic}.");
-                            break;
-
-                        case LayoutSemantic.VertexColor:
-                            VertexColor color = colorQueue.Dequeue();
-                            if (member.Type == LayoutType.Float4)
-                            {
-                                color.WriteFloatRGBA(bw);
-                            }
-                            else if (member.Type == LayoutType.Byte4A)
-                            {
-                                color.WriteByteARGB(bw);
-                            }
-                            else if (member.Type == LayoutType.Byte4C)
-                            {
-                                color.WriteByteRGBA(bw);
-                            }
-                            else
-                                throw new NotImplementedException($"Write not implemented for {member.Type} {member.Semantic}.");
-                            break;
-
-                        default:
+                        if (member.Type == LayoutType.Float3)
+                        {
+                            bw.WriteVector3(Position);
+                        }
+                        else if (member.Type == LayoutType.Float4)
+                        {
+                            bw.WriteVector3(Position);
+                            bw.WriteSingle(0);
+                        }
+                        else
                             throw new NotImplementedException($"Write not implemented for {member.Type} {member.Semantic}.");
                     }
+                    else if (member.Semantic == LayoutSemantic.BoneWeights)
+                    {
+                        if (member.Type == LayoutType.Byte4A)
+                        {
+                            for (int i = 0; i < 4; i++)
+                                bw.WriteSByte((sbyte)Math.Round(BoneWeights[i] * 127));
+                        }
+                        else if (member.Type == LayoutType.Byte4C)
+                        {
+                            for (int i = 0; i < 4; i++)
+                                bw.WriteByte((byte)Math.Round(BoneWeights[i] * 255));
+                        }
+                        else if (member.Type == LayoutType.UVPair)
+                        {
+                            for (int i = 0; i < 4; i++)
+                                bw.WriteInt16((short)Math.Round(BoneWeights[i] * 32767));
+                        }
+                        else if (member.Type == LayoutType.Short4toFloat4A)
+                        {
+                            for (int i = 0; i < 4; i++)
+                                bw.WriteInt16((short)Math.Round(BoneWeights[i] * 32767));
+                        }
+                        else
+                            throw new NotImplementedException($"Write not implemented for {member.Type} {member.Semantic}.");
+                    }
+                    else if (member.Semantic == LayoutSemantic.BoneIndices)
+                    {
+                        if (member.Type == LayoutType.Byte4B)
+                        {
+                            for (int i = 0; i < 4; i++)
+                                bw.WriteByte((byte)BoneIndices[i]);
+                        }
+                        else if (member.Type == LayoutType.ShortBoneIndices)
+                        {
+                            for (int i = 0; i < 4; i++)
+                                bw.WriteUInt16((ushort)BoneIndices[i]);
+                        }
+                        else if (member.Type == LayoutType.Byte4E)
+                        {
+                            for (int i = 0; i < 4; i++)
+                                bw.WriteByte((byte)BoneIndices[i]);
+                        }
+                        else
+                            throw new NotImplementedException($"Write not implemented for {member.Type} {member.Semantic}.");
+                    }
+                    else if (member.Semantic == LayoutSemantic.Normal)
+                    {
+                        if (member.Type == LayoutType.Float3)
+                        {
+                            bw.WriteVector3(Normal);
+                        }
+                        else if (member.Type == LayoutType.Float4)
+                        {
+                            bw.WriteVector3(Normal);
+                            bw.WriteSingle(NormalW);
+                        }
+                        else if (member.Type == LayoutType.Byte4A)
+                        {
+                            WriteByteNormVector3(bw, Normal);
+                            bw.WriteByte((byte)NormalW);
+                        }
+                        else if (member.Type == LayoutType.Byte4B)
+                        {
+                            WriteByteNormVector3(bw, Normal);
+                            bw.WriteByte((byte)NormalW);
+                        }
+                        else if (member.Type == LayoutType.Byte4C)
+                        {
+                            WriteByteNormVector3(bw, Normal);
+                            bw.WriteByte((byte)NormalW);
+                        }
+                        else if (member.Type == LayoutType.Short4toFloat4A)
+                        {
+                            WriteShortNormVector3(bw, Normal);
+                            bw.WriteInt16((short)NormalW);
+                        }
+                        else if (member.Type == LayoutType.Short4toFloat4B)
+                        {
+                            WriteUShortNormVector3(bw, Normal);
+                            bw.WriteInt16((short)NormalW);
+                        }
+                        else if (member.Type == LayoutType.Byte4E)
+                        {
+                            WriteByteNormVector3(bw, Normal);
+                            bw.WriteByte((byte)NormalW);
+                        }
+                        else
+                            throw new NotImplementedException($"Write not implemented for {member.Type} {member.Semantic}.");
+                    }
+                    else if (member.Semantic == LayoutSemantic.UV)
+                    {
+                        Vector3 uv = uvQueue.Dequeue() * uvFactor;
+                        if (member.Type == LayoutType.Float2)
+                        {
+                            bw.WriteSingle(uv.X);
+                            bw.WriteSingle(uv.Y);
+                        }
+                        else if (member.Type == LayoutType.Float3)
+                        {
+                            bw.WriteVector3(uv);
+                        }
+                        else if (member.Type == LayoutType.Float4)
+                        {
+                            bw.WriteSingle(uv.X);
+                            bw.WriteSingle(uv.Y);
+
+                            uv = uvQueue.Dequeue() * uvFactor;
+                            bw.WriteSingle(uv.X);
+                            bw.WriteSingle(uv.Y);
+                        }
+                        else if (member.Type == LayoutType.Byte4A)
+                        {
+                            bw.WriteInt16((short)Math.Round(uv.X));
+                            bw.WriteInt16((short)Math.Round(uv.Y));
+                        }
+                        else if (member.Type == LayoutType.Byte4B)
+                        {
+                            bw.WriteInt16((short)Math.Round(uv.X));
+                            bw.WriteInt16((short)Math.Round(uv.Y));
+                        }
+                        else if (member.Type == LayoutType.Short2toFloat2)
+                        {
+                            bw.WriteInt16((short)Math.Round(uv.X));
+                            bw.WriteInt16((short)Math.Round(uv.Y));
+                        }
+                        else if (member.Type == LayoutType.Byte4C)
+                        {
+                            bw.WriteInt16((short)Math.Round(uv.X));
+                            bw.WriteInt16((short)Math.Round(uv.Y));
+                        }
+                        else if (member.Type == LayoutType.UV)
+                        {
+                            bw.WriteInt16((short)Math.Round(uv.X));
+                            bw.WriteInt16((short)Math.Round(uv.Y));
+                        }
+                        else if (member.Type == LayoutType.UVPair)
+                        {
+                            bw.WriteInt16((short)Math.Round(uv.X));
+                            bw.WriteInt16((short)Math.Round(uv.Y));
+
+                            uv = uvQueue.Dequeue() * uvFactor;
+                            bw.WriteInt16((short)Math.Round(uv.X));
+                            bw.WriteInt16((short)Math.Round(uv.Y));
+                        }
+                        else if (member.Type == LayoutType.Short4toFloat4B)
+                        {
+                            bw.WriteInt16((short)Math.Round(uv.X));
+                            bw.WriteInt16((short)Math.Round(uv.Y));
+                            bw.WriteInt16((short)Math.Round(uv.Z));
+                            bw.WriteInt16(0);
+                        }
+                        else
+                            throw new NotImplementedException($"Write not implemented for {member.Type} {member.Semantic}.");
+                    }
+                    else if (member.Semantic == LayoutSemantic.Tangent)
+                    {
+                        Vector4 tangent = tangentQueue.Dequeue();
+                        if (member.Type == LayoutType.Float4)
+                        {
+                            bw.WriteVector4(tangent);
+                        }
+                        else if (member.Type == LayoutType.Byte4A)
+                        {
+                            WriteByteNormVector4(bw, tangent);
+                        }
+                        else if (member.Type == LayoutType.Byte4B)
+                        {
+                            WriteByteNormVector4(bw, tangent);
+                        }
+                        else if (member.Type == LayoutType.Byte4C)
+                        {
+                            WriteByteNormVector4(bw, tangent);
+                        }
+                        else if (member.Type == LayoutType.Short4toFloat4A)
+                        {
+                            WriteShortNormVector4(bw, tangent);
+                        }
+                        else if (member.Type == LayoutType.Byte4E)
+                        {
+                            WriteByteNormVector4(bw, tangent);
+                        }
+                        else
+                            throw new NotImplementedException($"Write not implemented for {member.Type} {member.Semantic}.");
+                    }
+                    else if (member.Semantic == LayoutSemantic.Bitangent)
+                    {
+                        if (member.Type == LayoutType.Byte4A)
+                        {
+                            WriteByteNormVector4(bw, Bitangent);
+                        }
+                        else if (member.Type == LayoutType.Byte4B)
+                        {
+                            WriteByteNormVector4(bw, Bitangent);
+                        }
+                        else if (member.Type == LayoutType.Byte4C)
+                        {
+                            WriteByteNormVector4(bw, Bitangent);
+                        }
+                        else if (member.Type == LayoutType.Byte4E)
+                        {
+                            WriteByteNormVector4(bw, Bitangent);
+                        }
+                        else
+                            throw new NotImplementedException($"Write not implemented for {member.Type} {member.Semantic}.");
+                    }
+                    else if (member.Semantic == LayoutSemantic.VertexColor)
+                    {
+                        VertexColor color = colorQueue.Dequeue();
+                        if (member.Type == LayoutType.Float4)
+                        {
+                            color.WriteFloatRGBA(bw);
+                        }
+                        else if (member.Type == LayoutType.Byte4A)
+                        {
+                            color.WriteByteARGB(bw);
+                        }
+                        else if (member.Type == LayoutType.Byte4C)
+                        {
+                            color.WriteByteRGBA(bw);
+                        }
+                        else
+                            throw new NotImplementedException($"Write not implemented for {member.Type} {member.Semantic}.");
+                    }
+                    else
+                        throw new NotImplementedException($"Write not implemented for {member.Type} {member.Semantic}.");
                 }
             }
 
