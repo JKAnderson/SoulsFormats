@@ -223,16 +223,16 @@ namespace SoulsFormats
                     {
                         if (member.Type == LayoutType.Float2)
                         {
-                            UVs.Add(new Vector3(br.ReadVector2(), 0) / uvFactor);
+                            UVs.Add(new Vector3(br.ReadVector2(), 0));
                         }
                         else if (member.Type == LayoutType.Float3)
                         {
-                            UVs.Add(br.ReadVector3() / uvFactor);
+                            UVs.Add(br.ReadVector3());
                         }
                         else if (member.Type == LayoutType.Float4)
                         {
-                            UVs.Add(new Vector3(br.ReadVector2(), 0) / uvFactor);
-                            UVs.Add(new Vector3(br.ReadVector2(), 0) / uvFactor);
+                            UVs.Add(new Vector3(br.ReadVector2(), 0));
+                            UVs.Add(new Vector3(br.ReadVector2(), 0));
                         }
                         else if (member.Type == LayoutType.Byte4A)
                         {
