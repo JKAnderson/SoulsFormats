@@ -5,7 +5,7 @@ using System.Numerics;
 namespace SoulsFormats
 {
     /// <summary>
-    /// Demon's Souls models; read-only.
+    /// 3D models from Armored Core: For Answer to Another Century's Episode R. Extension: .flv, .flver
     /// </summary>
     public partial class FLVER0 : SoulsFile<FLVER0>
     {
@@ -28,6 +28,8 @@ namespace SoulsFormats
 
         public int Unk4C;
 
+        public int Unk5C;
+
         public List<Dummy> Dummies;
 
         public List<Material> Materials;
@@ -48,7 +50,7 @@ namespace SoulsFormats
             else if (endian == "B\0")
                 br.BigEndian = true;
             int version = br.ReadInt32();
-            return magic == "FLVER\0" && version <= 0x15;
+            return magic == "FLVER\0" && version >= 0x00000 && version < 0x20000;
         }
 
         internal override void Read(BinaryReaderEx br)
@@ -57,26 +59,33 @@ namespace SoulsFormats
             BigEndian = br.AssertASCII("L\0", "B\0") == "B\0";
             br.BigEndian = BigEndian;
 
-            Version = br.AssertInt32(0x0E, 0x0F, 0x10, 0x12, 0x13, 0x14, 0x15);
+            // 10002, 10003 - Another Century's Episode R
+            Version = br.AssertInt32(0x0E, 0x0F, 0x10, 0x12, 0x13, 0x14, 0x15,
+                0x10002, 0x10003);
             int dataOffset = br.ReadInt32();
             br.ReadInt32(); // Data length
             int dummyCount = br.ReadInt32();
             int materialCount = br.ReadInt32();
             int boneCount = br.ReadInt32();
             int meshCount = br.ReadInt32();
-            br.AssertInt32(meshCount); // Vertex buffer count
+            br.ReadInt32(); // Vertex buffer count
             BoundingBoxMin = br.ReadVector3();
             BoundingBoxMax = br.ReadVector3();
             br.ReadInt32(); // Face count not including motion blur meshes or degenerate faces
             br.ReadInt32(); // Total face count
-            VertexIndexSize = br.ReadByte();
+            VertexIndexSize = br.AssertByte(16, 32);
             Unicode = br.ReadBoolean();
             Unk4A = br.ReadByte();
             Unk4B = br.ReadByte();
             Unk4C = br.ReadInt32();
-
-            for (int i = 0; i < 12; i++)
-                br.AssertInt32(0);
+            br.AssertInt32(0);
+            br.AssertInt32(0);
+            br.AssertInt32(0);
+            Unk5C = br.ReadByte();
+            br.AssertByte(0);
+            br.AssertByte(0);
+            br.AssertByte(0);
+            br.AssertPattern(0x20, 0x00);
 
             Dummies = new List<Dummy>(dummyCount);
             for (int i = 0; i < dummyCount; i++)
@@ -92,7 +101,7 @@ namespace SoulsFormats
 
             Meshes = new List<Mesh>(meshCount);
             for (int i = 0; i < meshCount; i++)
-                Meshes.Add(new Mesh(br, Materials, dataOffset));
+                Meshes.Add(new Mesh(br, this, dataOffset));
         }
 
         internal override void Write(BinaryWriterEx bw)
