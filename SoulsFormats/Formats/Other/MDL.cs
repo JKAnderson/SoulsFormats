@@ -15,11 +15,12 @@ namespace SoulsFormats.Other
         public int Unk10;
         public int Unk14;
 
-        public List<MeshBone> Meshes;
+        public List<Bone> Meshes;
         public ushort[] Indices;
         public List<Vertex> VerticesA;
         public List<Vertex> VerticesB;
         public List<Vertex> VerticesC;
+        public List<VertexD> VerticesD;
         public List<Struct7> Struct7s;
         public List<Material> Materials;
         public List<string> Textures;
@@ -63,9 +64,9 @@ namespace SoulsFormats.Other
             int texturesOffset = br.ReadInt32();
 
             br.Position = meshesOffset;
-            Meshes = new List<MeshBone>();
+            Meshes = new List<Bone>();
             for (int i = 0; i < meshCount; i++)
-                Meshes.Add(new MeshBone(br));
+                Meshes.Add(new Bone(br));
 
             Indices = br.GetUInt16s(indicesOffset, indexCount);
 
@@ -83,6 +84,11 @@ namespace SoulsFormats.Other
             VerticesC = new List<Vertex>(vertexCountC);
             for (int i = 0; i < vertexCountC; i++)
                 VerticesC.Add(new Vertex(br, VertexFormat.C));
+
+            br.Position = verticesOffsetD;
+            VerticesD = new List<VertexD>(vertexCountD);
+            for (int i = 0; i < vertexCountD; i++)
+                VerticesD.Add(new VertexD(br));
 
             br.Position = offset7;
             Struct7s = new List<Struct7>(count7);
@@ -105,7 +111,7 @@ namespace SoulsFormats.Other
             throw new NotImplementedException();
         }
 
-        public class MeshBone
+        public class Bone
         {
             public Vector3 Translation;
             public Vector3 Rotation;
@@ -123,7 +129,7 @@ namespace SoulsFormats.Other
             public Vector3 BoundingBoxMax;
             public short[] Unk70;
 
-            internal MeshBone(BinaryReaderEx br)
+            internal Bone(BinaryReaderEx br)
             {
                 Translation = br.ReadVector3();
                 Rotation = br.ReadVector3();
@@ -234,23 +240,28 @@ namespace SoulsFormats.Other
         {
             A,
             B,
-            C,
-            D
+            C
         }
 
         public class Vertex
         {
-            public Vector3 Position;
-            public Vector3 Normal;
-            public Vector3 Tangent;
-            public Vector3 Bitangent;
+            public virtual Vector3 Position { get; set; }
+            public virtual Vector3 Normal { get; set; }
+            public virtual Vector3 Tangent { get; set; }
+            public virtual Vector3 Bitangent { get; set; }
+
             public Color Color;
             public Vector2[] UVs;
 
-            public short Unk3C;
-            public short Unk3E;
-            public float Unk40;
-            public float Unk44;
+            public short UnkShortA;
+            public short UnkShortB;
+            public float UnkFloatA;
+            public float UnkFloatB;
+
+            public Vertex()
+            {
+                UVs = new Vector2[4];
+            }
 
             internal Vertex(BinaryReaderEx br, VertexFormat format)
             {
@@ -266,30 +277,87 @@ namespace SoulsFormats.Other
 
                 if (format >= VertexFormat.B)
                 {
-                    Unk3C = br.ReadInt16();
-                    Unk3E = br.ReadInt16();
+                    // Both may be 0, 4, 8, 12, etc
+                    UnkShortA = br.ReadInt16();
+                    UnkShortB = br.ReadInt16();
                 }
 
                 if (format >= VertexFormat.C)
                 {
-                    Unk40 = br.ReadSingle();
-                    Unk44 = br.ReadSingle();
-                }
-
-                if (format >= VertexFormat.D)
-                {
-                    throw new NotImplementedException();
+                    UnkFloatA = br.ReadSingle();
+                    UnkFloatB = br.ReadSingle();
                 }
             }
+        }
 
-            private static Vector3 Read11_11_10Vector3(BinaryReaderEx br)
+        public class VertexD : Vertex
+        {
+            public Vector3[] Positions;
+            public override Vector3 Position
             {
-                int vector = br.ReadInt32();
-                int x = vector << 21 >> 21;
-                int y = vector << 10 >> 21;
-                int z = vector << 0 >> 22;
-                return new Vector3(x / (float)0b11_1111_1111, y / (float)0b11_1111_1111, z / (float)0b1_1111_1111);
+                get => Positions[0];
+                set => Positions[0] = value;
             }
+
+            public Vector3[] Normals;
+            public override Vector3 Normal
+            {
+                get => Normals[0];
+                set => Normals[0] = value;
+            }
+
+            public Vector3[] Tangents;
+            public override Vector3 Tangent
+            {
+                get => Tangents[0];
+                set => Tangents[0] = value;
+            }
+
+            public Vector3[] Bitangents;
+            public override Vector3 Bitangent
+            {
+                get => Bitangents[0];
+                set => Bitangents[0] = value;
+            }
+
+            internal VertexD(BinaryReaderEx br)
+            {
+                Positions = new Vector3[16];
+                for (int i = 0; i < 16; i++)
+                    Positions[i] = br.ReadVector3();
+
+                Normals = new Vector3[16];
+                for (int i = 0; i < 16; i++)
+                    Normals[i] = Read11_11_10Vector3(br);
+
+                Tangents = new Vector3[16];
+                for (int i = 0; i < 16; i++)
+                    Tangents[i] = Read11_11_10Vector3(br);
+
+                Bitangents = new Vector3[16];
+                for (int i = 0; i < 16; i++)
+                    Bitangents[i] = Read11_11_10Vector3(br);
+
+                Color = br.ReadRGBA();
+
+                UVs = new Vector2[4];
+                for (int i = 0; i < 4; i++)
+                    UVs[i] = br.ReadVector2();
+
+                UnkShortA = br.ReadInt16();
+                UnkShortB = br.ReadInt16();
+                UnkFloatA = br.ReadSingle();
+                UnkFloatB = br.ReadSingle();
+            }
+        }
+
+        private static Vector3 Read11_11_10Vector3(BinaryReaderEx br)
+        {
+            int vector = br.ReadInt32();
+            int x = vector << 21 >> 21;
+            int y = vector << 10 >> 21;
+            int z = vector << 0 >> 22;
+            return new Vector3(x / (float)0b11_1111_1111, y / (float)0b11_1111_1111, z / (float)0b1_1111_1111);
         }
 
         public class Struct7
@@ -356,25 +424,26 @@ namespace SoulsFormats.Other
             }
         }
 
-        public List<Vertex[]> GetFaces(Faceset faceset, ref bool flip)
+        public List<Vertex[]> GetFaces(Faceset faceset, List<Vertex> vertices)
         {
-            ushort[] indices = ToTriangleList(faceset, ref flip);
+            List<ushort> indices = Triangulate(faceset, vertices);
             var faces = new List<Vertex[]>();
-            for (int i = 0; i < indices.Length; i += 3)
+            for (int i = 0; i < indices.Count; i += 3)
             {
                 faces.Add(new Vertex[]
                 {
-                    VerticesA[indices[i + 0]],
-                    VerticesA[indices[i + 1]],
-                    VerticesA[indices[i + 2]],
+                    vertices[indices[i + 0]],
+                    vertices[indices[i + 1]],
+                    vertices[indices[i + 2]],
                 });
             }
             return faces;
         }
 
-        public ushort[] ToTriangleList(Faceset faceset, ref bool flip)
+        public List<ushort> Triangulate(Faceset faceset, List<Vertex> vertices)
         {
-            var converted = new List<ushort>();
+            bool flip = false;
+            var triangles = new List<ushort>();
             for (int i = faceset.StartIndex; i < faceset.StartIndex + faceset.IndexCount - 2; i++)
             {
                 ushort vi1 = Indices[i];
@@ -389,23 +458,31 @@ namespace SoulsFormats.Other
                 {
                     if (vi1 != vi2 && vi1 != vi3 && vi2 != vi3)
                     {
+                        Vertex v1 = vertices[vi1];
+                        Vertex v2 = vertices[vi2];
+                        Vertex v3 = vertices[vi3];
+                        Vector3 vertexNormal = Vector3.Normalize((v1.Normal + v2.Normal + v3.Normal) / 3);
+                        Vector3 faceNormal = Vector3.Normalize(Vector3.Cross(v2.Position - v1.Position, v3.Position - v1.Position));
+                        float angle = Vector3.Dot(faceNormal, vertexNormal) / (faceNormal.Length() * vertexNormal.Length());
+                        flip = angle <= 0;
+
                         if (!flip)
                         {
-                            converted.Add(vi1);
-                            converted.Add(vi2);
-                            converted.Add(vi3);
+                            triangles.Add(vi1);
+                            triangles.Add(vi2);
+                            triangles.Add(vi3);
                         }
                         else
                         {
-                            converted.Add(vi3);
-                            converted.Add(vi2);
-                            converted.Add(vi1);
+                            triangles.Add(vi3);
+                            triangles.Add(vi2);
+                            triangles.Add(vi1);
                         }
                     }
                     flip = !flip;
                 }
             }
-            return converted.ToArray();
+            return triangles;
         }
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
