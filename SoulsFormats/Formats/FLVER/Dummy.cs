@@ -3,7 +3,7 @@ using System.Numerics;
 
 namespace SoulsFormats
 {
-    public partial class FLVER2
+    public partial class FLVER
     {
         /// <summary>
         /// "Dummy polygons" used for hit detection, particle effect locations, and much more.
@@ -31,9 +31,9 @@ namespace SoulsFormats
             public short ReferenceID { get; set; }
 
             /// <summary>
-            /// Presumably the index of a bone the dummy points would be listed under in an editor. Not known to mean anything ingame.
+            /// Index of a bone that the dummy point is initially transformed to before binding to the attach bone.
             /// </summary>
-            public short DummyBoneIndex { get; set; }
+            public short ParentBoneIndex { get; set; }
 
             /// <summary>
             /// Index of the bone that the dummy point follows physically.
@@ -70,21 +70,29 @@ namespace SoulsFormats
             /// </summary>
             public Dummy()
             {
-                DummyBoneIndex = -1;
+                ParentBoneIndex = -1;
                 AttachBoneIndex = -1;
             }
 
-            internal Dummy(BinaryReaderEx br, FLVERHeader header)
+            /// <summary>
+            /// Returns a string representation of the dummy.
+            /// </summary>
+            public override string ToString()
+            {
+                return $"{ReferenceID}";
+            }
+
+            internal Dummy(BinaryReaderEx br, int version)
             {
                 Position = br.ReadVector3();
                 // Not certain about the ordering of RGB here
-                if (header.Version == 0x20010)
+                if (version == 0x20010)
                     Color = br.ReadBGRA();
                 else
                     Color = br.ReadARGB();
                 Forward = br.ReadVector3();
                 ReferenceID = br.ReadInt16();
-                DummyBoneIndex = br.ReadInt16();
+                ParentBoneIndex = br.ReadInt16();
                 Upward = br.ReadVector3();
                 AttachBoneIndex = br.ReadInt16();
                 Flag1 = br.ReadBoolean();
@@ -95,16 +103,16 @@ namespace SoulsFormats
                 br.AssertInt32(0);
             }
 
-            internal void Write(BinaryWriterEx bw, FLVERHeader header)
+            internal void Write(BinaryWriterEx bw, int version)
             {
                 bw.WriteVector3(Position);
-                if (header.Version == 0x20010)
+                if (version == 0x20010)
                     bw.WriteBGRA(Color);
                 else
                     bw.WriteARGB(Color);
                 bw.WriteVector3(Forward);
                 bw.WriteInt16(ReferenceID);
-                bw.WriteInt16(DummyBoneIndex);
+                bw.WriteInt16(ParentBoneIndex);
                 bw.WriteVector3(Upward);
                 bw.WriteInt16(AttachBoneIndex);
                 bw.WriteBoolean(Flag1);
@@ -113,14 +121,6 @@ namespace SoulsFormats
                 bw.WriteInt32(Unk34);
                 bw.WriteInt32(0);
                 bw.WriteInt32(0);
-            }
-
-            /// <summary>
-            /// Returns the dummy point's reference ID.
-            /// </summary>
-            public override string ToString()
-            {
-                return $"{ReferenceID}";
             }
         }
     }

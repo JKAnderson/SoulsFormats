@@ -30,11 +30,11 @@ namespace SoulsFormats
 
         public int Unk5C;
 
-        public List<Dummy> Dummies;
+        public List<FLVER.Dummy> Dummies;
 
         public List<Material> Materials;
 
-        public List<Bone> Bones;
+        public List<FLVER.Bone> Bones;
 
         public List<Mesh> Meshes;
 
@@ -87,17 +87,17 @@ namespace SoulsFormats
             br.AssertByte(0);
             br.AssertPattern(0x20, 0x00);
 
-            Dummies = new List<Dummy>(dummyCount);
+            Dummies = new List<FLVER.Dummy>(dummyCount);
             for (int i = 0; i < dummyCount; i++)
-                Dummies.Add(new Dummy(br));
+                Dummies.Add(new FLVER.Dummy(br, Version));
 
             Materials = new List<Material>(materialCount);
             for (int i = 0; i < materialCount; i++)
                 Materials.Add(new Material(br, this));
 
-            Bones = new List<Bone>(boneCount);
+            Bones = new List<FLVER.Bone>(boneCount);
             for (int i = 0; i < boneCount; i++)
-                Bones.Add(new Bone(br, this));
+                Bones.Add(new FLVER.Bone(br, Unicode));
 
             Meshes = new List<Mesh>(meshCount);
             for (int i = 0; i < meshCount; i++)

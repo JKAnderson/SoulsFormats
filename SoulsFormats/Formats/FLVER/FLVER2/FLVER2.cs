@@ -18,7 +18,7 @@ namespace SoulsFormats
         /// <summary>
         /// Dummy polygons in this model.
         /// </summary>
-        public List<Dummy> Dummies { get; set; }
+        public List<FLVER.Dummy> Dummies { get; set; }
 
         /// <summary>
         /// Materials in this model, usually one per mesh.
@@ -33,7 +33,7 @@ namespace SoulsFormats
         /// <summary>
         /// Bones used by this model, may or may not be the full skeleton.
         /// </summary>
-        public List<Bone> Bones { get; set; }
+        public List<FLVER.Bone> Bones { get; set; }
 
         /// <summary>
         /// Individual chunks of the model.
@@ -56,10 +56,10 @@ namespace SoulsFormats
         public FLVER2()
         {
             Header = new FLVERHeader();
-            Dummies = new List<Dummy>();
+            Dummies = new List<FLVER.Dummy>();
             Materials = new List<Material>();
             GXLists = new List<GXList>();
-            Bones = new List<Bone>();
+            Bones = new List<FLVER.Bone>();
             Meshes = new List<Mesh>();
             BufferLayouts = new List<BufferLayout>();
         }
@@ -140,9 +140,9 @@ namespace SoulsFormats
             br.AssertInt32(0);
             br.AssertInt32(0);
 
-            Dummies = new List<Dummy>(dummyCount);
+            Dummies = new List<FLVER.Dummy>(dummyCount);
             for (int i = 0; i < dummyCount; i++)
-                Dummies.Add(new Dummy(br, Header));
+                Dummies.Add(new FLVER.Dummy(br, Header.Version));
 
             Materials = new List<Material>(materialCount);
             var gxListIndices = new Dictionary<int, int>();
@@ -150,9 +150,9 @@ namespace SoulsFormats
             for (int i = 0; i < materialCount; i++)
                 Materials.Add(new Material(br, Header, GXLists, gxListIndices));
 
-            Bones = new List<Bone>(boneCount);
+            Bones = new List<FLVER.Bone>(boneCount);
             for (int i = 0; i < boneCount; i++)
-                Bones.Add(new Bone(br, Header));
+                Bones.Add(new FLVER.Bone(br, Header.Unicode));
 
             Meshes = new List<Mesh>(meshCount);
             for (int i = 0; i < meshCount; i++)
@@ -270,8 +270,8 @@ namespace SoulsFormats
             bw.WriteInt32(0);
             bw.WriteInt32(0);
 
-            foreach (Dummy dummy in Dummies)
-                dummy.Write(bw, Header);
+            foreach (FLVER.Dummy dummy in Dummies)
+                dummy.Write(bw, Header.Version);
 
             for (int i = 0; i < Materials.Count; i++)
                 Materials[i].Write(bw, i);
@@ -376,7 +376,7 @@ namespace SoulsFormats
 
             bw.Pad(0x10);
             for (int i = 0; i < Bones.Count; i++)
-                Bones[i].WriteStrings(bw, Header, i);
+                Bones[i].WriteStrings(bw, Header.Unicode, i);
 
             int alignment = Header.Version <= 0x2000E ? 0x20 : 0x10;
             bw.Pad(alignment);

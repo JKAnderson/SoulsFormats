@@ -2,15 +2,15 @@
 
 namespace SoulsFormats
 {
-    public partial class FLVER2
+    public partial class FLVER
     {
         /// <summary>
-        /// Bones available for vertices to be weighted to.
+        /// A joint available for vertices to be attached to.
         /// </summary>
         public class Bone
         {
             /// <summary>
-            /// Corresponds to the name of a bone in the parent skeleton. May also have a dummy name.
+            /// Corresponds to the name of a bone in the parent skeleton, if present.
             /// </summary>
             public string Name { get; set; }
 
@@ -40,7 +40,7 @@ namespace SoulsFormats
             public Vector3 Translation { get; set; }
 
             /// <summary>
-            /// Rotation of this bone; euler radians.
+            /// Rotation of this bone; euler radians in XZY order.
             /// </summary>
             public Vector3 Rotation { get; set; }
 
@@ -65,7 +65,7 @@ namespace SoulsFormats
             public int Unk3C { get; set; }
 
             /// <summary>
-            /// Creates a new Bone with default values.
+            /// Creates a Bone with default values.
             /// </summary>
             public Bone()
             {
@@ -77,7 +77,15 @@ namespace SoulsFormats
                 Scale = Vector3.One;
             }
 
-            internal Bone(BinaryReaderEx br, FLVERHeader header)
+            /// <summary>
+            /// Returns a string representation of the bone.
+            /// </summary>
+            public override string ToString()
+            {
+                return Name;
+            }
+
+            internal Bone(BinaryReaderEx br, bool unicode)
             {
                 Translation = br.ReadVector3();
                 int nameOffset = br.ReadInt32();
@@ -92,7 +100,7 @@ namespace SoulsFormats
                 BoundingBoxMax = br.ReadVector3();
                 br.AssertPattern(0x34, 0x00);
 
-                if (header.Unicode)
+                if (unicode)
                     Name = br.GetUTF16(nameOffset);
                 else
                     Name = br.GetShiftJIS(nameOffset);
@@ -101,7 +109,7 @@ namespace SoulsFormats
             internal void Write(BinaryWriterEx bw, int index)
             {
                 bw.WriteVector3(Translation);
-                bw.ReserveInt32($"BoneName{index}");
+                bw.ReserveInt32($"BoneNameOffset{index}");
                 bw.WriteVector3(Rotation);
                 bw.WriteInt16(ParentIndex);
                 bw.WriteInt16(ChildIndex);
@@ -114,21 +122,13 @@ namespace SoulsFormats
                 bw.WritePattern(0x34, 0x00);
             }
 
-            internal void WriteStrings(BinaryWriterEx bw, FLVERHeader header, int index)
+            internal void WriteStrings(BinaryWriterEx bw, bool unicode, int index)
             {
-                bw.FillInt32($"BoneName{index}", (int)bw.Position);
-                if (header.Unicode)
+                bw.FillInt32($"BoneNameOffset{index}", (int)bw.Position);
+                if (unicode)
                     bw.WriteUTF16(Name, true);
                 else
                     bw.WriteShiftJIS(Name, true);
-            }
-
-            /// <summary>
-            /// Returns the name of this bone.
-            /// </summary>
-            public override string ToString()
-            {
-                return Name;
             }
         }
     }
