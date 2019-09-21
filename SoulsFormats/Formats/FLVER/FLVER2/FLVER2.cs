@@ -6,9 +6,9 @@ using System.Numerics;
 namespace SoulsFormats
 {
     /// <summary>
-    /// A model format used throughout the series.
+    /// A model format used since Dark Souls 1. Extension: .flv, .flver
     /// </summary>
-    public partial class FLVER2 : SoulsFile<FLVER2>
+    public partial class FLVER2 : SoulsFile<FLVER2>, IFlver
     {
         /// <summary>
         /// General values for this model.
@@ -19,11 +19,13 @@ namespace SoulsFormats
         /// Dummy polygons in this model.
         /// </summary>
         public List<FLVER.Dummy> Dummies { get; set; }
+        IReadOnlyList<FLVER.Dummy> IFlver.Dummies => Dummies;
 
         /// <summary>
         /// Materials in this model, usually one per mesh.
         /// </summary>
         public List<Material> Materials { get; set; }
+        IReadOnlyList<IFlverMaterial> IFlver.Materials => Materials;
 
         /// <summary>
         /// Lists of GX elements referenced by materials in DS2 and beyond.
@@ -34,11 +36,13 @@ namespace SoulsFormats
         /// Bones used by this model, may or may not be the full skeleton.
         /// </summary>
         public List<FLVER.Bone> Bones { get; set; }
+        IReadOnlyList<FLVER.Bone> IFlver.Bones => Bones;
 
         /// <summary>
         /// Individual chunks of the model.
         /// </summary>
         public List<Mesh> Meshes { get; set; }
+        IReadOnlyList<IFlverMesh> IFlver.Meshes => Meshes;
 
         /// <summary>
         /// Layouts determining how to write vertex information.

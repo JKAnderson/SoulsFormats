@@ -7,25 +7,27 @@ namespace SoulsFormats
     public partial class FLVER0
     {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-        public class Mesh
+        public class Mesh : IFlverMesh
         {
-            public byte Dynamic;
+            public byte Dynamic { get; set; }
 
-            public byte MaterialIndex;
+            public byte MaterialIndex { get; set; }
+            int IFlverMesh.MaterialIndex => MaterialIndex;
 
-            public bool Unk02;
+            public bool Unk02 { get; set; }
 
-            public byte Unk03;
+            public byte Unk03 { get; set; }
 
-            public short DefaultBoneIndex;
+            public short DefaultBoneIndex { get; set; }
 
-            public short[] BoneIndices;
+            public short[] BoneIndices { get; private set; }
 
-            public short Unk46;
+            public short Unk46 { get; set; }
 
-            public List<int> VertexIndices;
+            public List<int> VertexIndices { get; set; }
 
-            public List<FLVER.Vertex> Vertices;
+            public List<FLVER.Vertex> Vertices { get; set; }
+            IReadOnlyList<FLVER.Vertex> IFlverMesh.Vertices => Vertices;
 
             internal Mesh(BinaryReaderEx br, FLVER0 flv, int dataOffset)
             {

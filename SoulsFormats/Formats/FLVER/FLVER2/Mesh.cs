@@ -10,12 +10,12 @@ namespace SoulsFormats
         /// <summary>
         /// An individual chunk of a model.
         /// </summary>
-        public class Mesh
+        public class Mesh : IFlverMesh
         {
             /// <summary>
-            /// Unknown.
+            /// When 1, mesh is in bind pose; when 0, it isn't. Most likely has further implications.
             /// </summary>
-            public bool Dynamic { get; set; }
+            public byte Dynamic { get; set; }
 
             /// <summary>
             /// Index of the material used by all triangles in this mesh.
@@ -46,6 +46,7 @@ namespace SoulsFormats
             /// Vertices in this mesh.
             /// </summary>
             public List<FLVER.Vertex> Vertices { get; set; }
+            IReadOnlyList<FLVER.Vertex> IFlverMesh.Vertices => Vertices;
 
             /// <summary>
             /// Optional bounding box struct; may be null.
@@ -59,8 +60,6 @@ namespace SoulsFormats
             /// </summary>
             public Mesh()
             {
-                Dynamic = false;
-                MaterialIndex = 0;
                 DefaultBoneIndex = -1;
                 BoneIndices = new List<int>();
                 FaceSets = new List<FaceSet>();
@@ -70,7 +69,7 @@ namespace SoulsFormats
 
             internal Mesh(BinaryReaderEx br, FLVERHeader header)
             {
-                Dynamic = br.ReadBoolean();
+                Dynamic = br.AssertByte(0, 1);
                 br.AssertByte(0);
                 br.AssertByte(0);
                 br.AssertByte(0);
@@ -173,7 +172,7 @@ namespace SoulsFormats
 
             internal void Write(BinaryWriterEx bw, int index)
             {
-                bw.WriteBoolean(Dynamic);
+                bw.WriteByte(Dynamic);
                 bw.WriteByte(0);
                 bw.WriteByte(0);
                 bw.WriteByte(0);

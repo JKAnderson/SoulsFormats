@@ -7,7 +7,7 @@ namespace SoulsFormats
         /// <summary>
         /// A texture used by the shader specified in an MTD.
         /// </summary>
-        public class Texture
+        public class Texture : IFlverTexture
         {
             /// <summary>
             /// The type of texture this is, corresponding to the entries in the MTD.

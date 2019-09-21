@@ -7,36 +7,40 @@ namespace SoulsFormats
     /// <summary>
     /// 3D models from Armored Core: For Answer to Another Century's Episode R. Extension: .flv, .flver
     /// </summary>
-    public partial class FLVER0 : SoulsFile<FLVER0>
+    public partial class FLVER0 : SoulsFile<FLVER0>, IFlver
     {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-        public bool BigEndian;
+        public bool BigEndian { get; set; }
 
-        public int Version;
+        public int Version { get; set; }
 
-        public Vector3 BoundingBoxMin;
+        public Vector3 BoundingBoxMin { get; set; }
 
-        public Vector3 BoundingBoxMax;
+        public Vector3 BoundingBoxMax { get; set; }
 
-        public byte VertexIndexSize;
+        public byte VertexIndexSize { get; set; }
 
-        public bool Unicode;
+        public bool Unicode { get; set; }
 
-        public byte Unk4A;
+        public byte Unk4A { get; set; }
 
-        public byte Unk4B;
+        public byte Unk4B { get; set; }
 
-        public int Unk4C;
+        public int Unk4C { get; set; }
 
-        public int Unk5C;
+        public int Unk5C { get; set; }
 
-        public List<FLVER.Dummy> Dummies;
+        public List<FLVER.Dummy> Dummies { get; set; }
+        IReadOnlyList<FLVER.Dummy> IFlver.Dummies => Dummies;
 
-        public List<Material> Materials;
+        public List<Material> Materials { get; set; }
+        IReadOnlyList<IFlverMaterial> IFlver.Materials => Materials;
 
-        public List<FLVER.Bone> Bones;
+        public List<FLVER.Bone> Bones { get; set; }
+        IReadOnlyList<FLVER.Bone> IFlver.Bones => Bones;
 
-        public List<Mesh> Meshes;
+        public List<Mesh> Meshes { get; set; }
+        IReadOnlyList<IFlverMesh> IFlver.Meshes => Meshes;
 
         internal override bool Is(BinaryReaderEx br)
         {

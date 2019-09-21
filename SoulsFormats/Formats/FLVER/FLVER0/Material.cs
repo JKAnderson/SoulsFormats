@@ -5,15 +5,16 @@ namespace SoulsFormats
     public partial class FLVER0
     {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-        public class Material
+        public class Material : IFlverMaterial
         {
-            public string Name;
+            public string Name { get; set; }
 
-            public string MTD;
+            public string MTD { get; set; }
 
-            public List<Texture> Textures;
+            public List<Texture> Textures { get; set; }
+            IReadOnlyList<IFlverTexture> IFlverMaterial.Textures => Textures;
 
-            public List<BufferLayout> Layouts;
+            public List<BufferLayout> Layouts { get; set; }
 
             internal Material(BinaryReaderEx br, FLVER0 flv)
             {

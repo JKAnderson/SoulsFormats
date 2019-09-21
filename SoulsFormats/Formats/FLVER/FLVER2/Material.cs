@@ -8,7 +8,7 @@ namespace SoulsFormats
         /// <summary>
         /// A reference to an MTD file, specifying textures to use.
         /// </summary>
-        public class Material
+        public class Material : IFlverMaterial
         {
             /// <summary>
             /// Identifies the mesh that uses this material, may include keywords that determine hideable parts.
@@ -29,6 +29,7 @@ namespace SoulsFormats
             /// Textures used by this material.
             /// </summary>
             public List<Texture> Textures { get; set; }
+            IReadOnlyList<IFlverTexture> IFlverMaterial.Textures => Textures;
 
             /// <summary>
             /// Index to the flver's list of GX lists.

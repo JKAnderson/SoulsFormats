@@ -76,6 +76,7 @@
     <Compile Include="Formats\FLVER\FLVER2\Mesh.cs" />
     <Compile Include="Formats\FLVER\FLVER2\SekiroUnkStruct.cs" />
     <Compile Include="Formats\FLVER\FLVER2\Texture.cs" />
+    <Compile Include="Formats\FLVER\IFlver.cs" />
     <Compile Include="Formats\FLVER\LayoutMember.cs" />
     <Compile Include="Formats\FLVER\Vertex.cs" />
     <Compile Include="Formats\FLVER\FLVER2\VertexBuffer.cs" />

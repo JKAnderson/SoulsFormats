@@ -3,11 +3,11 @@
     public partial class FLVER0
     {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-        public class Texture
+        public class Texture : IFlverTexture
         {
-            public string Type;
+            public string Type { get; set; }
 
-            public string Path;
+            public string Path { get; set; }
 
             internal Texture(BinaryReaderEx br, FLVER0 flv)
             {
