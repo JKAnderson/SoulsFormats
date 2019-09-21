@@ -78,6 +78,18 @@ namespace SoulsFormats
             }
 
             /// <summary>
+            /// Creates a transformation matrix from the scale, rotation, and translation of the bone.
+            /// </summary>
+            public Matrix4x4 ComputeLocalTransform()
+            {
+                return Matrix4x4.CreateScale(Scale)
+                    * Matrix4x4.CreateRotationX(Rotation.X)
+                    * Matrix4x4.CreateRotationZ(Rotation.Z)
+                    * Matrix4x4.CreateRotationY(Rotation.Y)
+                    * Matrix4x4.CreateTranslation(Translation);
+            }
+
+            /// <summary>
             /// Returns a string representation of the bone.
             /// </summary>
             public override string ToString()
