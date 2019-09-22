@@ -86,6 +86,7 @@
     <Compile Include="Formats\GRASS.cs" />
     <Compile Include="Formats\LUAGNL.cs" />
     <Compile Include="Formats\LUAINFO.cs" />
+    <Compile Include="Formats\MCP.cs" />
     <Compile Include="Formats\MSB1\PointParam.cs" />
     <Compile Include="Formats\MSB1\PartsParam.cs" />
     <Compile Include="Formats\MSB1\EventParam.cs" />
