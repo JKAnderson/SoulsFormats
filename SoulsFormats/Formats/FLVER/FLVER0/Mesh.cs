@@ -104,9 +104,9 @@ namespace SoulsFormats
                 br.StepOut();
             }
 
-            public List<FLVER.Vertex[]> GetFaces()
+            public List<FLVER.Vertex[]> GetFaces(int version)
             {
-                List<int> indices = Triangulate();
+                List<int> indices = Triangulate(version);
                 var faces = new List<FLVER.Vertex[]>();
                 for (int i = 0; i < indices.Count; i += 3)
                 {
@@ -120,10 +120,10 @@ namespace SoulsFormats
                 return faces;
             }
 
-            public List<int> Triangulate()
+            public List<int> Triangulate(int version)
             {
                 var triangles = new List<int>();
-                if (Unk03 == 0)
+                if (version >= 0x15 && Unk03 == 0)
                 {
                     triangles = new List<int>(VertexIndices);
                 }
