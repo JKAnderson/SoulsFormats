@@ -20,7 +20,11 @@ namespace SoulsFormats.Kuon
 
         internal override bool Is(BinaryReaderEx br)
         {
-            throw new NotImplementedException();
+            if (br.Length < 4)
+                return false;
+
+            string magic = br.GetASCII(0, 4);
+            return magic == "BND\0";
         }
 
         internal override void Read(BinaryReaderEx br)
@@ -40,11 +44,6 @@ namespace SoulsFormats.Kuon
                     nextOffset = br.GetInt32(br.Position + 0xC + 4);
                 Files.Add(new File(br, nextOffset));
             }
-        }
-
-        internal override void Write(BinaryWriterEx bw)
-        {
-            throw new NotImplementedException();
         }
 
         /// <summary>

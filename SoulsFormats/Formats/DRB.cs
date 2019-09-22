@@ -54,6 +54,9 @@ namespace SoulsFormats
 
         private static bool Is(BinaryReaderEx br)
         {
+            if (br.Length < 4)
+                return false;
+
             string magic = br.GetASCII(0, 4);
             return magic == "DRB\0";
         }

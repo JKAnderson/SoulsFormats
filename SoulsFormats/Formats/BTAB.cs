@@ -13,11 +13,6 @@ namespace SoulsFormats
         /// </summary>
         public List<Entry> Entries;
 
-        internal override bool Is(BinaryReaderEx br)
-        {
-            throw new NotImplementedException();
-        }
-
         internal override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;

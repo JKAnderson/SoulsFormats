@@ -16,11 +16,6 @@ namespace SoulsFormats.MWC
         public byte[] Data5;
         public byte[] Data6;
 
-        internal override bool Is(BinaryReaderEx br)
-        {
-            throw new NotImplementedException();
-        }
-
         internal override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
@@ -46,11 +41,6 @@ namespace SoulsFormats.MWC
                 Data5 = br.GetBytes(offset5, offsets[offsets.IndexOf(offset5) + 1] - offset5);
             if (offset6 != 0)
                 Data6 = br.GetBytes(offset6, offsets[offsets.IndexOf(offset6) + 1] - offset6);
-        }
-
-        internal override void Write(BinaryWriterEx bw)
-        {
-            throw new NotImplementedException();
         }
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }

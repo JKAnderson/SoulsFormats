@@ -38,11 +38,6 @@ namespace SoulsFormats
             Globals = new List<string>();
         }
 
-        internal override bool Is(BinaryReaderEx br)
-        {
-            throw new NotImplementedException();
-        }
-
         internal override void Read(BinaryReaderEx br)
         {
             BigEndian = br.GetInt16(0) == 0;

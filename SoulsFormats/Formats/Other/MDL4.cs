@@ -25,6 +25,9 @@ namespace SoulsFormats.Other
 
         internal override bool Is(BinaryReaderEx br)
         {
+            if (br.Length < 4)
+                return false;
+
             string magic = br.GetASCII(0, 4);
             return magic == "MDL4";
         }
@@ -62,11 +65,6 @@ namespace SoulsFormats.Other
             Meshes = new List<Mesh>(meshCount);
             for (int i = 0; i < meshCount; i++)
                 Meshes.Add(new Mesh(br, dataStart, Version));
-        }
-
-        internal override void Write(BinaryWriterEx bw)
-        {
-            throw new NotImplementedException();
         }
 
         public class Dummy

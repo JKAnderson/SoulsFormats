@@ -44,11 +44,6 @@ namespace SoulsFormats
             BigEndian = Version == FMGVersion.DemonsSouls;
         }
 
-        internal override bool Is(BinaryReaderEx br)
-        {
-            throw new NotImplementedException();
-        }
-
         internal override void Read(BinaryReaderEx br)
         {
             br.AssertByte(0);

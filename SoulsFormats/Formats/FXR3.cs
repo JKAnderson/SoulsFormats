@@ -31,6 +31,9 @@ namespace SoulsFormats
 
         internal override bool Is(BinaryReaderEx br)
         {
+            if (br.Length < 8)
+                return false;
+
             string magic = br.GetASCII(0, 4);
             short version = br.GetInt16(6);
             return magic == "FXR\0" && (version == 4 || version == 5);

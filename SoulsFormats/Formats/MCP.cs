@@ -32,11 +32,6 @@ namespace SoulsFormats
             Rooms = new List<Room>();
         }
 
-        internal override bool Is(BinaryReaderEx br)
-        {
-            throw new NotImplementedException();
-        }
-
         internal override void Read(BinaryReaderEx br)
         {
             br.BigEndian = true;

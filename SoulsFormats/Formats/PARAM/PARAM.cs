@@ -56,16 +56,6 @@ namespace SoulsFormats
         private BinaryReaderEx brRows;
         private Layout layout;
 
-        /// <summary>
-        /// Creates an uninitialized PARAM. Should not be used publicly; use PARAM.Read instead.
-        /// </summary>
-        public PARAM() { }
-
-        internal override bool Is(BinaryReaderEx br)
-        {
-            throw new NotImplementedException();
-        }
-
         internal override void Read(BinaryReaderEx br)
         {
             br.Position = 0x2C;

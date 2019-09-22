@@ -54,11 +54,6 @@ namespace SoulsFormats
         /// </summary>
         public Dictionary<int, Glyph> Glyphs { get; set; }
 
-        internal override bool Is(BinaryReaderEx br)
-        {
-            throw new NotImplementedException();
-        }
-
         internal override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;

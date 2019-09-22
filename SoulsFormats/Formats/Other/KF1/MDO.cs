@@ -17,11 +17,6 @@ namespace SoulsFormats.KF1
         public List<Unk1> Unk1s;
         public List<Mesh> Meshes;
 
-        internal override bool Is(BinaryReaderEx br)
-        {
-            throw new NotImplementedException();
-        }
-
         internal override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
@@ -44,11 +39,6 @@ namespace SoulsFormats.KF1
             Meshes = new List<Mesh>(meshCount);
             for (int i = 0; i < meshCount; i++)
                 Meshes.Add(new Mesh(br));
-        }
-
-        internal override void Write(BinaryWriterEx bw)
-        {
-            throw new NotImplementedException();
         }
 
         public class Unk1

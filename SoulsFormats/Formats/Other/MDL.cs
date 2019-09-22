@@ -27,6 +27,9 @@ namespace SoulsFormats.Other
 
         internal override bool Is(BinaryReaderEx br)
         {
+            if (br.Length < 4)
+                return false;
+
             string magic = br.GetASCII(4, 4);
             return magic == "MDL ";
         }
@@ -104,11 +107,6 @@ namespace SoulsFormats.Other
             Textures = new List<string>(textureCount);
             for (int i = 0; i < textureCount; i++)
                 Textures.Add(br.ReadShiftJIS());
-        }
-
-        internal override void Write(BinaryWriterEx bw)
-        {
-            throw new NotImplementedException();
         }
 
         public class Bone

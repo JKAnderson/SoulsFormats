@@ -21,11 +21,6 @@ namespace SoulsFormats
         /// </summary>
         public PartsSection Parts;
 
-        internal override bool Is(BinaryReaderEx br)
-        {
-            throw new NotImplementedException();
-        }
-
         internal struct Entries
         {
             public List<Model> Models;
@@ -95,11 +90,6 @@ namespace SoulsFormats
             //Events.GetNames(this, entries);
             Parts.GetNames(this, entries);
             //Regions.GetNames(this, entries);
-        }
-
-        internal override void Write(BinaryWriterEx bw)
-        {
-            throw new NotImplementedException();
         }
 
         private static void DisambiguateNames<T>(List<T> entries) where T : Entry

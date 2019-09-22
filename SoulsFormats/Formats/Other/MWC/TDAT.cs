@@ -12,11 +12,6 @@ namespace SoulsFormats.MWC
         public int Unk1C;
         public List<Texture> Textures;
 
-        internal override bool Is(BinaryReaderEx br)
-        {
-            throw new NotImplementedException();
-        }
-
         internal override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
@@ -29,11 +24,6 @@ namespace SoulsFormats.MWC
             Textures = new List<Texture>(textureCount);
             for (int i = 0; i < textureCount; i++)
                 Textures.Add(new Texture(br));
-        }
-
-        internal override void Write(BinaryWriterEx bw)
-        {
-            throw new NotImplementedException();
         }
 
         public class Texture

@@ -17,7 +17,10 @@ namespace SoulsFormats
         /// Returns true if the data appears to be a file of this type.
         /// </summary>
         // This should really be a static method, but interfaces do not allow static inheritance; hence the dummy objects below.
-        internal abstract bool Is(BinaryReaderEx br);
+        internal virtual bool Is(BinaryReaderEx br)
+        {
+            throw new NotImplementedException("Is is not implemented for this format.");
+        }
 
         /// <summary>
         /// Returns true if the bytes appear to be a file of this type.
@@ -51,7 +54,10 @@ namespace SoulsFormats
         /// <summary>
         /// Loads file data from a BinaryReaderEx.
         /// </summary>
-        internal abstract void Read(BinaryReaderEx br);
+        internal virtual void Read(BinaryReaderEx br)
+        {
+            throw new NotImplementedException("Read is not implemented for this format.");
+        }
 
         /// <summary>
         /// Loads a file from a byte array, automatically decompressing it if necessary.
@@ -120,7 +126,10 @@ namespace SoulsFormats
         /// <summary>
         /// Writes file data to a BinaryWriterEx.
         /// </summary>
-        internal abstract void Write(BinaryWriterEx bw);
+        internal virtual void Write(BinaryWriterEx bw)
+        {
+            throw new NotImplementedException("Write is not implemented for this format.");
+        }
 
         /// <summary>
         /// Writes file data to a BinaryWriterEx, compressing it afterwards if specified.

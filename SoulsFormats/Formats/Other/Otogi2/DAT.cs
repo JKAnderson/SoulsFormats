@@ -14,11 +14,6 @@ namespace SoulsFormats.Otogi2
         public byte[] Data3;
         public List<Texture> Textures;
 
-        internal override bool Is(BinaryReaderEx br)
-        {
-            throw new NotImplementedException();
-        }
-
         internal override void Read(BinaryReaderEx br)
         {
             br.ReadInt32(); // File size
@@ -42,11 +37,6 @@ namespace SoulsFormats.Otogi2
 
             if (offset3 != 0)
                 Data3 = br.GetBytes(offset3, br.GetInt32(offset3));
-        }
-
-        internal override void Write(BinaryWriterEx bw)
-        {
-            throw new NotImplementedException();
         }
 
         public class Texture
