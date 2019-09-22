@@ -89,6 +89,34 @@ namespace SoulsFormats
             return true;
         }
 
+        internal bool ValidateNull(object obj, string message, out Exception ex)
+        {
+            if (obj == null)
+            {
+                ex = new NullReferenceException(message);
+                return false;
+            }
+            else
+            {
+                ex = null;
+                return true;
+            }
+        }
+
+        internal bool ValidateIndex(long count, long index, string message, out Exception ex)
+        {
+            if (index < 0 || index >= count)
+            {
+                ex = new IndexOutOfRangeException(message);
+                return false;
+            }
+            else
+            {
+                ex = null;
+                return true;
+            }
+        }
+
         /// <summary>
         /// Writes file data to a BinaryWriterEx.
         /// </summary>
@@ -99,9 +127,6 @@ namespace SoulsFormats
         /// </summary>
         private void Write(BinaryWriterEx bw, DCX.Type compression)
         {
-            if (!Validate(out Exception ex))
-                throw ex;
-
             if (compression == DCX.Type.None)
             {
                 Write(bw);
@@ -128,6 +153,9 @@ namespace SoulsFormats
         /// </summary>
         public byte[] Write(DCX.Type compression)
         {
+            if (!Validate(out Exception ex))
+                throw ex;
+
             BinaryWriterEx bw = new BinaryWriterEx(false);
             Write(bw, compression);
             return bw.FinishBytes();
@@ -146,6 +174,9 @@ namespace SoulsFormats
         /// </summary>
         public void Write(string path, DCX.Type compression)
         {
+            if (!Validate(out Exception ex))
+                throw ex;
+
             Directory.CreateDirectory(Path.GetDirectoryName(path));
             using (FileStream stream = File.Create(path))
             {
