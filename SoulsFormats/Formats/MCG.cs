@@ -147,10 +147,11 @@ namespace SoulsFormats
             var nodeEdgeIndicesOffsets = new long[Nodes.Count];
             for (int i = 0; i < Nodes.Count; i++)
             {
-                nodeNodeIndicesOffsets[i] = bw.Position;
-                bw.WriteInt32s(Nodes[i].ConnectedNodeIndices);
-                nodeEdgeIndicesOffsets[i] = bw.Position;
-                bw.WriteInt32s(Nodes[i].ConnectedEdgeIndices);
+                Node node = Nodes[i];
+                nodeNodeIndicesOffsets[i] = node.ConnectedNodeIndices.Count == 0 ? 0 : bw.Position;
+                bw.WriteInt32s(node.ConnectedNodeIndices);
+                nodeEdgeIndicesOffsets[i] = node.ConnectedEdgeIndices.Count == 0 ? 0 : bw.Position;
+                bw.WriteInt32s(node.ConnectedEdgeIndices);
             }
 
             bw.FillInt32("EdgesOffset", (int)bw.Position);
