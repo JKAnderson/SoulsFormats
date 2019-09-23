@@ -5,7 +5,7 @@ using System.Numerics;
 namespace SoulsFormats
 {
     /// <summary>
-    /// A navigation format used in DeS and DS1 that defines a high-level map graph. Extension: .mcp
+    /// A navigation format used in DeS and DS1 that defines a basic graph of connected volumes. Extension: .mcp
     /// </summary>
     public class MCP : SoulsFile<MCP>
     {
@@ -44,7 +44,7 @@ namespace SoulsFormats
             br.Position = roomsOffset;
             Rooms = new List<Room>(roomCount);
             for (int i = 0; i < roomCount; i++)
-                Rooms.Add(new Room(br, i));
+                Rooms.Add(new Room(br));
         }
 
         /// <summary>
@@ -52,22 +52,20 @@ namespace SoulsFormats
         /// </summary>
         public override bool Validate(out Exception ex)
         {
-            if (!ValidateNull(Rooms, "Rooms may not be null.", out ex))
+            if (!ValidateNull(Rooms, $"{nameof(Rooms)} may not be null.", out ex))
                 return false;
 
             for (int i = 0; i < Rooms.Count; i++)
             {
                 Room room = Rooms[i];
-                if (!ValidateNull(room, $"Rooms[{i}]: Room may not be null.", out ex))
-                    return false;
-
-                if (!ValidateNull(room.ConnectedRoomIndices, $"Rooms[{i}]: ConnectedRoomIndices may not be null.", out ex))
+                if (!ValidateNull(room, $"{nameof(Rooms)}[{i}]: {nameof(Room)} may not be null.", out ex)
+                    || !ValidateNull(room.ConnectedRoomIndices, $"{nameof(Rooms)}[{i}]: {nameof(Room.ConnectedRoomIndices)} may not be null.", out ex))
                     return false;
 
                 for (int j = 0; j < room.ConnectedRoomIndices.Count; j++)
                 {
-                    int index = room.ConnectedRoomIndices[j];
-                    if (!ValidateIndex(Rooms.Count, index, $"Rooms[{i}].ConnectedRoomIndices[{j}]: Index out of range: {index}", out ex))
+                    int roomIndex = room.ConnectedRoomIndices[j];
+                    if (!ValidateIndex(Rooms.Count, roomIndex, $"{nameof(Rooms)}[{i}].{nameof(Room.ConnectedRoomIndices)}[{j}]: Index out of range: {roomIndex}", out ex))
                         return false;
                 }
             }
@@ -93,7 +91,7 @@ namespace SoulsFormats
 
             bw.FillInt32("RoomsOffset", (int)bw.Position);
             for (int i = 0; i < Rooms.Count; i++)
-                Rooms[i].Write(bw, i, indicesOffsets[i]);
+                Rooms[i].Write(bw, indicesOffsets[i]);
         }
 
         /// <summary>
@@ -105,6 +103,11 @@ namespace SoulsFormats
             /// The ID of the map the room is in, where mAA_BB_CC_DD is packed into bytes AABBCCDD of the uint.
             /// </summary>
             public uint MapID { get; set; }
+
+            /// <summary>
+            /// Index of the room among rooms with the same map ID, for MCPs that span multiple maps.
+            /// </summary>
+            public int LocalIndex { get; set; }
 
             /// <summary>
             /// Minimum extent of the room.
@@ -129,10 +132,10 @@ namespace SoulsFormats
                 ConnectedRoomIndices = new List<int>();
             }
 
-            internal Room(BinaryReaderEx br, int index)
+            internal Room(BinaryReaderEx br)
             {
                 MapID = br.ReadUInt32();
-                br.AssertInt32(index);
+                LocalIndex = br.ReadInt32();
                 int indexCount = br.ReadInt32();
                 int indicesOffset = br.ReadInt32();
                 BoundingBoxMin = br.ReadVector3();
@@ -141,10 +144,10 @@ namespace SoulsFormats
                 ConnectedRoomIndices = new List<int>(br.GetInt32s(indicesOffset, indexCount));
             }
 
-            internal void Write(BinaryWriterEx bw, int index, long indicesOffset)
+            internal void Write(BinaryWriterEx bw, long indicesOffset)
             {
                 bw.WriteUInt32(MapID);
-                bw.WriteInt32(index);
+                bw.WriteInt32(LocalIndex);
                 bw.WriteInt32(ConnectedRoomIndices.Count);
                 bw.WriteInt32((int)indicesOffset);
                 bw.WriteVector3(BoundingBoxMin);
