@@ -40,6 +40,15 @@ namespace SoulsFormats
         /// </summary>
         public int Unk1C { get; set; }
 
+        /// <summary>
+        /// Creates an empty MCG.
+        /// </summary>
+        public MCG()
+        {
+            Nodes = new List<Node>();
+            Edges = new List<Edge>();
+        }
+
         internal override void Read(BinaryReaderEx br)
         {
             br.BigEndian = true;
