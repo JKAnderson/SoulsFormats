@@ -35,7 +35,10 @@ namespace SoulsFormats
             Lights = new List<Light>();
         }
 
-        internal override void Read(BinaryReaderEx br)
+        /// <summary>
+        /// Deserializes file data from a stream.
+        /// </summary>
+        protected override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
 
@@ -62,7 +65,10 @@ namespace SoulsFormats
                 Lights.Add(new Light(br, namesStart, Version, LongOffsets));
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        /// <summary>
+        /// Serializes file data to a stream.
+        /// </summary>
+        protected override void Write(BinaryWriterEx bw)
         {
             bw.BigEndian = false;
 

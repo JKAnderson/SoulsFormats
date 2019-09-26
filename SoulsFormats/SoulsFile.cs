@@ -17,7 +17,7 @@ namespace SoulsFormats
         /// Returns true if the data appears to be a file of this type.
         /// </summary>
         // This should really be a static method, but interfaces do not allow static inheritance; hence the dummy objects below.
-        internal virtual bool Is(BinaryReaderEx br)
+        protected virtual bool Is(BinaryReaderEx br)
         {
             throw new NotImplementedException("Is is not implemented for this format.");
         }
@@ -54,7 +54,7 @@ namespace SoulsFormats
         /// <summary>
         /// Loads file data from a BinaryReaderEx.
         /// </summary>
-        internal virtual void Read(BinaryReaderEx br)
+        protected virtual void Read(BinaryReaderEx br)
         {
             throw new NotImplementedException("Read is not implemented for this format.");
         }
@@ -95,7 +95,10 @@ namespace SoulsFormats
             return true;
         }
 
-        internal bool ValidateNull(object obj, string message, out Exception ex)
+        /// <summary>
+        /// Returns whether the object is not null, otherwise setting ex to a NullReferenceException with the given message.
+        /// </summary>
+        protected static bool ValidateNull(object obj, string message, out Exception ex)
         {
             if (obj == null)
             {
@@ -109,7 +112,10 @@ namespace SoulsFormats
             }
         }
 
-        internal bool ValidateIndex(long count, long index, string message, out Exception ex)
+        /// <summary>
+        /// Returns whether the index is in range, otherwise setting ex to an IndexOutOfRangeException with the given message.
+        /// </summary>
+        protected static bool ValidateIndex(long count, long index, string message, out Exception ex)
         {
             if (index < 0 || index >= count)
             {
@@ -126,7 +132,7 @@ namespace SoulsFormats
         /// <summary>
         /// Writes file data to a BinaryWriterEx.
         /// </summary>
-        internal virtual void Write(BinaryWriterEx bw)
+        protected virtual void Write(BinaryWriterEx bw)
         {
             throw new NotImplementedException("Write is not implemented for this format.");
         }

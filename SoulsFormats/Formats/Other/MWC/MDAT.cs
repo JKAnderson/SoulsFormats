@@ -16,7 +16,7 @@ namespace SoulsFormats.MWC
         public byte[] Data5;
         public byte[] Data6;
 
-        internal override void Read(BinaryReaderEx br)
+        protected override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
             int fileSize = br.ReadInt32();

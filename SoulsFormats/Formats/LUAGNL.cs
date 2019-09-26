@@ -38,7 +38,10 @@ namespace SoulsFormats
             Globals = new List<string>();
         }
 
-        internal override void Read(BinaryReaderEx br)
+        /// <summary>
+        /// Deserializes file data from a stream.
+        /// </summary>
+        protected override void Read(BinaryReaderEx br)
         {
             BigEndian = br.GetInt16(0) == 0;
             br.BigEndian = BigEndian;
@@ -55,7 +58,10 @@ namespace SoulsFormats
             while (offset != 0);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        /// <summary>
+        /// Serializes file data to a stream.
+        /// </summary>
+        protected override void Write(BinaryWriterEx bw)
         {
             bw.BigEndian = BigEndian;
             for (int i = 0; i < Globals.Count; i++)

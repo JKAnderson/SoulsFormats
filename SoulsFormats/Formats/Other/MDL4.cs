@@ -23,7 +23,7 @@ namespace SoulsFormats.Other
         public List<Bone> Bones;
         public List<Mesh> Meshes;
 
-        internal override bool Is(BinaryReaderEx br)
+        protected override bool Is(BinaryReaderEx br)
         {
             if (br.Length < 4)
                 return false;
@@ -32,7 +32,7 @@ namespace SoulsFormats.Other
             return magic == "MDL4";
         }
 
-        internal override void Read(BinaryReaderEx br)
+        protected override void Read(BinaryReaderEx br)
         {
             br.BigEndian = true;
             br.AssertASCII("MDL4");

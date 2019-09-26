@@ -17,7 +17,7 @@ namespace SoulsFormats.KF1
         public List<Unk1> Unk1s;
         public List<Mesh> Meshes;
 
-        internal override void Read(BinaryReaderEx br)
+        protected override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
 

@@ -41,7 +41,10 @@ namespace SoulsFormats
             Textures = new List<Texture>();
         }
 
-        internal override bool Is(BinaryReaderEx br)
+        /// <summary>
+        /// Checks whether the data appears to be a file of this format.
+        /// </summary>
+        protected override bool Is(BinaryReaderEx br)
         {
             if (br.Length < 0x30)
                 return false;
@@ -50,7 +53,10 @@ namespace SoulsFormats
             return magic == "MTD ";
         }
 
-        internal override void Read(BinaryReaderEx br)
+        /// <summary>
+        /// Deserializes file data from a stream.
+        /// </summary>
+        protected override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
             Block.Read(br, 0, 3, 0x01); // File
@@ -94,7 +100,10 @@ namespace SoulsFormats
             }
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        /// <summary>
+        /// Serializes file data to a stream.
+        /// </summary>
+        protected override void Write(BinaryWriterEx bw)
         {
             bw.BigEndian = false;
             var fileBlock = Block.Write(bw, 0, 3, 0x01);

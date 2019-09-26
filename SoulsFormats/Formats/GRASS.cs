@@ -33,7 +33,10 @@ namespace SoulsFormats
             Faces = new List<Face>();
         }
 
-        internal override bool Is(BinaryReaderEx br)
+        /// <summary>
+        /// Checks whether the data appears to be a file of this format.
+        /// </summary>
+        protected override bool Is(BinaryReaderEx br)
         {
             if (br.Length < 0x28)
                 return false;
@@ -48,7 +51,10 @@ namespace SoulsFormats
                 && volumeSize == 0x14 && vertexSize == 0x24 && faceSize == 0x18 && boundingBoxSize == 0x18;
         }
 
-        internal override void Read(BinaryReaderEx br)
+        /// <summary>
+        /// Deserializes file data from a stream.
+        /// </summary>
+        protected override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
             br.AssertInt32(1); // Version?
@@ -78,7 +84,10 @@ namespace SoulsFormats
                 BoundingVolumeHierarchy[i].BoundingBox = new BoundingBox(br);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        /// <summary>
+        /// Serializes file data to a stream.
+        /// </summary>
+        protected override void Write(BinaryWriterEx bw)
         {
             bw.BigEndian = false;
             bw.WriteInt32(1);

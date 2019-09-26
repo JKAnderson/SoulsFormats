@@ -54,7 +54,10 @@ namespace SoulsFormats
         /// </summary>
         public Dictionary<int, Glyph> Glyphs { get; set; }
 
-        internal override void Read(BinaryReaderEx br)
+        /// <summary>
+        /// Deserializes file data from a stream.
+        /// </summary>
+        protected override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
             Version = br.ReadEnum32<CCMVer>();
@@ -142,7 +145,10 @@ namespace SoulsFormats
             }
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        /// <summary>
+        /// Serializes file data to a stream.
+        /// </summary>
+        protected override void Write(BinaryWriterEx bw)
         {
             bw.BigEndian = false;
             bw.WriteUInt32((uint)Version);

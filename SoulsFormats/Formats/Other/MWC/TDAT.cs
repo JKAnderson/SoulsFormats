@@ -12,7 +12,7 @@ namespace SoulsFormats.MWC
         public int Unk1C;
         public List<Texture> Textures;
 
-        internal override void Read(BinaryReaderEx br)
+        protected override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
             br.ReadInt32(); // File size

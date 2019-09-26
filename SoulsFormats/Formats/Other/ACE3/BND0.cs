@@ -30,7 +30,7 @@ namespace SoulsFormats.ACE3
         /// <summary>
         /// Returns true if the data appears to be a BND0.
         /// </summary>
-        internal override bool Is(BinaryReaderEx br)
+        protected override bool Is(BinaryReaderEx br)
         {
             if (br.Length < 4)
                 return false;
@@ -42,7 +42,7 @@ namespace SoulsFormats.ACE3
         /// <summary>
         /// Reads BND0 data from a BinaryReaderEx.
         /// </summary>
-        internal override void Read(BinaryReaderEx br)
+        protected override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
             br.AssertASCII("BND\0");
@@ -83,7 +83,7 @@ namespace SoulsFormats.ACE3
         /// <summary>
         /// Writes BND0 data to a BinaryWriterEx.
         /// </summary>
-        internal override void Write(BinaryWriterEx bw)
+        protected override void Write(BinaryWriterEx bw)
         {
             bw.BigEndian = false;
             bw.WriteASCII("BND\0");

@@ -49,7 +49,10 @@ namespace SoulsFormats
             Edges = new List<Edge>();
         }
 
-        internal override void Read(BinaryReaderEx br)
+        /// <summary>
+        /// Deserializes file data from a stream.
+        /// </summary>
+        protected override void Read(BinaryReaderEx br)
         {
             br.BigEndian = true;
             BigEndian = br.AssertInt32(1, 0x1000000) == 1;
@@ -121,7 +124,10 @@ namespace SoulsFormats
             return true;
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        /// <summary>
+        /// Serializes file data to a stream.
+        /// </summary>
+        protected override void Write(BinaryWriterEx bw)
         {
             bw.BigEndian = BigEndian;
             bw.WriteInt32(1);

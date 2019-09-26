@@ -66,7 +66,7 @@ namespace SoulsFormats
         /// <summary>
         /// Returns true if the data appears to be a BND4.
         /// </summary>
-        internal override bool Is(BinaryReaderEx br)
+        protected override bool Is(BinaryReaderEx br)
         {
             if (br.Length < 4)
                 return false;
@@ -78,7 +78,7 @@ namespace SoulsFormats
         /// <summary>
         /// Reads BND4 data from a BinaryReaderEx.
         /// </summary>
-        internal override void Read(BinaryReaderEx br)
+        protected override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
 
@@ -123,7 +123,7 @@ namespace SoulsFormats
         /// <summary>
         /// Writes BND4 data to a BinaryWriterEx.
         /// </summary>
-        internal override void Write(BinaryWriterEx bw)
+        protected override void Write(BinaryWriterEx bw)
         {
             bw.BigEndian = BigEndian;
 

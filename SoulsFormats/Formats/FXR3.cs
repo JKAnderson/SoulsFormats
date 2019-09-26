@@ -29,7 +29,7 @@ namespace SoulsFormats
             Section13s = new List<int>();
         }
 
-        internal override bool Is(BinaryReaderEx br)
+        protected override bool Is(BinaryReaderEx br)
         {
             if (br.Length < 8)
                 return false;
@@ -39,7 +39,7 @@ namespace SoulsFormats
             return magic == "FXR\0" && (version == 4 || version == 5);
         }
 
-        internal override void Read(BinaryReaderEx br)
+        protected override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
 
@@ -100,7 +100,7 @@ namespace SoulsFormats
             Section4Tree = new Section4(br);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        protected override void Write(BinaryWriterEx bw)
         {
             bw.WriteASCII("FXR\0");
             bw.WriteInt16(0);

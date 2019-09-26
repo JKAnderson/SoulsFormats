@@ -30,12 +30,15 @@ namespace SoulsFormats
             //public List<Tree> Trees;
         }
 
-        internal override void Read(BinaryReaderEx br)
+        /// <summary>
+        /// Deserializes file data from a stream.
+        /// </summary>
+        protected override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
 
             Entries entries = default;
-            
+
             int nextSectionOffset = (int)br.Position;
             do
             {

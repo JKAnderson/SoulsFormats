@@ -42,7 +42,7 @@ namespace SoulsFormats
         public List<Mesh> Meshes { get; set; }
         IReadOnlyList<IFlverMesh> IFlver.Meshes => Meshes;
 
-        internal override bool Is(BinaryReaderEx br)
+        protected override bool Is(BinaryReaderEx br)
         {
             if (br.Length < 0xC)
                 return false;
@@ -57,7 +57,7 @@ namespace SoulsFormats
             return magic == "FLVER\0" && version >= 0x00000 && version < 0x20000;
         }
 
-        internal override void Read(BinaryReaderEx br)
+        protected override void Read(BinaryReaderEx br)
         {
             br.AssertASCII("FLVER\0");
             BigEndian = br.AssertASCII("L\0", "B\0") == "B\0";
@@ -106,11 +106,6 @@ namespace SoulsFormats
             Meshes = new List<Mesh>(meshCount);
             for (int i = 0; i < meshCount; i++)
                 Meshes.Add(new Mesh(br, this, dataOffset));
-        }
-
-        internal override void Write(BinaryWriterEx bw)
-        {
-            throw new NotImplementedException();
         }
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }

@@ -44,7 +44,10 @@ namespace SoulsFormats
             BigEndian = Version == FMGVersion.DemonsSouls;
         }
 
-        internal override void Read(BinaryReaderEx br)
+        /// <summary>
+        /// Deserializes file data from a stream.
+        /// </summary>
+        protected override void Read(BinaryReaderEx br)
         {
             br.AssertByte(0);
             BigEndian = br.ReadBoolean();
@@ -105,7 +108,10 @@ namespace SoulsFormats
             }
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        /// <summary>
+        /// Serializes file data to a stream.
+        /// </summary>
+        protected override void Write(BinaryWriterEx bw)
         {
             bw.BigEndian = BigEndian;
             bool wide = Version == FMGVersion.DarkSouls3;

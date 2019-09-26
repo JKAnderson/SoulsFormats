@@ -34,7 +34,10 @@ namespace SoulsFormats
         /// </summary>
         public List<Entity> Entities;
 
-        internal override void Read(BinaryReaderEx br)
+        /// <summary>
+        /// Deserializes file data from a stream.
+        /// </summary>
+        protected override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
             BigEndian = br.AssertInt32(1, 0x1000000) != 1;
@@ -70,7 +73,10 @@ namespace SoulsFormats
                 Entities.Add(new Entity(br));
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        /// <summary>
+        /// Serializes file data to a stream.
+        /// </summary>
+        protected override void Write(BinaryWriterEx bw)
         {
             bw.BigEndian = BigEndian;
 

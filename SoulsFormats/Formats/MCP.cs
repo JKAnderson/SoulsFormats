@@ -32,7 +32,10 @@ namespace SoulsFormats
             Rooms = new List<Room>();
         }
 
-        internal override void Read(BinaryReaderEx br)
+        /// <summary>
+        /// Deserializes file data from a stream.
+        /// </summary>
+        protected override void Read(BinaryReaderEx br)
         {
             br.BigEndian = true;
             BigEndian = br.AssertInt32(2, 0x2000000) == 2;
@@ -74,7 +77,10 @@ namespace SoulsFormats
             return true;
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        /// <summary>
+        /// Serializes file data to a stream.
+        /// </summary>
+        protected override void Write(BinaryWriterEx bw)
         {
             bw.BigEndian = BigEndian;
             bw.WriteInt32(2);

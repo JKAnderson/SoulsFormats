@@ -47,7 +47,10 @@ namespace SoulsFormats
             PartPoses = new List<PartPose>();
         }
 
-        internal override bool Is(BinaryReaderEx br)
+        /// <summary>
+        /// Checks whether the data appears to be a file of this format.
+        /// </summary>
+        protected override bool Is(BinaryReaderEx br)
         {
             if (br.Length < 0x14)
                 return false;
@@ -58,7 +61,10 @@ namespace SoulsFormats
             return magic == "MSB " && modelVersion == 5;
         }
 
-        internal override void Read(BinaryReaderEx br)
+        /// <summary>
+        /// Deserializes file data from a stream.
+        /// </summary>
+        protected override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
             br.AssertASCII("MSB ");
@@ -96,7 +102,10 @@ namespace SoulsFormats
                 pose.GetNames(entries);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        /// <summary>
+        /// Serializes file data to a stream.
+        /// </summary>
+        protected override void Write(BinaryWriterEx bw)
         {
             Entries entries;
             entries.Models = Models.GetEntries();

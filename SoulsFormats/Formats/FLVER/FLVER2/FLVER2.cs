@@ -71,7 +71,7 @@ namespace SoulsFormats
         /// <summary>
         /// Returns true if the data appears to be a FLVER.
         /// </summary>
-        internal override bool Is(BinaryReaderEx br)
+        protected override bool Is(BinaryReaderEx br)
         {
             if (br.Length < 0xC)
                 return false;
@@ -86,7 +86,7 @@ namespace SoulsFormats
         /// <summary>
         /// Reads FLVER data from a BinaryReaderEx.
         /// </summary>
-        internal override void Read(BinaryReaderEx br)
+        protected override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
 
@@ -206,7 +206,7 @@ namespace SoulsFormats
         /// <summary>
         /// Writes FLVER data to a BinaryWriterEx.
         /// </summary>
-        internal override void Write(BinaryWriterEx bw)
+        protected override void Write(BinaryWriterEx bw)
         {
             bw.BigEndian = Header.BigEndian;
             bw.WriteASCII("FLVER\0");

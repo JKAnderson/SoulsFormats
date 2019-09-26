@@ -56,7 +56,10 @@ namespace SoulsFormats
         private BinaryReaderEx brRows;
         private Layout layout;
 
-        internal override void Read(BinaryReaderEx br)
+        /// <summary>
+        /// Deserializes file data from a stream.
+        /// </summary>
+        protected override void Read(BinaryReaderEx br)
         {
             br.Position = 0x2C;
             BigEndian = br.AssertByte(0, 0xFF) == 0xFF;
@@ -143,7 +146,10 @@ namespace SoulsFormats
                 DetectedSize = stringsOffset - Rows[0].Offset;
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        /// <summary>
+        /// Serializes file data to a stream.
+        /// </summary>
+        protected override void Write(BinaryWriterEx bw)
         {
             if (layout == null)
                 throw new InvalidOperationException("Params cannot be written without a layout.");

@@ -13,7 +13,10 @@ namespace SoulsFormats.KF4
         /// </summary>
         public List<File> Files;
 
-        internal override void Read(BinaryReaderEx br)
+        /// <summary>
+        /// Deserializes file data from a stream.
+        /// </summary>
+        protected override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
 

@@ -14,7 +14,7 @@ namespace SoulsFormats.Otogi2
         public byte[] Data3;
         public List<Texture> Textures;
 
-        internal override void Read(BinaryReaderEx br)
+        protected override void Read(BinaryReaderEx br)
         {
             br.ReadInt32(); // File size
             int offset1 = br.ReadInt32();

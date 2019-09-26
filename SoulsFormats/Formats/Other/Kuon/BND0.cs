@@ -18,7 +18,10 @@ namespace SoulsFormats.Kuon
         /// </summary>
         public int Unk04;
 
-        internal override bool Is(BinaryReaderEx br)
+        /// <summary>
+        /// Checks whether the data appears to be a file of this format.
+        /// </summary>
+        protected override bool Is(BinaryReaderEx br)
         {
             if (br.Length < 4)
                 return false;
@@ -27,7 +30,10 @@ namespace SoulsFormats.Kuon
             return magic == "BND\0";
         }
 
-        internal override void Read(BinaryReaderEx br)
+        /// <summary>
+        /// Deserializes file data from a stream.
+        /// </summary>
+        protected override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
 

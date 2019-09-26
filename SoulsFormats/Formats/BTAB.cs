@@ -13,7 +13,10 @@ namespace SoulsFormats
         /// </summary>
         public List<Entry> Entries;
 
-        internal override void Read(BinaryReaderEx br)
+        /// <summary>
+        /// Deserializes file data from a stream.
+        /// </summary>
+        protected override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
 
@@ -41,7 +44,10 @@ namespace SoulsFormats
                 Entries.Add(new Entry(br, nameStart));
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        /// <summary>
+        /// Serializes file data to a stream.
+        /// </summary>
+        protected override void Write(BinaryWriterEx bw)
         {
             bw.BigEndian = false;
 

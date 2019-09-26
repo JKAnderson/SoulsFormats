@@ -25,7 +25,7 @@ namespace SoulsFormats.Other
         public List<Material> Materials;
         public List<string> Textures;
 
-        internal override bool Is(BinaryReaderEx br)
+        protected override bool Is(BinaryReaderEx br)
         {
             if (br.Length < 4)
                 return false;
@@ -34,7 +34,7 @@ namespace SoulsFormats.Other
             return magic == "MDL ";
         }
 
-        internal override void Read(BinaryReaderEx br)
+        protected override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
 

@@ -42,7 +42,7 @@ namespace SoulsFormats
         /// <summary>
         /// Returns true if the data appears to be a TPF.
         /// </summary>
-        internal override bool Is(BinaryReaderEx br)
+        protected override bool Is(BinaryReaderEx br)
         {
             if (br.Length < 4)
                 return false;
@@ -54,7 +54,7 @@ namespace SoulsFormats
         /// <summary>
         /// Reads TPF data from a BinaryReaderEx.
         /// </summary>
-        internal override void Read(BinaryReaderEx br)
+        protected override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
             br.AssertASCII("TPF\0");
@@ -76,7 +76,7 @@ namespace SoulsFormats
         /// <summary>
         /// Writes TPF data to a BinaryWriterEx.
         /// </summary>
-        internal override void Write(BinaryWriterEx bw)
+        protected override void Write(BinaryWriterEx bw)
         {
             bw.BigEndian = Platform == TPFPlatform.Xbox360 || Platform == TPFPlatform.PS3;
             bw.WriteASCII("TPF\0");
