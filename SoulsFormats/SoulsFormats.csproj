@@ -117,6 +117,7 @@
     <Compile Include="Formats\Other\AC4\Zero3.cs" />
     <Compile Include="Formats\Other\ACE3\BND0.cs" />
     <Compile Include="Formats\FLVER\FLVER0\FLVER0.cs" />
+    <Compile Include="Formats\Other\MDL0.cs" />
     <Compile Include="Formats\Other\MDL4.cs" />
     <Compile Include="Formats\Other\KF1\MDO.cs" />
     <Compile Include="Formats\Other\KF4\DAT.cs" />
