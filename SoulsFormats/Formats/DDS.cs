@@ -14,9 +14,13 @@ namespace SoulsFormats
         public int dwPitchOrLinearSize;
         public int dwDepth;
         public int dwMipMapCount;
+        public int[] dwReserved1;
         public PIXELFORMAT ddspf;
         public DDSCAPS dwCaps;
         public DDSCAPS2 dwCaps2;
+        public int dwCaps3;
+        public int dwCaps4;
+        public int dwReserved2;
         public HEADER_DXT10 header10;
 
         public int DataOffset => ddspf.dwFourCC == "DX10" ? 0x94 : 0x80;
@@ -27,15 +31,9 @@ namespace SoulsFormats
         public DDS()
         {
             dwFlags = HEADER_FLAGS_TEXTURE;
-            dwHeight = 0;
-            dwWidth = 0;
-            dwPitchOrLinearSize = 0;
-            dwDepth = 0;
-            dwMipMapCount = 0;
+            dwReserved1 = new int[11];
             ddspf = new PIXELFORMAT();
             dwCaps = DDSCAPS.TEXTURE;
-            dwCaps2 = 0;
-            header10 = null;
         }
 
         /// <summary>
@@ -43,28 +41,23 @@ namespace SoulsFormats
         /// </summary>
         public DDS(byte[] bytes)
         {
-            BinaryReaderEx br = new BinaryReaderEx(false, bytes);
-            // dwMagic
-            br.AssertASCII("DDS ");
-            // dwSize
-            br.AssertInt32(0x7C);
+            var br = new BinaryReaderEx(false, bytes);
 
+            br.AssertASCII("DDS "); // dwMagic
+            br.AssertInt32(0x7C); // dwSize
             dwFlags = (DDSD)br.ReadUInt32();
             dwHeight = br.ReadInt32();
             dwWidth = br.ReadInt32();
             dwPitchOrLinearSize = br.ReadInt32();
             dwDepth = br.ReadInt32();
             dwMipMapCount = br.ReadInt32();
-
-            // dwReserved1
-            br.Skip(4 * 11);
-
+            dwReserved1 = br.ReadInt32s(11);
             ddspf = new PIXELFORMAT(br);
             dwCaps = (DDSCAPS)br.ReadUInt32();
             dwCaps2 = (DDSCAPS2)br.ReadUInt32();
-
-            // dwCaps3, dwCaps4, dwReserved2
-            br.Skip(4 * 3);
+            dwCaps3 = br.ReadInt32();
+            dwCaps4 = br.ReadInt32();
+            dwReserved2 = br.ReadInt32();
 
             if (ddspf.dwFourCC == "DX10")
                 header10 = new HEADER_DXT10(br);
@@ -77,26 +70,23 @@ namespace SoulsFormats
         /// </summary>
         public byte[] Write(byte[] pixelData)
         {
-            BinaryWriterEx bw = new BinaryWriterEx(false);
+            var bw = new BinaryWriterEx(false);
+
             bw.WriteASCII("DDS ");
             bw.WriteInt32(0x7C);
-
             bw.WriteUInt32((uint)dwFlags);
             bw.WriteInt32(dwHeight);
             bw.WriteInt32(dwWidth);
             bw.WriteInt32(dwPitchOrLinearSize);
             bw.WriteInt32(dwDepth);
             bw.WriteInt32(dwMipMapCount);
-
-            for (int i = 0; i < 11; i++)
-                bw.WriteInt32(0);
-
+            bw.WriteInt32s(dwReserved1);
             ddspf.Write(bw);
             bw.WriteUInt32((uint)dwCaps);
             bw.WriteUInt32((uint)dwCaps2);
-
-            for (int i = 0; i < 3; i++)
-                bw.WriteInt32(0);
+            bw.WriteInt32(dwCaps3);
+            bw.WriteInt32(dwCaps4);
+            bw.WriteInt32(dwReserved2);
 
             if (ddspf.dwFourCC == "DX10")
                 header10.Write(bw);
@@ -120,19 +110,12 @@ namespace SoulsFormats
             /// </summary>
             public PIXELFORMAT()
             {
-                dwFlags = 0;
-                dwFourCC = null;
-                dwRGBBitCount = 0;
-                dwRBitMask = 0;
-                dwGBitMask = 0;
-                dwBBitMask = 0;
-                dwABitMask = 0;
+                dwFourCC = "\0\0\0\0";
             }
 
             internal PIXELFORMAT(BinaryReaderEx br)
             {
-                // dwSize
-                br.AssertInt32(32);
+                br.AssertInt32(32); // dwSize
                 dwFlags = (DDPF)br.ReadUInt32();
                 dwFourCC = br.ReadASCII(4);
                 dwRGBBitCount = br.ReadInt32();
@@ -171,7 +154,6 @@ namespace SoulsFormats
             {
                 dxgiFormat = DXGI_FORMAT.UNKNOWN;
                 resourceDimension = DIMENSION.TEXTURE2D;
-                miscFlag = 0;
                 arraySize = 1;
                 miscFlags2 = ALPHA_MODE.UNKNOWN;
             }
