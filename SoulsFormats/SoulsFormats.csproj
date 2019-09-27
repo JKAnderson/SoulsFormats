@@ -160,7 +160,7 @@
     <Compile Include="Formats\PARAM\Enum.cs" />
     <Compile Include="Formats\PARAM\PARAM.cs" />
     <Compile Include="Formats\PARAM\PARAM.Layout.cs" />
-    <Compile Include="Formats\DDS.cs" />
+    <Compile Include="Formats\TPF\DDS.cs" />
     <Compile Include="Formats\PMDCL.cs" />
     <Compile Include="Formats\TAE3\TAE3.cs" />
     <Compile Include="Formats\TPF\Headerizer.cs" />
