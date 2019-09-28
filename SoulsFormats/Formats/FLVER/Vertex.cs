@@ -599,7 +599,7 @@ namespace SoulsFormats
                         }
                         else if (member.Type == LayoutType.Byte4A)
                         {
-                            color.WriteByteARGB(bw);
+                            color.WriteByteRGBA(bw);
                         }
                         else if (member.Type == LayoutType.Byte4C)
                         {
