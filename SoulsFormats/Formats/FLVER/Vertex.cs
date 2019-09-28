@@ -325,10 +325,12 @@ namespace SoulsFormats
                         }
                         else if (member.Type == LayoutType.Byte4A)
                         {
-                            Colors.Add(VertexColor.ReadByteARGB(br));
+                            // Definitely RGBA in DeS
+                            Colors.Add(VertexColor.ReadByteRGBA(br));
                         }
                         else if (member.Type == LayoutType.Byte4C)
                         {
+                            // Definitely RGBA in DS1
                             Colors.Add(VertexColor.ReadByteRGBA(br));
                         }
                         else
