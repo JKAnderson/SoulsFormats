@@ -12,6 +12,8 @@ namespace SoulsFormats
 
             public int BufferOffset;
 
+            public VertexBuffer() { }
+
             internal VertexBuffer(BinaryReaderEx br)
             {
                 LayoutIndex = br.ReadInt32();

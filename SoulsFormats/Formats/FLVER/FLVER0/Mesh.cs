@@ -29,6 +29,8 @@ namespace SoulsFormats
             public List<FLVER.Vertex> Vertices { get; set; }
             IReadOnlyList<FLVER.Vertex> IFlverMesh.Vertices => Vertices;
 
+            public int LayoutIndex { get; set; }
+
             internal Mesh(BinaryReaderEx br, FLVER0 flv, int dataOffset)
             {
                 Dynamic = br.ReadByte();
@@ -43,8 +45,8 @@ namespace SoulsFormats
                 Unk46 = br.ReadInt16();
                 br.ReadInt32(); // Vertex indices length
                 int vertexIndicesOffset = br.ReadInt32();
-                br.ReadInt32(); // Buffer data length
-                br.ReadInt32(); // Buffer data offset
+                int bufferDataLength = br.ReadInt32();
+                int bufferDataOffset = br.ReadInt32();
                 int vertexBuffersOffset1 = br.ReadInt32();
                 int vertexBuffersOffset2 = br.ReadInt32();
                 br.AssertInt32(0);
@@ -61,17 +63,30 @@ namespace SoulsFormats
                 }
 
                 VertexBuffer buffer;
-                br.StepIn(vertexBuffersOffset1);
+                // Stupid hack for old (version F?) flvers; for example DeS o9993.
+                if (vertexBuffersOffset1 == 0)
                 {
-                    List<VertexBuffer> vertexBuffers1 = VertexBuffer.ReadVertexBuffers(br);
-                    if (vertexBuffers1.Count == 0)
-                        throw new NotSupportedException("First vertex buffer list is expected to contain at least 1 buffer.");
-                    for (int i = 1; i < vertexBuffers1.Count; i++)
-                        if (vertexBuffers1[i].BufferLength != 0)
-                            throw new NotSupportedException("Vertex buffers after the first one in the first buffer list are expected to be empty.");
-                    buffer = vertexBuffers1[0];
+                    buffer = new VertexBuffer()
+                    {
+                        BufferLength = bufferDataLength,
+                        BufferOffset = bufferDataOffset,
+                        LayoutIndex = 0,
+                    };
                 }
-                br.StepOut();
+                else
+                {
+                    br.StepIn(vertexBuffersOffset1);
+                    {
+                        List<VertexBuffer> vertexBuffers1 = VertexBuffer.ReadVertexBuffers(br);
+                        if (vertexBuffers1.Count == 0)
+                            throw new NotSupportedException("First vertex buffer list is expected to contain at least 1 buffer.");
+                        for (int i = 1; i < vertexBuffers1.Count; i++)
+                            if (vertexBuffers1[i].BufferLength != 0)
+                                throw new NotSupportedException("Vertex buffers after the first one in the first buffer list are expected to be empty.");
+                        buffer = vertexBuffers1[0];
+                    }
+                    br.StepOut();
+                }
 
                 if (vertexBuffersOffset2 != 0)
                 {
@@ -86,7 +101,8 @@ namespace SoulsFormats
 
                 br.StepIn(dataOffset + buffer.BufferOffset);
                 {
-                    BufferLayout layout = flv.Materials[MaterialIndex].Layouts[buffer.LayoutIndex];
+                    LayoutIndex = buffer.LayoutIndex;
+                    BufferLayout layout = flv.Materials[MaterialIndex].Layouts[LayoutIndex];
 
                     float uvFactor = 1024;
                     // NB hack
