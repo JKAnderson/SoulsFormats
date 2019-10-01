@@ -751,9 +751,9 @@ namespace SoulsFormats
                 public int FogParamID { get; set; }
 
                 /// <summary>
-                /// Unknown.
+                /// ID of the value set from LightScattering : ParamEditor to use.
                 /// </summary>
-                public int Unk08 { get; set; }
+                public int LightScatteringID { get; set; }
 
                 /// <summary>
                 /// ID of the value set from Env Map:Editor to use.
@@ -772,7 +772,7 @@ namespace SoulsFormats
                 {
                     LightSetID = clone.LightSetID;
                     FogParamID = clone.FogParamID;
-                    Unk08 = clone.Unk08;
+                    LightScatteringID = clone.LightScatteringID;
                     EnvMapID = clone.EnvMapID;
                 }
 
@@ -780,7 +780,7 @@ namespace SoulsFormats
                 {
                     LightSetID = br.ReadInt32();
                     FogParamID = br.ReadInt32();
-                    Unk08 = br.ReadInt32();
+                    LightScatteringID = br.ReadInt32();
                     EnvMapID = br.ReadInt32();
                     br.AssertPattern(0x10, 0x00);
                 }
@@ -789,7 +789,7 @@ namespace SoulsFormats
                 {
                     bw.WriteInt32(LightSetID);
                     bw.WriteInt32(FogParamID);
-                    bw.WriteInt32(Unk08);
+                    bw.WriteInt32(LightScatteringID);
                     bw.WriteInt32(EnvMapID);
                     bw.WritePattern(0x10, 0x00);
                 }
@@ -799,7 +799,7 @@ namespace SoulsFormats
                 /// </summary>
                 public override string ToString()
                 {
-                    return $"{LightSetID}, {FogParamID}, {Unk08}, {EnvMapID}";
+                    return $"{LightSetID}, {FogParamID}, {LightScatteringID}, {EnvMapID}";
                 }
             }
 
