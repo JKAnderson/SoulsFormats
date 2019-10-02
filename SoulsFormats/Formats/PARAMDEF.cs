@@ -150,9 +150,17 @@ namespace SoulsFormats
             for (int i = 0; i < Fields.Count; i++)
                 Fields[i].WriteDescription(bw, this, i);
 
-            long descriptionsLength = bw.Position - descriptionsStart;
-            if (descriptionsLength % 0x10 != 0)
-                bw.WritePattern((int)(0x10 - descriptionsStart % 0x10), 0x00);
+            if (Version >= 104)
+            {
+                long descriptionsLength = bw.Position - descriptionsStart;
+                if (descriptionsLength % 0x10 != 0)
+                    bw.WritePattern((int)(0x10 - descriptionsLength % 0x10), 0x00);
+            }
+            else
+            {
+                bw.Pad(0x10);
+            }
+            bw.FillInt32("FileSize", (int)bw.Position);
         }
 
         /// <summary>
@@ -309,9 +317,9 @@ namespace SoulsFormats
             internal void Write(BinaryWriterEx bw, PARAMDEF def, int index)
             {
                 if (def.Unicode)
-                    bw.WriteFixStrW(DisplayName, 0x40);
+                    bw.WriteFixStrW(DisplayName, 0x40, (byte)(def.Version >= 104 ? 0x00 : 0x20));
                 else
-                    bw.WriteFixStr(DisplayName, 0x40);
+                    bw.WriteFixStr(DisplayName, 0x40, (byte)(def.Version >= 104 ? 0x00 : 0x20));
 
                 byte padding = (byte)(def.Version >= 201 ? 0x00 : 0x20);
                 bw.WriteFixStr(DisplayType, 8, padding);
