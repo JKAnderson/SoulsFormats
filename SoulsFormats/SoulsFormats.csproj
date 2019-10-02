@@ -157,6 +157,7 @@
     <Compile Include="Formats\Other\MWC\MDAT.cs" />
     <Compile Include="Formats\Other\MWC\TDAT.cs" />
     <Compile Include="Formats\Other\Otogi2\DAT.cs" />
+    <Compile Include="Formats\PARAMDEF.cs" />
     <Compile Include="Formats\PARAM\Enum.cs" />
     <Compile Include="Formats\PARAM\PARAM.cs" />
     <Compile Include="Formats\PARAM\PARAM.Layout.cs" />
