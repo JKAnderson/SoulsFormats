@@ -112,6 +112,7 @@
     <Compile Include="Formats\MSBS\PointParam.cs" />
     <Compile Include="Formats\MSBS\RouteParam.cs" />
     <Compile Include="Formats\MSBS\Shape.cs" />
+    <Compile Include="Formats\NGP.cs" />
     <Compile Include="Formats\NVA.cs" />
     <Compile Include="Formats\NVM.cs" />
     <Compile Include="Formats\Other\AC4\Zero3.cs" />
