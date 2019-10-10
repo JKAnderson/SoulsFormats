@@ -1,182 +1,25 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{22C664BD-877B-44DF-8ECF-2808522469A8}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SoulsFormats</RootNamespace>
-    <AssemblyName>SoulsFormats</AssemblyName>
-    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
+    <TargetFrameworks>net461;netstandard2.1</TargetFrameworks>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-    <DocumentationFile>bin\Debug\SoulsFormats.xml</DocumentationFile>
-    <LangVersion>7.3</LangVersion>
-    <NoWarn>IDE0017</NoWarn>
+  
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Copyright>Copyright © Joseph Anderson 2019</Copyright>
+    <Description>A .NET library for reading and writing FromSoftware file formats.</Description>
+    <Company>JKAnderson</Company>
+    <Authors>Joseph Anderson</Authors>
+    <RepositoryUrl></RepositoryUrl>
+    <PackageProjectUrl>https://github.com/JKAnderson/SoulsFormats</PackageProjectUrl>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-    <DocumentationFile>bin\Release\SoulsFormats.xml</DocumentationFile>
-    <LangVersion>7.3</LangVersion>
-    <NoWarn>IDE0017</NoWarn>
-  </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Numerics" />
-    <Reference Include="System.Xml" />
+
+  <ItemGroup Condition="$(TargetFramework.StartsWith('netstandard'))">
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="4.6.0" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Binder\BinderFile.cs" />
-    <Compile Include="Formats\ACB.cs" />
-    <Compile Include="Formats\BHD5.cs" />
-    <Compile Include="Binder\Binder.cs" />
-    <Compile Include="Formats\CCM.cs" />
-    <Compile Include="Formats\CLM2.cs" />
-    <Compile Include="Formats\DRB.cs" />
-    <Compile Include="Formats\EDD.cs" />
-    <Compile Include="Formats\EDGE.cs" />
-    <Compile Include="Formats\EMELD.cs" />
-    <Compile Include="Formats\EMEVD\EMEVD.cs" />
-    <Compile Include="Formats\EMEVD\Event.cs" />
-    <Compile Include="Formats\EMEVD\Parameter.cs" />
-    <Compile Include="Formats\EMEVD\Layer.cs" />
-    <Compile Include="Formats\EMEVD\Instruction.cs" />
-    <Compile Include="Formats\ESD.cs" />
-    <Compile Include="Formats\F2TR.cs" />
-    <Compile Include="Formats\FLVER\FLVER0\BufferLayout.cs" />
-    <Compile Include="Formats\FLVER\FLVER0\Mesh.cs" />
-    <Compile Include="Formats\FLVER\FLVER0\Texture.cs" />
-    <Compile Include="Formats\FLVER\FLVER0\Material.cs" />
-    <Compile Include="Formats\FLVER\FLVER0\VertexBuffer.cs" />
-    <Compile Include="Formats\FLVER\FLVER2\BufferLayout.cs" />
-    <Compile Include="Formats\FLVER\Dummy.cs" />
-    <Compile Include="Formats\FLVER\FLVER2\FaceSet.cs" />
-    <Compile Include="Formats\FLVER\FLVER2\GXList.cs" />
-    <Compile Include="Formats\FLVER\FLVER2\Material.cs" />
-    <Compile Include="Formats\FLVER\Bone.cs" />
-    <Compile Include="Formats\FLVER\FLVER2\Mesh.cs" />
-    <Compile Include="Formats\FLVER\FLVER2\SekiroUnkStruct.cs" />
-    <Compile Include="Formats\FLVER\FLVER2\Texture.cs" />
-    <Compile Include="Formats\FLVER\IFlver.cs" />
-    <Compile Include="Formats\FLVER\LayoutMember.cs" />
-    <Compile Include="Formats\FLVER\Vertex.cs" />
-    <Compile Include="Formats\FLVER\FLVER2\VertexBuffer.cs" />
-    <Compile Include="Formats\FLVER\VertexBoneIndices.cs" />
-    <Compile Include="Formats\FLVER\VertexBoneWeights.cs" />
-    <Compile Include="Formats\FLVER\VertexColor.cs" />
-    <Compile Include="Formats\GRASS.cs" />
-    <Compile Include="Formats\LUAGNL.cs" />
-    <Compile Include="Formats\LUAINFO.cs" />
-    <Compile Include="Formats\MCG.cs" />
-    <Compile Include="Formats\MCP.cs" />
-    <Compile Include="Formats\MSB1\PointParam.cs" />
-    <Compile Include="Formats\MSB1\PartsParam.cs" />
-    <Compile Include="Formats\MSB1\EventParam.cs" />
-    <Compile Include="Formats\MSB1\ModelParam.cs" />
-    <Compile Include="Formats\MSB1\MSB1.cs" />
-    <Compile Include="Formats\MSB1\Shape.cs" />
-    <Compile Include="Formats\MSB2\ModelParam.cs" />
-    <Compile Include="Formats\MSB2\MapstudioBoneName.cs" />
-    <Compile Include="Formats\MSB2\MapstudioPartsPose.cs" />
-    <Compile Include="Formats\MSB2\PointParam.cs" />
-    <Compile Include="Formats\MSB2\PartsParam.cs" />
-    <Compile Include="Formats\MSB2\LayerParam.cs" />
-    <Compile Include="Formats\MSB2\RouteParam.cs" />
-    <Compile Include="Formats\MSB2\EventParam.cs" />
-    <Compile Include="Formats\MSB2\MSB2.cs" />
-    <Compile Include="Formats\MSB2\Shape.cs" />
-    <Compile Include="Formats\MSB3\Shape.cs" />
-    <Compile Include="Formats\MSBS\EventParam.cs" />
-    <Compile Include="Formats\MSBS\ModelParam.cs" />
-    <Compile Include="Formats\MSBS\MSBS.cs" />
-    <Compile Include="Formats\MSBS\PartsParam.cs" />
-    <Compile Include="Formats\MSBS\PointParam.cs" />
-    <Compile Include="Formats\MSBS\RouteParam.cs" />
-    <Compile Include="Formats\MSBS\Shape.cs" />
-    <Compile Include="Formats\NGP.cs" />
-    <Compile Include="Formats\NVA.cs" />
-    <Compile Include="Formats\NVM.cs" />
-    <Compile Include="Formats\Other\AC4\Zero3.cs" />
-    <Compile Include="Formats\Other\ACE3\BND0.cs" />
-    <Compile Include="Formats\FLVER\FLVER0\FLVER0.cs" />
-    <Compile Include="Formats\Other\MDL0.cs" />
-    <Compile Include="Formats\Other\MDL4.cs" />
-    <Compile Include="Formats\Other\KF1\MDO.cs" />
-    <Compile Include="Formats\Other\KF4\DAT.cs" />
-    <Compile Include="Formats\Other\Kuon\DVDBND0.cs" />
-    <Compile Include="Formats\Other\Kuon\BND0.cs" />
-    <Compile Include="Formats\BTAB.cs" />
-    <Compile Include="Formats\BTL.cs" />
-    <Compile Include="Formats\BXF3.cs" />
-    <Compile Include="Formats\BXF4.cs" />
-    <Compile Include="BinaryReaderEx.cs" />
-    <Compile Include="BinaryWriterEx.cs" />
-    <Compile Include="Formats\BND3.cs" />
-    <Compile Include="Formats\BND4.cs" />
-    <Compile Include="Formats\DCX.cs" />
-    <Compile Include="Formats\ENFL.cs" />
-    <Compile Include="Formats\FLVER\FLVER2\FLVER2.cs" />
-    <Compile Include="Formats\FMG.cs" />
-    <Compile Include="Formats\FXR3.cs" />
-    <Compile Include="Formats\GPARAM.cs" />
-    <Compile Include="Formats\Other\MSBD\MSBD.cs" />
-    <Compile Include="Formats\Other\MSBD\MSBD.ModelSection.cs" />
-    <Compile Include="Formats\Other\MSBD\MSBD.PartsSection.cs" />
-    <Compile Include="Formats\MSB3\MSB3.cs" />
-    <Compile Include="Formats\MSB3\MapstudioBoneName.cs" />
-    <Compile Include="Formats\MSB3\MapstudioPartsPose.cs" />
-    <Compile Include="Formats\MSB3\PointParam.cs" />
-    <Compile Include="Formats\MSB3\RouteParam.cs" />
-    <Compile Include="Formats\MSB3\LayerParam.cs" />
-    <Compile Include="Formats\MSB3\PartsParam.cs" />
-    <Compile Include="Formats\MSB3\EventParam.cs" />
-    <Compile Include="Formats\MSB3\ModelParam.cs" />
-    <Compile Include="Formats\Other\MSBN\MSBN.cs" />
-    <Compile Include="Formats\Other\MSBN\MSBN.ModelSection.cs" />
-    <Compile Include="Formats\Other\MSBN\MSBN.PartsSection.cs" />
-    <Compile Include="Formats\MTD.cs" />
-    <Compile Include="Formats\Other\MDL.cs" />
-    <Compile Include="Formats\Other\MWC\MDAT.cs" />
-    <Compile Include="Formats\Other\MWC\TDAT.cs" />
-    <Compile Include="Formats\Other\Otogi2\DAT.cs" />
-    <Compile Include="Formats\PARAMDEF.cs" />
-    <Compile Include="Formats\PARAM\Enum.cs" />
-    <Compile Include="Formats\PARAM\PARAM.cs" />
-    <Compile Include="Formats\PARAM\PARAM.Layout.cs" />
-    <Compile Include="Formats\TPF\DDS.cs" />
-    <Compile Include="Formats\PMDCL.cs" />
-    <Compile Include="Formats\TAE3\TAE3.cs" />
-    <Compile Include="Formats\TPF\Headerizer.cs" />
-    <Compile Include="Binder\IBinder.cs" />
-    <Compile Include="Oodle26.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Formats\TPF\TPF.cs" />
-    <Compile Include="SoulsFile.cs" />
-    <Compile Include="SFUtil.cs" />
-    <Compile Include="SupportsAlphaAttribute.cs" />
+  
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
+    
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Formats\TAE3\TAE3.Event.cs" />
-  </ItemGroup>
-  <ItemGroup />
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

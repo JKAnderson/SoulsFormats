@@ -40,7 +40,7 @@ namespace SoulsFormats
 
         public static byte[] Headerize(TPF.Texture texture)
         {
-            if (Encoding.ASCII.GetString(texture.Bytes, 0, 4) == "DDS ")
+            if (SFEncoding.ASCII.GetString(texture.Bytes, 0, 4) == "DDS ")
                 return texture.Bytes;
 
             byte format = texture.Format;

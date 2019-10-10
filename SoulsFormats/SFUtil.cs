@@ -466,7 +466,7 @@ namespace SoulsFormats
             }
         }
 
-        private static byte[] ds3RegulationKey = Encoding.ASCII.GetBytes("ds3#jn/8_7(rsY9pg55GFN7VFL#+3n/)");
+        private static byte[] ds3RegulationKey = SFEncoding.ASCII.GetBytes("ds3#jn/8_7(rsY9pg55GFN7VFL#+3n/)");
 
         /// <summary>
         /// Decrypts and unpacks DS3's regulation BND4 from the specified path.

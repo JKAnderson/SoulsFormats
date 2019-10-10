@@ -12,11 +12,6 @@ namespace SoulsFormats
     /// </summary>
     public class BinaryWriterEx
     {
-        private static readonly Encoding ASCII = Encoding.ASCII;
-        private static readonly Encoding ShiftJIS = Encoding.GetEncoding("shift-jis");
-        private static readonly Encoding UTF16 = Encoding.Unicode;
-        private static readonly Encoding UTF16BE = Encoding.BigEndianUnicode;
-
         private BinaryWriter bw;
         private Stack<long> steps;
         private Dictionary<string, long> reservations;
@@ -661,7 +656,7 @@ namespace SoulsFormats
         /// </summary>
         public void WriteASCII(string text, bool terminate = false)
         {
-            WriteChars(text, ASCII, terminate);
+            WriteChars(text, SFEncoding.ASCII, terminate);
         }
 
         /// <summary>
@@ -669,7 +664,7 @@ namespace SoulsFormats
         /// </summary>
         public void WriteShiftJIS(string text, bool terminate = false)
         {
-            WriteChars(text, ShiftJIS, terminate);
+            WriteChars(text, SFEncoding.ShiftJIS, terminate);
         }
 
         /// <summary>
@@ -678,9 +673,9 @@ namespace SoulsFormats
         public void WriteUTF16(string text, bool terminate = false)
         {
             if (BigEndian)
-                WriteChars(text, UTF16BE, terminate);
+                WriteChars(text, SFEncoding.UTF16BE, terminate);
             else
-                WriteChars(text, UTF16, terminate);
+                WriteChars(text, SFEncoding.UTF16, terminate);
         }
 
         /// <summary>
@@ -692,7 +687,7 @@ namespace SoulsFormats
             for (int i = 0; i < size; i++)
                 fixstr[i] = padding;
 
-            byte[] bytes = ShiftJIS.GetBytes(text + '\0');
+            byte[] bytes = SFEncoding.ShiftJIS.GetBytes(text + '\0');
             Array.Copy(bytes, fixstr, Math.Min(size, bytes.Length));
             bw.Write(fixstr);
         }
@@ -708,9 +703,9 @@ namespace SoulsFormats
 
             byte[] bytes;
             if (BigEndian)
-                bytes = UTF16BE.GetBytes(text + '\0');
+                bytes = SFEncoding.UTF16BE.GetBytes(text + '\0');
             else
-                bytes = UTF16.GetBytes(text + '\0');
+                bytes = SFEncoding.UTF16.GetBytes(text + '\0');
             Array.Copy(bytes, fixstr, Math.Min(size, bytes.Length));
             bw.Write(fixstr);
         }

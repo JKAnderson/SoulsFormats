@@ -13,11 +13,6 @@ namespace SoulsFormats
     /// </summary>
     public class BinaryReaderEx
     {
-        private static readonly Encoding ASCII = Encoding.ASCII;
-        private static readonly Encoding ShiftJIS = Encoding.GetEncoding("shift-jis");
-        private static readonly Encoding UTF16 = Encoding.Unicode;
-        private static readonly Encoding UTF16BE = Encoding.BigEndianUnicode;
-
         private BinaryReader br;
         private Stack<long> steps;
 
@@ -862,7 +857,7 @@ namespace SoulsFormats
         /// </summary>
         public string ReadASCII()
         {
-            return ReadCharsTerminated(ASCII);
+            return ReadCharsTerminated(SFEncoding.ASCII);
         }
 
         /// <summary>
@@ -870,7 +865,7 @@ namespace SoulsFormats
         /// </summary>
         public string ReadASCII(int length)
         {
-            return ReadChars(ASCII, length);
+            return ReadChars(SFEncoding.ASCII, length);
         }
 
         /// <summary>
@@ -918,7 +913,7 @@ namespace SoulsFormats
         /// </summary>
         public string ReadShiftJIS()
         {
-            return ReadCharsTerminated(ShiftJIS);
+            return ReadCharsTerminated(SFEncoding.ShiftJIS);
         }
 
         /// <summary>
@@ -926,7 +921,7 @@ namespace SoulsFormats
         /// </summary>
         public string ReadShiftJIS(int length)
         {
-            return ReadChars(ShiftJIS, length);
+            return ReadChars(SFEncoding.ShiftJIS, length);
         }
 
         /// <summary>
@@ -966,9 +961,9 @@ namespace SoulsFormats
             }
 
             if (BigEndian)
-                return UTF16BE.GetString(bytes.ToArray());
+                return SFEncoding.UTF16BE.GetString(bytes.ToArray());
             else
-                return UTF16.GetString(bytes.ToArray());
+                return SFEncoding.UTF16.GetString(bytes.ToArray());
         }
 
         /// <summary>
@@ -994,7 +989,7 @@ namespace SoulsFormats
                 if (bytes[terminator] == 0)
                     break;
             }
-            return ShiftJIS.GetString(bytes, 0, terminator);
+            return SFEncoding.ShiftJIS.GetString(bytes, 0, terminator);
         }
 
         /// <summary>
@@ -1014,9 +1009,9 @@ namespace SoulsFormats
             }
 
             if (BigEndian)
-                return UTF16BE.GetString(bytes, 0, terminator);
+                return SFEncoding.UTF16BE.GetString(bytes, 0, terminator);
             else
-                return UTF16.GetString(bytes, 0, terminator);
+                return SFEncoding.UTF16.GetString(bytes, 0, terminator);
         }
         #endregion
 

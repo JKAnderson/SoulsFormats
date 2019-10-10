@@ -527,7 +527,7 @@ namespace SoulsFormats
 
         private static void WriteMarkedString(BinaryWriterEx bw, byte marker, string str)
         {
-            byte[] bytes = Encoding.GetEncoding("shift-jis").GetBytes(str);
+            byte[] bytes = SFEncoding.ShiftJIS.GetBytes(str);
             bw.WriteInt32(bytes.Length);
             bw.WriteBytes(bytes);
             WriteMarker(bw, marker);
