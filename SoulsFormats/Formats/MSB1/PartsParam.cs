@@ -913,7 +913,7 @@ namespace SoulsFormats
                 /// </summary>
                 public ConnectCollision() : base()
                 {
-                    MapID = new byte[4] { 12, 2, 0, 0 };
+                    MapID = new byte[4] { 10, 2, 0, 0 };
                 }
 
                 internal ConnectCollision(BinaryReaderEx br) : base(br)
@@ -936,13 +936,13 @@ namespace SoulsFormats
                 internal override void GetNames(MSB1 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    CollisionName = FindName(entries.Parts, CollisionIndex);
+                    CollisionName = FindName(msb.Parts.Collisions, CollisionIndex);
                 }
 
                 internal override void GetIndices(MSB1 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    CollisionIndex = FindIndex(entries.Parts, CollisionName);
+                    CollisionIndex = FindIndex(msb.Parts.Collisions, CollisionName);
                 }
             }
         }
