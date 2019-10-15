@@ -804,14 +804,14 @@ namespace SoulsFormats
             }
 
             /// <summary>
-            /// Unknown.
+            /// Unknown; sceneGParam Struct according to Pav.
             /// </summary>
             public class UnkStruct6
             {
                 /// <summary>
-                /// Unknown.
+                /// Unknown; 4 bytes.
                 /// </summary>
-                public int Unk3C { get; set; }
+                public sbyte[] EventIDs { get; private set; }
 
                 /// <summary>
                 /// Unknown.
@@ -821,12 +821,15 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates an UnkStruct6 with default values.
                 /// </summary>
-                public UnkStruct6() { }
+                public UnkStruct6()
+                {
+                    EventIDs = new sbyte[4];
+                }
 
                 internal UnkStruct6(BinaryReaderEx br)
                 {
                     br.AssertPattern(0x3C, 0x00);
-                    Unk3C = br.ReadInt32();
+                    EventIDs = br.ReadSBytes(4);
                     Unk40 = br.ReadSingle();
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -836,11 +839,19 @@ namespace SoulsFormats
                 internal void Write(BinaryWriterEx bw)
                 {
                     bw.WritePattern(0x3C, 0x00);
-                    bw.WriteInt32(Unk3C);
+                    bw.WriteSBytes(EventIDs);
                     bw.WriteSingle(Unk40);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
+                }
+
+                /// <summary>
+                /// Returns a string representation of the object.
+                /// </summary>
+                public override string ToString()
+                {
+                    return $"EventID[{EventIDs[0],2}][{EventIDs[1],2}][{EventIDs[2],2}][{EventIDs[3],2}] {Unk40:0.0}";
                 }
             }
 
@@ -1249,7 +1260,7 @@ namespace SoulsFormats
 
                 internal Collision(BinaryReaderEx br) : base(br)
                 {
-                    HitFilterID = br.ReadByte();
+                    HitFilterID = br.ReadByte(); // Pav says Type, did it change?
                     SoundSpaceType = br.ReadByte();
                     br.AssertInt16(0);
                     ReflectPlaneHeight = br.ReadSingle();
