@@ -208,9 +208,9 @@ namespace SoulsFormats
 
             List<Image> images = null;
             if (CompressedBPB.ContainsKey(format))
-                images = Image.ReadCompressed(bytes, width, height, imageCount, mipCount, 0x100, CompressedBPB[format]);
+                images = Image.ReadCompressed(bytes, width, height, imageCount, mipCount, 0x80, CompressedBPB[format]);
             else if (UncompressedBPP.ContainsKey(format))
-                images = Image.ReadUncompressed(bytes, width, height, imageCount, mipCount, 0x100, UncompressedBPP[format]);
+                images = Image.ReadUncompressed(bytes, width, height, imageCount, mipCount, 0x80, UncompressedBPP[format]);
 
             if (format == 10)
             {
@@ -226,7 +226,8 @@ namespace SoulsFormats
                 {
                     for (int i = 0; i < image.MipLevels.Count; i++)
                     {
-                        byte[] unswizzled = DeswizzlePS3(image.MipLevels[i], texelSize, texelWidth);
+                        byte[] swizzled = image.MipLevels[i];
+                        byte[] unswizzled = DeswizzlePS3(swizzled, texelSize, texelWidth / (int)Math.Pow(2, i));
                         if (format == 10)
                         {
                             byte[] trimmed = new byte[unswizzled.Length / 4 * 3];
@@ -250,7 +251,7 @@ namespace SoulsFormats
 
         private static int DetermineMipCount(int width, int height)
         {
-            return (int)Math.Ceiling(Math.Log(Math.Min(width, height), 2)) + 1;
+            return (int)Math.Ceiling(Math.Log(Math.Max(width, height), 2)) + 1;
         }
 
         // Black magic stolen from Insomniac Games
@@ -327,7 +328,7 @@ namespace SoulsFormats
                         int scale = (int)Math.Pow(2, j);
                         int w = width / scale;
                         int h = height / scale;
-                        int blocks = (int)Math.Ceiling(w / 4f) * (int)Math.Ceiling(h / 4f);
+                        int blocks = (int)Math.Max(1, w / 4f) * (int)Math.Max(1, h / 4f);
                         image.MipLevels.Add(br.ReadBytes(blocks * bytesPerBlock));
                     }
                     images.Add(image);
