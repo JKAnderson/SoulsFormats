@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System;
 
 namespace SoulsFormats
 {
@@ -8,148 +8,199 @@ namespace SoulsFormats
     public static class Binder
     {
         /// <summary>
-        /// All known format bytes for BND3, BXF3, BND4, or BXF4.
+        /// Flags indicating the features supported by a binder.
         /// </summary>
+        [Flags]
         public enum Format : byte
         {
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-            x00 = 0x00,
-            x06 = 0x06,
-            x0A = 0x0A,
-            x0C = 0x0C,
-            x0E = 0x0E,
-            x1C = 0x1C,
-            x20 = 0x20,
-            x22 = 0x22,
-            x24 = 0x24,
-            x26 = 0x26,
-            x2A = 0x2A,
-            x2C = 0x2C,
-            x2E = 0x2E,
-            x30 = 0x30,
-            x3E = 0x3E,
-            x40 = 0x40,
-            x54 = 0x54,
-            x60 = 0x60,
-            x64 = 0x64,
-            x67 = 0x67,
-            x70 = 0x70,
-            x74 = 0x74,
-            x80 = 0x80,
-            x91 = 0x91,
-            xA0 = 0xA0,
-            xE0 = 0xE0,
-            xE4 = 0xE4,
-            xF0 = 0xF0,
-            xF4 = 0xF4,
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
-        }
-        
-        private static HashSet<byte> forceBigEndian = new HashSet<byte>
-        {
-            0x67, 0x80, 0x91, 0xA0, 0xE0, 0xE4, 0xF0, 0xF4
-        };
+            /// <summary>
+            /// Minimal file information.
+            /// </summary>
+            None = 0,
 
-        /// <summary>
-        /// Whether the file is big endian regardless of the big endian indicator.
-        /// </summary>
-        public static bool ForceBigEndian(Format format)
-        {
-            return forceBigEndian.Contains((byte)format);
-        }
-        
-        private static HashSet<byte> hasID = new HashSet<byte>
-        {
-            0x06, 0x0A, 0x0E, 0x22, 0x26, 0x2A, 0x2E, 0x3E, 0x40, 0x54, 0x60, 0x64, 0x67, 0x70, 0x74, 0xE0, 0xE4, 0xF0, 0xF4
-        };
+            /// <summary>
+            /// File is big-endian regardless of the big-endian byte.
+            /// </summary>
+            BigEndian = 0b0000_0001,
 
-        /// <summary>
-        /// Whether files have an ID number.
-        /// </summary>
-        public static bool HasID(Format format)
-        {
-            return hasID.Contains((byte)format);
-        }
+            /// <summary>
+            /// Files have ID numbers.
+            /// </summary>
+            IDs = 0b0000_0010,
 
-        private static HashSet<byte> hasName = new HashSet<byte>
-        {
-            0x06, 0x0A, 0x0C, 0x0E, 0x1C, 0x20, 0x24, 0x26, 0x2A, 0x2C, 0x2E, 0x30, 0x3E, 0x54, 0x60, 0x64, 0x67, 0x70, 0x74, 0x91, 0xA0, 0xE0, 0xE4, 0xF0, 0xF4
-        };
+            /// <summary>
+            /// Files have name strings; Names2 may or may not be set. Perhaps the distinction is related to whether it's a full path or just the filename?
+            /// </summary>
+            Names1 = 0b0000_0100,
 
-        /// <summary>
-        /// Whether files have a name string.
-        /// </summary>
-        public static bool HasName(Format format)
-        {
-            return hasName.Contains((byte)format);
-        }
+            /// <summary>
+            /// Files have name strings; Names1 may or may not be set.
+            /// </summary>
+            Names2 = 0b0000_1000,
 
-        private static HashSet<byte> hasUncompressedSize = new HashSet<byte>
-        {
-            0x22, 0x24, 0x26, 0x2A, 0x2C, 0x2E, 0x3E, 0x54, 0x64, 0x67, 0x74, 0xE4, 0xF4
-        };
+            /// <summary>
+            /// File data offsets are 64-bit.
+            /// </summary>
+            LongOffsets = 0b0001_0000,
 
-        /// <summary>
-        /// Whether files include their uncompressed size.
-        /// </summary>
-        public static bool HasUncompressedSize(Format format)
-        {
-            return hasUncompressedSize.Contains((byte)format);
-        }
+            /// <summary>
+            /// Files may be compressed.
+            /// </summary>
+            Compression = 0b0010_0000,
 
-        private static HashSet<byte> hasLongOffsets = new HashSet<byte>
-        {
-            0x1C, 0x3E
-        };
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            Flag6 = 0b0100_0000,
 
-        /// <summary>
-        /// Whether file headers have a 64-bit offset instead of a 32-bit one.
-        /// </summary>
-        public static bool HasLongOffsets(Format format)
-        {
-            return hasLongOffsets.Contains((byte)format);
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            Flag7 = 0b1000_0000,
         }
 
         /// <summary>
-        /// Size of each file header for BND4/BXF4.
+        /// Reads a binder format byte, reversed according to the big-endian setting.
         /// </summary>
-        public static long FileHeaderSize(Format format)
+        public static Format ReadFormat(BinaryReaderEx br, bool bitBigEndian)
+        {
+            byte rawFormat = br.ReadByte();
+            bool reverse = bitBigEndian || (rawFormat & 1) != 0 && (rawFormat & 0b1000_0000) == 0;
+            return (Format)(reverse ? rawFormat : SFUtil.ReverseBits(rawFormat));
+        }
+
+        /// <summary>
+        /// Writes a binder format byte, reversed according to the big-endian setting.
+        /// </summary>
+        public static void WriteFormat(BinaryWriterEx bw, bool bitBigEndian, Format format)
+        {
+            bool reverse = bitBigEndian || ForceBigEndian(format);
+            byte rawFormat = reverse ? (byte)format : SFUtil.ReverseBits((byte)format);
+            bw.WriteByte(rawFormat);
+        }
+
+        /// <summary>
+        /// Whether the file is big-endian regardless of the big-endian byte.
+        /// </summary>
+        public static bool ForceBigEndian(Format format) => (format & Format.BigEndian) != 0;
+
+        /// <summary>
+        /// Whether the format includes file ID numbers.
+        /// </summary>
+        public static bool HasIDs(Format format) => (format & Format.IDs) != 0;
+
+        /// <summary>
+        /// Whether the format includes file names.
+        /// </summary>
+        public static bool HasNames(Format format) => (format & (Format.Names1 | Format.Names2)) != 0;
+
+        /// <summary>
+        /// Whether the format uses 64-bit data offsets.
+        /// </summary>
+        public static bool HasLongOffsets(Format format) => (format & Format.LongOffsets) != 0;
+
+        /// <summary>
+        /// Whether the format supports file compression.
+        /// </summary>
+        public static bool HasCompression(Format format) => (format & Format.Compression) != 0;
+
+        /// <summary>
+        /// Whether the format has flag 6 set.
+        /// </summary>
+        public static bool HasFlag6(Format format) => (format & Format.Flag6) != 0;
+
+        /// <summary>
+        /// Whether the format has flag 7 set.
+        /// </summary>
+        public static bool HasFlag7(Format format) => (format & Format.Flag7) != 0;
+
+        /// <summary>
+        /// Computes the size of each file header for BND4/BXF4.
+        /// </summary>
+        public static long GetBND4FileHeaderSize(Format format)
         {
             return 0x10
-                + (HasUncompressedSize(format) ? 8 : 0)
                 + (HasLongOffsets(format) ? 8 : 4)
-                + (HasID(format) ? 4 : 0)
-                + (HasName(format) ? 4 : 0)
-                + (format == Format.x20 ? 8 : 0);
+                + (HasCompression(format) ? 8 : 0)
+                + (HasIDs(format) ? 4 : 0)
+                + (HasNames(format) ? 4 : 0);
         }
 
         /// <summary>
-        /// All known file flag values.
+        /// Flags indicating features for specific files.
         /// </summary>
+        [Flags]
         public enum FileFlags : byte
         {
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-            x00 = 0x00,
-            x02 = 0x02,
-            x03 = 0x03,
-            x0A = 0x0A,
-            x40 = 0x40,
-            x50 = 0x50,
-            xC0 = 0xC0,
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
-        }
+            /// <summary>
+            /// No flags set.
+            /// </summary>
+            None = 0,
 
-        private static HashSet<byte> isCompressed = new HashSet<byte>
-        {
-            0x03, 0xC0
-        };
+            /// <summary>
+            /// File is compressed.
+            /// </summary>
+            Compressed = 0b0000_0001,
+
+            /// <summary>
+            /// Unknown; seems to be standard for all files.
+            /// </summary>
+            Flag1 = 0b0000_0010,
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            Flag2 = 0b0000_0100,
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            Flag3 = 0b0000_1000,
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            Flag4 = 0b0001_0000,
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            Flag5 = 0b0010_0000,
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            Flag6 = 0b0100_0000,
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            Flag7 = 0b1000_0000,
+        }
 
         /// <summary>
-        /// Whether a file uses integrated compression.
+        /// Reads a file flags byte, reversed according to the big-endian setting.
         /// </summary>
-        public static bool IsCompressed(FileFlags flags)
+        public static FileFlags ReadFileFlags(BinaryReaderEx br, bool bitBigEndian, Format format)
         {
-            return isCompressed.Contains((byte)flags);
+            bool reverse = bitBigEndian || ForceBigEndian(format);
+            byte rawFlags = br.ReadByte();
+            return (FileFlags)(reverse ? rawFlags : SFUtil.ReverseBits(rawFlags));
         }
+
+        /// <summary>
+        /// Writes a file flags byte, reversed according to the big-endian setting.
+        /// </summary>
+        public static void WriteFileFlags(BinaryWriterEx bw, bool bitBigEndian, Format format, FileFlags flags)
+        {
+            bool reverse = bitBigEndian || ForceBigEndian(format);
+            byte rawFlags = reverse ? (byte)flags : SFUtil.ReverseBits((byte)flags);
+            bw.WriteByte(rawFlags);
+        }
+
+        /// <summary>
+        /// Whether the file data is compressed.
+        /// </summary>
+        public static bool IsCompressed(FileFlags flags) => (flags & FileFlags.Compressed) != 0;
     }
 }

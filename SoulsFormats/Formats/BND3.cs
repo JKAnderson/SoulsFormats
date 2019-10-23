@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace SoulsFormats
 {
     /// <summary>
-    /// A general-purpose file container used in DS1, DSR, DeS, and NB. Extension: .*bnd
+    /// A general-purpose file container used before DS2. Extension: .*bnd
     /// </summary>
     public class BND3 : SoulsFile<BND3>, IBinder
     {
@@ -16,7 +16,7 @@ namespace SoulsFormats
         /// <summary>
         /// A timestamp or version number, 8 characters maximum.
         /// </summary>
-        public string Timestamp;
+        public string Version { get; set; }
 
         /// <summary>
         /// Indicates the format of the BND3.
@@ -24,19 +24,19 @@ namespace SoulsFormats
         public Binder.Format Format { get; set; }
 
         /// <summary>
-        /// Write bytes in big-endian order for PS3.
+        /// Write bytes in big-endian order for PS3/X360.
         /// </summary>
-        public bool BigEndian;
+        public bool BigEndian { get; set; }
 
         /// <summary>
         /// Unknown; usually false.
         /// </summary>
-        public bool Unk1;
+        public bool BitBigEndian { get; set; }
 
         /// <summary>
-        /// Unknown; usually 0.
+        /// Unknown; always 0 except in DeS where it's occasionally 0x80000000 (probably a byte).
         /// </summary>
-        public int Unk2;
+        public int Unk18 { get; set; }
 
         /// <summary>
         /// Creates an empty BND3 formatted for DS1.
@@ -44,15 +44,12 @@ namespace SoulsFormats
         public BND3()
         {
             Files = new List<BinderFile>();
-            Timestamp = SFUtil.DateToBinderTimestamp(DateTime.Now);
-            Format = Binder.Format.x74;
-            BigEndian = false;
-            Unk1 = false;
-            Unk2 = 0;
+            Version = SFUtil.DateToBinderTimestamp(DateTime.Now);
+            Format = Binder.Format.IDs | Binder.Format.Names1 | Binder.Format.Names2 | Binder.Format.Compression;
         }
 
         /// <summary>
-        /// Returns true if the data appears to be a BND3.
+        /// Checks whether the data appears to be a file of this format.
         /// </summary>
         protected override bool Is(BinaryReaderEx br)
         {
@@ -64,153 +61,65 @@ namespace SoulsFormats
         }
 
         /// <summary>
-        /// Reads BND3 data from a BinaryReaderEx.
+        /// Deserializes file data from a stream.
         /// </summary>
         protected override void Read(BinaryReaderEx br)
         {
-            br.BigEndian = false;
             br.AssertASCII("BND3");
-            Timestamp = br.ReadFixStr(8);
+            Version = br.ReadFixStr(8);
 
-            Format = br.ReadEnum8<Binder.Format>();
+            BitBigEndian = br.GetBoolean(0xE);
+
+            Format = Binder.ReadFormat(br, BitBigEndian);
             BigEndian = br.ReadBoolean();
-            Unk1 = br.ReadBoolean();
+            br.AssertBoolean(BitBigEndian);
             br.AssertByte(0);
 
             br.BigEndian = BigEndian || Binder.ForceBigEndian(Format);
+
             int fileCount = br.ReadInt32();
-            int fileHeadersEnd = br.ReadInt32();
-            Unk2 = br.ReadInt32();
+            br.ReadInt32(); // End of file headers, not including padding before data
+            Unk18 = br.AssertInt32(0, unchecked((int)0x80000000));
             br.AssertInt32(0);
 
             Files = new List<BinderFile>(fileCount);
             for (int i = 0; i < fileCount; i++)
             {
-                Files.Add(ReadFile(br, Format));
+                BinderFileHeader fileHeader = BinderFileHeader.ReadBinder3FileHeader(br, Format, BitBigEndian);
+                Files.Add(fileHeader.ReadFileData(br));
             }
         }
 
         /// <summary>
-        /// Writes BND3 data to a BinaryWriterEx.
+        /// Serializes file data to a stream.
         /// </summary>
         protected override void Write(BinaryWriterEx bw)
         {
-            bw.BigEndian = false;
+            bw.BigEndian = BigEndian || Binder.ForceBigEndian(Format);
+
             bw.WriteASCII("BND3");
-            bw.WriteFixStr(Timestamp, 8);
-            bw.WriteByte((byte)Format);
+            bw.WriteFixStr(Version, 8);
+
+            Binder.WriteFormat(bw, BigEndian, Format);
             bw.WriteBoolean(BigEndian);
-            bw.WriteBoolean(Unk1);
+            bw.WriteBoolean(BitBigEndian);
             bw.WriteByte(0);
 
-            bw.BigEndian = BigEndian || Binder.ForceBigEndian(Format);
             bw.WriteInt32(Files.Count);
-            bw.ReserveInt32("HeaderEnd");
-            bw.WriteInt32(Unk2);
+            bw.ReserveInt32("FileHeadersEnd");
+            bw.WriteInt32(Unk18);
             bw.WriteInt32(0);
 
             for (int i = 0; i < Files.Count; i++)
-                WriteFileHeader(Files[i], bw, i, Format);
-
-            if (Binder.HasName(Format))
-            {
-                for (int i = 0; i < Files.Count; i++)
-                    WriteFileName(Files[i], bw, i);
-            }
-
-            bw.FillInt32($"HeaderEnd", (int)bw.Position);
+                BinderFileHeader.WriteBinder3FileHeader(Files[i], bw, Format, BitBigEndian, i);
 
             for (int i = 0; i < Files.Count; i++)
-                WriteFileData(Files[i], bw, i);
-        }
+                BinderFileHeader.WriteFileName(Files[i], bw, Format, false, i);
 
-        private static BinderFile ReadFile(BinaryReaderEx br, Binder.Format format)
-        {
-            Binder.FileFlags flags = br.ReadEnum8<Binder.FileFlags>();
-            br.AssertByte(0);
-            br.AssertByte(0);
-            br.AssertByte(0);
+            bw.FillInt32($"FileHeadersEnd", (int)bw.Position);
 
-            int compressedSize = br.ReadInt32();
-            uint fileOffset = br.ReadUInt32();
-
-            int id = -1;
-            if (Binder.HasID(format))
-            {
-                id = br.ReadInt32();
-            }
-
-            string name = null;
-            if (Binder.HasName(format))
-            {
-                uint fileNameOffset = br.ReadUInt32();
-                name = br.GetShiftJIS(fileNameOffset);
-            }
-
-            if (Binder.HasUncompressedSize(format))
-            {
-                int uncompressedSize = br.ReadInt32();
-            }
-
-            byte[] bytes;
-            if (Binder.IsCompressed(flags))
-            {
-                br.StepIn(fileOffset);
-                bytes = SFUtil.ReadZlib(br, compressedSize);
-                br.StepOut();
-            }
-            else
-            {
-                bytes = br.GetBytes(fileOffset, compressedSize);
-            }
-
-            return new BinderFile(flags, id, name, bytes);
-        }
-
-        private static void WriteFileHeader(BinderFile file, BinaryWriterEx bw, int index, Binder.Format format)
-        {
-            bw.WriteByte((byte)file.Flags);
-            bw.WriteByte(0);
-            bw.WriteByte(0);
-            bw.WriteByte(0);
-
-            bw.ReserveInt32($"CompressedSize{index}");
-            bw.ReserveUInt32($"FileData{index}");
-
-            if (Binder.HasID(format))
-                bw.WriteInt32(file.ID);
-
-            if (Binder.HasName(format))
-                bw.ReserveUInt32($"FileName{index}");
-
-            if (Binder.HasUncompressedSize(format))
-                bw.WriteInt32(file.Bytes.Length);
-        }
-
-        private static void WriteFileName(BinderFile file, BinaryWriterEx bw, int index)
-        {
-            bw.FillUInt32($"FileName{index}", (uint)bw.Position);
-            bw.WriteShiftJIS(file.Name, true);
-        }
-
-        private static void WriteFileData(BinderFile file, BinaryWriterEx bw, int index)
-        {
-            if (file.Bytes.Length > 0)
-                bw.Pad(0x10);
-
-            bw.FillUInt32($"FileData{index}", (uint)bw.Position);
-
-            int compressedSize = file.Bytes.Length;
-            if (Binder.IsCompressed(file.Flags))
-            {
-                compressedSize = SFUtil.WriteZlib(bw, 0x9C, file.Bytes);
-            }
-            else
-            {
-                bw.WriteBytes(file.Bytes);
-            }
-
-            bw.FillInt32($"CompressedSize{index}", compressedSize);
+            for (int i = 0; i < Files.Count; i++)
+                BinderFileHeader.WriteBinder3FileData(Files[i], bw, Format, i);
         }
     }
 }

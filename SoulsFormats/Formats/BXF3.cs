@@ -177,12 +177,7 @@ namespace SoulsFormats
         /// <summary>
         ///A timestamp or version number, 8 characters maximum.
         /// </summary>
-        public string BHDTimestamp;
-
-        /// <summary>
-        /// A timestamp or version number, 8 characters maximum.
-        /// </summary>
-        public string BDTTimestamp;
+        public string Version { get; set; }
 
         /// <summary>
         /// Indicates the format of this BXF3.
@@ -190,14 +185,23 @@ namespace SoulsFormats
         public Binder.Format Format { get; set; }
 
         /// <summary>
+        /// Write file in big-endian mode for PS3/X360.
+        /// </summary>
+        public bool BigEndian { get; set; }
+
+        /// <summary>
+        /// Controls ordering of flag bits.
+        /// </summary>
+        public bool BitBigEndian { get; set; }
+
+        /// <summary>
         /// Creates an empty BXF3 formatted for DS1.
         /// </summary>
         public BXF3()
         {
             Files = new List<BinderFile>();
-            BHDTimestamp = SFUtil.DateToBinderTimestamp(DateTime.Now);
-            BDTTimestamp = SFUtil.DateToBinderTimestamp(DateTime.Now);
-            Format = Binder.Format.x74;
+            Version = SFUtil.DateToBinderTimestamp(DateTime.Now);
+            Format = Binder.Format.IDs | Binder.Format.Names1 | Binder.Format.Names2 | Binder.Format.Compression;
         }
 
         private static bool IsBHD(BinaryReaderEx br)
@@ -220,126 +224,74 @@ namespace SoulsFormats
 
         private BXF3(BinaryReaderEx bhdReader, BinaryReaderEx bdtReader)
         {
-            BHD3 bhd = new BHD3(bhdReader);
-            BHDTimestamp = bhd.Timestamp;
-            Format = bhd.Format;
+            ReadBDFHeader(bdtReader);
 
-            bdtReader.AssertASCII("BDF3");
-            BDTTimestamp = bdtReader.ReadFixStr(8);
-            bdtReader.AssertInt32(0);
+            bhdReader.AssertASCII("BHF3");
+            Version = bhdReader.ReadFixStr(8);
 
-            Files = new List<BinderFile>(bhd.FileHeaders.Count);
-            for (int i = 0; i < bhd.FileHeaders.Count; i++)
+            BitBigEndian = bhdReader.GetBoolean(0xE);
+
+            Format = Binder.ReadFormat(bhdReader, BitBigEndian);
+            BigEndian = bhdReader.ReadBoolean();
+            bhdReader.AssertBoolean(BitBigEndian);
+            bhdReader.AssertByte(0);
+
+            bhdReader.BigEndian = BigEndian || Binder.ForceBigEndian(Format);
+
+            int fileCount = bhdReader.ReadInt32();
+            bhdReader.AssertInt32(0);
+            bhdReader.AssertInt32(0);
+            bhdReader.AssertInt32(0);
+
+            Files = new List<BinderFile>(fileCount);
+            for (int i = 0; i < fileCount; i++)
             {
-                BHD3.FileHeader fileHeader = bhd.FileHeaders[i];
-                byte[] data = bdtReader.GetBytes(fileHeader.Offset, fileHeader.Size);
-
-                Files.Add(new BinderFile(Binder.FileFlags.x40, fileHeader.ID, fileHeader.Name, data));
+                BinderFileHeader fileHeader = BinderFileHeader.ReadBinder3FileHeader(bhdReader, Format, BitBigEndian);
+                Files.Add(fileHeader.ReadFileData(bdtReader));
             }
+        }
+
+        private void ReadBDFHeader(BinaryReaderEx br)
+        {
+            br.AssertASCII("BDF3");
+            br.ReadFixStr(8); // Version
+            br.AssertInt32(0);
         }
 
         private void Write(BinaryWriterEx bhdWriter, BinaryWriterEx bdtWriter)
         {
+            WriteBDFHeader(bdtWriter);
+
+            bhdWriter.BigEndian = BigEndian || Binder.ForceBigEndian(Format);
+
             bhdWriter.WriteASCII("BHF3");
-            bhdWriter.WriteFixStr(BHDTimestamp, 8);
-            bhdWriter.WriteByte((byte)Format);
+            bhdWriter.WriteFixStr(Version, 8);
+
+            Binder.WriteFormat(bhdWriter, BitBigEndian, Format);
             bhdWriter.WriteByte(0);
             bhdWriter.WriteByte(0);
             bhdWriter.WriteByte(0);
-            bhdWriter.BigEndian = Binder.ForceBigEndian(Format);
 
             bhdWriter.WriteInt32(Files.Count);
             bhdWriter.WriteInt32(0);
             bhdWriter.WriteInt32(0);
             bhdWriter.WriteInt32(0);
 
-            bdtWriter.WriteASCII("BDF3");
-            bdtWriter.WriteFixStr(BDTTimestamp, 8);
-            bdtWriter.WriteInt32(0);
+            for (int i = 0; i < Files.Count; i++)
+                BinderFileHeader.WriteBinder3FileHeader(Files[i], bhdWriter, Format, BitBigEndian, i);
 
             for (int i = 0; i < Files.Count; i++)
-            {
-                BinderFile file = Files[i];
-                bhdWriter.WriteByte(0x40);
-                bhdWriter.WriteByte(0);
-                bhdWriter.WriteByte(0);
-                bhdWriter.WriteByte(0);
-
-                bhdWriter.WriteInt32(file.Bytes.Length);
-                bhdWriter.WriteUInt32((uint)bdtWriter.Position);
-                bhdWriter.WriteInt32(i);
-                bhdWriter.ReserveUInt32($"FileName{i}");
-
-                if (Binder.HasUncompressedSize(Format))
-                    bhdWriter.WriteInt32(file.Bytes.Length);
-
-                bdtWriter.WriteBytes(file.Bytes);
-                bdtWriter.Pad(0x10);
-            }
+                BinderFileHeader.WriteFileName(Files[i], bhdWriter, Format, false, i);
 
             for (int i = 0; i < Files.Count; i++)
-            {
-                BinderFile file = Files[i];
-                bhdWriter.FillUInt32($"FileName{i}", (uint)bhdWriter.Position);
-                bhdWriter.WriteShiftJIS(file.Name, true);
-            }
+                BinderFileHeader.WriteBinder3FileData(Files[i], bdtWriter, Format, i);
         }
 
-        private class BHD3
+        private void WriteBDFHeader(BinaryWriterEx bw)
         {
-            public string Timestamp;
-            public List<FileHeader> FileHeaders;
-            public Binder.Format Format;
-
-            public BHD3(BinaryReaderEx br)
-            {
-                br.AssertASCII("BHF3");
-                Timestamp = br.ReadFixStr(8);
-                Format = br.ReadEnum8<Binder.Format>();
-                br.AssertByte(0);
-                br.AssertByte(0);
-                br.AssertByte(0);
-                br.BigEndian = Binder.ForceBigEndian(Format);
-
-                int fileCount = br.ReadInt32();
-                br.AssertInt32(0);
-                br.AssertInt32(0);
-                br.AssertInt32(0);
-
-                FileHeaders = new List<FileHeader>(fileCount);
-                for (int i = 0; i < fileCount; i++)
-                {
-                    FileHeaders.Add(new FileHeader(br, Format));
-                }
-            }
-
-            public class FileHeader
-            {
-                public int ID;
-                public string Name;
-                public uint Offset;
-                public int Size;
-
-                public FileHeader(BinaryReaderEx br, Binder.Format format)
-                {
-                    br.AssertByte(0x40);
-                    br.AssertByte(0);
-                    br.AssertByte(0);
-                    br.AssertByte(0);
-
-                    Size = br.ReadInt32();
-                    Offset = br.ReadUInt32();
-                    ID = br.ReadInt32();
-                    uint fileNameOffset = br.ReadUInt32();
-
-                    if (Binder.HasUncompressedSize(format))
-                    {
-                        int uncompressedSize = br.ReadInt32();
-                    }
-
-                    Name = br.GetShiftJIS(fileNameOffset);
-                }
-            }
+            bw.WriteASCII("BDF3");
+            bw.WriteFixStr(Version, 8);
+            bw.WriteInt32(0);
         }
     }
 }
