@@ -92,7 +92,7 @@
         public BinderFile ReadFileData(BinaryReaderEx br)
         {
             byte[] bytes;
-            DCX.Type compressionType = DCX.Type.Unknown;
+            DCX.Type compressionType = DCX.Type.Zlib;
             if (Binder.IsCompressed(Flags))
             {
                 bytes = br.GetBytes(DataOffset, (int)CompressedSize);
