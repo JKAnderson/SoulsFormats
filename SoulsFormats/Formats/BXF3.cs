@@ -284,7 +284,7 @@ namespace SoulsFormats
                 BinderFileHeader.WriteFileName(Files[i], bhdWriter, Format, false, i);
 
             for (int i = 0; i < Files.Count; i++)
-                BinderFileHeader.WriteBinder3FileData(Files[i], bdtWriter, Format, i);
+                BinderFileHeader.WriteBinder3FileData(Files[i], bhdWriter, bdtWriter, Format, i);
         }
 
         private void WriteBDFHeader(BinaryWriterEx bw)

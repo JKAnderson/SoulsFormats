@@ -119,7 +119,7 @@ namespace SoulsFormats
             bw.FillInt32($"FileHeadersEnd", (int)bw.Position);
 
             for (int i = 0; i < Files.Count; i++)
-                BinderFileHeader.WriteBinder3FileData(Files[i], bw, Format, i);
+                BinderFileHeader.WriteBinder3FileData(Files[i], bw, bw, Format, i);
         }
     }
 }

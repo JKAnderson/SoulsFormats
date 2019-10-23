@@ -185,7 +185,7 @@ namespace SoulsFormats
             bw.FillInt64("HeadersEnd", bw.Position);
 
             for (int i = 0; i < Files.Count; i++)
-                BinderFileHeader.WriteBinder4FileData(Files[i], bw, Format, i);
+                BinderFileHeader.WriteBinder4FileData(Files[i], bw, bw, Format, i);
         }
     }
 }

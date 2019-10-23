@@ -368,7 +368,7 @@ namespace SoulsFormats
             }
 
             for (int i = 0; i < Files.Count; i++)
-                BinderFileHeader.WriteBinder4FileData(Files[i], bdtWriter, Format, i);
+                BinderFileHeader.WriteBinder4FileData(Files[i], bhdWriter, bdtWriter, Format, i);
         }
 
         private void WriteBDFHeader(BinaryWriterEx bw)
@@ -384,7 +384,7 @@ namespace SoulsFormats
             bw.WriteBoolean(!BitBigEndian);
             bw.WriteByte(0);
             bw.WriteInt32(0);
-            bw.WriteInt32(0x30);
+            bw.WriteInt64(0x30);
             bw.WriteFixStr(Version, 8);
             bw.WriteInt64(0);
             bw.WriteInt64(0);

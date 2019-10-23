@@ -133,31 +133,31 @@
                 bw.WriteInt32(file.Bytes.Length);
         }
 
-        public static void WriteBinder3FileData(BinderFile file, BinaryWriterEx bw, Binder.Format format, int index)
+        public static void WriteBinder3FileData(BinderFile file, BinaryWriterEx bwHeader, BinaryWriterEx bwData, Binder.Format format, int index)
         {
             if (file.Bytes.Length > 0)
-                bw.Pad(0x10);
+                bwData.Pad(0x10);
 
-            long dataOffset = bw.Position;
+            long dataOffset = bwData.Position;
             int compressedSize;
             if (Binder.IsCompressed(file.Flags))
             {
                 byte[] compressed = DCX.Compress(file.Bytes, file.CompressionType);
                 compressedSize = compressed.Length;
-                bw.WriteBytes(compressed);
+                bwData.WriteBytes(compressed);
             }
             else
             {
                 compressedSize = file.Bytes.Length;
-                bw.WriteBytes(file.Bytes);
+                bwData.WriteBytes(file.Bytes);
             }
 
-            bw.FillInt32($"FileCompressedSize{index}", compressedSize);
+            bwHeader.FillInt32($"FileCompressedSize{index}", compressedSize);
 
             if (Binder.HasLongOffsets(format))
-                bw.FillInt64($"FileDataOffset{index}", dataOffset);
+                bwHeader.FillInt64($"FileDataOffset{index}", dataOffset);
             else
-                bw.FillUInt32($"FileDataOffset{index}", (uint)dataOffset);
+                bwHeader.FillUInt32($"FileDataOffset{index}", (uint)dataOffset);
         }
 
         public static void WriteBinder4FileHeader(BinderFile file, BinaryWriterEx bw, Binder.Format format, bool bitBigEndian, int index)
@@ -185,38 +185,38 @@
                 bw.ReserveInt32($"FileNameOffset{index}");
         }
 
-        public static void WriteBinder4FileData(BinderFile file, BinaryWriterEx bw, Binder.Format format, int index)
+        public static void WriteBinder4FileData(BinderFile file, BinaryWriterEx bwHeader, BinaryWriterEx bwData, Binder.Format format, int index)
         {
             if (file.Bytes.LongLength > 0)
-                bw.Pad(0x10);
+                bwData.Pad(0x10);
 
-            long dataOffset = bw.Position;
+            long dataOffset = bwData.Position;
             long compressedSize;
             if (Binder.IsCompressed(file.Flags))
             {
                 if (file.CompressionType == DCX.Type.Unknown)
                 {
-                    compressedSize = SFUtil.WriteZlib(bw, 0x9C, file.Bytes);
+                    compressedSize = SFUtil.WriteZlib(bwData, 0x9C, file.Bytes);
                 }
                 else
                 {
                     byte[] compressed = DCX.Compress(file.Bytes, file.CompressionType);
                     compressedSize = compressed.LongLength;
-                    bw.WriteBytes(compressed);
+                    bwData.WriteBytes(compressed);
                 }
             }
             else
             {
                 compressedSize = file.Bytes.LongLength;
-                bw.WriteBytes(file.Bytes);
+                bwData.WriteBytes(file.Bytes);
             }
 
-            bw.FillInt64($"FileCompressedSize{index}", compressedSize);
+            bwHeader.FillInt64($"FileCompressedSize{index}", compressedSize);
 
             if (Binder.HasLongOffsets(format))
-                bw.FillInt64($"FileDataOffset{index}", dataOffset);
+                bwHeader.FillInt64($"FileDataOffset{index}", dataOffset);
             else
-                bw.FillUInt32($"FileDataOffset{index}", (uint)dataOffset);
+                bwHeader.FillUInt32($"FileDataOffset{index}", (uint)dataOffset);
         }
 
         public static void WriteFileName(BinderFile file, BinaryWriterEx bw, Binder.Format format, bool unicode, int index)
