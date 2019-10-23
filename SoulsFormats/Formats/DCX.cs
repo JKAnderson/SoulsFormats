@@ -662,74 +662,80 @@ namespace SoulsFormats
             Zlib,
 
             /// <summary>
-            /// A multi-block format used in ACE R TPFs.
+            /// DCP header, chunked deflate compression. Used in ACE:R TPFs.
             /// </summary>
             DCP_EDGE,
 
             /// <summary>
-            /// An single-block format used for DeS debug map files.
+            /// DCP header, default compression. Used in DeS test maps.
             /// </summary>
             DCP_DFLT,
 
             /// <summary>
-            /// A multi-block format used for most DeS files.
+            /// DCX header, chunked deflate compression. Primarily used in DeS.
             /// </summary>
             DCX_EDGE,
 
             /// <summary>
-            /// The standard single-block format used in DS1, DSR, and DS2.
+            /// DCX header, deflate compression. Primarily used in DS1 and DS2.
             /// </summary>
             DCX_DFLT_10000_24_9,
 
             /// <summary>
-            /// The standard single-block format used in DS3 and BB.
+            /// DCX header, deflate compression. Primarily used in BB and DS3.
             /// </summary>
             DCX_DFLT_10000_44_9,
 
             /// <summary>
-            /// Used for the copy of the regulation stored in DS3 save files.
+            /// DCX header, deflate compression. Used for the backup regulation in DS3 save files.
             /// </summary>
             DCX_DFLT_11000_44_8,
 
             /// <summary>
-            /// Deflate format used in Sekiro.
+            /// DCX header, deflate compression. Used in Sekiro.
             /// </summary>
             DCX_DFLT_11000_44_9,
 
             /// <summary>
-            /// Oodle compression used in Sekiro.
+            /// DCX header, Oodle compression. Used in Sekiro.
             /// </summary>
             DCX_KRAK,
+        }
 
+        /// <summary>
+        /// Standard compression types used by various games; may be cast directly to DCX.Type.
+        /// </summary>
+        public enum DefaultType
+        {
             /// <summary>
             /// Most common compression format for Demon's Souls.
             /// </summary>
-            DemonsSouls = DCX_EDGE,
+            DemonsSouls = Type.DCX_EDGE,
 
             /// <summary>
             /// Most common compression format for Dark Souls 1.
             /// </summary>
-            DarkSouls1 = DCX_DFLT_10000_24_9,
+            DarkSouls1 = Type.DCX_DFLT_10000_24_9,
 
             /// <summary>
             /// Most common compression format for Dark Souls 2.
             /// </summary>
-            DarkSouls2 = DCX_DFLT_10000_24_9,
+            DarkSouls2 = Type.DCX_DFLT_10000_24_9,
 
             /// <summary>
             /// Most common compression format for Bloodborne.
             /// </summary>
-            Bloodborne = DCX_DFLT_10000_44_9,
+            Bloodborne = Type.DCX_DFLT_10000_44_9,
 
             /// <summary>
             /// Most common compression format for Dark Souls 3.
             /// </summary>
-            DarkSouls3 = DCX_DFLT_10000_44_9,
+            DarkSouls3 = Type.DCX_DFLT_10000_44_9,
 
             /// <summary>
             /// Most common compression format for Sekiro.
             /// </summary>
-            Sekiro = DCX_KRAK,
+            Sekiro = Type.DCX_KRAK,
         }
     }
 }
