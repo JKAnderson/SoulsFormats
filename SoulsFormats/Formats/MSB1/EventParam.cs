@@ -1099,15 +1099,14 @@ namespace SoulsFormats
                 public int HostEntityID { get; set; }
 
                 /// <summary>
-                /// Unknown, presumably enables the summoning.
+                /// Set when inside the event's region, unset when outside it.
                 /// </summary>
                 public int EventFlagID { get; set; }
 
                 /// <summary>
-                /// Unknown, presumably where you appear in the other world.
+                /// ID of a goods item that is used to trigger the event.
                 /// </summary>
-                public string SpawnPointName { get; set; }
-                private int SpawnPointIndex;
+                public int ActivateGoodsID { get; set; }
 
                 /// <summary>
                 /// Creates a PseudoMultiplayer with default values.
@@ -1122,7 +1121,7 @@ namespace SoulsFormats
                 {
                     HostEntityID = br.ReadInt32();
                     EventFlagID = br.ReadInt32();
-                    SpawnPointIndex = br.ReadInt32();
+                    ActivateGoodsID = br.ReadInt32();
                     br.AssertInt32(0);
                 }
 
@@ -1131,20 +1130,8 @@ namespace SoulsFormats
                     base.Write(bw, id);
                     bw.WriteInt32(HostEntityID);
                     bw.WriteInt32(EventFlagID);
-                    bw.WriteInt32(SpawnPointIndex);
+                    bw.WriteInt32(ActivateGoodsID);
                     bw.WriteInt32(0);
-                }
-
-                internal override void GetNames(MSB1 msb, Entries entries)
-                {
-                    base.GetNames(msb, entries);
-                    SpawnPointName = FindName(entries.Regions, SpawnPointIndex);
-                }
-
-                internal override void GetIndices(MSB1 msb, Entries entries)
-                {
-                    base.GetIndices(msb, entries);
-                    SpawnPointIndex = FindIndex(entries.Regions, SpawnPointName);
                 }
             }
         }
