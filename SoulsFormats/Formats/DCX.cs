@@ -14,8 +14,10 @@ namespace SoulsFormats
             if (br.Stream.Length < 4)
                 return false;
 
+            byte b0 = br.GetByte(0);
+            byte b1 = br.GetByte(1);
             string magic = br.GetASCII(0, 4);
-            return magic == "DCX\0" || magic == "DCP\0";
+            return magic == "DCP\0" || magic == "DCX\0" || b0 == 0x78 && (b1 == 0x01 || b1 == 0x5E || b1 == 0x9C || b1 == 0xDA);
         }
 
         /// <summary>
@@ -23,7 +25,7 @@ namespace SoulsFormats
         /// </summary>
         public static bool Is(byte[] bytes)
         {
-            BinaryReaderEx br = new BinaryReaderEx(true, bytes);
+            var br = new BinaryReaderEx(true, bytes);
             return Is(br);
         }
 
@@ -34,7 +36,7 @@ namespace SoulsFormats
         {
             using (FileStream stream = File.OpenRead(path))
             {
-                BinaryReaderEx br = new BinaryReaderEx(true, stream);
+                var br = new BinaryReaderEx(true, stream);
                 return Is(br);
             }
         }
@@ -86,14 +88,14 @@ namespace SoulsFormats
             string magic = br.ReadASCII(4);
             if (magic == "DCP\0")
             {
-                string format = br.GetASCII(0x4, 4);
+                string format = br.GetASCII(4, 4);
                 if (format == "DFLT")
                 {
-                    type = Type.DemonsSoulsDFLT;
+                    type = Type.DCP_DFLT;
                 }
                 else if (format == "EDGE")
                 {
-                    type = Type.ACEREDGE;
+                    type = Type.DCP_EDGE;
                 }
             }
             else if (magic == "DCX\0")
@@ -101,7 +103,7 @@ namespace SoulsFormats
                 string format = br.GetASCII(0x28, 4);
                 if (format == "EDGE")
                 {
-                    type = Type.DemonsSoulsEDGE;
+                    type = Type.DCX_EDGE;
                 }
                 else if (format == "DFLT")
                 {
@@ -110,43 +112,54 @@ namespace SoulsFormats
                     int unk30 = br.GetInt32(0x30);
                     if (unk10 == 0x24)
                     {
-                        type = Type.DarkSouls1;
+                        type = Type.DCX_DFLT_10000_24_9;
                     }
                     else if (unk10 == 0x44)
                     {
                         if (unk04 == 0x10000)
                         {
-                            type = Type.DarkSouls3;
+                            type = Type.DCX_DFLT_10000_44_9;
                         }
                         else if (unk04 == 0x11000)
                         {
                             if (unk30 == 0x8000000)
                             {
-                                type = Type.DarkSouls3SL2;
+                                type = Type.DCX_DFLT_11000_44_8;
                             }
                             else if (unk30 == 0x9000000)
                             {
-                                type = Type.SekiroDFLT;
+                                type = Type.DCX_DFLT_11000_44_9;
                             }
                         }
                     }
                 }
                 else if (format == "KRAK")
                 {
-                    type = Type.SekiroKRAK;
+                    type = Type.DCX_KRAK;
+                }
+            }
+            else
+            {
+                byte b0 = br.GetByte(0);
+                byte b1 = br.GetByte(1);
+                if (b0 == 0x78 && (b1 == 0x01 || b1 == 0x5E || b1 == 0x9C || b1 == 0xDA))
+                {
+                    type = Type.Zlib;
                 }
             }
 
             br.Position = 0;
-            if (type == Type.ACEREDGE)
+            if (type == Type.Zlib)
+                return SFUtil.ReadZlib(br, (int)br.Length);
+            else if (type == Type.DCP_EDGE)
                 return DecompressDCPEDGE(br);
-            else if (type == Type.DemonsSoulsDFLT)
+            else if (type == Type.DCP_DFLT)
                 return DecompressDCPDFLT(br);
-            else if (type == Type.DemonsSoulsEDGE)
+            else if (type == Type.DCX_EDGE)
                 return DecompressDCXEDGE(br);
-            else if (type == Type.DarkSouls1 || type == Type.DarkSouls3 || type == Type.DarkSouls3SL2 || type == Type.SekiroDFLT)
+            else if (type == Type.DCX_DFLT_10000_24_9 || type == Type.DCX_DFLT_10000_44_9 || type == Type.DCX_DFLT_11000_44_8 || type == Type.DCX_DFLT_11000_44_9)
                 return DecompressDCXDFLT(br, type);
-            else if (type == Type.SekiroKRAK)
+            else if (type == Type.DCX_KRAK)
                 return DecompressDCXKRAK(br);
             else
                 throw new FormatException("Unknown DCX format.");
@@ -311,11 +324,11 @@ namespace SoulsFormats
         {
             br.AssertASCII("DCX\0");
 
-            if (type == Type.DarkSouls1 || type == Type.DarkSouls3)
+            if (type == Type.DCX_DFLT_10000_24_9 || type == Type.DCX_DFLT_10000_44_9)
             {
                 br.AssertInt32(0x10000);
             }
-            else if (type == Type.DarkSouls3SL2 || type == Type.SekiroDFLT)
+            else if (type == Type.DCX_DFLT_11000_44_8 || type == Type.DCX_DFLT_11000_44_9)
             {
                 br.AssertInt32(0x11000);
             }
@@ -323,12 +336,12 @@ namespace SoulsFormats
             br.AssertInt32(0x18);
             br.AssertInt32(0x24);
 
-            if (type == Type.DarkSouls1)
+            if (type == Type.DCX_DFLT_10000_24_9)
             {
                 br.AssertInt32(0x24);
                 br.AssertInt32(0x2C);
             }
-            else if (type == Type.DarkSouls3 || type == Type.DarkSouls3SL2 || type == Type.SekiroDFLT)
+            else if (type == Type.DCX_DFLT_10000_44_9 || type == Type.DCX_DFLT_11000_44_8 || type == Type.DCX_DFLT_11000_44_9)
             {
                 br.AssertInt32(0x44);
                 br.AssertInt32(0x4C);
@@ -342,11 +355,11 @@ namespace SoulsFormats
             br.AssertASCII("DFLT");
             br.AssertInt32(0x20);
 
-            if (type == Type.DarkSouls1 || type == Type.DarkSouls3 || type == Type.SekiroDFLT)
+            if (type == Type.DCX_DFLT_10000_24_9 || type == Type.DCX_DFLT_10000_44_9 || type == Type.DCX_DFLT_11000_44_9)
             {
                 br.AssertInt32(0x9000000);
             }
-            else if (type == Type.DarkSouls3SL2)
+            else if (type == Type.DCX_DFLT_11000_44_8)
             {
                 br.AssertInt32(0x8000000);
             }
@@ -417,17 +430,19 @@ namespace SoulsFormats
         internal static void Compress(byte[] data, BinaryWriterEx bw, Type type)
         {
             // Some day I hope to get Oodle compression working, but not today
-            if (type == Type.SekiroKRAK)
-                type = Type.SekiroDFLT;
+            if (type == Type.DCX_KRAK)
+                type = Type.DCX_DFLT_11000_44_9;
 
             bw.BigEndian = true;
-            if (type == Type.DemonsSoulsDFLT)
+            if (type == Type.Zlib)
+                SFUtil.WriteZlib(bw, 0xDA, data);
+            else if (type == Type.DCP_DFLT)
                 CompressDCPDFLT(data, bw);
-            else if (type == Type.DemonsSoulsEDGE)
+            else if (type == Type.DCX_EDGE)
                 CompressDCXEDGE(data, bw);
-            else if (type == Type.DarkSouls1 || type == Type.DarkSouls3 || type == Type.DarkSouls3SL2 || type == Type.SekiroDFLT)
+            else if (type == Type.DCX_DFLT_10000_24_9 || type == Type.DCX_DFLT_10000_44_9 || type == Type.DCX_DFLT_11000_44_8 || type == Type.DCX_DFLT_11000_44_9)
                 CompressDCXDFLT(data, bw, type);
-            else if (type == Type.SekiroKRAK)
+            else if (type == Type.DCX_KRAK)
                 CompressDCXKRAK(data, bw);
             else if (type == Type.Unknown)
                 throw new ArgumentException("You cannot compress a DCX with an unknown type.");
@@ -548,11 +563,11 @@ namespace SoulsFormats
         {
             bw.WriteASCII("DCX\0");
 
-            if (type == Type.DarkSouls1 || type == Type.DarkSouls3)
+            if (type == Type.DCX_DFLT_10000_24_9 || type == Type.DCX_DFLT_10000_44_9)
             {
                 bw.WriteInt32(0x10000);
             }
-            else if (type == Type.DarkSouls3SL2 || type == Type.SekiroDFLT)
+            else if (type == Type.DCX_DFLT_11000_44_8 || type == Type.DCX_DFLT_11000_44_9)
             {
                 bw.WriteInt32(0x11000);
             }
@@ -560,12 +575,12 @@ namespace SoulsFormats
             bw.WriteInt32(0x18);
             bw.WriteInt32(0x24);
 
-            if (type == Type.DarkSouls1)
+            if (type == Type.DCX_DFLT_10000_24_9)
             {
                 bw.WriteInt32(0x24);
                 bw.WriteInt32(0x2C);
             }
-            else if (type == Type.DarkSouls3 || type == Type.DarkSouls3SL2 || type == Type.SekiroDFLT)
+            else if (type == Type.DCX_DFLT_10000_44_9 || type == Type.DCX_DFLT_11000_44_8 || type == Type.DCX_DFLT_11000_44_9)
             {
                 bw.WriteInt32(0x44);
                 bw.WriteInt32(0x4C);
@@ -578,21 +593,21 @@ namespace SoulsFormats
             bw.WriteASCII("DFLT");
             bw.WriteInt32(0x20);
 
-            if (type == Type.DarkSouls1 || type == Type.DarkSouls3 || type == Type.SekiroDFLT)
+            if (type == Type.DCX_DFLT_10000_24_9 || type == Type.DCX_DFLT_10000_44_9 || type == Type.DCX_DFLT_11000_44_9)
             {
                 bw.WriteInt32(0x9000000);
             }
-            else if (type == Type.DarkSouls3SL2)
+            else if (type == Type.DCX_DFLT_11000_44_8)
             {
                 bw.WriteInt32(0x8000000);
             }
 
-            bw.WriteInt32(0x0);
-            bw.WriteInt32(0x0);
-            bw.WriteInt32(0x0);
+            bw.WriteInt32(0);
+            bw.WriteInt32(0);
+            bw.WriteInt32(0);
             bw.WriteInt32(0x00010100);
             bw.WriteASCII("DCA\0");
-            bw.WriteInt32(0x8);
+            bw.WriteInt32(8);
 
             long compressedStart = bw.Position;
             SFUtil.WriteZlib(bw, 0xDA, data);
@@ -601,7 +616,7 @@ namespace SoulsFormats
 
         private static void CompressDCXKRAK(byte[] data, BinaryWriterEx bw)
         {
-            byte[] compressed = Oodle26.Compress(data, Oodle26.Codec.Kraken, Oodle26.Level.Optimal2);
+            byte[] compressed = Oodle26.Compress(data, Oodle26.Compressor.Kraken, Oodle26.CompressionLevel.Optimal2);
 
             bw.WriteASCII("DCX\0");
             bw.WriteInt32(0x11000);
@@ -627,7 +642,7 @@ namespace SoulsFormats
         }
 
         /// <summary>
-        /// Specific DCX format used for a certain file.
+        /// Specific compression format used for a certain file.
         /// </summary>
         public enum Type
         {
@@ -642,44 +657,79 @@ namespace SoulsFormats
             None,
 
             /// <summary>
+            /// Plain zlib-wrapped data; not really DCX, but it's convenient to support it here.
+            /// </summary>
+            Zlib,
+
+            /// <summary>
             /// A multi-block format used in ACE R TPFs.
             /// </summary>
-            ACEREDGE,
+            DCP_EDGE,
 
             /// <summary>
             /// An single-block format used for DeS debug map files.
             /// </summary>
-            DemonsSoulsDFLT,
+            DCP_DFLT,
 
             /// <summary>
             /// A multi-block format used for most DeS files.
             /// </summary>
-            DemonsSoulsEDGE,
+            DCX_EDGE,
 
             /// <summary>
             /// The standard single-block format used in DS1, DSR, and DS2.
             /// </summary>
-            DarkSouls1,
+            DCX_DFLT_10000_24_9,
 
             /// <summary>
             /// The standard single-block format used in DS3 and BB.
             /// </summary>
-            DarkSouls3,
+            DCX_DFLT_10000_44_9,
 
             /// <summary>
             /// Used for the copy of the regulation stored in DS3 save files.
             /// </summary>
-            DarkSouls3SL2,
+            DCX_DFLT_11000_44_8,
 
             /// <summary>
             /// Deflate format used in Sekiro.
             /// </summary>
-            SekiroDFLT,
+            DCX_DFLT_11000_44_9,
 
             /// <summary>
             /// Oodle compression used in Sekiro.
             /// </summary>
-            SekiroKRAK,
+            DCX_KRAK,
+
+            /// <summary>
+            /// Most common compression format for Demon's Souls.
+            /// </summary>
+            DemonsSouls = DCX_EDGE,
+
+            /// <summary>
+            /// Most common compression format for Dark Souls 1.
+            /// </summary>
+            DarkSouls1 = DCX_DFLT_10000_24_9,
+
+            /// <summary>
+            /// Most common compression format for Dark Souls 2.
+            /// </summary>
+            DarkSouls2 = DCX_DFLT_10000_24_9,
+
+            /// <summary>
+            /// Most common compression format for Bloodborne.
+            /// </summary>
+            Bloodborne = DCX_DFLT_10000_44_9,
+
+            /// <summary>
+            /// Most common compression format for Dark Souls 3.
+            /// </summary>
+            DarkSouls3 = DCX_DFLT_10000_44_9,
+
+            /// <summary>
+            /// Most common compression format for Sekiro.
+            /// </summary>
+            Sekiro = DCX_KRAK,
         }
     }
 }

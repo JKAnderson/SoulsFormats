@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace SoulsFormats
@@ -249,7 +250,11 @@ namespace SoulsFormats
 
                 Bytes = br.GetBytes(fileOffset, fileSize);
                 if (Flags1 == 2 || Flags1 == 3)
-                    Bytes = DCX.Decompress(Bytes);
+                {
+                    Bytes = DCX.Decompress(Bytes, out DCX.Type type);
+                    if (type != DCX.Type.DCP_EDGE)
+                        throw new NotImplementedException($"TPF compression is expected to be DCP_EDGE, but it was {type}");
+                }
 
                 if (encoding == 1)
                     Name = br.GetUTF16(nameOffset);
@@ -335,7 +340,7 @@ namespace SoulsFormats
 
                 byte[] bytes = Bytes;
                 if (Flags1 == 2 || Flags2 == 3)
-                    bytes = DCX.Compress(bytes, DCX.Type.ACEREDGE);
+                    bytes = DCX.Compress(bytes, DCX.Type.DCP_EDGE);
 
                 bw.FillInt32($"FileSize{index}", bytes.Length);
                 bw.WriteBytes(bytes);
