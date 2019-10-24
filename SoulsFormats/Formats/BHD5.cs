@@ -11,24 +11,29 @@ namespace SoulsFormats
     public class BHD5
     {
         /// <summary>
-        /// Whether the header is big-endian.
+        /// Format the file should be written in.
         /// </summary>
-        public bool BigEndian { get; }
+        public Game Format { get; set; }
 
         /// <summary>
-        /// Unknown.
+        /// Whether the header is big-endian.
         /// </summary>
-        public bool Unk05 { get; }
+        public bool BigEndian { get; set; }
+
+        /// <summary>
+        /// Unknown; possibly whether crypto is allowed? Offsets are present regardless.
+        /// </summary>
+        public bool Unk05 { get; set; }
 
         /// <summary>
         /// A salt used to calculate SHA hashes for file data.
         /// </summary>
-        public string Salt { get; }
+        public string Salt { get; set; }
 
         /// <summary>
         /// Collections of files grouped by their hash value for faster lookup.
         /// </summary>
-        public List<Bucket> Buckets { get; }
+        public List<Bucket> Buckets { get; set; }
 
         /// <summary>
         /// Read a dvdbnd header from the given stream, formatted for the given game. Must already be decrypted, if applicable.
@@ -39,8 +44,30 @@ namespace SoulsFormats
             return new BHD5(br, game);
         }
 
+        /// <summary>
+        /// Write a dvdbnd header to the given stream.
+        /// </summary>
+        public void Write(Stream bhdStream)
+        {
+            var bw = new BinaryWriterEx(false, bhdStream);
+            Write(bw);
+            bw.Finish();
+        }
+
+        /// <summary>
+        /// Creates an empty BHD5.
+        /// </summary>
+        public BHD5(Game game)
+        {
+            Format = game;
+            Salt = "";
+            Buckets = new List<Bucket>();
+        }
+
         private BHD5(BinaryReaderEx br, Game game)
         {
+            Format = game;
+
             br.AssertASCII("BHD5");
             BigEndian = br.AssertSByte(0, -1) == 0;
             br.BigEndian = BigEndian;
@@ -52,8 +79,7 @@ namespace SoulsFormats
             int bucketCount = br.ReadInt32();
             int bucketsOffset = br.ReadInt32();
 
-            Salt = null;
-            if (game == Game.DarkSouls2 || game == Game.DarkSouls3 || game == Game.Sekiro)
+            if (game >= Game.DarkSouls2)
             {
                 int saltLength = br.ReadInt32();
                 Salt = br.ReadASCII(saltLength);
@@ -64,6 +90,39 @@ namespace SoulsFormats
             Buckets = new List<Bucket>(bucketCount);
             for (int i = 0; i < bucketCount; i++)
                 Buckets.Add(new Bucket(br, game));
+        }
+
+        private void Write(BinaryWriterEx bw)
+        {
+            bw.BigEndian = BigEndian;
+            bw.WriteASCII("BHD5");
+            bw.WriteSByte((sbyte)(BigEndian ? 0 : -1));
+            bw.WriteBoolean(Unk05);
+            bw.WriteByte(0);
+            bw.WriteByte(0);
+            bw.WriteInt32(1);
+            bw.ReserveInt32("FileSize");
+            bw.WriteInt32(Buckets.Count);
+            bw.ReserveInt32("BucketsOffset");
+
+            if (Format >= Game.DarkSouls2)
+            {
+                bw.WriteInt32(Salt.Length);
+                bw.WriteASCII(Salt);
+            }
+
+            bw.FillInt32("BucketsOffset", (int)bw.Position);
+            for (int i = 0; i < Buckets.Count; i++)
+                Buckets[i].Write(bw, i);
+
+            for (int i = 0; i < Buckets.Count; i++)
+                Buckets[i].WriteFileHeaders(bw, Format, i);
+
+            for (int i = 0; i < Buckets.Count; i++)
+                for (int j = 0; j < Buckets[i].Count; j++)
+                    Buckets[i][j].WriteHashAndKey(bw, Format, i, j);
+
+            bw.FillInt32("FileSize", (int)bw.Position);
         }
 
         /// <summary>
@@ -97,10 +156,16 @@ namespace SoulsFormats
         /// </summary>
         public class Bucket : List<FileHeader>
         {
+            /// <summary>
+            /// Creates an empty Bucket.
+            /// </summary>
+            public Bucket() : base() { }
+
             internal Bucket(BinaryReaderEx br, Game game) : base()
             {
                 int fileHeaderCount = br.ReadInt32();
                 int fileHeadersOffset = br.ReadInt32();
+                Capacity = fileHeaderCount;
 
                 br.StepIn(fileHeadersOffset);
                 {
@@ -108,6 +173,19 @@ namespace SoulsFormats
                         Add(new FileHeader(br, game));
                 }
                 br.StepOut();
+            }
+
+            internal void Write(BinaryWriterEx bw, int index)
+            {
+                bw.WriteInt32(Count);
+                bw.ReserveInt32($"FileHeadersOffset{index}");
+            }
+
+            internal void WriteFileHeaders(BinaryWriterEx bw, Game game, int index)
+            {
+                bw.FillInt32($"FileHeadersOffset{index}", (int)bw.Position);
+                for (int i = 0; i < Count; i++)
+                    this[i].Write(bw, game, index, i);
             }
         }
 
@@ -119,32 +197,37 @@ namespace SoulsFormats
             /// <summary>
             /// Hash of the full file path using From's algorithm found in SFUtil.FromPathHash.
             /// </summary>
-            public uint FileNameHash { get; }
+            public uint FileNameHash { get; set; }
 
             /// <summary>
             /// Full size of the file data in the BDT.
             /// </summary>
-            public int PaddedFileSize { get; }
+            public int PaddedFileSize { get; set; }
 
             /// <summary>
             /// File size after decryption; only included in DS3.
             /// </summary>
-            public long UnpaddedFileSize { get; }
+            public long UnpaddedFileSize { get; set; }
 
             /// <summary>
             /// Beginning of file data in the BDT.
             /// </summary>
-            public long FileOffset { get; }
+            public long FileOffset { get; set; }
 
             /// <summary>
             /// Hashing information for this file.
             /// </summary>
-            public SHAHash SHAHash { get; }
+            public SHAHash SHAHash { get; set; }
 
             /// <summary>
             /// Encryption information for this file.
             /// </summary>
-            public AESKey AESKey { get; }
+            public AESKey AESKey { get; set; }
+
+            /// <summary>
+            /// Creates a FileHeader with default values.
+            /// </summary>
+            public FileHeader() { }
 
             internal FileHeader(BinaryReaderEx br, Game game)
             {
@@ -152,7 +235,7 @@ namespace SoulsFormats
                 PaddedFileSize = br.ReadInt32();
                 FileOffset = br.ReadInt64();
 
-                if (game == Game.DarkSouls2 || game == Game.DarkSouls3 || game == Game.Sekiro)
+                if (game >= Game.DarkSouls2)
                 {
                     long shaHashOffset = br.ReadInt64();
                     long aesKeyOffset = br.ReadInt64();
@@ -177,9 +260,53 @@ namespace SoulsFormats
                 }
 
                 UnpaddedFileSize = -1;
-                if (game == Game.DarkSouls3 || game == Game.Sekiro)
+                if (game >= Game.DarkSouls3)
                 {
                     UnpaddedFileSize = br.ReadInt64();
+                }
+            }
+
+            internal void Write(BinaryWriterEx bw, Game game, int bucketIndex, int fileIndex)
+            {
+                bw.WriteUInt32(FileNameHash);
+                bw.WriteInt32(PaddedFileSize);
+                bw.WriteInt64(FileOffset);
+
+                if (game >= Game.DarkSouls2)
+                {
+                    bw.ReserveInt64($"SHAHashOffset{bucketIndex}:{fileIndex}");
+                    bw.ReserveInt64($"AESKeyOffset{bucketIndex}:{fileIndex}");
+                }
+
+                if (game >= Game.DarkSouls3)
+                {
+                    bw.WriteInt64(UnpaddedFileSize);
+                }
+            }
+
+            internal void WriteHashAndKey(BinaryWriterEx bw, Game game, int bucketIndex, int fileIndex)
+            {
+                if (game >= Game.DarkSouls2)
+                {
+                    if (SHAHash == null)
+                    {
+                        bw.FillInt64($"SHAHashOffset{bucketIndex}:{fileIndex}", 0);
+                    }
+                    else
+                    {
+                        bw.FillInt64($"SHAHashOffset{bucketIndex}:{fileIndex}", bw.Position);
+                        SHAHash.Write(bw);
+                    }
+
+                    if (AESKey == null)
+                    {
+                        bw.FillInt64($"AESKeyOffset{bucketIndex}:{fileIndex}", 0);
+                    }
+                    else
+                    {
+                        bw.FillInt64($"AESKeyOffset{bucketIndex}:{fileIndex}", bw.Position);
+                        AESKey.Write(bw);
+                    }
                 }
             }
 
@@ -204,12 +331,21 @@ namespace SoulsFormats
             /// <summary>
             /// 32-byte salted SHA hash.
             /// </summary>
-            public byte[] Hash { get; }
+            public byte[] Hash { get; set; }
 
             /// <summary>
             /// Hashed sections of the file.
             /// </summary>
-            public List<Range> Ranges { get; }
+            public List<Range> Ranges { get; set; }
+
+            /// <summary>
+            /// Creates a SHAHash with default values.
+            /// </summary>
+            public SHAHash()
+            {
+                Hash = new byte[32];
+                Ranges = new List<Range>();
+            }
 
             internal SHAHash(BinaryReaderEx br)
             {
@@ -218,6 +354,17 @@ namespace SoulsFormats
                 Ranges = new List<Range>(rangeCount);
                 for (int i = 0; i < rangeCount; i++)
                     Ranges.Add(new Range(br));
+            }
+
+            internal void Write(BinaryWriterEx bw)
+            {
+                if (Hash.Length != 32)
+                    throw new InvalidDataException("SHA hash must be 32 bytes long.");
+
+                bw.WriteBytes(Hash);
+                bw.WriteInt32(Ranges.Count);
+                foreach (Range range in Ranges)
+                    range.Write(bw);
             }
         }
 
@@ -231,12 +378,21 @@ namespace SoulsFormats
             /// <summary>
             /// 16-byte encryption key.
             /// </summary>
-            public byte[] Key { get; }
+            public byte[] Key { get; set; }
 
             /// <summary>
             /// Encrypted sections of the file.
             /// </summary>
-            public List<Range> Ranges { get; }
+            public List<Range> Ranges { get; set; }
+
+            /// <summary>
+            /// Creates an AESKey with default values.
+            /// </summary>
+            public AESKey()
+            {
+                Key = new byte[16];
+                Ranges = new List<Range>();
+            }
 
             internal AESKey(BinaryReaderEx br)
             {
@@ -245,6 +401,17 @@ namespace SoulsFormats
                 Ranges = new List<Range>(rangeCount);
                 for (int i = 0; i < rangeCount; i++)
                     Ranges.Add(new Range(br));
+            }
+
+            internal void Write(BinaryWriterEx bw)
+            {
+                if (Key.Length != 16)
+                    throw new InvalidDataException("AES key must be 16 bytes long.");
+
+                bw.WriteBytes(Key);
+                bw.WriteInt32(Ranges.Count);
+                foreach (Range range in Ranges)
+                    range.Write(bw);
             }
 
             /// <summary>
@@ -272,17 +439,32 @@ namespace SoulsFormats
             /// <summary>
             /// The beginning of the range, inclusive.
             /// </summary>
-            public long StartOffset { get; }
+            public long StartOffset { get; set; }
 
             /// <summary>
             /// The end of the range, exclusive.
             /// </summary>
-            public long EndOffset { get; }
+            public long EndOffset { get; set; }
+
+            /// <summary>
+            /// Creates a Range with the given values.
+            /// </summary>
+            public Range(long startOffset, long endOffset)
+            {
+                StartOffset = startOffset;
+                EndOffset = endOffset;
+            }
 
             internal Range(BinaryReaderEx br)
             {
                 StartOffset = br.ReadInt64();
                 EndOffset = br.ReadInt64();
+            }
+
+            internal void Write(BinaryWriterEx bw)
+            {
+                bw.WriteInt64(StartOffset);
+                bw.WriteInt64(EndOffset);
             }
         }
     }
