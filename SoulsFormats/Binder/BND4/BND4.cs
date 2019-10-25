@@ -6,7 +6,7 @@ namespace SoulsFormats
     /// <summary>
     /// A general-purpose file container used since DS2. Extension: .*bnd
     /// </summary>
-    public class BND4 : SoulsFile<BND4>, IBinder
+    public class BND4 : SoulsFile<BND4>, IBinder, IBND4
     {
         /// <summary>
         /// The files contained within this BND4.
@@ -82,34 +82,42 @@ namespace SoulsFormats
         /// </summary>
         protected override void Read(BinaryReaderEx br)
         {
+            List<BinderFileHeader> fileHeaders = ReadHeader(this, br);
+            Files = new List<BinderFile>(fileHeaders.Count);
+            foreach (BinderFileHeader fileHeader in fileHeaders)
+                Files.Add(fileHeader.ReadFileData(br));
+        }
+
+        internal static List<BinderFileHeader> ReadHeader(IBND4 bnd, BinaryReaderEx br)
+        {
             br.AssertASCII("BND4");
 
-            Unk04 = br.ReadBoolean();
-            Unk05 = br.ReadBoolean();
+            bnd.Unk04 = br.ReadBoolean();
+            bnd.Unk05 = br.ReadBoolean();
             br.AssertByte(0);
             br.AssertByte(0);
 
             br.AssertByte(0);
-            BigEndian = br.ReadBoolean();
-            BitBigEndian = !br.ReadBoolean();
+            bnd.BigEndian = br.ReadBoolean();
+            bnd.BitBigEndian = !br.ReadBoolean();
             br.AssertByte(0);
 
-            br.BigEndian = BigEndian;
+            br.BigEndian = bnd.BigEndian;
 
             int fileCount = br.ReadInt32();
             br.AssertInt64(0x40); // Header size
-            Version = br.ReadFixStr(8);
+            bnd.Version = br.ReadFixStr(8);
             long fileHeaderSize = br.ReadInt64();
             br.ReadInt64(); // Headers end (includes hash table)
 
-            Unicode = br.ReadBoolean();
-            Format = Binder.ReadFormat(br, BitBigEndian);
-            Extended = br.AssertByte(0, 1, 4, 0x80);
+            bnd.Unicode = br.ReadBoolean();
+            bnd.Format = Binder.ReadFormat(br, bnd.BitBigEndian);
+            bnd.Extended = br.AssertByte(0, 1, 4, 0x80);
             br.AssertByte(0);
 
             br.AssertInt32(0);
 
-            if (Extended == 4)
+            if (bnd.Extended == 4)
             {
                 long hashTableOffset = br.ReadInt64();
                 br.StepIn(hashTableOffset);
@@ -121,15 +129,14 @@ namespace SoulsFormats
                 br.AssertInt64(0);
             }
 
-            if (fileHeaderSize != Binder.GetBND4FileHeaderSize(Format))
-                throw new FormatException($"File header size for format {Format} is expected to be 0x{Binder.GetBND4FileHeaderSize(Format):X}, but was 0x{fileHeaderSize:X}");
+            if (fileHeaderSize != Binder.GetBND4FileHeaderSize(bnd.Format))
+                throw new FormatException($"File header size for format {bnd.Format} is expected to be 0x{Binder.GetBND4FileHeaderSize(bnd.Format):X}, but was 0x{fileHeaderSize:X}");
 
-            Files = new List<BinderFile>(fileCount);
+            var fileHeaders = new List<BinderFileHeader>(fileCount);
             for (int i = 0; i < fileCount; i++)
-            {
-                BinderFileHeader fileHeader = BinderFileHeader.ReadBinder4FileHeader(br, Format, BitBigEndian, Unicode);
-                Files.Add(fileHeader.ReadFileData(br));
-            }
+                fileHeaders.Add(BinderFileHeader.ReadBinder4FileHeader(br, bnd.Format, bnd.BitBigEndian, bnd.Unicode));
+
+            return fileHeaders;
         }
 
         /// <summary>
@@ -137,45 +144,56 @@ namespace SoulsFormats
         /// </summary>
         protected override void Write(BinaryWriterEx bw)
         {
-            bw.BigEndian = BigEndian;
+            var fileHeaders = new List<BinderFileHeader>(Files.Count);
+            foreach (BinderFile file in Files)
+                fileHeaders.Add(new BinderFileHeader(file));
+
+            WriteHeader(this, bw, fileHeaders);
+            for (int i = 0; i < Files.Count; i++)
+                fileHeaders[i].WriteBinder4FileData(bw, bw, Format, i, Files[i].Bytes);
+        }
+
+        internal static void WriteHeader(IBND4 bnd, BinaryWriterEx bw, List<BinderFileHeader> fileHeaders)
+        {
+            bw.BigEndian = bnd.BigEndian;
 
             bw.WriteASCII("BND4");
 
-            bw.WriteBoolean(Unk04);
-            bw.WriteBoolean(Unk05);
+            bw.WriteBoolean(bnd.Unk04);
+            bw.WriteBoolean(bnd.Unk05);
             bw.WriteByte(0);
             bw.WriteByte(0);
 
             bw.WriteByte(0);
-            bw.WriteBoolean(BigEndian);
-            bw.WriteBoolean(!BitBigEndian);
+            bw.WriteBoolean(bnd.BigEndian);
+            bw.WriteBoolean(!bnd.BitBigEndian);
             bw.WriteByte(0);
 
-            bw.WriteInt32(Files.Count);
+            bw.WriteInt32(fileHeaders.Count);
             bw.WriteInt64(0x40);
-            bw.WriteFixStr(Version, 8);
-            bw.WriteInt64(Binder.GetBND4FileHeaderSize(Format));
+            bw.WriteFixStr(bnd.Version, 8);
+            bw.WriteInt64(Binder.GetBND4FileHeaderSize(bnd.Format));
             bw.ReserveInt64("HeadersEnd");
 
-            bw.WriteBoolean(Unicode);
-            Binder.WriteFormat(bw, BitBigEndian, Format);
-            bw.WriteByte(Extended);
+            bw.WriteBoolean(bnd.Unicode);
+            Binder.WriteFormat(bw, bnd.BitBigEndian, bnd.Format);
+            bw.WriteByte(bnd.Extended);
             bw.WriteByte(0);
 
             bw.WriteInt32(0);
             bw.ReserveInt64("HashTableOffset");
 
-            for (int i = 0; i < Files.Count; i++)
-                BinderFileHeader.WriteBinder4FileHeader(Files[i], bw, Format, BitBigEndian, i);
+            for (int i = 0; i < fileHeaders.Count; i++)
+                fileHeaders[i].WriteBinder4FileHeader(bw, bnd.Format, bnd.BitBigEndian, i);
 
-            for (int i = 0; i < Files.Count; i++)
-                BinderFileHeader.WriteFileName(Files[i], bw, Format, Unicode, i);
+            for (int i = 0; i < fileHeaders.Count; i++)
+                fileHeaders[i].WriteFileName(bw, bnd.Format, bnd.Unicode, i);
 
-            if (Extended == 4)
+            if (bnd.Extended == 4)
             {
                 bw.Pad(0x8);
                 bw.FillInt64("HashTableOffset", bw.Position);
-                BinderHashTable.Write(bw, Files);
+                BinderHashTable.Write(bw, fileHeaders);
             }
             else
             {
@@ -183,9 +201,6 @@ namespace SoulsFormats
             }
 
             bw.FillInt64("HeadersEnd", bw.Position);
-
-            for (int i = 0; i < Files.Count; i++)
-                BinderFileHeader.WriteBinder4FileData(Files[i], bw, bw, Format, i);
         }
     }
 }

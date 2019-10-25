@@ -1,27 +1,44 @@
-﻿namespace SoulsFormats
+﻿using static SoulsFormats.Binder;
+
+namespace SoulsFormats
 {
     internal class BinderFileHeader
     {
-        public Binder.FileFlags Flags;
-        public long CompressedSize;
-        public long DataOffset;
-        public int ID;
-        public string Name;
-        public long UncompressedSize;
+        public FileFlags Flags { get; set; }
 
-        private BinderFileHeader(Binder.FileFlags flags, long compressedSize, long dataOffset, int id, string name, long uncompressedSize)
+        public int ID { get; set; }
+
+        public string Name { get; set; }
+
+        public DCX.Type CompressionType { get; set; }
+
+        internal long CompressedSize;
+        internal long UncompressedSize;
+        internal long DataOffset;
+
+        public BinderFileHeader(int id, string name) : this(FileFlags.Flag1, id, name) { }
+
+        public BinderFileHeader(FileFlags flags, int id, string name) : this(flags, id, name, -1, -1, -1) { }
+
+        internal BinderFileHeader(BinderFile file) : this(file.Flags, file.ID, file.Name, -1, -1, -1)
         {
-            Flags = flags;
-            CompressedSize = compressedSize;
-            DataOffset = dataOffset;
-            ID = id;
-            Name = name;
-            UncompressedSize = uncompressedSize;
+            CompressionType = file.CompressionType;
         }
 
-        public static BinderFileHeader ReadBinder3FileHeader(BinaryReaderEx br, Binder.Format format, bool bitBigEndian)
+        private BinderFileHeader(FileFlags flags, int id, string name, long compressedSize, long uncompressedSize, long dataOffset)
         {
-            Binder.FileFlags flags = Binder.ReadFileFlags(br, bitBigEndian, format);
+            Flags = flags;
+            ID = id;
+            Name = name;
+            CompressionType = DCX.Type.Zlib;
+            CompressedSize = compressedSize;
+            UncompressedSize = uncompressedSize;
+            DataOffset = dataOffset;
+        }
+
+        internal static BinderFileHeader ReadBinder3FileHeader(BinaryReaderEx br, Format format, bool bitBigEndian)
+        {
+            FileFlags flags = ReadFileFlags(br, bitBigEndian, format);
             br.AssertByte(0);
             br.AssertByte(0);
             br.AssertByte(0);
@@ -29,32 +46,32 @@
             int compressedSize = br.ReadInt32();
 
             long dataOffset;
-            if (Binder.HasLongOffsets(format))
+            if (HasLongOffsets(format))
                 dataOffset = br.ReadInt64();
             else
                 dataOffset = br.ReadUInt32();
 
             int id = -1;
-            if (Binder.HasIDs(format))
+            if (HasIDs(format))
                 id = br.ReadInt32();
 
             string name = null;
-            if (Binder.HasNames(format))
+            if (HasNames(format))
             {
                 int nameOffset = br.ReadInt32();
                 name = br.GetShiftJIS(nameOffset);
             }
 
             int uncompressedSize = -1;
-            if (Binder.HasCompression(format))
+            if (HasCompression(format))
                 uncompressedSize = br.ReadInt32();
 
-            return new BinderFileHeader(flags, compressedSize, dataOffset, id, name, uncompressedSize);
+            return new BinderFileHeader(flags, id, name, compressedSize, uncompressedSize, dataOffset);
         }
 
-        public static BinderFileHeader ReadBinder4FileHeader(BinaryReaderEx br, Binder.Format format, bool bitBigEndian, bool unicode)
+        internal static BinderFileHeader ReadBinder4FileHeader(BinaryReaderEx br, Format format, bool bitBigEndian, bool unicode)
         {
-            Binder.FileFlags flags = Binder.ReadFileFlags(br, bitBigEndian, format);
+            FileFlags flags = ReadFileFlags(br, bitBigEndian, format);
             br.AssertByte(0);
             br.AssertByte(0);
             br.AssertByte(0);
@@ -63,21 +80,21 @@
             long compressedSize = br.ReadInt64();
 
             long uncompressedSize = -1;
-            if (Binder.HasCompression(format))
+            if (HasCompression(format))
                 uncompressedSize = br.ReadInt64();
 
             long dataOffset;
-            if (Binder.HasLongOffsets(format))
+            if (HasLongOffsets(format))
                 dataOffset = br.ReadInt64();
             else
                 dataOffset = br.ReadUInt32();
 
             int id = -1;
-            if (Binder.HasIDs(format))
+            if (HasIDs(format))
                 id = br.ReadInt32();
 
             string name = null;
-            if (Binder.HasNames(format))
+            if (HasNames(format))
             {
                 uint nameOffset = br.ReadUInt32();
                 if (unicode)
@@ -86,14 +103,14 @@
                     name = br.GetShiftJIS(nameOffset);
             }
 
-            return new BinderFileHeader(flags, compressedSize, dataOffset, id, name, uncompressedSize);
+            return new BinderFileHeader(flags, id, name, compressedSize, uncompressedSize, dataOffset);
         }
 
-        public BinderFile ReadFileData(BinaryReaderEx br)
+        internal BinderFile ReadFileData(BinaryReaderEx br)
         {
             byte[] bytes;
             DCX.Type compressionType = DCX.Type.Zlib;
-            if (Binder.IsCompressed(Flags))
+            if (IsCompressed(Flags))
             {
                 bytes = br.GetBytes(DataOffset, (int)CompressedSize);
                 bytes = DCX.Decompress(bytes, out compressionType);
@@ -109,60 +126,33 @@
             };
         }
 
-        public static void WriteBinder3FileHeader(BinderFile file, BinaryWriterEx bw, Binder.Format format, bool bitBigEndian, int index)
+        internal void WriteBinder3FileHeader(BinaryWriterEx bw, Format format, bool bitBigEndian, int index)
         {
-            Binder.WriteFileFlags(bw, bitBigEndian, format, file.Flags);
+            WriteFileFlags(bw, bitBigEndian, format, Flags);
             bw.WriteByte(0);
             bw.WriteByte(0);
             bw.WriteByte(0);
 
             bw.ReserveInt32($"FileCompressedSize{index}");
 
-            if (Binder.HasLongOffsets(format))
+            if (HasLongOffsets(format))
                 bw.ReserveInt64($"FileDataOffset{index}");
             else
                 bw.ReserveUInt32($"FileDataOffset{index}");
 
-            if (Binder.HasIDs(format))
-                bw.WriteInt32(file.ID);
+            if (HasIDs(format))
+                bw.WriteInt32(ID);
 
-            if (Binder.HasNames(format))
+            if (HasNames(format))
                 bw.ReserveInt32($"FileNameOffset{index}");
 
-            if (Binder.HasCompression(format))
-                bw.WriteInt32(file.Bytes.Length);
+            if (HasCompression(format))
+                bw.ReserveInt32($"FileUncompressedSize{index}");
         }
 
-        public static void WriteBinder3FileData(BinderFile file, BinaryWriterEx bwHeader, BinaryWriterEx bwData, Binder.Format format, int index)
+        internal void WriteBinder4FileHeader(BinaryWriterEx bw, Format format, bool bitBigEndian, int index)
         {
-            if (file.Bytes.Length > 0)
-                bwData.Pad(0x10);
-
-            long dataOffset = bwData.Position;
-            int compressedSize;
-            if (Binder.IsCompressed(file.Flags))
-            {
-                byte[] compressed = DCX.Compress(file.Bytes, file.CompressionType);
-                compressedSize = compressed.Length;
-                bwData.WriteBytes(compressed);
-            }
-            else
-            {
-                compressedSize = file.Bytes.Length;
-                bwData.WriteBytes(file.Bytes);
-            }
-
-            bwHeader.FillInt32($"FileCompressedSize{index}", compressedSize);
-
-            if (Binder.HasLongOffsets(format))
-                bwHeader.FillInt64($"FileDataOffset{index}", dataOffset);
-            else
-                bwHeader.FillUInt32($"FileDataOffset{index}", (uint)dataOffset);
-        }
-
-        public static void WriteBinder4FileHeader(BinderFile file, BinaryWriterEx bw, Binder.Format format, bool bitBigEndian, int index)
-        {
-            Binder.WriteFileFlags(bw, bitBigEndian, format, file.Flags);
+            WriteFileFlags(bw, bitBigEndian, format, Flags);
             bw.WriteByte(0);
             bw.WriteByte(0);
             bw.WriteByte(0);
@@ -170,64 +160,80 @@
 
             bw.ReserveInt64($"FileCompressedSize{index}");
 
-            if (Binder.HasCompression(format))
-                bw.WriteInt64(file.Bytes.LongLength);
+            if (HasCompression(format))
+                bw.ReserveInt64($"FileUncompressedSize{index}");
 
-            if (Binder.HasLongOffsets(format))
+            if (HasLongOffsets(format))
                 bw.ReserveInt64($"FileDataOffset{index}");
             else
                 bw.ReserveUInt32($"FileDataOffset{index}");
 
-            if (Binder.HasIDs(format))
-                bw.WriteInt32(file.ID);
+            if (HasIDs(format))
+                bw.WriteInt32(ID);
 
-            if (Binder.HasNames(format))
+            if (HasNames(format))
                 bw.ReserveInt32($"FileNameOffset{index}");
         }
 
-        public static void WriteBinder4FileData(BinderFile file, BinaryWriterEx bwHeader, BinaryWriterEx bwData, Binder.Format format, int index)
+        private void WriteFileData(BinaryWriterEx bw, byte[] bytes)
         {
-            if (file.Bytes.LongLength > 0)
-                bwData.Pad(0x10);
+            if (bytes.LongLength > 0)
+                bw.Pad(0x10);
 
-            long dataOffset = bwData.Position;
-            long compressedSize;
-            if (Binder.IsCompressed(file.Flags))
+            DataOffset = bw.Position;
+            UncompressedSize = bytes.LongLength;
+            if (IsCompressed(Flags))
             {
-                if (file.CompressionType == DCX.Type.Unknown)
-                {
-                    compressedSize = SFUtil.WriteZlib(bwData, 0x9C, file.Bytes);
-                }
-                else
-                {
-                    byte[] compressed = DCX.Compress(file.Bytes, file.CompressionType);
-                    compressedSize = compressed.LongLength;
-                    bwData.WriteBytes(compressed);
-                }
+                byte[] compressed = DCX.Compress(bytes, CompressionType);
+                CompressedSize = compressed.LongLength;
+                bw.WriteBytes(compressed);
             }
             else
             {
-                compressedSize = file.Bytes.LongLength;
-                bwData.WriteBytes(file.Bytes);
+                CompressedSize = bytes.LongLength;
+                bw.WriteBytes(bytes);
             }
-
-            bwHeader.FillInt64($"FileCompressedSize{index}", compressedSize);
-
-            if (Binder.HasLongOffsets(format))
-                bwHeader.FillInt64($"FileDataOffset{index}", dataOffset);
-            else
-                bwHeader.FillUInt32($"FileDataOffset{index}", (uint)dataOffset);
         }
 
-        public static void WriteFileName(BinderFile file, BinaryWriterEx bw, Binder.Format format, bool unicode, int index)
+        internal void WriteBinder3FileData(BinaryWriterEx bwHeader, BinaryWriterEx bwData, Format format, int index, byte[] bytes)
         {
-            if (Binder.HasNames(format))
+            WriteFileData(bwData, bytes);
+
+            bwHeader.FillInt32($"FileCompressedSize{index}", (int)CompressedSize);
+
+            if (HasCompression(format))
+                bwHeader.FillInt32($"FileUncompressedSize{index}", (int)UncompressedSize);
+
+            if (HasLongOffsets(format))
+                bwHeader.FillInt64($"FileDataOffset{index}", DataOffset);
+            else
+                bwHeader.FillUInt32($"FileDataOffset{index}", (uint)DataOffset);
+        }
+
+        internal void WriteBinder4FileData(BinaryWriterEx bwHeader, BinaryWriterEx bwData, Format format, int index, byte[] bytes)
+        {
+            WriteFileData(bwData, bytes);
+
+            bwHeader.FillInt64($"FileCompressedSize{index}", CompressedSize);
+
+            if (HasCompression(format))
+                bwHeader.FillInt64($"FileUncompressedSize{index}", UncompressedSize);
+
+            if (HasLongOffsets(format))
+                bwHeader.FillInt64($"FileDataOffset{index}", DataOffset);
+            else
+                bwHeader.FillUInt32($"FileDataOffset{index}", (uint)DataOffset);
+        }
+
+        internal void WriteFileName(BinaryWriterEx bw, Format format, bool unicode, int index)
+        {
+            if (HasNames(format))
             {
                 bw.FillInt32($"FileNameOffset{index}", (int)bw.Position);
                 if (unicode)
-                    bw.WriteUTF16(file.Name, true);
+                    bw.WriteUTF16(Name, true);
                 else
-                    bw.WriteShiftJIS(file.Name, true);
+                    bw.WriteShiftJIS(Name, true);
             }
         }
     }

@@ -16,7 +16,7 @@ namespace SoulsFormats
             // Don't actually care about the hashes, I just like asserting
         }
 
-        public static void Write(BinaryWriterEx bw, List<BinderFile> files)
+        public static void Write(BinaryWriterEx bw, List<BinderFileHeader> files)
         {
             uint groupCount = 0;
             for (uint p = (uint)files.Count / 7; p <= 100000; p++)

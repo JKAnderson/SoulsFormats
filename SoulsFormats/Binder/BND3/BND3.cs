@@ -6,7 +6,7 @@ namespace SoulsFormats
     /// <summary>
     /// A general-purpose file container used before DS2. Extension: .*bnd
     /// </summary>
-    public class BND3 : SoulsFile<BND3>, IBinder
+    public class BND3 : SoulsFile<BND3>, IBinder, IBND3
     {
         /// <summary>
         /// The files contained within this BND3.
@@ -65,29 +65,36 @@ namespace SoulsFormats
         /// </summary>
         protected override void Read(BinaryReaderEx br)
         {
+            List<BinderFileHeader> fileHeaders = ReadHeader(this, br);
+            Files = new List<BinderFile>(fileHeaders.Count);
+            foreach (BinderFileHeader fileHeader in fileHeaders)
+                Files.Add(fileHeader.ReadFileData(br));
+        }
+
+        internal static List<BinderFileHeader> ReadHeader(IBND3 bnd, BinaryReaderEx br)
+        {
             br.AssertASCII("BND3");
-            Version = br.ReadFixStr(8);
+            bnd.Version = br.ReadFixStr(8);
 
-            BitBigEndian = br.GetBoolean(0xE);
+            bnd.BitBigEndian = br.GetBoolean(0xE);
 
-            Format = Binder.ReadFormat(br, BitBigEndian);
-            BigEndian = br.ReadBoolean();
-            br.AssertBoolean(BitBigEndian);
+            bnd.Format = Binder.ReadFormat(br, bnd.BitBigEndian);
+            bnd.BigEndian = br.ReadBoolean();
+            br.AssertBoolean(bnd.BitBigEndian);
             br.AssertByte(0);
 
-            br.BigEndian = BigEndian || Binder.ForceBigEndian(Format);
+            br.BigEndian = bnd.BigEndian || Binder.ForceBigEndian(bnd.Format);
 
             int fileCount = br.ReadInt32();
             br.ReadInt32(); // End of file headers, not including padding before data
-            Unk18 = br.AssertInt32(0, unchecked((int)0x80000000));
+            bnd.Unk18 = br.AssertInt32(0, unchecked((int)0x80000000));
             br.AssertInt32(0);
 
-            Files = new List<BinderFile>(fileCount);
+            var fileHeaders = new List<BinderFileHeader>(fileCount);
             for (int i = 0; i < fileCount; i++)
-            {
-                BinderFileHeader fileHeader = BinderFileHeader.ReadBinder3FileHeader(br, Format, BitBigEndian);
-                Files.Add(fileHeader.ReadFileData(br));
-            }
+                fileHeaders.Add(BinderFileHeader.ReadBinder3FileHeader(br, bnd.Format, bnd.BitBigEndian));
+
+            return fileHeaders;
         }
 
         /// <summary>
@@ -95,31 +102,39 @@ namespace SoulsFormats
         /// </summary>
         protected override void Write(BinaryWriterEx bw)
         {
-            bw.BigEndian = BigEndian || Binder.ForceBigEndian(Format);
+            var fileHeaders = new List<BinderFileHeader>(Files.Count);
+            foreach (BinderFile file in Files)
+                fileHeaders.Add(new BinderFileHeader(file));
+
+            WriteHeader(this, bw, fileHeaders);
+            for (int i = 0; i < Files.Count; i++)
+                fileHeaders[i].WriteBinder3FileData(bw, bw, Format, i, Files[i].Bytes);
+        }
+
+        internal static void WriteHeader(IBND3 bnd, BinaryWriterEx bw, List<BinderFileHeader> fileHeaders)
+        {
+            bw.BigEndian = bnd.BigEndian || Binder.ForceBigEndian(bnd.Format);
 
             bw.WriteASCII("BND3");
-            bw.WriteFixStr(Version, 8);
+            bw.WriteFixStr(bnd.Version, 8);
 
-            Binder.WriteFormat(bw, BigEndian, Format);
-            bw.WriteBoolean(BigEndian);
-            bw.WriteBoolean(BitBigEndian);
+            Binder.WriteFormat(bw, bnd.BigEndian, bnd.Format);
+            bw.WriteBoolean(bnd.BigEndian);
+            bw.WriteBoolean(bnd.BitBigEndian);
             bw.WriteByte(0);
 
-            bw.WriteInt32(Files.Count);
+            bw.WriteInt32(fileHeaders.Count);
             bw.ReserveInt32("FileHeadersEnd");
-            bw.WriteInt32(Unk18);
+            bw.WriteInt32(bnd.Unk18);
             bw.WriteInt32(0);
 
-            for (int i = 0; i < Files.Count; i++)
-                BinderFileHeader.WriteBinder3FileHeader(Files[i], bw, Format, BitBigEndian, i);
+            for (int i = 0; i < fileHeaders.Count; i++)
+                fileHeaders[i].WriteBinder3FileHeader(bw, bnd.Format, bnd.BitBigEndian, i);
 
-            for (int i = 0; i < Files.Count; i++)
-                BinderFileHeader.WriteFileName(Files[i], bw, Format, false, i);
+            for (int i = 0; i < fileHeaders.Count; i++)
+                fileHeaders[i].WriteFileName(bw, bnd.Format, false, i);
 
             bw.FillInt32($"FileHeadersEnd", (int)bw.Position);
-
-            for (int i = 0; i < Files.Count; i++)
-                BinderFileHeader.WriteBinder3FileData(Files[i], bw, bw, Format, i);
         }
     }
 }

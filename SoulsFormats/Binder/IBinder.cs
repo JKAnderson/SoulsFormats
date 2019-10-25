@@ -8,9 +8,14 @@ namespace SoulsFormats
     public interface IBinder
     {
         /// <summary>
-        /// A code indicating which file data is present.
+        /// Flags indicating features of the binder.
         /// </summary>
         Binder.Format Format { get; set; }
+
+        /// <summary>
+        /// A timestamp or version number, 8 characters maximum.
+        /// </summary>
+        string Version { get; set; }
 
         /// <summary>
         /// Files in this binder.

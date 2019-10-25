@@ -7,7 +7,7 @@ namespace SoulsFormats
     /// <summary>
     /// A general-purpose headered file container used in DS1 and DSR. Extensions: .*bhd (header) and .*bdt (data)
     /// </summary>
-    public class BXF3 : IBinder
+    public class BXF3 : IBinder, IBXF3
     {
         #region Public Is
         /// <summary>
@@ -225,73 +225,86 @@ namespace SoulsFormats
         private BXF3(BinaryReaderEx bhdReader, BinaryReaderEx bdtReader)
         {
             ReadBDFHeader(bdtReader);
-
-            bhdReader.AssertASCII("BHF3");
-            Version = bhdReader.ReadFixStr(8);
-
-            BitBigEndian = bhdReader.GetBoolean(0xE);
-
-            Format = Binder.ReadFormat(bhdReader, BitBigEndian);
-            BigEndian = bhdReader.ReadBoolean();
-            bhdReader.AssertBoolean(BitBigEndian);
-            bhdReader.AssertByte(0);
-
-            bhdReader.BigEndian = BigEndian || Binder.ForceBigEndian(Format);
-
-            int fileCount = bhdReader.ReadInt32();
-            bhdReader.AssertInt32(0);
-            bhdReader.AssertInt32(0);
-            bhdReader.AssertInt32(0);
-
-            Files = new List<BinderFile>(fileCount);
-            for (int i = 0; i < fileCount; i++)
-            {
-                BinderFileHeader fileHeader = BinderFileHeader.ReadBinder3FileHeader(bhdReader, Format, BitBigEndian);
+            List<BinderFileHeader> fileHeaders = ReadBHFHeader(this, bhdReader);
+            Files = new List<BinderFile>(fileHeaders.Count);
+            foreach (BinderFileHeader fileHeader in fileHeaders)
                 Files.Add(fileHeader.ReadFileData(bdtReader));
-            }
         }
 
-        private void ReadBDFHeader(BinaryReaderEx br)
+        internal static void ReadBDFHeader(BinaryReaderEx br)
         {
             br.AssertASCII("BDF3");
             br.ReadFixStr(8); // Version
             br.AssertInt32(0);
         }
 
-        private void Write(BinaryWriterEx bhdWriter, BinaryWriterEx bdtWriter)
+        internal static List<BinderFileHeader> ReadBHFHeader(IBXF3 bxf, BinaryReaderEx br)
         {
-            WriteBDFHeader(bdtWriter);
+            br.AssertASCII("BHF3");
+            bxf.Version = br.ReadFixStr(8);
 
-            bhdWriter.BigEndian = BigEndian || Binder.ForceBigEndian(Format);
+            bxf.BitBigEndian = br.GetBoolean(0xE);
 
-            bhdWriter.WriteASCII("BHF3");
-            bhdWriter.WriteFixStr(Version, 8);
+            bxf.Format = Binder.ReadFormat(br, bxf.BitBigEndian);
+            bxf.BigEndian = br.ReadBoolean();
+            br.AssertBoolean(bxf.BitBigEndian);
+            br.AssertByte(0);
 
-            Binder.WriteFormat(bhdWriter, BitBigEndian, Format);
-            bhdWriter.WriteByte(0);
-            bhdWriter.WriteByte(0);
-            bhdWriter.WriteByte(0);
+            br.BigEndian = bxf.BigEndian || Binder.ForceBigEndian(bxf.Format);
 
-            bhdWriter.WriteInt32(Files.Count);
-            bhdWriter.WriteInt32(0);
-            bhdWriter.WriteInt32(0);
-            bhdWriter.WriteInt32(0);
+            int fileCount = br.ReadInt32();
+            br.AssertInt32(0);
+            br.AssertInt32(0);
+            br.AssertInt32(0);
 
-            for (int i = 0; i < Files.Count; i++)
-                BinderFileHeader.WriteBinder3FileHeader(Files[i], bhdWriter, Format, BitBigEndian, i);
+            var fileHeaders = new List<BinderFileHeader>(fileCount);
+            for (int i = 0; i < fileCount; i++)
+                fileHeaders.Add(BinderFileHeader.ReadBinder3FileHeader(br, bxf.Format, bxf.BitBigEndian));
 
-            for (int i = 0; i < Files.Count; i++)
-                BinderFileHeader.WriteFileName(Files[i], bhdWriter, Format, false, i);
-
-            for (int i = 0; i < Files.Count; i++)
-                BinderFileHeader.WriteBinder3FileData(Files[i], bhdWriter, bdtWriter, Format, i);
+            return fileHeaders;
         }
 
-        private void WriteBDFHeader(BinaryWriterEx bw)
+        private void Write(BinaryWriterEx bhdWriter, BinaryWriterEx bdtWriter)
+        {
+            var fileHeaders = new List<BinderFileHeader>(Files.Count);
+            foreach (BinderFile file in Files)
+                fileHeaders.Add(new BinderFileHeader(file));
+
+            WriteBDFHeader(this, bdtWriter);
+            WriteBHFHeader(this, bhdWriter, fileHeaders);
+            for (int i = 0; i < Files.Count; i++)
+                fileHeaders[i].WriteBinder3FileData(bhdWriter, bdtWriter, Format, i, Files[i].Bytes);
+        }
+
+        internal static void WriteBDFHeader(IBXF3 bxf, BinaryWriterEx bw)
         {
             bw.WriteASCII("BDF3");
-            bw.WriteFixStr(Version, 8);
+            bw.WriteFixStr(bxf.Version, 8);
             bw.WriteInt32(0);
+        }
+
+        internal static void WriteBHFHeader(IBXF3 bxf, BinaryWriterEx bw, List<BinderFileHeader> fileHeaders)
+        {
+            bw.BigEndian = bxf.BigEndian || Binder.ForceBigEndian(bxf.Format);
+
+            bw.WriteASCII("BHF3");
+            bw.WriteFixStr(bxf.Version, 8);
+
+            Binder.WriteFormat(bw, bxf.BitBigEndian, bxf.Format);
+            bw.WriteByte(0);
+            bw.WriteByte(0);
+            bw.WriteByte(0);
+
+            bw.WriteInt32(fileHeaders.Count);
+            bw.WriteInt32(0);
+            bw.WriteInt32(0);
+            bw.WriteInt32(0);
+
+            for (int i = 0; i < fileHeaders.Count; i++)
+                fileHeaders[i].WriteBinder3FileHeader(bw, bxf.Format, bxf.BitBigEndian, i);
+
+            for (int i = 0; i < fileHeaders.Count; i++)
+                fileHeaders[i].WriteFileName(bw, bxf.Format, false, i);
         }
     }
 }

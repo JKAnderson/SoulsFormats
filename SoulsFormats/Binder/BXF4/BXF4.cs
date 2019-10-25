@@ -7,7 +7,7 @@ namespace SoulsFormats
     /// <summary>
     /// A general-purpose headered file container used in DS2, DS3, and BB. Extensions: .*bhd (header) and .*bdt (data)
     /// </summary>
-    public class BXF4 : IBinder
+    public class BXF4 : IBinder, IBXF4
     {
         #region Public Is
         /// <summary>
@@ -247,60 +247,15 @@ namespace SoulsFormats
         private BXF4(BinaryReaderEx bhdReader, BinaryReaderEx bdtReader)
         {
             ReadBDFHeader(bdtReader);
-
-            bhdReader.AssertASCII("BHF4");
-
-            Unk04 = bhdReader.ReadBoolean();
-            Unk05 = bhdReader.ReadBoolean();
-            bhdReader.AssertByte(0);
-            bhdReader.AssertByte(0);
-
-            bhdReader.AssertByte(0);
-            BigEndian = bhdReader.ReadBoolean();
-            BitBigEndian = !bhdReader.ReadBoolean();
-            bhdReader.AssertByte(0);
-
-            bhdReader.BigEndian = BigEndian;
-
-            int fileCount = bhdReader.ReadInt32();
-            bhdReader.AssertInt64(0x40); // Header size
-            Version = bhdReader.ReadFixStr(8);
-            long fileHeaderSize = bhdReader.ReadInt64();
-            bhdReader.AssertInt64(0);
-
-            Unicode = bhdReader.ReadBoolean();
-            Format = Binder.ReadFormat(bhdReader, BitBigEndian);
-            Extended = bhdReader.AssertByte(0, 4);
-            bhdReader.AssertByte(0);
-
-            if (fileHeaderSize != Binder.GetBND4FileHeaderSize(Format))
-                throw new FormatException($"File header size for format {Format} is expected to be 0x{Binder.GetBND4FileHeaderSize(Format):X}, but was 0x{fileHeaderSize:X}");
-
-            bhdReader.AssertInt32(0);
-
-            if (Extended == 4)
-            {
-                long hashGroupsOffset = bhdReader.ReadInt64();
-                bhdReader.StepIn(hashGroupsOffset);
-                BinderHashTable.Assert(bhdReader);
-                bhdReader.StepOut();
-            }
-            else
-            {
-                bhdReader.AssertInt64(0);
-            }
-
-            Files = new List<BinderFile>(fileCount);
-            for (int i = 0; i < fileCount; i++)
-            {
-                BinderFileHeader fileHeader = BinderFileHeader.ReadBinder4FileHeader(bhdReader, Format, BitBigEndian, Unicode);
+            List<BinderFileHeader> fileHeaders = ReadBHFHeader(this, bhdReader);
+            Files = new List<BinderFile>(fileHeaders.Count);
+            foreach (BinderFileHeader fileHeader in fileHeaders)
                 Files.Add(fileHeader.ReadFileData(bdtReader));
-            }
         }
 
         // I am very tempted to preserve these since they don't always match the BHF,
         // but it makes the API messy and they don't actually do anything.
-        private void ReadBDFHeader(BinaryReaderEx br)
+        internal static void ReadBDFHeader(BinaryReaderEx br)
         {
             br.AssertASCII("BDF4");
             br.ReadBoolean(); // Unk04
@@ -318,76 +273,134 @@ namespace SoulsFormats
             br.AssertInt64(0);
         }
 
-        private void Write(BinaryWriterEx bhdWriter, BinaryWriterEx bdtWriter)
+        internal static List<BinderFileHeader> ReadBHFHeader(IBXF4 bxf, BinaryReaderEx br)
         {
-            WriteBDFHeader(bdtWriter);
+            br.AssertASCII("BHF4");
 
-            bhdWriter.BigEndian = BigEndian;
+            bxf.Unk04 = br.ReadBoolean();
+            bxf.Unk05 = br.ReadBoolean();
+            br.AssertByte(0);
+            br.AssertByte(0);
 
-            bhdWriter.WriteASCII("BHF4");
+            br.AssertByte(0);
+            bxf.BigEndian = br.ReadBoolean();
+            bxf.BitBigEndian = !br.ReadBoolean();
+            br.AssertByte(0);
 
-            bhdWriter.WriteBoolean(Unk04);
-            bhdWriter.WriteBoolean(Unk05);
-            bhdWriter.WriteByte(0);
-            bhdWriter.WriteByte(0);
+            br.BigEndian = bxf.BigEndian;
 
-            bhdWriter.WriteByte(0);
-            bhdWriter.WriteBoolean(BigEndian);
-            bhdWriter.WriteBoolean(!BitBigEndian);
-            bhdWriter.WriteByte(0);
+            int fileCount = br.ReadInt32();
+            br.AssertInt64(0x40); // Header size
+            bxf.Version = br.ReadFixStr(8);
+            long fileHeaderSize = br.ReadInt64();
+            br.AssertInt64(0);
 
-            bhdWriter.WriteInt32(Files.Count);
-            bhdWriter.WriteInt64(0x40);
-            bhdWriter.WriteFixStr(Version, 8);
-            bhdWriter.WriteInt64(Binder.GetBND4FileHeaderSize(Format));
-            bhdWriter.WriteInt64(0);
+            bxf.Unicode = br.ReadBoolean();
+            bxf.Format = Binder.ReadFormat(br, bxf.BitBigEndian);
+            bxf.Extended = br.AssertByte(0, 4);
+            br.AssertByte(0);
 
-            bhdWriter.WriteBoolean(Unicode);
-            Binder.WriteFormat(bhdWriter, BitBigEndian, Format);
-            bhdWriter.WriteByte(Extended);
-            bhdWriter.WriteByte(0);
+            if (fileHeaderSize != Binder.GetBND4FileHeaderSize(bxf.Format))
+                throw new FormatException($"File header size for format {bxf.Format} is expected to be 0x{Binder.GetBND4FileHeaderSize(bxf.Format):X}, but was 0x{fileHeaderSize:X}");
 
-            bhdWriter.WriteInt32(0);
-            bhdWriter.ReserveInt64("HashTableOffset");
+            br.AssertInt32(0);
 
-            for (int i = 0; i < Files.Count; i++)
-                BinderFileHeader.WriteBinder4FileHeader(Files[i], bhdWriter, Format, BitBigEndian, i);
-
-            for (int i = 0; i < Files.Count; i++)
-                BinderFileHeader.WriteFileName(Files[i], bhdWriter, Format, Unicode, i);
-
-            if (Extended == 4)
+            if (bxf.Extended == 4)
             {
-                bhdWriter.Pad(0x8);
-                bhdWriter.FillInt64("HashTableOffset", bhdWriter.Position);
-                BinderHashTable.Write(bhdWriter, Files);
+                long hashGroupsOffset = br.ReadInt64();
+                br.StepIn(hashGroupsOffset);
+                BinderHashTable.Assert(br);
+                br.StepOut();
             }
             else
             {
-                bhdWriter.FillInt64("HashTableOffset", 0);
+                br.AssertInt64(0);
             }
 
-            for (int i = 0; i < Files.Count; i++)
-                BinderFileHeader.WriteBinder4FileData(Files[i], bhdWriter, bdtWriter, Format, i);
+            var fileHeaders = new List<BinderFileHeader>(fileCount);
+            for (int i = 0; i < fileCount; i++)
+                fileHeaders.Add(BinderFileHeader.ReadBinder4FileHeader(br, bxf.Format, bxf.BitBigEndian, bxf.Unicode));
+
+            return fileHeaders;
         }
 
-        private void WriteBDFHeader(BinaryWriterEx bw)
+        private void Write(BinaryWriterEx bhdWriter, BinaryWriterEx bdtWriter)
         {
-            bw.BigEndian = BigEndian;
+            var fileHeaders = new List<BinderFileHeader>(Files.Count);
+            foreach (BinderFile file in Files)
+                fileHeaders.Add(new BinderFileHeader(file));
+
+            WriteBDFHeader(this, bdtWriter);
+            WriteBHFHeader(this, bhdWriter, fileHeaders);
+            for (int i = 0; i < Files.Count; i++)
+                fileHeaders[i].WriteBinder4FileData(bhdWriter, bdtWriter, Format, i, Files[i].Bytes);
+        }
+
+        internal static void WriteBDFHeader(IBXF4 bxf, BinaryWriterEx bw)
+        {
+            bw.BigEndian = bxf.BigEndian;
             bw.WriteASCII("BDF4");
-            bw.WriteBoolean(Unk04);
-            bw.WriteBoolean(Unk05);
+            bw.WriteBoolean(bxf.Unk04);
+            bw.WriteBoolean(bxf.Unk05);
             bw.WriteByte(0);
             bw.WriteByte(0);
             bw.WriteByte(0);
-            bw.WriteBoolean(BigEndian);
-            bw.WriteBoolean(!BitBigEndian);
+            bw.WriteBoolean(bxf.BigEndian);
+            bw.WriteBoolean(!bxf.BitBigEndian);
             bw.WriteByte(0);
             bw.WriteInt32(0);
             bw.WriteInt64(0x30);
-            bw.WriteFixStr(Version, 8);
+            bw.WriteFixStr(bxf.Version, 8);
             bw.WriteInt64(0);
             bw.WriteInt64(0);
+        }
+
+        internal static void WriteBHFHeader(IBXF4 bxf, BinaryWriterEx bw, List<BinderFileHeader> fileHeaders)
+        {
+            bw.BigEndian = bxf.BigEndian;
+
+            bw.WriteASCII("BHF4");
+
+            bw.WriteBoolean(bxf.Unk04);
+            bw.WriteBoolean(bxf.Unk05);
+            bw.WriteByte(0);
+            bw.WriteByte(0);
+
+            bw.WriteByte(0);
+            bw.WriteBoolean(bxf.BigEndian);
+            bw.WriteBoolean(!bxf.BitBigEndian);
+            bw.WriteByte(0);
+
+            bw.WriteInt32(fileHeaders.Count);
+            bw.WriteInt64(0x40);
+            bw.WriteFixStr(bxf.Version, 8);
+            bw.WriteInt64(Binder.GetBND4FileHeaderSize(bxf.Format));
+            bw.WriteInt64(0);
+
+            bw.WriteBoolean(bxf.Unicode);
+            Binder.WriteFormat(bw, bxf.BitBigEndian, bxf.Format);
+            bw.WriteByte(bxf.Extended);
+            bw.WriteByte(0);
+
+            bw.WriteInt32(0);
+            bw.ReserveInt64("HashTableOffset");
+
+            for (int i = 0; i < fileHeaders.Count; i++)
+                fileHeaders[i].WriteBinder4FileHeader(bw, bxf.Format, bxf.BitBigEndian, i);
+
+            for (int i = 0; i < fileHeaders.Count; i++)
+                fileHeaders[i].WriteFileName(bw, bxf.Format, bxf.Unicode, i);
+
+            if (bxf.Extended == 4)
+            {
+                bw.Pad(0x8);
+                bw.FillInt64("HashTableOffset", bw.Position);
+                BinderHashTable.Write(bw, fileHeaders);
+            }
+            else
+            {
+                bw.FillInt64("HashTableOffset", 0);
+            }
         }
     }
 }
