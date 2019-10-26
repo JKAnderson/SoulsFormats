@@ -2,22 +2,43 @@
 
 namespace SoulsFormats
 {
-    internal class BinderFileHeader
+    /// <summary>
+    /// Metadata for a file in a binder container.
+    /// </summary>
+    public class BinderFileHeader
     {
+        /// <summary>
+        /// Flags indicating compression, and possibly other things.
+        /// </summary>
         public FileFlags Flags { get; set; }
 
+        /// <summary>
+        /// ID of the file, or -1 for none.
+        /// </summary>
         public int ID { get; set; }
 
+        /// <summary>
+        /// Name of the file, or null for none.
+        /// </summary>
         public string Name { get; set; }
 
+        /// <summary>
+        /// If compressed, which type of compression to use.
+        /// </summary>
         public DCX.Type CompressionType { get; set; }
 
         internal long CompressedSize;
         internal long UncompressedSize;
         internal long DataOffset;
 
+        /// <summary>
+        /// Creates a BinderFileHeader with the given ID and name.
+        /// </summary>
         public BinderFileHeader(int id, string name) : this(FileFlags.Flag1, id, name) { }
 
+        /// <summary>
+        /// Creates a BinderFileHeader with the given flags, ID, and name.
+        /// </summary>
         public BinderFileHeader(FileFlags flags, int id, string name) : this(flags, id, name, -1, -1, -1) { }
 
         internal BinderFileHeader(BinderFile file) : this(file.Flags, file.ID, file.Name, -1, -1, -1)
