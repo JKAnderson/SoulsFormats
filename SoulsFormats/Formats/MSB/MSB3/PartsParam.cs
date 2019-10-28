@@ -396,7 +396,7 @@ namespace SoulsFormats
                 bw.ReserveInt64("UnkOffset4");
 
                 bw.FillInt64("NameOffset", bw.Position - start);
-                bw.WriteUTF16(ReambiguateName(Name), true);
+                bw.WriteUTF16(MSB.ReambiguateName(Name), true);
                 bw.FillInt64("PlaceholderOffset", bw.Position - start);
                 bw.WriteUTF16(Placeholder, true);
                 // This is purely here for byte-perfect writes because From is nasty
@@ -472,12 +472,12 @@ namespace SoulsFormats
 
             internal virtual void GetNames(MSB3 msb, Entries entries)
             {
-                ModelName = FindName(entries.Models, modelIndex);
+                ModelName = MSB.FindName(entries.Models, modelIndex);
             }
 
             internal virtual void GetIndices(MSB3 msb, Entries entries)
             {
-                modelIndex = FindIndex(entries.Models, ModelName);
+                modelIndex = MSB.FindIndex(entries.Models, ModelName);
             }
 
             /// <summary>
@@ -752,13 +752,13 @@ namespace SoulsFormats
                 internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    CollisionName = FindName(entries.Parts, CollisionPartIndex);
+                    CollisionName = MSB.FindName(entries.Parts, CollisionPartIndex);
                 }
 
                 internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    CollisionPartIndex = FindIndex(entries.Parts, CollisionName);
+                    CollisionPartIndex = MSB.FindIndex(entries.Parts, CollisionName);
                 }
             }
 
@@ -960,15 +960,15 @@ namespace SoulsFormats
                 internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    CollisionName = FindName(entries.Parts, CollisionPartIndex);
-                    WalkRouteName = FindName(msb.Events.WalkRoutes, WalkRouteIndex);
+                    CollisionName = MSB.FindName(entries.Parts, CollisionPartIndex);
+                    WalkRouteName = MSB.FindName(msb.Events.WalkRoutes, WalkRouteIndex);
                 }
 
                 internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    CollisionPartIndex = FindIndex(entries.Parts, CollisionName);
-                    WalkRouteIndex = (short)FindIndex(msb.Events.WalkRoutes, WalkRouteName);
+                    CollisionPartIndex = MSB.FindIndex(entries.Parts, CollisionName);
+                    WalkRouteIndex = (short)MSB.FindIndex(msb.Events.WalkRoutes, WalkRouteName);
                 }
             }
 
@@ -1240,13 +1240,13 @@ namespace SoulsFormats
                 internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    UnkHitName = FindName(entries.Parts, UnkHitIndex);
+                    UnkHitName = MSB.FindName(entries.Parts, UnkHitIndex);
                 }
 
                 internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    UnkHitIndex = FindIndex(entries.Parts, UnkHitName);
+                    UnkHitIndex = MSB.FindIndex(entries.Parts, UnkHitName);
                 }
             }
 
@@ -1355,13 +1355,13 @@ namespace SoulsFormats
                 internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    CollisionName = FindName(msb.Parts.Collisions, CollisionIndex);
+                    CollisionName = MSB.FindName(msb.Parts.Collisions, CollisionIndex);
                 }
 
                 internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    CollisionIndex = FindIndex(msb.Parts.Collisions, CollisionName);
+                    CollisionIndex = MSB.FindIndex(msb.Parts.Collisions, CollisionName);
                 }
             }
         }

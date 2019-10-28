@@ -491,7 +491,7 @@ namespace SoulsFormats
                 bw.WriteInt64(0);
 
                 bw.FillInt64("NameOffset", bw.Position - start);
-                bw.WriteUTF16(ReambiguateName(Name), true);
+                bw.WriteUTF16(MSB.ReambiguateName(Name), true);
                 bw.FillInt64("SibOffset", bw.Position - start);
                 bw.WriteUTF16(Placeholder, true);
                 bw.Pad(8);
@@ -608,12 +608,12 @@ namespace SoulsFormats
 
             internal virtual void GetNames(MSBS msb, Entries entries)
             {
-                ModelName = FindName(entries.Models, ModelIndex);
+                ModelName = MSB.FindName(entries.Models, ModelIndex);
             }
 
             internal virtual void GetIndices(MSBS msb, Entries entries)
             {
-                ModelIndex = FindIndex(entries.Models, ModelName);
+                ModelIndex = MSB.FindIndex(entries.Models, ModelName);
             }
 
             /// <summary>
@@ -1486,17 +1486,17 @@ namespace SoulsFormats
                 internal override void GetNames(MSBS msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    ObjPartName1 = FindName(entries.Parts, ObjPartIndex1);
-                    ObjPartName2 = FindName(entries.Parts, ObjPartIndex2);
-                    ObjPartName3 = FindName(entries.Parts, ObjPartIndex3);
+                    ObjPartName1 = MSB.FindName(entries.Parts, ObjPartIndex1);
+                    ObjPartName2 = MSB.FindName(entries.Parts, ObjPartIndex2);
+                    ObjPartName3 = MSB.FindName(entries.Parts, ObjPartIndex3);
                 }
 
                 internal override void GetIndices(MSBS msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    ObjPartIndex1 = FindIndex(entries.Parts, ObjPartName1);
-                    ObjPartIndex2 = FindIndex(entries.Parts, ObjPartName2);
-                    ObjPartIndex3 = FindIndex(entries.Parts, ObjPartName3);
+                    ObjPartIndex1 = MSB.FindIndex(entries.Parts, ObjPartName1);
+                    ObjPartIndex2 = MSB.FindIndex(entries.Parts, ObjPartName2);
+                    ObjPartIndex3 = MSB.FindIndex(entries.Parts, ObjPartName3);
                 }
             }
 
@@ -1731,13 +1731,13 @@ namespace SoulsFormats
                 internal override void GetNames(MSBS msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    CollisionPartName = FindName(entries.Parts, CollisionPartIndex);
+                    CollisionPartName = MSB.FindName(entries.Parts, CollisionPartIndex);
                 }
 
                 internal override void GetIndices(MSBS msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    CollisionPartIndex = FindIndex(entries.Parts, CollisionPartName);
+                    CollisionPartIndex = MSB.FindIndex(entries.Parts, CollisionPartName);
                 }
             }
 
@@ -1805,13 +1805,13 @@ namespace SoulsFormats
                 internal override void GetNames(MSBS msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    CollisionName = FindName(msb.Parts.Collisions, CollisionIndex);
+                    CollisionName = MSB.FindName(msb.Parts.Collisions, CollisionIndex);
                 }
 
                 internal override void GetIndices(MSBS msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    CollisionIndex = FindIndex(msb.Parts.Collisions, CollisionName);
+                    CollisionIndex = MSB.FindIndex(msb.Parts.Collisions, CollisionName);
                 }
             }
         }

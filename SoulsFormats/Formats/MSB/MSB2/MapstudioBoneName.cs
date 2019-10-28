@@ -43,7 +43,7 @@ namespace SoulsFormats
 
             internal override void Write(BinaryWriterEx bw, int index)
             {
-                bw.WriteUTF16(ReambiguateName(Name), true);
+                bw.WriteUTF16(MSB.ReambiguateName(Name), true);
             }
         }
     }

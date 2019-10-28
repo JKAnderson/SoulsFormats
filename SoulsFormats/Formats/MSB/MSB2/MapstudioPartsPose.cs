@@ -80,7 +80,7 @@ namespace SoulsFormats
 
             internal void GetNames(Entries entries)
             {
-                PartName = FindName(entries.Parts, PartIndex);
+                PartName = MSB.FindName(entries.Parts, PartIndex);
                 foreach (Bone bone in Bones)
                     bone.GetNames(entries);
             }
@@ -153,7 +153,7 @@ namespace SoulsFormats
 
                 internal void GetNames(Entries entries)
                 {
-                    Name = FindName(entries.BoneNames, NameIndex);
+                    Name = MSB.FindName(entries.BoneNames, NameIndex);
                 }
 
                 internal void GetIndices(Lookups lookups, Entries entries)

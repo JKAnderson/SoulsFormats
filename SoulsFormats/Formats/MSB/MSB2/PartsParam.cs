@@ -251,7 +251,7 @@ namespace SoulsFormats
 
                 long nameStart = bw.Position;
                 bw.FillInt64("NameOffset", nameStart - start);
-                bw.WriteUTF16(ReambiguateName(Name), true);
+                bw.WriteUTF16(MSB.ReambiguateName(Name), true);
                 if (bw.Position - nameStart < 0x20)
                     bw.Position += 0x20 - (bw.Position - nameStart);
                 bw.Pad(8);
@@ -264,7 +264,7 @@ namespace SoulsFormats
 
             internal virtual void GetNames(MSB2 msb, Entries entries)
             {
-                ModelName = FindName(entries.Models, ModelIndex);
+                ModelName = MSB.FindName(entries.Models, ModelIndex);
             }
 
             internal virtual void GetIndices(Lookups lookups)
@@ -689,7 +689,7 @@ namespace SoulsFormats
                 internal override void GetNames(MSB2 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    CollisionName = FindName(msb.Parts.Collisions, CollisionIndex);
+                    CollisionName = MSB.FindName(msb.Parts.Collisions, CollisionIndex);
                 }
 
                 internal override void GetIndices(Lookups lookups)

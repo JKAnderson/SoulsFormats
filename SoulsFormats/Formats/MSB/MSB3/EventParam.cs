@@ -262,14 +262,14 @@ namespace SoulsFormats
 
             internal virtual void GetNames(MSB3 msb, Entries entries)
             {
-                PartName = FindName(entries.Parts, PartIndex);
-                PointName = FindName(entries.Regions, PointIndex);
+                PartName = MSB.FindName(entries.Parts, PartIndex);
+                PointName = MSB.FindName(entries.Regions, PointIndex);
             }
 
             internal virtual void GetIndices(MSB3 msb, Entries entries)
             {
-                PartIndex = FindIndex(entries.Parts, PartName);
-                PointIndex = FindIndex(entries.Regions, PointName);
+                PartIndex = MSB.FindIndex(entries.Parts, PartName);
+                PointIndex = MSB.FindIndex(entries.Regions, PointName);
             }
 
             /// <summary>
@@ -406,13 +406,13 @@ namespace SoulsFormats
                 internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    PartName2 = FindName(entries.Parts, PartIndex2);
+                    PartName2 = MSB.FindName(entries.Parts, PartIndex2);
                 }
 
                 internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    PartIndex2 = FindIndex(entries.Parts, PartName2);
+                    PartIndex2 = MSB.FindIndex(entries.Parts, PartName2);
                 }
             }
 
@@ -571,15 +571,15 @@ namespace SoulsFormats
                 internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    SpawnPointNames = FindNames(entries.Regions, SpawnPointIndices);
-                    SpawnPartNames = FindNames(entries.Parts, SpawnPartIndices);
+                    SpawnPointNames = MSB.FindNames(entries.Regions, SpawnPointIndices);
+                    SpawnPartNames = MSB.FindNames(entries.Parts, SpawnPartIndices);
                 }
 
                 internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    SpawnPointIndices = FindIndices(entries.Regions, SpawnPointNames);
-                    SpawnPartIndices = FindIndices(entries.Parts, SpawnPartNames);
+                    SpawnPointIndices = MSB.FindIndices(entries.Regions, SpawnPointNames);
+                    SpawnPartIndices = MSB.FindIndices(entries.Parts, SpawnPartNames);
                 }
             }
 
@@ -690,13 +690,13 @@ namespace SoulsFormats
                 internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    PartName2 = FindName(entries.Parts, PartIndex2);
+                    PartName2 = MSB.FindName(entries.Parts, PartIndex2);
                 }
 
                 internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    PartIndex2 = FindIndex(entries.Parts, PartName2);
+                    PartIndex2 = MSB.FindIndex(entries.Parts, PartName2);
                 }
             }
 
@@ -906,7 +906,7 @@ namespace SoulsFormats
                     base.GetNames(msb, entries);
                     WalkPointNames = new string[WalkPointIndices.Length];
                     for (int i = 0; i < WalkPointIndices.Length; i++)
-                        WalkPointNames[i] = FindName(entries.Regions, WalkPointIndices[i]);
+                        WalkPointNames[i] = MSB.FindName(entries.Regions, WalkPointIndices[i]);
                 }
 
                 internal override void GetIndices(MSB3 msb, Entries entries)
@@ -914,7 +914,7 @@ namespace SoulsFormats
                     base.GetIndices(msb, entries);
                     WalkPointIndices = new short[WalkPointNames.Length];
                     for (int i = 0; i < WalkPointNames.Length; i++)
-                        WalkPointIndices[i] = (short)FindIndex(entries.Regions, WalkPointNames[i]);
+                        WalkPointIndices[i] = (short)MSB.FindIndex(entries.Regions, WalkPointNames[i]);
                 }
             }
 
@@ -977,13 +977,13 @@ namespace SoulsFormats
                 internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    GroupPartsNames = FindNames(entries.Parts, GroupPartsIndices);
+                    GroupPartsNames = MSB.FindNames(entries.Parts, GroupPartsIndices);
                 }
 
                 internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    GroupPartsIndices = FindIndices(entries.Parts, GroupPartsNames);
+                    GroupPartsIndices = MSB.FindIndices(entries.Parts, GroupPartsNames);
                 }
             }
 

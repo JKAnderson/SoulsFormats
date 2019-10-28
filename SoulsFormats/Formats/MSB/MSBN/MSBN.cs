@@ -86,59 +86,13 @@ namespace SoulsFormats
             } while (nextSectionOffset != 0);
 
             //DisambiguateNames(entries.Events);
-            DisambiguateNames(entries.Models);
-            DisambiguateNames(entries.Parts);
+            MSB.DisambiguateNames(entries.Models);
+            MSB.DisambiguateNames(entries.Parts);
             //DisambiguateNames(entries.Regions);
 
             //Events.GetNames(this, entries);
             Parts.GetNames(this, entries);
             //Regions.GetNames(this, entries);
-        }
-
-        private static void DisambiguateNames<T>(List<T> entries) where T : Entry
-        {
-            bool ambiguous;
-            do
-            {
-                ambiguous = false;
-                var nameCounts = new Dictionary<string, int>();
-                foreach (Entry entry in entries)
-                {
-                    string name = entry.Name;
-                    if (!nameCounts.ContainsKey(name))
-                    {
-                        nameCounts[name] = 1;
-                    }
-                    else
-                    {
-                        ambiguous = true;
-                        nameCounts[name]++;
-                        entry.Name = $"{name} ({nameCounts[name]})";
-                    }
-                }
-            }
-            while (ambiguous);
-        }
-
-        private static string GetName<T>(List<T> list, int index) where T : Entry
-        {
-            if (index == -1)
-                return null;
-            else
-                return list[index].Name;
-        }
-
-        private static int GetIndex<T>(List<T> list, string name) where T : Entry
-        {
-            if (name == null)
-                return -1;
-            else
-            {
-                int result = list.FindIndex(entry => entry.Name == name);
-                if (result == -1)
-                    throw new KeyNotFoundException("No items found in list.");
-                return result;
-            }
         }
 
         /// <summary>
@@ -209,7 +163,7 @@ namespace SoulsFormats
         /// <summary>
         /// A generic entry in an MSB section.
         /// </summary>
-        public abstract class Entry
+        public abstract class Entry : IMsbEntry
         {
             /// <summary>
             /// The name of this entry.

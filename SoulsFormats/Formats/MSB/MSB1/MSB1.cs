@@ -69,9 +69,9 @@ namespace SoulsFormats
             if (br.Position != 0)
                 throw new InvalidDataException("The next param offset of the final param should be 0, but it wasn't.");
 
-            DisambiguateNames(entries.Models);
-            DisambiguateNames(entries.Regions);
-            DisambiguateNames(entries.Parts);
+            MSB.DisambiguateNames(entries.Models);
+            MSB.DisambiguateNames(entries.Regions);
+            MSB.DisambiguateNames(entries.Parts);
 
             foreach (Event evt in entries.Events)
                 evt.GetNames(this, entries);
@@ -190,7 +190,7 @@ namespace SoulsFormats
         /// <summary>
         /// A generic entry in an MSB param.
         /// </summary>
-        public abstract class Entry
+        public abstract class Entry : IMsbEntry
         {
             /// <summary>
             /// The name of this entry.
@@ -198,75 +198,6 @@ namespace SoulsFormats
             public string Name { get; set; }
 
             internal abstract void Write(BinaryWriterEx bw, int id);
-        }
-
-        private static void DisambiguateNames<T>(List<T> entries) where T : Entry
-        {
-            bool ambiguous;
-            do
-            {
-                ambiguous = false;
-                var nameCounts = new Dictionary<string, int>();
-                foreach (Entry entry in entries)
-                {
-                    string name = entry.Name;
-                    if (!nameCounts.ContainsKey(name))
-                    {
-                        nameCounts[name] = 1;
-                    }
-                    else
-                    {
-                        ambiguous = true;
-                        nameCounts[name]++;
-                        entry.Name = $"{name} {{{nameCounts[name]}}}";
-                    }
-                }
-            }
-            while (ambiguous);
-        }
-
-        private static string ReambiguateName(string name)
-        {
-            return Regex.Replace(name, @" \{\d+\}", "");
-        }
-
-        private static string FindName<T>(List<T> list, int index) where T : Entry
-        {
-            if (index == -1)
-                return null;
-            else
-                return list[index].Name;
-        }
-
-        private static string[] FindNames<T>(List<T> list, int[] indices) where T : Entry
-        {
-            var names = new string[indices.Length];
-            for (int i = 0; i < indices.Length; i++)
-                names[i] = FindName(list, indices[i]);
-            return names;
-        }
-
-        private static int FindIndex<T>(List<T> list, string name) where T : Entry
-        {
-            if (name == null)
-            {
-                return -1;
-            }
-            else
-            {
-                int result = list.FindIndex(entry => entry.Name == name);
-                if (result == -1)
-                    throw new KeyNotFoundException($"Name not found: {name}");
-                return result;
-            }
-        }
-
-        private static int[] FindIndices<T>(List<T> list, string[] names) where T : Entry
-        {
-            var indices = new int[names.Length];
-            for (int i = 0; i < names.Length; i++)
-                indices[i] = FindIndex(list, names[i]);
-            return indices;
         }
     }
 }

@@ -150,7 +150,7 @@ namespace SoulsFormats
                 bw.WriteInt32(0);
 
                 bw.FillInt32("NameOffset", (int)(bw.Position - start));
-                bw.WriteShiftJIS(ReambiguateName(Name), true);
+                bw.WriteShiftJIS(MSB.ReambiguateName(Name), true);
                 bw.Pad(4);
 
                 bw.FillInt32("UnkOffsetA", (int)(bw.Position - start));

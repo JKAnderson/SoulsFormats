@@ -189,7 +189,7 @@ namespace SoulsFormats
                 bw.ReserveInt64("TypeDataOffset");
 
                 bw.FillInt64("NameOffset", bw.Position - start);
-                bw.WriteUTF16(ReambiguateName(Name), true);
+                bw.WriteUTF16(MSB.ReambiguateName(Name), true);
                 bw.FillInt64("PlaceholderOffset", bw.Position - start);
                 bw.WriteUTF16(Placeholder, true);
                 bw.Pad(8);

@@ -92,9 +92,9 @@ namespace SoulsFormats
             if (br.Position != 0)
                 throw new InvalidDataException($"The next param offset of the final param should be 0, but it was 0x{br.Position:X}.");
 
-            DisambiguateNames(entries.Models);
-            DisambiguateNames(entries.Parts);
-            DisambiguateNames(entries.BoneNames);
+            MSB.DisambiguateNames(entries.Models);
+            MSB.DisambiguateNames(entries.Parts);
+            MSB.DisambiguateNames(entries.BoneNames);
 
             foreach (Part part in entries.Parts)
                 part.GetNames(this, entries);
@@ -181,7 +181,7 @@ namespace SoulsFormats
         /// <summary>
         /// A generic entry in an MSB param that has a name.
         /// </summary>
-        public abstract class NamedEntry : Entry
+        public abstract class NamedEntry : Entry, IMsbEntry
         {
             /// <summary>
             /// The name of this entry; should generally be unique.
@@ -257,52 +257,6 @@ namespace SoulsFormats
             public abstract List<T> GetEntries();
         }
 
-        private static void DisambiguateNames<T>(List<T> entries) where T : NamedEntry
-        {
-            bool ambiguous;
-            do
-            {
-                ambiguous = false;
-                var nameCounts = new Dictionary<string, int>();
-                foreach (NamedEntry entry in entries)
-                {
-                    string name = entry.Name;
-                    if (!nameCounts.ContainsKey(name))
-                    {
-                        nameCounts[name] = 1;
-                    }
-                    else
-                    {
-                        ambiguous = true;
-                        nameCounts[name]++;
-                        entry.Name = $"{name} {{{nameCounts[name]}}}";
-                    }
-                }
-            }
-            while (ambiguous);
-        }
-
-        private static string ReambiguateName(string name)
-        {
-            return Regex.Replace(name, @" \{\d+\}", "");
-        }
-
-        private static string FindName<T>(List<T> list, int index) where T : NamedEntry
-        {
-            if (index == -1)
-                return null;
-            else
-                return list[index].Name;
-        }
-
-        //private static string[] FindNames<T>(List<T> list, int[] indices) where T : NamedEntry
-        //{
-        //    var names = new string[indices.Length];
-        //    for (int i = 0; i < indices.Length; i++)
-        //        names[i] = FindName(list, indices[i]);
-        //    return names;
-        //}
-
         private static int FindIndex(Dictionary<string, int> lookup, string name)
         {
             if (name == null)
@@ -316,14 +270,6 @@ namespace SoulsFormats
                 return lookup[name];
             }
         }
-
-        //private static int[] FindIndices(Dictionary<string, int> lookup, string[] names)
-        //{
-        //    var indices = new int[names.Length];
-        //    for (int i = 0; i < names.Length; i++)
-        //        indices[i] = FindIndex(lookup, names[i]);
-        //    return indices;
-        //}
 
         private static Dictionary<string, int> MakeNameLookup<T>(List<T> list) where T : NamedEntry
         {

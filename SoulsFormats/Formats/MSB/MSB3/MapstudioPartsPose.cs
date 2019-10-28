@@ -96,12 +96,12 @@ namespace SoulsFormats
 
             internal void GetNames(MSB3 msb, Entries entries)
             {
-                PartName = FindName(entries.Parts, PartIndex);
+                PartName = MSB.FindName(entries.Parts, PartIndex);
             }
 
             internal void GetIndices(MSB3 msb, Entries entries)
             {
-                PartIndex = (short)FindIndex(entries.Parts, PartName);
+                PartIndex = (short)MSB.FindIndex(entries.Parts, PartName);
             }
 
             /// <summary>

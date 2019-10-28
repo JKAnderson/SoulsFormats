@@ -291,14 +291,14 @@ namespace SoulsFormats
 
             internal virtual void GetNames(MSB1 msb, Entries entries)
             {
-                PartName = FindName(entries.Parts, PartIndex);
-                RegionName = FindName(entries.Regions, RegionIndex);
+                PartName = MSB.FindName(entries.Parts, PartIndex);
+                RegionName = MSB.FindName(entries.Regions, RegionIndex);
             }
 
             internal virtual void GetIndices(MSB1 msb, Entries entries)
             {
-                PartIndex = FindIndex(entries.Parts, PartName);
-                RegionIndex = FindIndex(entries.Regions, RegionName);
+                PartIndex = MSB.FindIndex(entries.Parts, PartName);
+                RegionIndex = MSB.FindIndex(entries.Regions, RegionName);
             }
 
             /// <summary>
@@ -621,13 +621,13 @@ namespace SoulsFormats
                 internal override void GetNames(MSB1 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    TreasurePartName = FindName(entries.Parts, TreasurePartIndex);
+                    TreasurePartName = MSB.FindName(entries.Parts, TreasurePartIndex);
                 }
 
                 internal override void GetIndices(MSB1 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    TreasurePartIndex = FindIndex(entries.Parts, TreasurePartName);
+                    TreasurePartIndex = MSB.FindIndex(entries.Parts, TreasurePartName);
                 }
             }
 
@@ -731,15 +731,15 @@ namespace SoulsFormats
                 internal override void GetNames(MSB1 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    SpawnPointNames = FindNames(entries.Regions, SpawnPointIndices);
-                    SpawnPartNames = FindNames(entries.Parts, SpawnPartIndices);
+                    SpawnPointNames = MSB.FindNames(entries.Regions, SpawnPointIndices);
+                    SpawnPartNames = MSB.FindNames(entries.Parts, SpawnPartIndices);
                 }
 
                 internal override void GetIndices(MSB1 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    SpawnPointIndices = FindIndices(entries.Regions, SpawnPointNames);
-                    SpawnPartIndices = FindIndices(entries.Parts, SpawnPartNames);
+                    SpawnPointIndices = MSB.FindIndices(entries.Regions, SpawnPointNames);
+                    SpawnPartIndices = MSB.FindIndices(entries.Parts, SpawnPartNames);
                 }
             }
 
@@ -861,13 +861,13 @@ namespace SoulsFormats
                 internal override void GetNames(MSB1 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    ObjActPartName = FindName(entries.Parts, ObjActPartIndex);
+                    ObjActPartName = MSB.FindName(entries.Parts, ObjActPartIndex);
                 }
 
                 internal override void GetIndices(MSB1 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    ObjActPartIndex = FindIndex(entries.Parts, ObjActPartName);
+                    ObjActPartIndex = MSB.FindIndex(entries.Parts, ObjActPartName);
                 }
             }
 
@@ -912,13 +912,13 @@ namespace SoulsFormats
                 internal override void GetNames(MSB1 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    SpawnPointName = FindName(entries.Regions, SpawnPointIndex);
+                    SpawnPointName = MSB.FindName(entries.Regions, SpawnPointIndex);
                 }
 
                 internal override void GetIndices(MSB1 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    SpawnPointIndex = FindIndex(entries.Regions, SpawnPointName);
+                    SpawnPointIndex = MSB.FindIndex(entries.Regions, SpawnPointName);
                 }
             }
 
@@ -1002,13 +1002,13 @@ namespace SoulsFormats
                 internal override void GetNames(MSB1 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    NavmeshRegionName = FindName(entries.Regions, NavmeshRegionIndex);
+                    NavmeshRegionName = MSB.FindName(entries.Regions, NavmeshRegionIndex);
                 }
 
                 internal override void GetIndices(MSB1 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    NavmeshRegionIndex = FindIndex(entries.Regions, NavmeshRegionName);
+                    NavmeshRegionIndex = MSB.FindIndex(entries.Regions, NavmeshRegionName);
                 }
             }
 

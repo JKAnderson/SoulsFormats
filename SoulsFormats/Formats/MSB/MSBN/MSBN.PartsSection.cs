@@ -243,12 +243,12 @@ namespace SoulsFormats
 
             internal virtual void GetNames(MSBN msb, Entries entries)
             {
-                ModelName = GetName(entries.Models, modelIndex);
+                ModelName = MSB.FindName(entries.Models, modelIndex);
             }
 
             internal virtual void GetIndices(MSBN msb, Entries entries)
             {
-                modelIndex = GetIndex(entries.Models, ModelName);
+                modelIndex = MSB.FindIndex(entries.Models, ModelName);
             }
 
             /// <summary>
