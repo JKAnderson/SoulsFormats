@@ -86,6 +86,44 @@ namespace SoulsFormats
             }
         }
 
+        private static bool IsRead(BinaryReaderEx br, out TFormat file)
+        {
+            var test = new TFormat();
+            br = SFUtil.GetDecompressedBR(br, out test.Compression);
+            if (test.Is(br))
+            {
+                test.Read(br);
+                file = test;
+                return true;
+            }
+            else
+            {
+                file = null;
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Returns whether the bytes appear to be a file of this type and reads it if so.
+        /// </summary>
+        public static bool IsRead(byte[] bytes, out TFormat file)
+        {
+            var br = new BinaryReaderEx(false, bytes);
+            return IsRead(br, out file);
+        }
+
+        /// <summary>
+        /// Returns whether the file appears to be a file of this type and reads it if so.
+        /// </summary>
+        public static bool IsRead(string path, out TFormat file)
+        {
+            using (FileStream fs = File.OpenRead(path))
+            {
+                var br = new BinaryReaderEx(false, fs);
+                return IsRead(br, out file);
+            }
+        }
+
         /// <summary>
         /// Checks the object for any fatal problems; Write will throw the returned exception on failure.
         /// </summary>
