@@ -92,6 +92,7 @@ namespace SoulsFormats
             br = SFUtil.GetDecompressedBR(br, out test.Compression);
             if (test.Is(br))
             {
+                br.Position = 0;
                 test.Read(br);
                 file = test;
                 return true;
