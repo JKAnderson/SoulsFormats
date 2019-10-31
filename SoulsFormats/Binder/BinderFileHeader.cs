@@ -27,9 +27,20 @@ namespace SoulsFormats
         /// </summary>
         public DCX.Type CompressionType { get; set; }
 
-        internal long CompressedSize;
-        internal long UncompressedSize;
-        internal long DataOffset;
+        /// <summary>
+        /// Size of the file after compression (or just the size of the file, if not compressed). Do not modify unless you know what you're doing.
+        /// </summary>
+        public long CompressedSize { get; set; }
+
+        /// <summary>
+        /// Size of the file without compression. Do not modify unless you know what you're doing.
+        /// </summary>
+        public long UncompressedSize { get; set; }
+
+        /// <summary>
+        /// Location of file data in the BND or BXF. Do not modify unless you know what you're doing.
+        /// </summary>
+        public long DataOffset { get; set; }
 
         /// <summary>
         /// Creates a BinderFileHeader with the given ID and name.
@@ -55,6 +66,14 @@ namespace SoulsFormats
             CompressedSize = compressedSize;
             UncompressedSize = uncompressedSize;
             DataOffset = dataOffset;
+        }
+
+        /// <summary>
+        /// Returns a string representation of the object.
+        /// </summary>
+        public override string ToString()
+        {
+            return $"{ID} {Name}";
         }
 
         internal static BinderFileHeader ReadBinder3FileHeader(BinaryReaderEx br, Format format, bool bitBigEndian)
