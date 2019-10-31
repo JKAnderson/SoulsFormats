@@ -56,12 +56,7 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public byte Unk06 { get; set; }
-
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public byte Unk07 { get; set; }
+            public short Unk06 { get; set; }
 
             /// <summary>
             /// Indices to vertices in a mesh.
@@ -82,13 +77,12 @@ namespace SoulsFormats
             /// <summary>
             /// Creates a new FaceSet with the specified values.
             /// </summary>
-            public FaceSet(FSFlags flags, bool triangleStrip, bool cullBackfaces, byte unk06, byte unk07, List<int> indices)
+            public FaceSet(FSFlags flags, bool triangleStrip, bool cullBackfaces, short unk06, List<int> indices)
             {
                 Flags = flags;
                 TriangleStrip = triangleStrip;
                 CullBackfaces = cullBackfaces;
                 Unk06 = unk06;
-                Unk07 = unk07;
                 Indices = indices;
             }
 
@@ -97,8 +91,7 @@ namespace SoulsFormats
                 Flags = (FSFlags)br.ReadUInt32();
                 TriangleStrip = br.ReadBoolean();
                 CullBackfaces = br.ReadBoolean();
-                Unk06 = br.ReadByte();
-                Unk07 = br.ReadByte();
+                Unk06 = br.ReadInt16();
                 int indexCount = br.ReadInt32();
                 int indicesOffset = br.ReadInt32();
 
@@ -135,8 +128,7 @@ namespace SoulsFormats
                 bw.WriteUInt32((uint)Flags);
                 bw.WriteBoolean(TriangleStrip);
                 bw.WriteBoolean(CullBackfaces);
-                bw.WriteByte(Unk06);
-                bw.WriteByte(Unk07);
+                bw.WriteInt16(Unk06);
                 bw.WriteInt32(Indices.Count);
                 bw.ReserveInt32($"FaceSetVertices{index}");
 
