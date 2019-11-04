@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Xml.Serialization;
 
 namespace SoulsFormats
 {
@@ -12,6 +13,8 @@ namespace SoulsFormats
             internal override int Version => 1;
 
             public int Value { get; set; }
+
+            public PrimitiveInt() { }
 
             internal PrimitiveInt(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
@@ -34,6 +37,8 @@ namespace SoulsFormats
 
             public float Value { get; set; }
 
+            public PrimitiveFloat() { }
+
             internal PrimitiveFloat(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -54,6 +59,8 @@ namespace SoulsFormats
             internal override int Version => 1;
 
             public float Value { get; set; }
+
+            public PrimitiveTick() { }
 
             internal PrimitiveTick(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
@@ -81,6 +88,8 @@ namespace SoulsFormats
             public float B { get; set; }
 
             public float A { get; set; }
+
+            public PrimitiveColor() { }
 
             internal PrimitiveColor(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 

@@ -11,6 +11,11 @@ namespace SoulsFormats
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         public FXEffect Effect { get; set; }
 
+        public FFXDLSE()
+        {
+            Effect = new FXEffect();
+        }
+
         protected override bool Is(BinaryReaderEx br)
         {
             if (br.Length < 4)
@@ -72,6 +77,8 @@ namespace SoulsFormats
 
         public class DLVector : List<int>
         {
+            public DLVector() : base() { }
+
             internal DLVector(BinaryReaderEx br, List<string> classNames)
             {
                 br.AssertInt16((short)(classNames.IndexOf("DLVector") + 1));
@@ -98,6 +105,8 @@ namespace SoulsFormats
             internal abstract string ClassName { get; }
 
             internal abstract int Version { get; }
+
+            public FXSerializable() { }
 
             internal FXSerializable(BinaryReaderEx br, List<string> classNames)
             {
@@ -141,6 +150,11 @@ namespace SoulsFormats
 
             public List<Param> Params { get; set; }
 
+            public ParamList()
+            {
+                Params = new List<Param>();
+            }
+
             internal ParamList(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -183,6 +197,14 @@ namespace SoulsFormats
             public StateMap StateMap { get; set; }
 
             public ResourceSet ResourceSet { get; set; }
+
+            public FXEffect()
+            {
+                Vector = new DLVector();
+                ParamLists = new List<ParamList>();
+                StateMap = new StateMap();
+                ResourceSet = new ResourceSet();
+            }
 
             internal FXEffect(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
@@ -244,6 +266,11 @@ namespace SoulsFormats
 
             public List<State> States { get; set; }
 
+            public StateMap()
+            {
+                States = new List<State>();
+            }
+
             internal StateMap(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -275,11 +302,17 @@ namespace SoulsFormats
 
             internal override int Version => 1;
 
-            internal State(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
-
             public List<Action> Actions { get; set; }
 
             public List<Trigger> Triggers { get; set; }
+
+            public State()
+            {
+                Actions = new List<Action>();
+                Triggers = new List<Trigger>();
+            }
+
+            internal State(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
             {
@@ -323,6 +356,11 @@ namespace SoulsFormats
 
             public ParamList ParamList { get; set; }
 
+            public Action()
+            {
+                ParamList = new ParamList();
+            }
+
             internal Action(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -353,6 +391,11 @@ namespace SoulsFormats
             public int StateIndex { get; set; }
 
             public EvaluatableInt Evaluator { get; set; }
+
+            public Trigger()
+            {
+                Evaluator = new EvaluatableInt();
+            }
 
             internal Trigger(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
@@ -390,6 +433,15 @@ namespace SoulsFormats
             public DLVector Vector4 { get; set; }
 
             public DLVector Vector5 { get; set; }
+
+            public ResourceSet()
+            {
+                Vector1 = new DLVector();
+                Vector2 = new DLVector();
+                Vector3 = new DLVector();
+                Vector4 = new DLVector();
+                Vector5 = new DLVector();
+            }
 
             internal ResourceSet(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 

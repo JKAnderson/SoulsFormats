@@ -14,6 +14,8 @@ namespace SoulsFormats
 
             internal abstract int Type { get; }
 
+            public Param() { }
+
             internal Param(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -82,6 +84,11 @@ namespace SoulsFormats
 
             public PrimitiveInt Int { get; set; }
 
+            public Param1()
+            {
+                Int = new PrimitiveInt();
+            }
+
             internal Param1(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -108,6 +115,11 @@ namespace SoulsFormats
             internal override int Type => 2;
 
             public List<PrimitiveInt> Ints { get; set; }
+
+            public Param2()
+            {
+                Ints = new List<PrimitiveInt>();
+            }
 
             internal Param2(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
@@ -142,6 +154,11 @@ namespace SoulsFormats
 
             public List<TickInt> TickInts { get; set; }
 
+            public Param5()
+            {
+                TickInts = new List<TickInt>();
+            }
+
             internal Param5(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -174,6 +191,11 @@ namespace SoulsFormats
             internal override int Type => 6;
 
             public List<TickInt> TickInts { get; set; }
+
+            public Param6()
+            {
+                TickInts = new List<TickInt>();
+            }
 
             internal Param6(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
@@ -208,6 +230,11 @@ namespace SoulsFormats
 
             public PrimitiveFloat Float { get; set; }
 
+            public Param7()
+            {
+                Float = new PrimitiveFloat();
+            }
+
             internal Param7(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -234,6 +261,11 @@ namespace SoulsFormats
             internal override int Type => 9;
 
             public List<TickFloat> TickFloats { get; set; }
+
+            public Param9()
+            {
+                TickFloats = new List<TickFloat>();
+            }
 
             internal Param9(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
@@ -268,6 +300,11 @@ namespace SoulsFormats
 
             public List<TickFloat> TickFloats { get; set; }
 
+            public Param11()
+            {
+                TickFloats = new List<TickFloat>();
+            }
+
             internal Param11(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -300,6 +337,11 @@ namespace SoulsFormats
             internal override int Type => 12;
 
             public List<TickFloat> TickFloats { get; set; }
+
+            public Param12()
+            {
+                TickFloats = new List<TickFloat>();
+            }
 
             internal Param12(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
@@ -334,6 +376,11 @@ namespace SoulsFormats
 
             public List<TickFloat3> TickFloat3s { get; set; }
 
+            public Param13()
+            {
+                TickFloat3s = new List<TickFloat3>();
+            }
+
             internal Param13(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -367,6 +414,11 @@ namespace SoulsFormats
 
             public PrimitiveColor Color { get; set; }
 
+            public Param15()
+            {
+                Color = new PrimitiveColor();
+            }
+
             internal Param15(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -393,6 +445,11 @@ namespace SoulsFormats
             internal override int Type => 17;
 
             public List<TickColor> TickColors { get; set; }
+
+            public Param17()
+            {
+                TickColors = new List<TickColor>();
+            }
 
             internal Param17(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
@@ -427,6 +484,11 @@ namespace SoulsFormats
 
             public List<TickColor> TickColors { get; set; }
 
+            public Param18()
+            {
+                TickColors = new List<TickColor>();
+            }
+
             internal Param18(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -459,6 +521,11 @@ namespace SoulsFormats
             internal override int Type => 19;
 
             public List<TickColor> TickColors { get; set; }
+
+            public Param19()
+            {
+                TickColors = new List<TickColor>();
+            }
 
             internal Param19(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
@@ -493,6 +560,11 @@ namespace SoulsFormats
 
             public List<TickColor> TickColors { get; set; }
 
+            public Param20()
+            {
+                TickColors = new List<TickColor>();
+            }
+
             internal Param20(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -525,6 +597,11 @@ namespace SoulsFormats
             internal override int Type => 21;
 
             public List<TickColor3> TickColor3s { get; set; }
+
+            public Param21()
+            {
+                TickColor3s = new List<TickColor3>();
+            }
 
             internal Param21(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
@@ -561,6 +638,11 @@ namespace SoulsFormats
 
             public ParamList ParamList { get; set; }
 
+            public Param37()
+            {
+                ParamList = new ParamList();
+            }
+
             internal Param37(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -592,6 +674,11 @@ namespace SoulsFormats
 
             public ParamList ParamList { get; set; }
 
+            public Param38()
+            {
+                ParamList = new ParamList();
+            }
+
             internal Param38(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -621,6 +708,8 @@ namespace SoulsFormats
 
             public int Unk04 { get; set; }
 
+            public Param40() { }
+
             internal Param40(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -641,6 +730,8 @@ namespace SoulsFormats
             internal override int Type => 41;
 
             public int Unk04 { get; set; }
+
+            public Param41() { }
 
             internal Param41(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
@@ -664,6 +755,8 @@ namespace SoulsFormats
             public int Unk04 { get; set; }
 
             public int Unk08 { get; set; }
+
+            public Param44() { }
 
             internal Param44(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
@@ -690,6 +783,8 @@ namespace SoulsFormats
 
             public int Unk08 { get; set; }
 
+            public Param45() { }
+
             internal Param45(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -714,6 +809,8 @@ namespace SoulsFormats
             public int Unk04 { get; set; }
 
             public int Unk08 { get; set; }
+
+            public Param46() { }
 
             internal Param46(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
@@ -740,6 +837,8 @@ namespace SoulsFormats
 
             public int Unk08 { get; set; }
 
+            public Param47() { }
+
             internal Param47(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -764,6 +863,8 @@ namespace SoulsFormats
             public int Unk04 { get; set; }
 
             public int Unk08 { get; set; }
+
+            public Param59() { }
 
             internal Param59(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
@@ -790,6 +891,8 @@ namespace SoulsFormats
 
             public int Unk08 { get; set; }
 
+            public Param60() { }
+
             internal Param60(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -815,6 +918,8 @@ namespace SoulsFormats
 
             public int Unk08 { get; set; }
 
+            public Param66() { }
+
             internal Param66(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -838,6 +943,8 @@ namespace SoulsFormats
 
             public int Unk04 { get; set; }
 
+            public Param68() { }
+
             internal Param68(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -859,6 +966,8 @@ namespace SoulsFormats
 
             public int Unk04 { get; set; }
 
+            public Param69() { }
+
             internal Param69(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -879,6 +988,11 @@ namespace SoulsFormats
             internal override int Type => 70;
 
             public PrimitiveTick Tick { get; set; }
+
+            public Param70()
+            {
+                Tick = new PrimitiveTick();
+            }
 
             internal Param70(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
@@ -909,6 +1023,8 @@ namespace SoulsFormats
 
             public int Unk08 { get; set; }
 
+            public Param71() { }
+
             internal Param71(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -933,6 +1049,12 @@ namespace SoulsFormats
             public PrimitiveInt Int1 { get; set; }
 
             public PrimitiveInt Int2 { get; set; }
+
+            public Param79()
+            {
+                Int1 = new PrimitiveInt();
+                Int2 = new PrimitiveInt();
+            }
 
             internal Param79(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
@@ -966,6 +1088,12 @@ namespace SoulsFormats
 
             public PrimitiveFloat Float2 { get; set; }
 
+            public Param81()
+            {
+                Float1 = new PrimitiveFloat();
+                Float2 = new PrimitiveFloat();
+            }
+
             internal Param81(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -997,6 +1125,12 @@ namespace SoulsFormats
             public Param Param { get; set; }
 
             public PrimitiveFloat Float { get; set; }
+
+            public Param82()
+            {
+                Param = new Param1();
+                Float = new PrimitiveFloat();
+            }
 
             internal Param82(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
@@ -1030,6 +1164,12 @@ namespace SoulsFormats
 
             public PrimitiveColor Color2 { get; set; }
 
+            public Param83()
+            {
+                Color1 = new PrimitiveColor();
+                Color2 = new PrimitiveColor();
+            }
+
             internal Param83(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -1061,6 +1201,12 @@ namespace SoulsFormats
             public Param Param { get; set; }
 
             public PrimitiveColor Color { get; set; }
+
+            public Param84()
+            {
+                Param = new Param1();
+                Color = new PrimitiveColor();
+            }
 
             internal Param84(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
@@ -1094,6 +1240,12 @@ namespace SoulsFormats
 
             public PrimitiveTick Tick2 { get; set; }
 
+            public Param85()
+            {
+                Tick1 = new PrimitiveTick();
+                Tick2 = new PrimitiveTick();
+            }
+
             internal Param85(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -1126,6 +1278,8 @@ namespace SoulsFormats
 
             public int Unk08 { get; set; }
 
+            public Param87() { }
+
             internal Param87(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -1148,6 +1302,12 @@ namespace SoulsFormats
             public PrimitiveTick Tick { get; set; }
 
             public PrimitiveInt Int { get; set; }
+
+            public TickInt()
+            {
+                Tick = new PrimitiveTick();
+                Int = new PrimitiveInt();
+            }
 
             internal TickInt(BinaryReaderEx br, List<string> classNames)
             {
@@ -1173,6 +1333,12 @@ namespace SoulsFormats
             public PrimitiveTick Tick { get; set; }
 
             public PrimitiveFloat Float { get; set; }
+
+            public TickFloat()
+            {
+                Tick = new PrimitiveTick();
+                Float = new PrimitiveFloat();
+            }
 
             internal TickFloat(BinaryReaderEx br, List<string> classNames)
             {
@@ -1202,6 +1368,14 @@ namespace SoulsFormats
             public PrimitiveFloat Float2 { get; set; }
 
             public PrimitiveFloat Float3 { get; set; }
+
+            public TickFloat3()
+            {
+                Tick = new PrimitiveTick();
+                Float1 = new PrimitiveFloat();
+                Float2 = new PrimitiveFloat();
+                Float3 = new PrimitiveFloat();
+            }
 
             internal TickFloat3(BinaryReaderEx br, List<string> classNames)
             {
@@ -1234,6 +1408,12 @@ namespace SoulsFormats
 
             public PrimitiveColor Color { get; set; }
 
+            public TickColor()
+            {
+                Tick = new PrimitiveTick();
+                Color = new PrimitiveColor();
+            }
+
             internal TickColor(BinaryReaderEx br, List<string> classNames)
             {
                 Tick = new PrimitiveTick(br, classNames);
@@ -1262,6 +1442,14 @@ namespace SoulsFormats
             public PrimitiveColor Color2 { get; set; }
 
             public PrimitiveColor Color3 { get; set; }
+
+            public TickColor3()
+            {
+                Tick = new PrimitiveTick();
+                Color1 = new PrimitiveColor();
+                Color2 = new PrimitiveColor();
+                Color3 = new PrimitiveColor();
+            }
 
             internal TickColor3(BinaryReaderEx br, List<string> classNames)
             {

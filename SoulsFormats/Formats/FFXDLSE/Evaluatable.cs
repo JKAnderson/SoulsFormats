@@ -24,6 +24,12 @@ namespace SoulsFormats
 
             public EvaluatableInt Right { get; set; }
 
+            public EvaluatableInt()
+            {
+                Operator = 1;
+                Literal1 = 1;
+            }
+
             internal EvaluatableInt(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
