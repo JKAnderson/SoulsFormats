@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Xml.Serialization;
 
 namespace SoulsFormats
 {
@@ -146,6 +147,7 @@ namespace SoulsFormats
 
             internal override int Version => 2;
 
+            [XmlAttribute]
             public int Unk04 { get; set; }
 
             public List<Param> Params { get; set; }
@@ -188,6 +190,7 @@ namespace SoulsFormats
 
             internal override int Version => 5;
 
+            [XmlAttribute]
             public int ID { get; set; }
 
             public DLVector Vector { get; set; }
@@ -352,6 +355,7 @@ namespace SoulsFormats
 
             internal override int Version => 1;
 
+            [XmlAttribute]
             public int ID { get; set; }
 
             public ParamList ParamList { get; set; }
@@ -388,6 +392,7 @@ namespace SoulsFormats
 
             internal override int Version => 1;
 
+            [XmlAttribute]
             public int StateIndex { get; set; }
 
             public EvaluatableInt Evaluator { get; set; }

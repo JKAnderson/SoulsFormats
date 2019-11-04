@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Xml.Serialization;
 
 namespace SoulsFormats
 {
@@ -12,8 +13,10 @@ namespace SoulsFormats
 
             internal override int Version => 1;
 
+            [XmlAttribute]
             public int Operator { get; set; }
 
+            [XmlAttribute]
             public int Type { get; set; }
 
             public int Literal1 { get; set; }

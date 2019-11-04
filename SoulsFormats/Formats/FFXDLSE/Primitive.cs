@@ -12,6 +12,7 @@ namespace SoulsFormats
 
             internal override int Version => 1;
 
+            [XmlAttribute]
             public int Value { get; set; }
 
             public PrimitiveInt() { }
@@ -35,6 +36,7 @@ namespace SoulsFormats
 
             internal override int Version => 1;
 
+            [XmlAttribute]
             public float Value { get; set; }
 
             public PrimitiveFloat() { }
@@ -58,6 +60,7 @@ namespace SoulsFormats
 
             internal override int Version => 1;
 
+            [XmlAttribute]
             public float Value { get; set; }
 
             public PrimitiveTick() { }
