@@ -17,6 +17,11 @@ namespace SoulsFormats
 
             public PrimitiveInt() { }
 
+            public PrimitiveInt(int value)
+            {
+                Value = value;
+            }
+
             internal PrimitiveInt(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -28,6 +33,15 @@ namespace SoulsFormats
             {
                 bw.WriteInt32(Value);
             }
+
+            internal static int Read(BinaryReaderEx br, List<string> classNames)
+                => new PrimitiveInt(br, classNames).Value;
+
+            internal static void AddClassName(List<string> classNames)
+                => new PrimitiveInt().AddClassNames(classNames);
+
+            internal static void Write(BinaryWriterEx bw, List<string> classNames, int value)
+                => new PrimitiveInt(value).Write(bw, classNames);
         }
 
         public class PrimitiveFloat : FXSerializable
@@ -41,6 +55,11 @@ namespace SoulsFormats
 
             public PrimitiveFloat() { }
 
+            public PrimitiveFloat(float value)
+            {
+                Value = value;
+            }
+
             internal PrimitiveFloat(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -52,6 +71,15 @@ namespace SoulsFormats
             {
                 bw.WriteSingle(Value);
             }
+
+            internal static float Read(BinaryReaderEx br, List<string> classNames)
+                => new PrimitiveFloat(br, classNames).Value;
+
+            internal static void AddClassName(List<string> classNames)
+                => new PrimitiveFloat().AddClassNames(classNames);
+
+            internal static void Write(BinaryWriterEx bw, List<string> classNames, float value)
+                => new PrimitiveFloat(value).Write(bw, classNames);
         }
 
         public class PrimitiveTick : FXSerializable
@@ -65,6 +93,11 @@ namespace SoulsFormats
 
             public PrimitiveTick() { }
 
+            public PrimitiveTick(float value)
+            {
+                Value = value;
+            }
+
             internal PrimitiveTick(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
@@ -76,6 +109,15 @@ namespace SoulsFormats
             {
                 bw.WriteSingle(Value);
             }
+
+            internal static float Read(BinaryReaderEx br, List<string> classNames)
+                => new PrimitiveTick(br, classNames).Value;
+
+            internal static void AddClassName(List<string> classNames)
+                => new PrimitiveTick().AddClassNames(classNames);
+
+            internal static void Write(BinaryWriterEx bw, List<string> classNames, float value)
+                => new PrimitiveTick(value).Write(bw, classNames);
         }
 
         public class PrimitiveColor : FXSerializable
@@ -93,6 +135,14 @@ namespace SoulsFormats
             public float A { get; set; }
 
             public PrimitiveColor() { }
+
+            public PrimitiveColor(float r, float g, float b, float a)
+            {
+                R = r;
+                G = g;
+                B = b;
+                A = a;
+            }
 
             internal PrimitiveColor(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 

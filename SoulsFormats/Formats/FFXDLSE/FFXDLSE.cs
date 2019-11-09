@@ -80,6 +80,10 @@ namespace SoulsFormats
         {
             public DLVector() : base() { }
 
+            public DLVector(int capacity) : base(capacity) { }
+
+            public DLVector(IEnumerable<int> collection) : base(collection) { }
+
             internal DLVector(BinaryReaderEx br, List<string> classNames)
             {
                 br.AssertInt16((short)(classNames.IndexOf("DLVector") + 1));
@@ -395,19 +399,16 @@ namespace SoulsFormats
             [XmlAttribute]
             public int StateIndex { get; set; }
 
-            public EvaluatableInt Evaluator { get; set; }
+            public Evaluatable Evaluator { get; set; }
 
-            public Trigger()
-            {
-                Evaluator = new EvaluatableInt();
-            }
+            public Trigger() { }
 
             internal Trigger(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
             {
                 StateIndex = br.ReadInt32();
-                Evaluator = new EvaluatableInt(br, classNames);
+                Evaluator = Evaluatable.Read(br, classNames);
             }
 
             internal override void AddClassNames(List<string> classNames)

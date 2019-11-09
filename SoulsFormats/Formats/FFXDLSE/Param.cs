@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Xml.Serialization;
 
 namespace SoulsFormats
 {
@@ -82,31 +83,29 @@ namespace SoulsFormats
         {
             internal override int Type => 1;
 
-            public PrimitiveInt Int { get; set; }
+            [XmlAttribute]
+            public int Int { get; set; }
 
-            public Param1()
-            {
-                Int = new PrimitiveInt();
-            }
+            public Param1() { }
 
             internal Param1(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
             {
                 base.Deserialize(br, classNames);
-                Int = new PrimitiveInt(br, classNames);
+                Int = PrimitiveInt.Read(br, classNames);
             }
 
             internal override void AddClassNames(List<string> classNames)
             {
                 base.AddClassNames(classNames);
-                Int.AddClassNames(classNames);
+                PrimitiveInt.AddClassName(classNames);
             }
 
             protected internal override void Serialize(BinaryWriterEx bw, List<string> classNames)
             {
                 base.Serialize(bw, classNames);
-                Int.Write(bw, classNames);
+                PrimitiveInt.Write(bw, classNames, Int);
             }
         }
 
@@ -114,11 +113,11 @@ namespace SoulsFormats
         {
             internal override int Type => 2;
 
-            public List<PrimitiveInt> Ints { get; set; }
+            public List<int> Ints { get; set; }
 
             public Param2()
             {
-                Ints = new List<PrimitiveInt>();
+                Ints = new List<int>();
             }
 
             internal Param2(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
@@ -127,24 +126,23 @@ namespace SoulsFormats
             {
                 base.Deserialize(br, classNames);
                 int count = br.ReadInt32();
-                Ints = new List<PrimitiveInt>(count);
+                Ints = new List<int>(count);
                 for (int i = 0; i < count; i++)
-                    Ints.Add(new PrimitiveInt(br, classNames));
+                    Ints.Add(PrimitiveInt.Read(br, classNames));
             }
 
             internal override void AddClassNames(List<string> classNames)
             {
                 base.AddClassNames(classNames);
-                foreach (PrimitiveInt primInt in Ints)
-                    primInt.AddClassNames(classNames);
+                PrimitiveInt.AddClassName(classNames);
             }
 
             protected internal override void Serialize(BinaryWriterEx bw, List<string> classNames)
             {
                 base.Serialize(bw, classNames);
                 bw.WriteInt32(Ints.Count);
-                foreach (PrimitiveInt primInt in Ints)
-                    primInt.Write(bw, classNames);
+                foreach (int value in Ints)
+                    PrimitiveInt.Write(bw, classNames, value);
             }
         }
 
@@ -228,31 +226,29 @@ namespace SoulsFormats
         {
             internal override int Type => 7;
 
-            public PrimitiveFloat Float { get; set; }
+            [XmlAttribute]
+            public float Float { get; set; }
 
-            public Param7()
-            {
-                Float = new PrimitiveFloat();
-            }
+            public Param7() { }
 
             internal Param7(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
             {
                 base.Deserialize(br, classNames);
-                Float = new PrimitiveFloat(br, classNames);
+                Float = PrimitiveFloat.Read(br, classNames);
             }
 
             internal override void AddClassNames(List<string> classNames)
             {
                 base.AddClassNames(classNames);
-                Float.AddClassNames(classNames);
+                PrimitiveFloat.AddClassName(classNames);
             }
 
             protected internal override void Serialize(BinaryWriterEx bw, List<string> classNames)
             {
                 base.Serialize(bw, classNames);
-                Float.Write(bw, classNames);
+                PrimitiveFloat.Write(bw, classNames, Float);
             }
         }
 
@@ -634,6 +630,7 @@ namespace SoulsFormats
         {
             internal override int Type => 37;
 
+            [XmlAttribute]
             public int Unk04 { get; set; }
 
             public ParamList ParamList { get; set; }
@@ -670,6 +667,7 @@ namespace SoulsFormats
         {
             internal override int Type => 38;
 
+            [XmlAttribute]
             public int Unk04 { get; set; }
 
             public ParamList ParamList { get; set; }
@@ -706,6 +704,7 @@ namespace SoulsFormats
         {
             internal override int Type => 40;
 
+            [XmlAttribute]
             public int Unk04 { get; set; }
 
             public Param40() { }
@@ -729,6 +728,7 @@ namespace SoulsFormats
         {
             internal override int Type => 41;
 
+            [XmlAttribute]
             public int Unk04 { get; set; }
 
             public Param41() { }
@@ -751,9 +751,11 @@ namespace SoulsFormats
         public class Param44 : Param
         {
             internal override int Type => 44;
-
+            
+            [XmlAttribute]
             public int Unk04 { get; set; }
 
+            [XmlAttribute]
             public int Unk08 { get; set; }
 
             public Param44() { }
@@ -779,8 +781,10 @@ namespace SoulsFormats
         {
             internal override int Type => 45;
 
+            [XmlAttribute]
             public int Unk04 { get; set; }
 
+            [XmlAttribute]
             public int Unk08 { get; set; }
 
             public Param45() { }
@@ -806,8 +810,10 @@ namespace SoulsFormats
         {
             internal override int Type => 46;
 
+            [XmlAttribute]
             public int Unk04 { get; set; }
 
+            [XmlAttribute]
             public int Unk08 { get; set; }
 
             public Param46() { }
@@ -833,8 +839,10 @@ namespace SoulsFormats
         {
             internal override int Type => 47;
 
+            [XmlAttribute]
             public int Unk04 { get; set; }
 
+            [XmlAttribute]
             public int Unk08 { get; set; }
 
             public Param47() { }
@@ -860,8 +868,10 @@ namespace SoulsFormats
         {
             internal override int Type => 59;
 
+            [XmlAttribute]
             public int Unk04 { get; set; }
 
+            [XmlAttribute]
             public int Unk08 { get; set; }
 
             public Param59() { }
@@ -887,8 +897,10 @@ namespace SoulsFormats
         {
             internal override int Type => 60;
 
+            [XmlAttribute]
             public int Unk04 { get; set; }
 
+            [XmlAttribute]
             public int Unk08 { get; set; }
 
             public Param60() { }
@@ -914,8 +926,10 @@ namespace SoulsFormats
         {
             internal override int Type => 66;
 
+            [XmlAttribute]
             public int Unk04 { get; set; }
 
+            [XmlAttribute]
             public int Unk08 { get; set; }
 
             public Param66() { }
@@ -941,6 +955,7 @@ namespace SoulsFormats
         {
             internal override int Type => 68;
 
+            [XmlAttribute]
             public int Unk04 { get; set; }
 
             public Param68() { }
@@ -964,6 +979,7 @@ namespace SoulsFormats
         {
             internal override int Type => 69;
 
+            [XmlAttribute]
             public int Unk04 { get; set; }
 
             public Param69() { }
@@ -987,31 +1003,29 @@ namespace SoulsFormats
         {
             internal override int Type => 70;
 
-            public PrimitiveTick Tick { get; set; }
+            [XmlAttribute]
+            public float Tick { get; set; }
 
-            public Param70()
-            {
-                Tick = new PrimitiveTick();
-            }
+            public Param70() { }
 
             internal Param70(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
             {
                 base.Deserialize(br, classNames);
-                Tick = new PrimitiveTick(br, classNames);
+                Tick = PrimitiveTick.Read(br, classNames);
             }
 
             internal override void AddClassNames(List<string> classNames)
             {
                 base.AddClassNames(classNames);
-                Tick.AddClassNames(classNames);
+                PrimitiveTick.AddClassName(classNames);
             }
 
             protected internal override void Serialize(BinaryWriterEx bw, List<string> classNames)
             {
                 base.Serialize(bw, classNames);
-                Tick.Write(bw, classNames);
+                PrimitiveTick.Write(bw, classNames, Tick);
             }
         }
 
@@ -1019,8 +1033,10 @@ namespace SoulsFormats
         {
             internal override int Type => 71;
 
+            [XmlAttribute]
             public int Unk04 { get; set; }
 
+            [XmlAttribute]
             public int Unk08 { get; set; }
 
             public Param71() { }
@@ -1046,37 +1062,34 @@ namespace SoulsFormats
         {
             internal override int Type => 79;
 
-            public PrimitiveInt Int1 { get; set; }
+            [XmlAttribute]
+            public int Int1 { get; set; }
 
-            public PrimitiveInt Int2 { get; set; }
+            [XmlAttribute]
+            public int Int2 { get; set; }
 
-            public Param79()
-            {
-                Int1 = new PrimitiveInt();
-                Int2 = new PrimitiveInt();
-            }
+            public Param79() { }
 
             internal Param79(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
             {
                 base.Deserialize(br, classNames);
-                Int1 = new PrimitiveInt(br, classNames);
-                Int2 = new PrimitiveInt(br, classNames);
+                Int1 = PrimitiveInt.Read(br, classNames);
+                Int2 = PrimitiveInt.Read(br, classNames);
             }
 
             internal override void AddClassNames(List<string> classNames)
             {
                 base.AddClassNames(classNames);
-                Int1.AddClassNames(classNames);
-                Int2.AddClassNames(classNames);
+                PrimitiveInt.AddClassName(classNames);
             }
 
             protected internal override void Serialize(BinaryWriterEx bw, List<string> classNames)
             {
                 base.Serialize(bw, classNames);
-                Int1.Write(bw, classNames);
-                Int2.Write(bw, classNames);
+                PrimitiveInt.Write(bw, classNames, Int1);
+                PrimitiveInt.Write(bw, classNames, Int2);
             }
         }
 
@@ -1084,37 +1097,34 @@ namespace SoulsFormats
         {
             internal override int Type => 81;
 
-            public PrimitiveFloat Float1 { get; set; }
+            [XmlAttribute]
+            public float Float1 { get; set; }
 
-            public PrimitiveFloat Float2 { get; set; }
+            [XmlAttribute]
+            public float Float2 { get; set; }
 
-            public Param81()
-            {
-                Float1 = new PrimitiveFloat();
-                Float2 = new PrimitiveFloat();
-            }
+            public Param81() { }
 
             internal Param81(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
             {
                 base.Deserialize(br, classNames);
-                Float1 = new PrimitiveFloat(br, classNames);
-                Float2 = new PrimitiveFloat(br, classNames);
+                Float1 = PrimitiveFloat.Read(br, classNames);
+                Float2 = PrimitiveFloat.Read(br, classNames);
             }
 
             internal override void AddClassNames(List<string> classNames)
             {
                 base.AddClassNames(classNames);
-                Float1.AddClassNames(classNames);
-                Float2.AddClassNames(classNames);
+                PrimitiveFloat.AddClassName(classNames);
             }
 
             protected internal override void Serialize(BinaryWriterEx bw, List<string> classNames)
             {
                 base.Serialize(bw, classNames);
-                Float1.Write(bw, classNames);
-                Float2.Write(bw, classNames);
+                PrimitiveFloat.Write(bw, classNames, Float1);
+                PrimitiveFloat.Write(bw, classNames, Float2);
             }
         }
 
@@ -1124,12 +1134,11 @@ namespace SoulsFormats
 
             public Param Param { get; set; }
 
-            public PrimitiveFloat Float { get; set; }
+            public float Float { get; set; }
 
             public Param82()
             {
                 Param = new Param1();
-                Float = new PrimitiveFloat();
             }
 
             internal Param82(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
@@ -1138,21 +1147,21 @@ namespace SoulsFormats
             {
                 base.Deserialize(br, classNames);
                 Param = Param.Read(br, classNames);
-                Float = new PrimitiveFloat(br, classNames);
+                Float = PrimitiveFloat.Read(br, classNames);
             }
 
             internal override void AddClassNames(List<string> classNames)
             {
                 base.AddClassNames(classNames);
                 Param.AddClassNames(classNames);
-                Float.AddClassNames(classNames);
+                PrimitiveFloat.AddClassName(classNames);
             }
 
             protected internal override void Serialize(BinaryWriterEx bw, List<string> classNames)
             {
                 base.Serialize(bw, classNames);
                 Param.Write(bw, classNames);
-                Float.Write(bw, classNames);
+                PrimitiveFloat.Write(bw, classNames, Float);
             }
         }
 
@@ -1236,37 +1245,34 @@ namespace SoulsFormats
         {
             internal override int Type => 85;
 
-            public PrimitiveTick Tick1 { get; set; }
+            [XmlAttribute]
+            public float Tick1 { get; set; }
 
-            public PrimitiveTick Tick2 { get; set; }
+            [XmlAttribute]
+            public float Tick2 { get; set; }
 
-            public Param85()
-            {
-                Tick1 = new PrimitiveTick();
-                Tick2 = new PrimitiveTick();
-            }
+            public Param85() { }
 
             internal Param85(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
             {
                 base.Deserialize(br, classNames);
-                Tick1 = new PrimitiveTick(br, classNames);
-                Tick2 = new PrimitiveTick(br, classNames);
+                Tick1 = PrimitiveTick.Read(br, classNames);
+                Tick2 = PrimitiveTick.Read(br, classNames);
             }
 
             internal override void AddClassNames(List<string> classNames)
             {
                 base.AddClassNames(classNames);
-                Tick1.AddClassNames(classNames);
-                Tick2.AddClassNames(classNames);
+                PrimitiveTick.AddClassName(classNames);
             }
 
             protected internal override void Serialize(BinaryWriterEx bw, List<string> classNames)
             {
                 base.Serialize(bw, classNames);
-                Tick1.Write(bw, classNames);
-                Tick2.Write(bw, classNames);
+                PrimitiveTick.Write(bw, classNames, Tick1);
+                PrimitiveTick.Write(bw, classNames, Tick2);
             }
         }
 
@@ -1274,8 +1280,10 @@ namespace SoulsFormats
         {
             internal override int Type => 87;
 
+            [XmlAttribute]
             public int Unk04 { get; set; }
 
+            [XmlAttribute]
             public int Unk08 { get; set; }
 
             public Param87() { }
@@ -1299,143 +1307,159 @@ namespace SoulsFormats
 
         public class TickInt
         {
-            public PrimitiveTick Tick { get; set; }
+            [XmlAttribute]
+            public float Tick { get; set; }
 
-            public PrimitiveInt Int { get; set; }
+            [XmlAttribute]
+            public int Int { get; set; }
 
-            public TickInt()
+            public TickInt() { }
+
+            public TickInt(float tick, int primInt)
             {
-                Tick = new PrimitiveTick();
-                Int = new PrimitiveInt();
+                Tick = tick;
+                Int = primInt;
             }
 
             internal TickInt(BinaryReaderEx br, List<string> classNames)
             {
-                Tick = new PrimitiveTick(br, classNames);
-                Int = new PrimitiveInt(br, classNames);
+                Tick = PrimitiveTick.Read(br, classNames);
+                Int = PrimitiveInt.Read(br, classNames);
             }
 
             internal void AddClassNames(List<string> classNames)
             {
-                Tick.AddClassNames(classNames);
-                Int.AddClassNames(classNames);
+                PrimitiveTick.AddClassName(classNames);
+                PrimitiveInt.AddClassName(classNames);
             }
 
             internal void Write(BinaryWriterEx bw, List<string> classNames)
             {
-                Tick.Write(bw, classNames);
-                Int.Write(bw, classNames);
+                PrimitiveTick.Write(bw, classNames, Tick);
+                PrimitiveInt.Write(bw, classNames, Int);
             }
         }
 
         public class TickFloat
         {
-            public PrimitiveTick Tick { get; set; }
+            [XmlAttribute]
+            public float Tick { get; set; }
 
-            public PrimitiveFloat Float { get; set; }
+            [XmlAttribute]
+            public float Float { get; set; }
 
-            public TickFloat()
+            public TickFloat() { }
+
+            public TickFloat(float tick, float primFloat)
             {
-                Tick = new PrimitiveTick();
-                Float = new PrimitiveFloat();
+                Tick = tick;
+                Float = primFloat;
             }
 
             internal TickFloat(BinaryReaderEx br, List<string> classNames)
             {
-                Tick = new PrimitiveTick(br, classNames);
-                Float = new PrimitiveFloat(br, classNames);
+                Tick = PrimitiveTick.Read(br, classNames);
+                Float = PrimitiveFloat.Read(br, classNames);
             }
 
             internal void AddClassNames(List<string> classNames)
             {
-                Tick.AddClassNames(classNames);
-                Float.AddClassNames(classNames);
+                PrimitiveTick.AddClassName(classNames);
+                PrimitiveFloat.AddClassName(classNames);
             }
 
             internal void Write(BinaryWriterEx bw, List<string> classNames)
             {
-                Tick.Write(bw, classNames);
-                Float.Write(bw, classNames);
+                PrimitiveTick.Write(bw, classNames, Tick);
+                PrimitiveFloat.Write(bw, classNames, Float);
             }
         }
 
         public class TickFloat3
         {
-            public PrimitiveTick Tick { get; set; }
+            [XmlAttribute]
+            public float Tick { get; set; }
 
-            public PrimitiveFloat Float1 { get; set; }
+            public float Float1 { get; set; }
 
-            public PrimitiveFloat Float2 { get; set; }
+            public float Float2 { get; set; }
 
-            public PrimitiveFloat Float3 { get; set; }
+            public float Float3 { get; set; }
 
-            public TickFloat3()
+            public TickFloat3() { }
+
+            public TickFloat3(float tick, float float1, float float2, float float3)
             {
-                Tick = new PrimitiveTick();
-                Float1 = new PrimitiveFloat();
-                Float2 = new PrimitiveFloat();
-                Float3 = new PrimitiveFloat();
+                Tick = tick;
+                Float1 = float1;
+                Float2 = float2;
+                Float3 = float3;
             }
 
             internal TickFloat3(BinaryReaderEx br, List<string> classNames)
             {
-                Tick = new PrimitiveTick(br, classNames);
-                Float1 = new PrimitiveFloat(br, classNames);
-                Float2 = new PrimitiveFloat(br, classNames);
-                Float3 = new PrimitiveFloat(br, classNames);
+                Tick = PrimitiveTick.Read(br, classNames);
+                Float1 = PrimitiveFloat.Read(br, classNames);
+                Float2 = PrimitiveFloat.Read(br, classNames);
+                Float3 = PrimitiveFloat.Read(br, classNames);
             }
 
             internal void AddClassNames(List<string> classNames)
             {
-                Tick.AddClassNames(classNames);
-                Float1.AddClassNames(classNames);
-                Float2.AddClassNames(classNames);
-                Float3.AddClassNames(classNames);
+                PrimitiveTick.AddClassName(classNames);
+                PrimitiveFloat.AddClassName(classNames);
             }
 
             internal void Write(BinaryWriterEx bw, List<string> classNames)
             {
-                Tick.Write(bw, classNames);
-                Float1.Write(bw, classNames);
-                Float2.Write(bw, classNames);
-                Float3.Write(bw, classNames);
+                PrimitiveTick.Write(bw, classNames, Tick);
+                PrimitiveFloat.Write(bw, classNames, Float1);
+                PrimitiveFloat.Write(bw, classNames, Float2);
+                PrimitiveFloat.Write(bw, classNames, Float3);
             }
         }
 
         public class TickColor
         {
-            public PrimitiveTick Tick { get; set; }
+            [XmlAttribute]
+            public float Tick { get; set; }
 
             public PrimitiveColor Color { get; set; }
 
             public TickColor()
             {
-                Tick = new PrimitiveTick();
                 Color = new PrimitiveColor();
+            }
+
+            public TickColor(float tick, PrimitiveColor color)
+            {
+                Tick = tick;
+                Color = color;
             }
 
             internal TickColor(BinaryReaderEx br, List<string> classNames)
             {
-                Tick = new PrimitiveTick(br, classNames);
+                Tick = PrimitiveTick.Read(br, classNames);
                 Color = new PrimitiveColor(br, classNames);
             }
 
             internal void AddClassNames(List<string> classNames)
             {
-                Tick.AddClassNames(classNames);
+                PrimitiveTick.AddClassName(classNames);
                 Color.AddClassNames(classNames);
             }
 
             internal void Write(BinaryWriterEx bw, List<string> classNames)
             {
-                Tick.Write(bw, classNames);
+                PrimitiveTick.Write(bw, classNames, Tick);
                 Color.Write(bw, classNames);
             }
         }
 
         public class TickColor3
         {
-            public PrimitiveTick Tick { get; set; }
+            [XmlAttribute]
+            public float Tick { get; set; }
 
             public PrimitiveColor Color1 { get; set; }
 
@@ -1445,15 +1469,22 @@ namespace SoulsFormats
 
             public TickColor3()
             {
-                Tick = new PrimitiveTick();
                 Color1 = new PrimitiveColor();
                 Color2 = new PrimitiveColor();
                 Color3 = new PrimitiveColor();
             }
 
+            public TickColor3(float tick, PrimitiveColor color1, PrimitiveColor color2, PrimitiveColor color3)
+            {
+                Tick = tick;
+                Color1 = color1;
+                Color2 = color2;
+                Color3 = color3;
+            }
+
             internal TickColor3(BinaryReaderEx br, List<string> classNames)
             {
-                Tick = new PrimitiveTick(br, classNames);
+                Tick = PrimitiveTick.Read(br, classNames);
                 Color1 = new PrimitiveColor(br, classNames);
                 Color2 = new PrimitiveColor(br, classNames);
                 Color3 = new PrimitiveColor(br, classNames);
@@ -1461,7 +1492,7 @@ namespace SoulsFormats
 
             internal void AddClassNames(List<string> classNames)
             {
-                Tick.AddClassNames(classNames);
+                PrimitiveTick.AddClassName(classNames);
                 Color1.AddClassNames(classNames);
                 Color2.AddClassNames(classNames);
                 Color3.AddClassNames(classNames);
@@ -1469,7 +1500,7 @@ namespace SoulsFormats
 
             internal void Write(BinaryWriterEx bw, List<string> classNames)
             {
-                Tick.Write(bw, classNames);
+                PrimitiveTick.Write(bw, classNames, Tick);
                 Color1.Write(bw, classNames);
                 Color2.Write(bw, classNames);
                 Color3.Write(bw, classNames);
