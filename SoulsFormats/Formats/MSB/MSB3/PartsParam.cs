@@ -669,18 +669,43 @@ namespace SoulsFormats
                 /// <summary>
                 /// Gparam IDs for this object.
                 /// </summary>
-                public GparamConfig Gparam;
+                public GparamConfig Gparam { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public string CollisionName;
+                public string CollisionName { get; set; }
                 private int CollisionPartIndex;
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short UnkT0C, UnkT0E, UnkT10, UnkT12, UnkT14, UnkT16, UnkT18, UnkT1A, UnkT1C, UnkT1E;
+                public byte UnkT0C { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public bool EnableObjAnimNetSyncStructure { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public bool CollisionFilter { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public bool SetMainObjStructureBooleans { get; set; }
+
+                /// <summary>
+                /// Automatically playing animations; only the first is actually used, according to Pav.
+                /// </summary>
+                public short[] AnimIDs { get; private set; }
+
+                /// <summary>
+                /// Value added to the base ModelSfxParam ID; only the first is actually used, according to Pav.
+                /// </summary>
+                public short[] ModelSfxParamRelativeIDs { get; private set; }
 
                 /// <summary>
                 /// Creates a new Object with the given name.
@@ -688,6 +713,8 @@ namespace SoulsFormats
                 public Object(string name) : base(name)
                 {
                     Gparam = new GparamConfig();
+                    AnimIDs = new short[4] { -1, -1, -1, -1 };
+                    ModelSfxParamRelativeIDs = new short[4] { -1, -1, -1, -1 };
                 }
 
                 /// <summary>
@@ -698,15 +725,11 @@ namespace SoulsFormats
                     Gparam = new GparamConfig(clone.Gparam);
                     CollisionName = clone.CollisionName;
                     UnkT0C = clone.UnkT0C;
-                    UnkT0E = clone.UnkT0E;
-                    UnkT10 = clone.UnkT10;
-                    UnkT12 = clone.UnkT12;
-                    UnkT14 = clone.UnkT14;
-                    UnkT16 = clone.UnkT16;
-                    UnkT18 = clone.UnkT18;
-                    UnkT1A = clone.UnkT1A;
-                    UnkT1C = clone.UnkT1C;
-                    UnkT1E = clone.UnkT1E;
+                    EnableObjAnimNetSyncStructure = clone.EnableObjAnimNetSyncStructure;
+                    CollisionFilter = clone.CollisionFilter;
+                    SetMainObjStructureBooleans = clone.SetMainObjStructureBooleans;
+                    AnimIDs = (short[])clone.AnimIDs.Clone();
+                    ModelSfxParamRelativeIDs = (short[])clone.ModelSfxParamRelativeIDs.Clone();
                 }
 
                 internal Object(BinaryReaderEx br) : base(br) { }
@@ -716,16 +739,12 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     CollisionPartIndex = br.ReadInt32();
-                    UnkT0C = br.ReadInt16();
-                    UnkT0E = br.ReadInt16();
-                    UnkT10 = br.ReadInt16();
-                    UnkT12 = br.ReadInt16();
-                    UnkT14 = br.ReadInt16();
-                    UnkT16 = br.ReadInt16();
-                    UnkT18 = br.ReadInt16();
-                    UnkT1A = br.ReadInt16();
-                    UnkT1C = br.ReadInt16();
-                    UnkT1E = br.ReadInt16();
+                    UnkT0C = br.ReadByte();
+                    EnableObjAnimNetSyncStructure = br.ReadBoolean();
+                    CollisionFilter = br.ReadBoolean();
+                    SetMainObjStructureBooleans = br.ReadBoolean();
+                    AnimIDs = br.ReadInt16s(4);
+                    ModelSfxParamRelativeIDs = br.ReadInt16s(4);
                 }
 
                 internal override void ReadGparamConfig(BinaryReaderEx br) => Gparam = new GparamConfig(br);
@@ -735,16 +754,12 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(CollisionPartIndex);
-                    bw.WriteInt16(UnkT0C);
-                    bw.WriteInt16(UnkT0E);
-                    bw.WriteInt16(UnkT10);
-                    bw.WriteInt16(UnkT12);
-                    bw.WriteInt16(UnkT14);
-                    bw.WriteInt16(UnkT16);
-                    bw.WriteInt16(UnkT18);
-                    bw.WriteInt16(UnkT1A);
-                    bw.WriteInt16(UnkT1C);
-                    bw.WriteInt16(UnkT1E);
+                    bw.WriteByte(UnkT0C);
+                    bw.WriteBoolean(EnableObjAnimNetSyncStructure);
+                    bw.WriteBoolean(CollisionFilter);
+                    bw.WriteBoolean(SetMainObjStructureBooleans);
+                    bw.WriteInt16s(AnimIDs);
+                    bw.WriteInt16s(ModelSfxParamRelativeIDs);
                 }
 
                 internal override void WriteGparamConfig(BinaryWriterEx bw) => Gparam.Write(bw);
