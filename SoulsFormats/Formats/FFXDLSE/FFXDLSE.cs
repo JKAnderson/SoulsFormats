@@ -81,32 +81,26 @@ namespace SoulsFormats
             Effect.Write(bw, classNames);
         }
 
-        public class DLVector : List<int>
+        private static class DLVector
         {
-            public DLVector() : base() { }
-
-            public DLVector(int capacity) : base(capacity) { }
-
-            public DLVector(IEnumerable<int> collection) : base(collection) { }
-
-            internal DLVector(BinaryReaderEx br, List<string> classNames)
+            public static List<int> Read(BinaryReaderEx br, List<string> classNames)
             {
                 br.AssertInt16((short)(classNames.IndexOf("DLVector") + 1));
                 int count = br.ReadInt32();
-                AddRange(br.ReadInt32s(count));
+                return new List<int>(br.ReadInt32s(count));
             }
 
-            internal void AddClassNames(List<string> classNames)
+            public static void AddClassNames(List<string> classNames)
             {
                 if (!classNames.Contains("DLVector"))
                     classNames.Add("DLVector");
             }
 
-            internal void Write(BinaryWriterEx bw, List<string> classNames)
+            public static void Write(BinaryWriterEx bw, List<string> classNames, List<int> vector)
             {
                 bw.WriteInt16((short)(classNames.IndexOf("DLVector") + 1));
-                bw.WriteInt32(Count);
-                bw.WriteInt32s(this);
+                bw.WriteInt32(vector.Count);
+                bw.WriteInt32s(vector);
             }
         }
 
@@ -116,7 +110,7 @@ namespace SoulsFormats
 
             internal abstract int Version { get; }
 
-            public FXSerializable() { }
+            internal FXSerializable() { }
 
             internal FXSerializable(BinaryReaderEx br, List<string> classNames)
             {
@@ -243,7 +237,7 @@ namespace SoulsFormats
             [XmlAttribute]
             public int ID { get; set; }
 
-            public DLVector Vector { get; set; }
+            public List<int> Vector { get; set; }
 
             public List<ParamList> ParamLists { get; set; }
 
@@ -253,7 +247,7 @@ namespace SoulsFormats
 
             public FXEffect()
             {
-                Vector = new DLVector();
+                Vector = new List<int>();
                 ParamLists = new List<ParamList>();
                 StateMap = new StateMap();
                 ResourceSet = new ResourceSet();
@@ -269,7 +263,7 @@ namespace SoulsFormats
                 br.AssertInt32(0);
                 int paramListCount = br.ReadInt32();
                 br.AssertInt16(0);
-                Vector = new DLVector(br, classNames);
+                Vector = DLVector.Read(br, classNames);
 
                 ParamLists = new List<ParamList>(paramListCount);
                 for (int i = 0; i < paramListCount; i++)
@@ -283,7 +277,7 @@ namespace SoulsFormats
             internal override void AddClassNames(List<string> classNames)
             {
                 base.AddClassNames(classNames);
-                Vector.AddClassNames(classNames);
+                DLVector.AddClassNames(classNames);
 
                 foreach (ParamList paramList in ParamLists)
                     paramList.AddClassNames(classNames);
@@ -300,7 +294,7 @@ namespace SoulsFormats
                 bw.WriteInt32(0);
                 bw.WriteInt32(ParamLists.Count);
                 bw.WriteInt16(0);
-                Vector.Write(bw, classNames);
+                DLVector.Write(bw, classNames, Vector);
 
                 foreach (ParamList paramList in ParamLists)
                     paramList.Write(bw, classNames);
@@ -476,53 +470,49 @@ namespace SoulsFormats
 
             internal override int Version => 1;
 
-            public DLVector Vector1 { get; set; }
+            public List<int> Vector1 { get; set; }
 
-            public DLVector Vector2 { get; set; }
+            public List<int> Vector2 { get; set; }
 
-            public DLVector Vector3 { get; set; }
+            public List<int> Vector3 { get; set; }
 
-            public DLVector Vector4 { get; set; }
+            public List<int> Vector4 { get; set; }
 
-            public DLVector Vector5 { get; set; }
+            public List<int> Vector5 { get; set; }
 
             public ResourceSet()
             {
-                Vector1 = new DLVector();
-                Vector2 = new DLVector();
-                Vector3 = new DLVector();
-                Vector4 = new DLVector();
-                Vector5 = new DLVector();
+                Vector1 = new List<int>();
+                Vector2 = new List<int>();
+                Vector3 = new List<int>();
+                Vector4 = new List<int>();
+                Vector5 = new List<int>();
             }
 
             internal ResourceSet(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
             {
-                Vector1 = new DLVector(br, classNames);
-                Vector2 = new DLVector(br, classNames);
-                Vector3 = new DLVector(br, classNames);
-                Vector4 = new DLVector(br, classNames);
-                Vector5 = new DLVector(br, classNames);
+                Vector1 = DLVector.Read(br, classNames);
+                Vector2 = DLVector.Read(br, classNames);
+                Vector3 = DLVector.Read(br, classNames);
+                Vector4 = DLVector.Read(br, classNames);
+                Vector5 = DLVector.Read(br, classNames);
             }
 
             internal override void AddClassNames(List<string> classNames)
             {
                 base.AddClassNames(classNames);
-                Vector1.AddClassNames(classNames);
-                Vector2.AddClassNames(classNames);
-                Vector3.AddClassNames(classNames);
-                Vector4.AddClassNames(classNames);
-                Vector5.AddClassNames(classNames);
+                DLVector.AddClassNames(classNames);
             }
 
             protected internal override void Serialize(BinaryWriterEx bw, List<string> classNames)
             {
-                Vector1.Write(bw, classNames);
-                Vector2.Write(bw, classNames);
-                Vector3.Write(bw, classNames);
-                Vector4.Write(bw, classNames);
-                Vector5.Write(bw, classNames);
+                DLVector.Write(bw, classNames, Vector1);
+                DLVector.Write(bw, classNames, Vector2);
+                DLVector.Write(bw, classNames, Vector3);
+                DLVector.Write(bw, classNames, Vector4);
+                DLVector.Write(bw, classNames, Vector5);
             }
         }
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
