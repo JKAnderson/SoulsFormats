@@ -1,5 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Xml;
+using System.Xml.Schema;
 using System.Xml.Serialization;
 
 namespace SoulsFormats
@@ -145,7 +150,7 @@ namespace SoulsFormats
             protected internal abstract void Serialize(BinaryWriterEx bw, List<string> classNames);
         }
 
-        public class ParamList : FXSerializable
+        public class ParamList : FXSerializable, IXmlSerializable
         {
             internal override string ClassName => "FXSerializableParamList";
 
@@ -186,6 +191,47 @@ namespace SoulsFormats
                 foreach (Param param in Params)
                     param.Write(bw, classNames);
             }
+
+            #region IXmlSerializable
+            private static XmlSerializer _paramSerializer;
+            private static XmlSerializer ParamSerializer
+            {
+                get
+                {
+                    if (_paramSerializer == null)
+                    {
+                        Type[] extraTypes = Assembly.GetExecutingAssembly().GetTypes()
+                            .Where(t => typeof(Param).IsAssignableFrom(t)).ToArray();
+                        _paramSerializer = new XmlSerializer(typeof(Param), extraTypes);
+                    }
+                    return _paramSerializer;
+                }
+            }
+
+            XmlSchema IXmlSerializable.GetSchema() => null;
+
+            void IXmlSerializable.ReadXml(XmlReader reader)
+            {
+                reader.MoveToContent();
+                bool empty = reader.IsEmptyElement;
+                Unk04 = int.Parse(reader.GetAttribute(nameof(Unk04)));
+                reader.ReadStartElement();
+
+                if (!empty)
+                {
+                    while (reader.IsStartElement(nameof(Param)))
+                        Params.Add((Param)ParamSerializer.Deserialize(reader));
+                    reader.ReadEndElement();
+                }
+            }
+
+            void IXmlSerializable.WriteXml(XmlWriter writer)
+            {
+                writer.WriteAttributeString(nameof(Unk04), Unk04.ToString());
+                foreach (Param param in Params)
+                    ParamSerializer.Serialize(writer, param);
+            }
+            #endregion
         }
 
         public class FXEffect : FXSerializable
