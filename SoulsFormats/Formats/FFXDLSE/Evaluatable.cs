@@ -7,6 +7,28 @@ namespace SoulsFormats
     public partial class FFXDLSE
     {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+        #region XmlInclude
+        [
+            XmlInclude(typeof(EvaluatableConstant)),
+            XmlInclude(typeof(Evaluatable2)),
+            XmlInclude(typeof(Evaluatable3)),
+            XmlInclude(typeof(EvaluatableCurrentTick)),
+            XmlInclude(typeof(EvaluatableTotalTick)),
+            XmlInclude(typeof(EvaluatableAnd)),
+            XmlInclude(typeof(EvaluatableOr)),
+            XmlInclude(typeof(EvaluatableGE)),
+            XmlInclude(typeof(EvaluatableGT)),
+            XmlInclude(typeof(EvaluatableLE)),
+            XmlInclude(typeof(EvaluatableLT)),
+            XmlInclude(typeof(EvaluatableEQ)),
+            XmlInclude(typeof(EvaluatableNE)),
+            XmlInclude(typeof(EvaluatableNot)),
+            XmlInclude(typeof(EvaluatableChildExists)),
+            XmlInclude(typeof(EvaluatableParentExists)),
+            XmlInclude(typeof(EvaluatableDistanceFromCamera)),
+            XmlInclude(typeof(EvaluatableEmittersStopped)),
+            ]
+        #endregion
         public abstract class Evaluatable : FXSerializable
         {
             internal override string ClassName => "FXSerializableEvaluatable<dl_int32>";
@@ -35,6 +57,7 @@ namespace SoulsFormats
 
             internal static Evaluatable Read(BinaryReaderEx br, List<string> classNames)
             {
+                // Don't @ me.
                 int opcode = br.GetInt32(br.Position + 0xA);
                 switch (opcode)
                 {

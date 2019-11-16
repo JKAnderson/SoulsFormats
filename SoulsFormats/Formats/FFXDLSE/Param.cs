@@ -7,6 +7,47 @@ namespace SoulsFormats
     public partial class FFXDLSE
     {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+        #region XmlInclude
+        [
+            XmlInclude(typeof(Param1)),
+            XmlInclude(typeof(Param2)),
+            XmlInclude(typeof(Param5)),
+            XmlInclude(typeof(Param6)),
+            XmlInclude(typeof(Param7)),
+            XmlInclude(typeof(Param9)),
+            XmlInclude(typeof(Param11)),
+            XmlInclude(typeof(Param12)),
+            XmlInclude(typeof(Param13)),
+            XmlInclude(typeof(Param15)),
+            XmlInclude(typeof(Param17)),
+            XmlInclude(typeof(Param18)),
+            XmlInclude(typeof(Param19)),
+            XmlInclude(typeof(Param20)),
+            XmlInclude(typeof(Param21)),
+            XmlInclude(typeof(Param37)),
+            XmlInclude(typeof(Param38)),
+            XmlInclude(typeof(Param40)),
+            XmlInclude(typeof(Param41)),
+            XmlInclude(typeof(Param44)),
+            XmlInclude(typeof(Param45)),
+            XmlInclude(typeof(Param46)),
+            XmlInclude(typeof(Param47)),
+            XmlInclude(typeof(Param59)),
+            XmlInclude(typeof(Param60)),
+            XmlInclude(typeof(Param66)),
+            XmlInclude(typeof(Param68)),
+            XmlInclude(typeof(Param69)),
+            XmlInclude(typeof(Param70)),
+            XmlInclude(typeof(Param71)),
+            XmlInclude(typeof(Param79)),
+            XmlInclude(typeof(Param81)),
+            XmlInclude(typeof(Param82)),
+            XmlInclude(typeof(Param83)),
+            XmlInclude(typeof(Param84)),
+            XmlInclude(typeof(Param85)),
+            XmlInclude(typeof(Param87)),
+            ]
+        #endregion
         public abstract class Param : FXSerializable
         {
             internal override string ClassName => "FXSerializableParam";

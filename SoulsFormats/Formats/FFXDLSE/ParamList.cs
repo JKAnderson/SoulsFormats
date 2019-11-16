@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
+﻿using System.Collections.Generic;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
@@ -61,9 +58,7 @@ namespace SoulsFormats
                 {
                     if (_paramSerializer == null)
                     {
-                        Type[] extraTypes = Assembly.GetExecutingAssembly().GetTypes()
-                            .Where(t => typeof(Param).IsAssignableFrom(t)).ToArray();
-                        _paramSerializer = new XmlSerializer(typeof(Param), extraTypes);
+                        _paramSerializer = new XmlSerializer(typeof(Param));
                     }
                     return _paramSerializer;
                 }
