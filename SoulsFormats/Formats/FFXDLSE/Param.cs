@@ -631,7 +631,7 @@ namespace SoulsFormats
             internal override int Type => 37;
 
             [XmlAttribute]
-            public int Unk04 { get; set; }
+            public int EffectID { get; set; }
 
             public ParamList ParamList { get; set; }
 
@@ -645,7 +645,7 @@ namespace SoulsFormats
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
             {
                 base.Deserialize(br, classNames);
-                Unk04 = br.ReadInt32();
+                EffectID = br.ReadInt32();
                 ParamList = new ParamList(br, classNames);
             }
 
@@ -658,7 +658,7 @@ namespace SoulsFormats
             protected internal override void Serialize(BinaryWriterEx bw, List<string> classNames)
             {
                 base.Serialize(bw, classNames);
-                bw.WriteInt32(Unk04);
+                bw.WriteInt32(EffectID);
                 ParamList.Write(bw, classNames);
             }
         }
@@ -668,7 +668,7 @@ namespace SoulsFormats
             internal override int Type => 38;
 
             [XmlAttribute]
-            public int Unk04 { get; set; }
+            public int ActionID { get; set; }
 
             public ParamList ParamList { get; set; }
 
@@ -682,7 +682,7 @@ namespace SoulsFormats
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
             {
                 base.Deserialize(br, classNames);
-                Unk04 = br.ReadInt32();
+                ActionID = br.ReadInt32();
                 ParamList = new ParamList(br, classNames);
             }
 
@@ -695,7 +695,7 @@ namespace SoulsFormats
             protected internal override void Serialize(BinaryWriterEx bw, List<string> classNames)
             {
                 base.Serialize(bw, classNames);
-                bw.WriteInt32(Unk04);
+                bw.WriteInt32(ActionID);
                 ParamList.Write(bw, classNames);
             }
         }
@@ -705,7 +705,7 @@ namespace SoulsFormats
             internal override int Type => 40;
 
             [XmlAttribute]
-            public int Unk04 { get; set; }
+            public int TextureID { get; set; }
 
             public Param40() { }
 
@@ -714,13 +714,13 @@ namespace SoulsFormats
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
             {
                 base.Deserialize(br, classNames);
-                Unk04 = br.ReadInt32();
+                TextureID = br.ReadInt32();
             }
 
             protected internal override void Serialize(BinaryWriterEx bw, List<string> classNames)
             {
                 base.Serialize(bw, classNames);
-                bw.WriteInt32(Unk04);
+                bw.WriteInt32(TextureID);
             }
         }
 
@@ -751,12 +751,12 @@ namespace SoulsFormats
         public class Param44 : Param
         {
             internal override int Type => 44;
-            
+
             [XmlAttribute]
             public int Unk04 { get; set; }
 
             [XmlAttribute]
-            public int Unk08 { get; set; }
+            public int ArgIndex { get; set; }
 
             public Param44() { }
 
@@ -766,14 +766,14 @@ namespace SoulsFormats
             {
                 base.Deserialize(br, classNames);
                 Unk04 = br.ReadInt32();
-                Unk08 = br.ReadInt32();
+                ArgIndex = br.ReadInt32();
             }
 
             protected internal override void Serialize(BinaryWriterEx bw, List<string> classNames)
             {
                 base.Serialize(bw, classNames);
                 bw.WriteInt32(Unk04);
-                bw.WriteInt32(Unk08);
+                bw.WriteInt32(ArgIndex);
             }
         }
 
@@ -785,7 +785,7 @@ namespace SoulsFormats
             public int Unk04 { get; set; }
 
             [XmlAttribute]
-            public int Unk08 { get; set; }
+            public int ArgIndex { get; set; }
 
             public Param45() { }
 
@@ -795,14 +795,14 @@ namespace SoulsFormats
             {
                 base.Deserialize(br, classNames);
                 Unk04 = br.ReadInt32();
-                Unk08 = br.ReadInt32();
+                ArgIndex = br.ReadInt32();
             }
 
             protected internal override void Serialize(BinaryWriterEx bw, List<string> classNames)
             {
                 base.Serialize(bw, classNames);
                 bw.WriteInt32(Unk04);
-                bw.WriteInt32(Unk08);
+                bw.WriteInt32(ArgIndex);
             }
         }
 
@@ -814,7 +814,7 @@ namespace SoulsFormats
             public int Unk04 { get; set; }
 
             [XmlAttribute]
-            public int Unk08 { get; set; }
+            public int ArgIndex { get; set; }
 
             public Param46() { }
 
@@ -824,14 +824,14 @@ namespace SoulsFormats
             {
                 base.Deserialize(br, classNames);
                 Unk04 = br.ReadInt32();
-                Unk08 = br.ReadInt32();
+                ArgIndex = br.ReadInt32();
             }
 
             protected internal override void Serialize(BinaryWriterEx bw, List<string> classNames)
             {
                 base.Serialize(bw, classNames);
                 bw.WriteInt32(Unk04);
-                bw.WriteInt32(Unk08);
+                bw.WriteInt32(ArgIndex);
             }
         }
 
@@ -843,7 +843,7 @@ namespace SoulsFormats
             public int Unk04 { get; set; }
 
             [XmlAttribute]
-            public int Unk08 { get; set; }
+            public int ArgIndex { get; set; }
 
             public Param47() { }
 
@@ -853,14 +853,14 @@ namespace SoulsFormats
             {
                 base.Deserialize(br, classNames);
                 Unk04 = br.ReadInt32();
-                Unk08 = br.ReadInt32();
+                ArgIndex = br.ReadInt32();
             }
 
             protected internal override void Serialize(BinaryWriterEx bw, List<string> classNames)
             {
                 base.Serialize(bw, classNames);
                 bw.WriteInt32(Unk04);
-                bw.WriteInt32(Unk08);
+                bw.WriteInt32(ArgIndex);
             }
         }
 
@@ -872,7 +872,7 @@ namespace SoulsFormats
             public int Unk04 { get; set; }
 
             [XmlAttribute]
-            public int Unk08 { get; set; }
+            public int ArgIndex { get; set; }
 
             public Param59() { }
 
@@ -882,14 +882,14 @@ namespace SoulsFormats
             {
                 base.Deserialize(br, classNames);
                 Unk04 = br.ReadInt32();
-                Unk08 = br.ReadInt32();
+                ArgIndex = br.ReadInt32();
             }
 
             protected internal override void Serialize(BinaryWriterEx bw, List<string> classNames)
             {
                 base.Serialize(bw, classNames);
                 bw.WriteInt32(Unk04);
-                bw.WriteInt32(Unk08);
+                bw.WriteInt32(ArgIndex);
             }
         }
 
@@ -901,7 +901,7 @@ namespace SoulsFormats
             public int Unk04 { get; set; }
 
             [XmlAttribute]
-            public int Unk08 { get; set; }
+            public int ArgIndex { get; set; }
 
             public Param60() { }
 
@@ -911,14 +911,14 @@ namespace SoulsFormats
             {
                 base.Deserialize(br, classNames);
                 Unk04 = br.ReadInt32();
-                Unk08 = br.ReadInt32();
+                ArgIndex = br.ReadInt32();
             }
 
             protected internal override void Serialize(BinaryWriterEx bw, List<string> classNames)
             {
                 base.Serialize(bw, classNames);
                 bw.WriteInt32(Unk04);
-                bw.WriteInt32(Unk08);
+                bw.WriteInt32(ArgIndex);
             }
         }
 
@@ -930,7 +930,7 @@ namespace SoulsFormats
             public int Unk04 { get; set; }
 
             [XmlAttribute]
-            public int Unk08 { get; set; }
+            public int ArgIndex { get; set; }
 
             public Param66() { }
 
@@ -940,14 +940,14 @@ namespace SoulsFormats
             {
                 base.Deserialize(br, classNames);
                 Unk04 = br.ReadInt32();
-                Unk08 = br.ReadInt32();
+                ArgIndex = br.ReadInt32();
             }
 
             protected internal override void Serialize(BinaryWriterEx bw, List<string> classNames)
             {
                 base.Serialize(bw, classNames);
                 bw.WriteInt32(Unk04);
-                bw.WriteInt32(Unk08);
+                bw.WriteInt32(ArgIndex);
             }
         }
 
@@ -956,7 +956,7 @@ namespace SoulsFormats
             internal override int Type => 68;
 
             [XmlAttribute]
-            public int Unk04 { get; set; }
+            public int SoundID { get; set; }
 
             public Param68() { }
 
@@ -965,13 +965,13 @@ namespace SoulsFormats
             protected internal override void Deserialize(BinaryReaderEx br, List<string> classNames)
             {
                 base.Deserialize(br, classNames);
-                Unk04 = br.ReadInt32();
+                SoundID = br.ReadInt32();
             }
 
             protected internal override void Serialize(BinaryWriterEx bw, List<string> classNames)
             {
                 base.Serialize(bw, classNames);
-                bw.WriteInt32(Unk04);
+                bw.WriteInt32(SoundID);
             }
         }
 
@@ -1037,7 +1037,7 @@ namespace SoulsFormats
             public int Unk04 { get; set; }
 
             [XmlAttribute]
-            public int Unk08 { get; set; }
+            public int ArgIndex { get; set; }
 
             public Param71() { }
 
@@ -1047,14 +1047,14 @@ namespace SoulsFormats
             {
                 base.Deserialize(br, classNames);
                 Unk04 = br.ReadInt32();
-                Unk08 = br.ReadInt32();
+                ArgIndex = br.ReadInt32();
             }
 
             protected internal override void Serialize(BinaryWriterEx bw, List<string> classNames)
             {
                 base.Serialize(bw, classNames);
                 bw.WriteInt32(Unk04);
-                bw.WriteInt32(Unk08);
+                bw.WriteInt32(ArgIndex);
             }
         }
 

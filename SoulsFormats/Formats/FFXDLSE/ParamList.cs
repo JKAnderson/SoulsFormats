@@ -89,8 +89,11 @@ namespace SoulsFormats
             void IXmlSerializable.WriteXml(XmlWriter writer)
             {
                 writer.WriteAttributeString(nameof(Unk04), Unk04.ToString());
-                foreach (Param param in Params)
-                    ParamSerializer.Serialize(writer, param);
+                for (int i = 0; i < Params.Count; i++)
+                {
+                    //writer.WriteComment($" {i} ");
+                    ParamSerializer.Serialize(writer, Params[i]);
+                }
             }
             #endregion
         }

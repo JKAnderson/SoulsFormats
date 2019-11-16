@@ -54,7 +54,7 @@ namespace SoulsFormats
                     case 20: return new EvaluatableNot(br, classNames);
                     case 21: return new EvaluatableChildExists(br, classNames);
                     case 22: return new EvaluatableParentExists(br, classNames);
-                    case 23: return new Evaluatable23(br, classNames);
+                    case 23: return new EvaluatableDistanceFromCamera(br, classNames);
                     case 24: return new EvaluatableEmittersStopped(br, classNames);
 
                     default:
@@ -164,7 +164,7 @@ namespace SoulsFormats
             public int Unk00 { get; set; }
 
             [XmlAttribute]
-            public int Unk04 { get; set; }
+            public int ArgIndex { get; set; }
 
             public Evaluatable2() { }
 
@@ -174,17 +174,17 @@ namespace SoulsFormats
             {
                 base.Deserialize(br, classNames);
                 Unk00 = br.ReadInt32();
-                Unk04 = br.ReadInt32();
+                ArgIndex = br.ReadInt32();
             }
 
             protected internal override void Serialize(BinaryWriterEx bw, List<string> classNames)
             {
                 base.Serialize(bw, classNames);
                 bw.WriteInt32(Unk00);
-                bw.WriteInt32(Unk04);
+                bw.WriteInt32(ArgIndex);
             }
 
-            public override string ToString() => $"{{2: {Unk00}, {Unk04}}}";
+            public override string ToString() => $"{{2: {Unk00}, {ArgIndex}}}";
         }
 
         public class Evaluatable3 : Evaluatable
@@ -197,7 +197,7 @@ namespace SoulsFormats
             public int Unk00 { get; set; }
 
             [XmlAttribute]
-            public int Unk04 { get; set; }
+            public int ArgIndex { get; set; }
 
             public Evaluatable3() { }
 
@@ -207,17 +207,17 @@ namespace SoulsFormats
             {
                 base.Deserialize(br, classNames);
                 Unk00 = br.ReadInt32();
-                Unk04 = br.ReadInt32();
+                ArgIndex = br.ReadInt32();
             }
 
             protected internal override void Serialize(BinaryWriterEx bw, List<string> classNames)
             {
                 base.Serialize(bw, classNames);
                 bw.WriteInt32(Unk00);
-                bw.WriteInt32(Unk04);
+                bw.WriteInt32(ArgIndex);
             }
 
-            public override string ToString() => $"{{3: {Unk00}, {Unk04}}}";
+            public override string ToString() => $"{{3: {Unk00}, {ArgIndex}}}";
         }
 
         public class EvaluatableCurrentTick : Evaluatable
@@ -371,15 +371,15 @@ namespace SoulsFormats
             public override string ToString() => "ParentExists";
         }
 
-        public class Evaluatable23 : Evaluatable
+        public class EvaluatableDistanceFromCamera : Evaluatable
         {
             internal override int Opcode => 23;
 
             internal override int Type => 3;
 
-            public Evaluatable23() { }
+            public EvaluatableDistanceFromCamera() { }
 
-            internal Evaluatable23(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
+            internal EvaluatableDistanceFromCamera(BinaryReaderEx br, List<string> classNames) : base(br, classNames) { }
 
             public override string ToString() => "DistanceFromCamera";
         }
