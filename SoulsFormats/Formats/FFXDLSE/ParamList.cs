@@ -51,19 +51,6 @@ namespace SoulsFormats
             }
 
             #region IXmlSerializable
-            private static XmlSerializer _paramSerializer;
-            private static XmlSerializer ParamSerializer
-            {
-                get
-                {
-                    if (_paramSerializer == null)
-                    {
-                        _paramSerializer = new XmlSerializer(typeof(Param));
-                    }
-                    return _paramSerializer;
-                }
-            }
-
             XmlSchema IXmlSerializable.GetSchema() => null;
 
             void IXmlSerializable.ReadXml(XmlReader reader)

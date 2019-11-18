@@ -1,5 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Xml;
+using System.Xml.Serialization;
 
 namespace SoulsFormats
 {
@@ -74,6 +77,45 @@ namespace SoulsFormats
 
             Effect.Write(bw, classNames);
         }
+
+        #region XML Serialization
+        private static XmlSerializer _ffxSerializer;
+        private static XmlSerializer _stateSerializer;
+        private static XmlSerializer _paramSerializer;
+
+        private static XmlSerializer MakeSerializers(int returnIndex)
+        {
+            XmlSerializer[] serializers = XmlSerializer.FromTypes(
+                new Type[] { typeof(FFXDLSE), typeof(State), typeof(Param) });
+
+            _ffxSerializer = serializers[0];
+            _stateSerializer = serializers[1];
+            _paramSerializer = serializers[2];
+            return serializers[returnIndex];
+        }
+
+        private static XmlSerializer FFXSerializer => _ffxSerializer ?? MakeSerializers(0);
+        private static XmlSerializer StateSerializer => _stateSerializer ?? MakeSerializers(1);
+        private static XmlSerializer ParamSerializer => _paramSerializer ?? MakeSerializers(2);
+
+        public static FFXDLSE XmlDeserialize(Stream stream)
+            => (FFXDLSE)FFXSerializer.Deserialize(stream);
+
+        public static FFXDLSE XmlDeserialize(TextReader textReader)
+            => (FFXDLSE)FFXSerializer.Deserialize(textReader);
+
+        public static FFXDLSE XmlDeserialize(XmlReader xmlReader)
+            => (FFXDLSE)FFXSerializer.Deserialize(xmlReader);
+
+        public void XmlSerialize(Stream stream)
+            => FFXSerializer.Serialize(stream, this);
+
+        public void XmlSerialize(TextWriter textWriter)
+            => FFXSerializer.Serialize(textWriter, this);
+
+        public void XmlSerialize(XmlWriter xmlWriter)
+            => FFXSerializer.Serialize(xmlWriter, this);
+        #endregion
 
         private static class DLVector
         {

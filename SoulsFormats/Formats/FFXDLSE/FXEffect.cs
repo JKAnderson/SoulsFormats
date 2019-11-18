@@ -16,9 +16,9 @@ namespace SoulsFormats
             [XmlAttribute]
             public int ID { get; set; }
 
-            public List<int> Vector { get; set; }
+            public ParamList ParamList1 { get; set; }
 
-            public List<ParamList> ParamLists { get; set; }
+            public ParamList ParamList2 { get; set; }
 
             public StateMap StateMap { get; set; }
 
@@ -26,8 +26,8 @@ namespace SoulsFormats
 
             public FXEffect()
             {
-                Vector = new List<int>();
-                ParamLists = new List<ParamList>();
+                ParamList1 = new ParamList();
+                ParamList2 = new ParamList();
                 StateMap = new StateMap();
                 ResourceSet = new ResourceSet();
             }
@@ -40,13 +40,13 @@ namespace SoulsFormats
                 ID = br.ReadInt32();
                 br.AssertInt32(0);
                 br.AssertInt32(0);
-                int paramListCount = br.ReadInt32();
+                br.AssertInt32(2); // Param list count?
                 br.AssertInt16(0);
-                Vector = DLVector.Read(br, classNames);
+                br.AssertInt16(2); // Judging by the order of class names, this must be an always-empty DLVector
+                br.AssertInt32(0);
 
-                ParamLists = new List<ParamList>(paramListCount);
-                for (int i = 0; i < paramListCount; i++)
-                    ParamLists.Add(new ParamList(br, classNames));
+                ParamList1 = new ParamList(br, classNames);
+                ParamList2 = new ParamList(br, classNames);
 
                 StateMap = new StateMap(br, classNames);
                 ResourceSet = new ResourceSet(br, classNames);
@@ -58,8 +58,8 @@ namespace SoulsFormats
                 base.AddClassNames(classNames);
                 DLVector.AddClassNames(classNames);
 
-                foreach (ParamList paramList in ParamLists)
-                    paramList.AddClassNames(classNames);
+                ParamList1.AddClassNames(classNames);
+                ParamList2.AddClassNames(classNames);
 
                 StateMap.AddClassNames(classNames);
                 ResourceSet.AddClassNames(classNames);
@@ -71,12 +71,13 @@ namespace SoulsFormats
                 bw.WriteInt32(ID);
                 bw.WriteInt32(0);
                 bw.WriteInt32(0);
-                bw.WriteInt32(ParamLists.Count);
+                bw.WriteInt32(2);
                 bw.WriteInt16(0);
-                DLVector.Write(bw, classNames, Vector);
+                bw.WriteInt16(2);
+                bw.WriteInt32(0);
 
-                foreach (ParamList paramList in ParamLists)
-                    paramList.Write(bw, classNames);
+                ParamList1.Write(bw, classNames);
+                ParamList2.Write(bw, classNames);
 
                 StateMap.Write(bw, classNames);
                 ResourceSet.Write(bw, classNames);

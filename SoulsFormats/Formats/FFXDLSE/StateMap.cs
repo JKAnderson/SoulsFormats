@@ -1,11 +1,14 @@
 ﻿using System.Collections.Generic;
+using System.Xml;
+using System.Xml.Schema;
+using System.Xml.Serialization;
 
 namespace SoulsFormats
 {
     public partial class FFXDLSE
     {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-        public class StateMap : FXSerializable
+        public class StateMap : FXSerializable, IXmlSerializable
         {
             internal override string ClassName => "FXSerializableStateMap";
 
@@ -41,6 +44,33 @@ namespace SoulsFormats
                 foreach (State state in States)
                     state.Write(bw, classNames);
             }
+
+            #region IXmlSerializable
+            XmlSchema IXmlSerializable.GetSchema() => null;
+
+            void IXmlSerializable.ReadXml(XmlReader reader)
+            {
+                reader.MoveToContent();
+                bool empty = reader.IsEmptyElement;
+                reader.ReadStartElement();
+
+                if (!empty)
+                {
+                    while (reader.IsStartElement(nameof(State)))
+                        States.Add((State)StateSerializer.Deserialize(reader));
+                    reader.ReadEndElement();
+                }
+            }
+
+            void IXmlSerializable.WriteXml(XmlWriter writer)
+            {
+                for (int i = 0; i < States.Count; i++)
+                {
+                    writer.WriteComment($" State {i} ");
+                    StateSerializer.Serialize(writer, States[i]);
+                }
+            }
+            #endregion
         }
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }

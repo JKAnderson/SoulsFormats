@@ -1325,7 +1325,7 @@ namespace SoulsFormats
             public int Unk04 { get; set; }
 
             [XmlAttribute]
-            public int Unk08 { get; set; }
+            public int ArgIndex { get; set; }
 
             public Param87() { }
 
@@ -1335,14 +1335,14 @@ namespace SoulsFormats
             {
                 base.Deserialize(br, classNames);
                 Unk04 = br.ReadInt32();
-                Unk08 = br.ReadInt32();
+                ArgIndex = br.ReadInt32();
             }
 
             protected internal override void Serialize(BinaryWriterEx bw, List<string> classNames)
             {
                 base.Serialize(bw, classNames);
                 bw.WriteInt32(Unk04);
-                bw.WriteInt32(Unk08);
+                bw.WriteInt32(ArgIndex);
             }
         }
 
