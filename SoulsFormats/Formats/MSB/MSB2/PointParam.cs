@@ -27,7 +27,7 @@ namespace SoulsFormats
         /// <summary>
         /// Points or volumes that trigger some behavior.
         /// </summary>
-        public class PointParam : Param<Region>
+        public class PointParam : Param<Region>, IMsbParam<IMsbRegion>
         {
             internal override string Name => "POINT_PARAM_ST";
             internal override int Version => 5;
@@ -146,12 +146,13 @@ namespace SoulsFormats
                     Region0s, Lights, StartPoints, Sounds, SFXs,
                     Winds, EnvLights, Fogs);
             }
+            IReadOnlyList<IMsbRegion> IMsbParam<IMsbRegion>.GetEntries() => GetEntries();
         }
 
         /// <summary>
         /// A point or volume that triggers some behavior.
         /// </summary>
-        public abstract class Region : NamedEntry
+        public abstract class Region : NamedEntry, IMsbRegion
         {
             /// <summary>
             /// The specific type of this region.

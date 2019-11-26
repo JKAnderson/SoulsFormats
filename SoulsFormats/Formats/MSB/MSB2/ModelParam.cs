@@ -18,7 +18,7 @@ namespace SoulsFormats
         /// <summary>
         /// Models available for parts in the map to use.
         /// </summary>
-        public class ModelParam : Param<Model>
+        public class ModelParam : Param<Model>, IMsbParam<IMsbModel>
         {
             internal override string Name => "MODEL_PARAM_ST";
             internal override int Version => 5;
@@ -88,6 +88,7 @@ namespace SoulsFormats
                 return SFUtil.ConcatAll(
                     MapPieces, Objects, Collisions, Navmeshes);
             }
+            IReadOnlyList<IMsbModel> IMsbParam<IMsbModel>.GetEntries() => GetEntries();
 
             internal void DiscriminateModels()
             {
@@ -105,7 +106,7 @@ namespace SoulsFormats
         /// <summary>
         /// A model file available for parts to reference.
         /// </summary>
-        public class Model : NamedEntry
+        public class Model : NamedEntry, IMsbModel
         {
             internal ModelType Type;
             internal short Index;

@@ -9,7 +9,7 @@ namespace SoulsFormats
         /// <summary>
         /// A section containing all the models available to parts in this map.
         /// </summary>
-        public class ModelParam : Param<Model>
+        public class ModelParam : Param<Model>, IMsbParam<IMsbModel>
         {
             internal override string Type => "MODEL_PARAM_ST";
 
@@ -110,6 +110,8 @@ namespace SoulsFormats
             {
                 entry.Write(bw, id);
             }
+
+            IReadOnlyList<IMsbModel> IMsbParam<IMsbModel>.GetEntries() => GetEntries();
         }
 
         internal enum ModelType : uint
@@ -129,7 +131,7 @@ namespace SoulsFormats
         /// <summary>
         /// A model available for use by parts in this map.
         /// </summary>
-        public abstract class Model : Entry
+        public abstract class Model : Entry, IMsbModel
         {
             internal abstract ModelType Type { get; }
 
@@ -143,7 +145,7 @@ namespace SoulsFormats
             /// <summary>
             /// The placeholder used for this model in MapStudio.
             /// </summary>
-            public string Placeholder;
+            public string Placeholder { get; set; }
 
             private int InstanceCount;
 

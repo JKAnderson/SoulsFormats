@@ -23,7 +23,7 @@ namespace SoulsFormats
         /// <summary>
         /// Instances of actual things in the map.
         /// </summary>
-        public class PartsParam : Param<Part>
+        public class PartsParam : Param<Part>, IMsbParam<IMsbPart>
         {
             /// <summary>
             /// All of the fixed visual geometry of the map.
@@ -139,12 +139,13 @@ namespace SoulsFormats
                     MapPieces, Objects, Enemies, Players, Collisions,
                     DummyObjects, DummyEnemies, ConnectCollisions);
             }
+            IReadOnlyList<IMsbPart> IMsbParam<IMsbPart>.GetEntries() => GetEntries();
         }
 
         /// <summary>
         /// Common data for all types of part.
         /// </summary>
-        public abstract class Part : Entry
+        public abstract class Part : Entry, IMsbPart
         {
             /// <summary>
             /// The specific type of this part.

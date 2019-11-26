@@ -1,19 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text.RegularExpressions;
 
 namespace SoulsFormats
 {
     /// <summary>
     /// A map layout file used in DS1. Extension: .msb
     /// </summary>
-    public partial class MSB1 : SoulsFile<MSB1>
+    public partial class MSB1 : SoulsFile<MSB1>, IMsb
     {
         /// <summary>
         /// Model files that are available for parts to use.
         /// </summary>
         public ModelParam Models { get; set; }
+        IMsbParam<IMsbModel> IMsb.Models => Models;
 
         /// <summary>
         /// Dynamic or interactive systems such as item pickups, levers, enemy spawners, etc.
@@ -24,11 +24,13 @@ namespace SoulsFormats
         /// Points or areas of space that trigger some sort of behavior.
         /// </summary>
         public PointParam Regions { get; set; }
+        IMsbParam<IMsbRegion> IMsb.Regions => Regions;
 
         /// <summary>
         /// Instances of actual things in the map.
         /// </summary>
         public PartsParam Parts { get; set; }
+        IMsbParam<IMsbPart> IMsb.Parts => Parts;
 
         internal struct Entries
         {

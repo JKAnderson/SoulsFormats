@@ -9,7 +9,7 @@ namespace SoulsFormats
         /// <summary>
         /// Instances of various "things" in this MSB.
         /// </summary>
-        public class PartsParam : Param<Part>
+        public class PartsParam : Param<Part>, IMsbParam<IMsbPart>
         {
             internal override string Type => "PARTS_PARAM_ST";
 
@@ -76,6 +76,7 @@ namespace SoulsFormats
                 return SFUtil.ConcatAll<Part>(
                     MapPieces, Objects, Enemies, Players, Collisions, DummyObjects, DummyEnemies, ConnectCollisions);
             }
+            IReadOnlyList<IMsbPart> IMsbParam<IMsbPart>.GetEntries() => GetEntries();
 
             internal override Part ReadEntry(BinaryReaderEx br)
             {
@@ -153,7 +154,7 @@ namespace SoulsFormats
         /// <summary>
         /// Any instance of some "thing" in a map.
         /// </summary>
-        public abstract class Part : Entry
+        public abstract class Part : Entry, IMsbPart
         {
             internal abstract PartsType Type { get; }
 
@@ -174,22 +175,22 @@ namespace SoulsFormats
             /// <summary>
             /// The name of this part's model.
             /// </summary>
-            public string ModelName;
+            public string ModelName { get; set; }
 
             /// <summary>
             /// The center of the part.
             /// </summary>
-            public Vector3 Position;
+            public Vector3 Position { get; set; }
 
             /// <summary>
             /// The rotation of the part.
             /// </summary>
-            public Vector3 Rotation;
+            public Vector3 Rotation { get; set; }
 
             /// <summary>
             /// The scale of the part, which only really works right for map pieces.
             /// </summary>
-            public Vector3 Scale;
+            public Vector3 Scale { get; set; }
 
             /// <summary>
             /// Unknown; related to which parts do or don't appear in different ceremonies.

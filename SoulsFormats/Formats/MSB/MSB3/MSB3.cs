@@ -1,54 +1,56 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text.RegularExpressions;
 
 namespace SoulsFormats
 {
     /// <summary>
     /// A map layout format used in DS3.
     /// </summary>
-    public partial class MSB3 : SoulsFile<MSB3>
+    public partial class MSB3 : SoulsFile<MSB3>, IMsb
     {
         /// <summary>
         /// Models in this MSB.
         /// </summary>
-        public ModelParam Models;
+        public ModelParam Models { get; set; }
+        IMsbParam<IMsbModel> IMsb.Models => Models;
 
         /// <summary>
         /// Events in this MSB.
         /// </summary>
-        public EventParam Events;
+        public EventParam Events { get; set; }
 
         /// <summary>
         /// Regions in this MSB.
         /// </summary>
-        public PointParam Regions;
+        public PointParam Regions { get; set; }
+        IMsbParam<IMsbRegion> IMsb.Regions => Regions;
 
         /// <summary>
         /// Routes in this MSB.
         /// </summary>
-        public RouteParam Routes;
+        public RouteParam Routes { get; set; }
 
         /// <summary>
         /// Layers in this MSB.
         /// </summary>
-        public LayerParam Layers;
+        public LayerParam Layers { get; set; }
 
         /// <summary>
         /// Parts in this MSB.
         /// </summary>
-        public PartsParam Parts;
+        public PartsParam Parts { get; set; }
+        IMsbParam<IMsbPart> IMsb.Parts => Parts;
 
         /// <summary>
         /// PartsPose data in this MSB.
         /// </summary>
-        public MapstudioPartsPose PartsPoses;
+        public MapstudioPartsPose PartsPoses { get; set; }
 
         /// <summary>
         /// Bone names in this MSB.
         /// </summary>
-        public MapstudioBoneName BoneNames;
+        public MapstudioBoneName BoneNames { get; set; }
 
         /// <summary>
         /// Creates a new MSB3 with all sections empty.
@@ -201,13 +203,13 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk1;
+            public int Version { get; set; }
 
             internal abstract string Type { get; }
 
-            internal Param(int unk1)
+            internal Param(int version)
             {
-                Unk1 = unk1;
+                Version = version;
             }
 
             /// <summary>
@@ -217,7 +219,7 @@ namespace SoulsFormats
 
             internal List<T> Read(BinaryReaderEx br)
             {
-                Unk1 = br.ReadInt32();
+                Version = br.ReadInt32();
                 int offsetCount = br.ReadInt32();
                 long nameOffset = br.ReadInt64();
                 long[] entryOffsets = br.ReadInt64s(offsetCount - 1);
@@ -241,7 +243,7 @@ namespace SoulsFormats
 
             internal void Write(BinaryWriterEx bw, List<T> entries)
             {
-                bw.WriteInt32(Unk1);
+                bw.WriteInt32(Version);
                 bw.WriteInt32(entries.Count + 1);
                 bw.ReserveInt64("ParamNameOffset");
                 for (int i = 0; i < entries.Count; i++)
@@ -275,7 +277,7 @@ namespace SoulsFormats
             /// </summary>
             public override string ToString()
             {
-                return $"{Type}:{Unk1}[{GetEntries().Count}]";
+                return $"{Type}:{Version}[{GetEntries().Count}]";
             }
         }
 

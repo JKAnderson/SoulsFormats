@@ -9,7 +9,7 @@ namespace SoulsFormats
         /// <summary>
         /// A collection of points and trigger volumes used by scripts and events.
         /// </summary>
-        public class PointParam : Param<Region>
+        public class PointParam : Param<Region>, IMsbParam<IMsbRegion>
         {
             internal override string Name => "POINT_PARAM_ST";
 
@@ -33,6 +33,7 @@ namespace SoulsFormats
             {
                 return Regions;
             }
+            IReadOnlyList<IMsbRegion> IMsbParam<IMsbRegion>.GetEntries() => GetEntries();
 
             internal override Region ReadEntry(BinaryReaderEx br)
             {
@@ -45,7 +46,7 @@ namespace SoulsFormats
         /// <summary>
         /// A point or volume used by scripts or events.
         /// </summary>
-        public class Region : Entry
+        public class Region : Entry, IMsbRegion
         {
             /// <summary>
             /// Describes the physical shape of the region.

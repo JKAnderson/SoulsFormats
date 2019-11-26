@@ -23,7 +23,7 @@ namespace SoulsFormats
         /// <summary>
         /// Concrete map elements.
         /// </summary>
-        public class PartsParam : Param<Part>
+        public class PartsParam : Param<Part>, IMsbParam<IMsbPart>
         {
             internal override string Name => "PARTS_PARAM_ST";
             internal override int Version => 5;
@@ -109,12 +109,13 @@ namespace SoulsFormats
                 return SFUtil.ConcatAll<Part>(
                     MapPieces, Objects, Collisions, Navmeshes, ConnectCollisions);
             }
+            IReadOnlyList<IMsbPart> IMsbParam<IMsbPart>.GetEntries() => GetEntries();
         }
 
         /// <summary>
         /// A concrete map element.
         /// </summary>
-        public abstract class Part : NamedEntry
+        public abstract class Part : NamedEntry, IMsbPart
         {
             /// <summary>
             /// The specific type of this part.

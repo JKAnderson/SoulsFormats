@@ -1,19 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text.RegularExpressions;
 
 namespace SoulsFormats
 {
     /// <summary>
     /// A map layout file used in DS2: SotFS. Extension: .msb
     /// </summary>
-    public partial class MSB2 : SoulsFile<MSB2>
+    public partial class MSB2 : SoulsFile<MSB2>, IMsb
     {
         /// <summary>
         /// Model files available for parts to use.
         /// </summary>
         public ModelParam Models { get; set; }
+        IMsbParam<IMsbModel> IMsb.Models => Models;
 
         /// <summary>
         /// Abstract entities that set map properties or control behaviors.
@@ -24,11 +24,13 @@ namespace SoulsFormats
         /// Points or volumes that trigger certain behaviors.
         /// </summary>
         public PointParam Regions { get; set; }
+        IMsbParam<IMsbRegion> IMsb.Regions => Regions;
 
         /// <summary>
         /// Concrete entities in the map.
         /// </summary>
         public PartsParam Parts { get; set; }
+        IMsbParam<IMsbPart> IMsb.Parts => Parts;
 
         /// <summary>
         /// Predetermined poses applied to objects such as corpses.

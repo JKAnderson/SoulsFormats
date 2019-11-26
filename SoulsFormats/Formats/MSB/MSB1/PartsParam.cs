@@ -24,7 +24,7 @@ namespace SoulsFormats
         /// <summary>
         /// All instances of concrete things in the map.
         /// </summary>
-        public class PartsParam : Param<Part>
+        public class PartsParam : Param<Part>, IMsbParam<IMsbPart>
         {
             internal override string Name => "PARTS_PARAM_ST";
 
@@ -153,12 +153,13 @@ namespace SoulsFormats
                     MapPieces, Objects, Enemies, Players, Collisions,
                     Navmeshes, DummyObjects, DummyEnemies, ConnectCollisions);
             }
+            IReadOnlyList<IMsbPart> IMsbParam<IMsbPart>.GetEntries() => GetEntries();
         }
 
         /// <summary>
         /// Common information for all concrete entities.
         /// </summary>
-        public abstract class Part : Entry
+        public abstract class Part : Entry, IMsbPart
         {
             /// <summary>
             /// The type of the Part.

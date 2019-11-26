@@ -20,7 +20,7 @@ namespace SoulsFormats
         /// <summary>
         /// Model files that are available for parts to use.
         /// </summary>
-        public class ModelParam : Param<Model>
+        public class ModelParam : Param<Model>, IMsbParam<IMsbModel>
         {
             /// <summary>
             /// Models for fixed terrain and scenery.
@@ -102,12 +102,13 @@ namespace SoulsFormats
                 return SFUtil.ConcatAll<Model>(
                     MapPieces, Objects, Enemies, Players, Collisions);
             }
+            IReadOnlyList<IMsbModel> IMsbParam<IMsbModel>.GetEntries() => GetEntries();
         }
 
         /// <summary>
         /// A model file available for parts to reference.
         /// </summary>
-        public abstract class Model : Entry
+        public abstract class Model : Entry, IMsbModel
         {
             /// <summary>
             /// The type of this Model.

@@ -21,7 +21,7 @@ namespace SoulsFormats
         /// <summary>
         /// Model files that are available for parts to use.
         /// </summary>
-        public class ModelParam : Param<Model>
+        public class ModelParam : Param<Model>, IMsbParam<IMsbModel>
         {
             internal override string Name => "MODEL_PARAM_ST";
 
@@ -97,6 +97,7 @@ namespace SoulsFormats
                 return SFUtil.ConcatAll(
                     MapPieces, Objects, Enemies, Players, Collisions, Navmeshes);
             }
+            IReadOnlyList<IMsbModel> IMsbParam<IMsbModel>.GetEntries() => GetEntries();
 
             internal void DiscriminateModels()
             {
@@ -118,7 +119,7 @@ namespace SoulsFormats
         /// <summary>
         /// A model file available for parts to reference.
         /// </summary>
-        public class Model : Entry
+        public class Model : Entry, IMsbModel
         {
             // Since models have no type data in DS1, this is just set before writing based on the list it's in.
             private ModelType Type;

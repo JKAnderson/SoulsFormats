@@ -9,7 +9,7 @@ namespace SoulsFormats
         /// <summary>
         /// A section containing points and volumes for various purposes.
         /// </summary>
-        public class PointParam : Param<Region>
+        public class PointParam : Param<Region>, IMsbParam<IMsbRegion>
         {
             internal override string Type => "POINT_PARAM_ST";
 
@@ -139,6 +139,7 @@ namespace SoulsFormats
                     ActivationAreas, Events, Unk00s, EnvironmentMapEffectBoxes, WindAreas,
                     MufflingBoxes, MufflingPortals, General);
             }
+            IReadOnlyList<IMsbRegion> IMsbParam<IMsbRegion>.GetEntries() => GetEntries();
 
             internal override Region ReadEntry(BinaryReaderEx br)
             {
@@ -272,7 +273,7 @@ namespace SoulsFormats
         /// <summary>
         /// A point or volumetric area used for a variety of purposes.
         /// </summary>
-        public abstract class Region : Entry
+        public abstract class Region : Entry, IMsbRegion
         {
             internal abstract RegionType Type { get; }
 
@@ -304,12 +305,12 @@ namespace SoulsFormats
             /// <summary>
             /// Center of the region.
             /// </summary>
-            public Vector3 Position;
+            public Vector3 Position { get; set; }
 
             /// <summary>
             /// Rotation of the region, in degrees.
             /// </summary>
-            public Vector3 Rotation;
+            public Vector3 Rotation { get; set; }
 
             /// <summary>
             /// Unknown.

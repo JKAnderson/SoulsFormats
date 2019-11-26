@@ -35,7 +35,7 @@ namespace SoulsFormats
         /// <summary>
         /// Points and volumes used to trigger various effects.
         /// </summary>
-        public class PointParam : Param<Region>
+        public class PointParam : Param<Region>, IMsbParam<IMsbRegion>
         {
             /// <summary>
             /// Unknown.
@@ -285,12 +285,13 @@ namespace SoulsFormats
                     Region0s, EnvironmentMapEffectBoxes, WindAreas, MufflingBoxes, MufflingPortals,
                     Region23s, Region24s, PartsGroups, AutoDrawGroups, Others);
             }
+            IReadOnlyList<IMsbRegion> IMsbParam<IMsbRegion>.GetEntries() => GetEntries();
         }
 
         /// <summary>
         /// A point or volume that triggers some sort of interaction.
         /// </summary>
-        public abstract class Region : Entry
+        public abstract class Region : Entry, IMsbRegion
         {
             /// <summary>
             /// The specific type of the region.
