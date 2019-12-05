@@ -100,12 +100,13 @@ namespace SoulsFormats
             for (int i = 0; i < Fields.Count; i++)
             {
                 Field field = Fields[i];
-                if (!ValidateNull(field, $"{nameof(Fields)}[{i}]: {nameof(Field)} may not be null.", out ex)
-                    || !ValidateNull(field.DisplayName, $"{nameof(Fields)}[{i}]: {nameof(Field.DisplayName)} may not be null.", out ex)
-                    || !ValidateNull(field.DisplayType, $"{nameof(Fields)}[{i}]: {nameof(Field.DisplayType)} may not be null.", out ex)
-                    || !ValidateNull(field.DisplayFormat, $"{nameof(Fields)}[{i}]: {nameof(Field.DisplayFormat)} may not be null.", out ex)
-                    || !ValidateNull(field.InternalType, $"{nameof(Fields)}[{i}]: {nameof(Field.InternalType)} may not be null.", out ex)
-                    || Version >= 102 && !ValidateNull(field.InternalName, $"{nameof(Fields)}[{i}]: {nameof(Field.InternalName)} may not be null on version {Version}.", out ex))
+                string which = $"{nameof(Fields)}[{i}]";
+                if (!ValidateNull(field, $"{which}: {nameof(Field)} may not be null.", out ex)
+                    || !ValidateNull(field.DisplayName, $"{which}: {nameof(Field.DisplayName)} may not be null.", out ex)
+                    || !ValidateNull(field.DisplayType, $"{which}: {nameof(Field.DisplayType)} may not be null.", out ex)
+                    || !ValidateNull(field.DisplayFormat, $"{which}: {nameof(Field.DisplayFormat)} may not be null.", out ex)
+                    || !ValidateNull(field.InternalType, $"{which}: {nameof(Field.InternalType)} may not be null.", out ex)
+                    || Version >= 102 && !ValidateNull(field.InternalName, $"{which}: {nameof(Field.InternalName)} may not be null on version {Version}.", out ex))
                     return false;
             }
 
@@ -186,6 +187,62 @@ namespace SoulsFormats
         }
 
         /// <summary>
+        /// Supported primitive field types.
+        /// </summary>
+        public enum DefType
+        {
+            /// <summary>
+            /// Signed 1-byte integer.
+            /// </summary>
+            s8,
+
+            /// <summary>
+            /// Unsigned 1-byte integer.
+            /// </summary>
+            u8,
+
+            /// <summary>
+            /// Signed 2-byte integer.
+            /// </summary>
+            s16,
+
+            /// <summary>
+            /// Unsigned 2-byte integer.
+            /// </summary>
+            u16,
+
+            /// <summary>
+            /// Signed 4-byte integer.
+            /// </summary>
+            s32,
+
+            /// <summary>
+            /// Unsigned 4-byte integer.
+            /// </summary>
+            u32,
+
+            /// <summary>
+            /// Single-precision floating point value.
+            /// </summary>
+            f32,
+
+            /// <summary>
+            /// Array of bytes used for padding or placeholding.
+            /// </summary>
+            dummy8,
+
+            /// <summary>
+            /// Fixed-width Shift-JIS string.
+            /// </summary>
+            fixstr,
+
+            /// <summary>
+            /// Fixed-width UTF-16 string.
+            /// </summary>
+            fixstrW,
+        }
+
+        /// <summary>
         /// Information about a field present in each row in a param.
         /// </summary>
         public class Field
@@ -198,7 +255,7 @@ namespace SoulsFormats
             /// <summary>
             /// Type of value to display in the editor.
             /// </summary>
-            public string DisplayType { get; set; }
+            public DefType DisplayType { get; set; }
 
             /// <summary>
             /// Printf-style format string to apply to the value in the editor.
@@ -261,7 +318,7 @@ namespace SoulsFormats
             public Field()
             {
                 DisplayName = "Placeholder";
-                DisplayType = "f32";
+                DisplayType = DefType.f32;
                 DisplayFormat = "%f";
                 Minimum = float.MinValue;
                 Maximum = float.MaxValue;
@@ -279,7 +336,7 @@ namespace SoulsFormats
                 else
                     DisplayName = br.ReadFixStr(0x40);
 
-                DisplayType = br.ReadFixStr(8);
+                DisplayType = (DefType)Enum.Parse(typeof(DefType), br.ReadFixStr(8));
                 DisplayFormat = br.ReadFixStr(8);
                 Default = br.ReadSingle();
                 Minimum = br.ReadSingle();
@@ -322,7 +379,7 @@ namespace SoulsFormats
                     bw.WriteFixStr(DisplayName, 0x40, (byte)(def.Version >= 104 ? 0x00 : 0x20));
 
                 byte padding = (byte)(def.Version >= 201 ? 0x00 : 0x20);
-                bw.WriteFixStr(DisplayType, 8, padding);
+                bw.WriteFixStr(DisplayType.ToString(), 8, padding);
                 bw.WriteFixStr(DisplayFormat, 8, padding);
                 bw.WriteSingle(Default);
                 bw.WriteSingle(Minimum);
