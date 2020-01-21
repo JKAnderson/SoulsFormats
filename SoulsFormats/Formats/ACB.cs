@@ -9,6 +9,11 @@ namespace SoulsFormats
     public class ACB : SoulsFile<ACB>
     {
         /// <summary>
+        /// True for PS3/X360, false otherwise.
+        /// </summary>
+        public bool BigEndian { get; set; }
+
+        /// <summary>
         /// Assets configured by this ACB.
         /// </summary>
         public List<Asset> Assets { get; set; }
@@ -29,9 +34,14 @@ namespace SoulsFormats
         /// </summary>
         protected override void Read(BinaryReaderEx br)
         {
-            br.BigEndian = false;
+            BigEndian = br.GetUInt32(0xC) > br.Length;
+            br.BigEndian = BigEndian;
+
             br.AssertASCII("ACB\0");
-            br.AssertInt32(0x00000102);
+            br.AssertByte(2);
+            br.AssertByte(1);
+            br.AssertByte(0);
+            br.AssertByte(0);
             int assetCount = br.ReadInt32();
             br.ReadInt32(); // Offset index offset
 
@@ -40,7 +50,9 @@ namespace SoulsFormats
             {
                 br.Position = assetOffset;
                 AssetType type = br.GetEnum16<AssetType>(br.Position + 8);
-                if (type == AssetType.General)
+                if (type == AssetType.PWV)
+                    Assets.Add(new Asset.PWV(br));
+                else if (type == AssetType.General)
                     Assets.Add(new Asset.General(br));
                 else if (type == AssetType.Model)
                     Assets.Add(new Asset.Model(br));
@@ -63,9 +75,12 @@ namespace SoulsFormats
             var offsetIndex = new List<int>();
             var memberOffsetsIndex = new SortedDictionary<int, List<int>>();
 
-            bw.BigEndian = false;
+            bw.BigEndian = BigEndian;
             bw.WriteASCII("ACB\0");
-            bw.WriteInt32(0x00000102);
+            bw.WriteByte(2);
+            bw.WriteByte(1);
+            bw.WriteByte(0);
+            bw.WriteByte(0);
             bw.WriteInt32(Assets.Count);
             bw.ReserveInt32("OffsetIndexOffset");
 
@@ -118,6 +133,7 @@ namespace SoulsFormats
         public enum AssetType : ushort
         {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+            PWV = 0,
             General = 1,
             Model = 2,
             Texture = 3,
@@ -189,6 +205,35 @@ namespace SoulsFormats
             }
 
             /// <summary>
+            /// Unknown.
+            /// </summary>
+            public class PWV : Asset
+            {
+                /// <summary>
+                /// AssetType.PWV
+                /// </summary>
+                public override AssetType Type => AssetType.PWV;
+
+                /// <summary>
+                /// Creates a PWV with default values.
+                /// </summary>
+                public PWV() : base() { }
+
+                internal PWV(BinaryReaderEx br) : base(br)
+                {
+                    br.AssertInt16(0);
+                    br.AssertInt32(0);
+                }
+
+                internal override void Write(BinaryWriterEx bw, int index, List<int> offsetIndex, SortedDictionary<int, List<int>> membersOffsetIndex)
+                {
+                    base.Write(bw, index, offsetIndex, membersOffsetIndex);
+                    bw.WriteInt16(0);
+                    bw.WriteInt32(0);
+                }
+            }
+
+            /// <summary>
             /// Miscellaneous assets including collisions and lighting configs.
             /// </summary>
             public class General : Asset
@@ -235,7 +280,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown; may be null.
                 /// </summary>
-                public List<Member> Members { get; set; }
+                public MemberList Members { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -371,17 +416,7 @@ namespace SoulsFormats
                     if (membersOffset != 0)
                     {
                         br.Position = membersOffset;
-                        br.AssertInt16(-1);
-                        short memberCount = br.ReadInt16();
-                        int memberOffsetsOffset = br.ReadInt32();
-
-                        br.Position = memberOffsetsOffset;
-                        Members = new List<Member>(memberCount);
-                        foreach (int memberOffset in br.ReadInt32s(memberCount))
-                        {
-                            br.Position = memberOffset;
-                            Members.Add(new Member(br));
-                        }
+                        Members = new MemberList(br);
                     }
                 }
 
@@ -427,23 +462,73 @@ namespace SoulsFormats
                     else
                     {
                         bw.FillInt32($"MembersOffset{index}", (int)bw.Position);
-                        bw.WriteInt16(-1);
-                        bw.WriteInt16((short)Members.Count);
+                        Members.Write(bw, index, offsetIndex, membersOffsetIndex);
+                    }
+                }
+
+                /// <summary>
+                /// Unknown collection of unknown items.
+                /// </summary>
+                public class MemberList : List<Member>
+                {
+                    /// <summary>
+                    /// Unknown; usually -1.
+                    /// </summary>
+                    public short Unk00 { get; set; }
+
+                    /// <summary>
+                    /// Creates an empty MemberList.
+                    /// </summary>
+                    public MemberList() : base() { }
+
+                    /// <summary>
+                    /// Creates an empty MemberList with the specified capacity.
+                    /// </summary>
+                    public MemberList(int capacity) : base(capacity) { }
+
+                    /// <summary>
+                    /// Creates a MemberList with elements copied from the specified collection.
+                    /// </summary>
+                    public MemberList(IEnumerable<Member> collection) : base(collection) { }
+
+                    internal MemberList(BinaryReaderEx br)
+                    {
+                        Unk00 = br.ReadInt16();
+                        short memberCount = br.ReadInt16();
+                        int memberOffsetsOffset = br.ReadInt32();
+
+                        br.StepIn(memberOffsetsOffset);
+                        {
+                            Capacity = memberCount;
+                            int[] memberOffsets = br.ReadInt32s(memberCount);
+                            for (int i = 0; i < memberCount; i++)
+                            {
+                                br.Position = memberOffsets[i];
+                                Add(new Member(br));
+                            }
+                        }
+                        br.StepOut();
+                    }
+
+                    internal void Write(BinaryWriterEx bw, int index, List<int> offsetIndex, SortedDictionary<int, List<int>> membersOffsetIndex)
+                    {
+                        bw.WriteInt16(Unk00);
+                        bw.WriteInt16((short)Count);
                         membersOffsetIndex[index].Add((int)bw.Position);
                         bw.ReserveInt32($"MemberOffsetsOffset{index}");
 
                         // :^)
                         bw.FillInt32($"MemberOffsetsOffset{index}", (int)bw.Position);
-                        for (int i = 0; i < Members.Count; i++)
+                        for (int i = 0; i < Count; i++)
                         {
                             membersOffsetIndex[index].Add((int)bw.Position);
                             bw.ReserveInt32($"MemberOffset{index}:{i}");
                         }
 
-                        for (int i = 0; i < Members.Count; i++)
+                        for (int i = 0; i < Count; i++)
                         {
                             bw.FillInt32($"MemberOffset{index}:{i}", (int)bw.Position);
-                            Members[i].Write(bw, index, i, offsetIndex);
+                            this[i].Write(bw, index, i, offsetIndex);
                         }
                     }
                 }
@@ -553,7 +638,6 @@ namespace SoulsFormats
                     br.AssertInt16(0);
                     br.AssertInt32(0);
                     Unk10 = br.ReadInt32();
-                    Unk14 = br.ReadInt32();
                 }
 
                 internal override void Write(BinaryWriterEx bw, int index, List<int> offsetIndex, SortedDictionary<int, List<int>> membersOffsetIndex)
@@ -562,7 +646,6 @@ namespace SoulsFormats
                     bw.WriteInt16(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(Unk10);
-                    bw.WriteInt32(Unk14);
                 }
             }
 
