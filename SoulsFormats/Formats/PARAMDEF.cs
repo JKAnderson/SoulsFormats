@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace SoulsFormats
 {
@@ -32,6 +33,11 @@ namespace SoulsFormats
         /// <summary>
         /// Determines format of the file.
         /// </summary>
+        // 101 - Enchanted Arms, Chromehounds, Armored Core 4/For Answer/V/Verdict Day, Shadow Assault: Tenchu
+        // 102 - Demon's Souls
+        // 103 - Ninja Blade, Another Century's Episode: R
+        // 104 - Dark Souls, Steel Battalion: Heavy Armor
+        // 201 - Bloodborne
         public short Version { get; set; }
 
         /// <summary>
@@ -72,7 +78,7 @@ namespace SoulsFormats
             if (!(Version < 200 && unk04 == 0x30 || Version >= 200 && unk04 == 0xFF))
                 throw new InvalidDataException($"Unexpected unk04 0x{unk04:X} for version {Version}.");
 
-            // Please note that for version 103 (Ninja Blade), this value is straight up wrong.
+            // Please note that for version 103 this value is wrong.
             if (!(Version == 101 && fieldSize == 0x8C || Version == 102 && fieldSize == 0xAC || Version == 103 && fieldSize == 0x6C
                 || Version == 104 && fieldSize == 0xB0 || Version == 201 && fieldSize == 0xD0))
                 throw new InvalidDataException($"Unexpected field size 0x{fieldSize:X} for version {Version}.");
@@ -227,7 +233,7 @@ namespace SoulsFormats
             f32,
 
             /// <summary>
-            /// Array of bytes used for padding or placeholding.
+            /// Byte or array of bytes used for padding or placeholding.
             /// </summary>
             dummy8,
 
@@ -288,9 +294,9 @@ namespace SoulsFormats
             public EditFlags EditFlags { get; set; }
 
             /// <summary>
-            /// Number of bytes taken up by the value; may be variable for some types.
+            /// Number of elements for array types; only supported for dummy8, fixstr, and fixstrW.
             /// </summary>
-            public int ByteCount { get; set; }
+            public int ArrayLength { get; set; }
 
             /// <summary>
             /// Optional description of the field; may be null.
@@ -308,25 +314,39 @@ namespace SoulsFormats
             public string InternalName { get; set; }
 
             /// <summary>
+            /// Number of bits used by a bitfield; only supported for unsigned types, -1 when not used.
+            /// </summary>
+            public int BitSize { get; set; }
+
+            /// <summary>
             /// Fields are ordered by this value in the editor; not present before version 104.
             /// </summary>
             public int SortID { get; set; }
 
+            private static readonly Regex arrayLengthRx = new Regex(@"^(?<name>.+?)\s*\[\s*(?<length>\d+)\s*\]\s*$");
+            private static readonly Regex bitSizeRx = new Regex(@"^(?<name>.+?)\s*\:\s*(?<size>\d+)\s*$");
+
             /// <summary>
             /// Creates a Field with placeholder values.
             /// </summary>
-            public Field()
+            public Field() : this(DefType.f32, "placeholder") { }
+
+            /// <summary>
+            /// Creates a Field with the given type, name, and appropriate default values.
+            /// </summary>
+            public Field(DefType displayType, string internalName)
             {
-                DisplayName = "Placeholder";
-                DisplayType = DefType.f32;
-                DisplayFormat = "%f";
-                Minimum = float.MinValue;
-                Maximum = float.MaxValue;
-                Increment = 1;
-                EditFlags = EditFlags.Wrap;
-                ByteCount = 4;
-                InternalType = "f32";
-                InternalName = "placeholder";
+                DisplayName = internalName;
+                DisplayType = displayType;
+                DisplayFormat = GetDefaultFormat(DisplayType);
+                Minimum = GetDefaultMinimum(DisplayType);
+                Maximum = GetDefaultMaximum(DisplayType);
+                Increment = GetDefaultIncrement(DisplayType);
+                EditFlags = GetDefaultEditFlags(DisplayType);
+                ArrayLength = 1;
+                InternalType = DisplayType.ToString();
+                InternalName = internalName;
+                BitSize = -1;
             }
 
             internal Field(BinaryReaderEx br, PARAMDEF def)
@@ -343,7 +363,12 @@ namespace SoulsFormats
                 Maximum = br.ReadSingle();
                 Increment = br.ReadSingle();
                 EditFlags = (EditFlags)br.ReadInt32();
-                ByteCount = br.ReadInt32();
+
+                int byteCount = br.ReadInt32();
+                if (!IsArrayType(DisplayType) && byteCount != GetValueSize(DisplayType)
+                    || IsArrayType(DisplayType) && byteCount % GetValueSize(DisplayType) != 0)
+                    throw new InvalidDataException($"Unexpected byte count {byteCount} for type {DisplayType}.");
+                ArrayLength = byteCount / GetValueSize(DisplayType);
 
                 long descriptionOffset;
                 if (def.Version >= 201)
@@ -353,8 +378,28 @@ namespace SoulsFormats
 
                 InternalType = br.ReadFixStr(0x20);
 
+                BitSize = -1;
                 if (def.Version >= 102)
+                {
                     InternalName = br.ReadFixStr(0x20);
+
+                    Match match = bitSizeRx.Match(InternalName);
+                    if (match.Success)
+                    {
+                        InternalName = match.Groups["name"].Value;
+                        BitSize = int.Parse(match.Groups["size"].Value);
+                    }
+
+                    if (IsArrayType(DisplayType))
+                    {
+                        match = arrayLengthRx.Match(InternalName);
+                        int length = match.Success ? int.Parse(match.Groups["length"].Value) : 1;
+                        if (length != ArrayLength)
+                            throw new InvalidDataException($"Mismatched array length in {InternalName} with byte count {byteCount}.");
+                        if (match.Success)
+                            InternalName = match.Groups["name"].Value;
+                    }
+                }
 
                 if (def.Version >= 104)
                     SortID = br.ReadInt32();
@@ -386,7 +431,7 @@ namespace SoulsFormats
                 bw.WriteSingle(Maximum);
                 bw.WriteSingle(Increment);
                 bw.WriteInt32((int)EditFlags);
-                bw.WriteInt32(ByteCount);
+                bw.WriteInt32(GetValueSize(DisplayType) * (IsArrayType(DisplayType) ? ArrayLength : 1));
 
                 if (def.Version >= 201)
                     bw.ReserveInt64($"DescriptionOffset{index}");
@@ -396,7 +441,16 @@ namespace SoulsFormats
                 bw.WriteFixStr(InternalType, 0x20, padding);
 
                 if (def.Version >= 102)
-                    bw.WriteFixStr(InternalName, 0x20, padding);
+                {
+                    string internalName = InternalName;
+                    // This is accurate except for "hasTarget : 1" in SpEffect
+                    if (BitSize != -1)
+                        internalName = $"{internalName}:{BitSize}";
+                    // BB is not consistent about including [1] or not, but PTDE always does
+                    else if (IsArrayType(DisplayType))
+                        internalName = $"{internalName}[{ArrayLength}]";
+                    bw.WriteFixStr(internalName, 0x20, padding);
+                }
 
                 if (def.Version >= 104)
                     bw.WriteInt32(SortID);
@@ -421,6 +475,140 @@ namespace SoulsFormats
                     bw.FillInt64($"DescriptionOffset{index}", descriptionOffset);
                 else
                     bw.FillInt32($"DescriptionOffset{index}", (int)descriptionOffset);
+            }
+
+            private static string GetDefaultFormat(DefType type)
+            {
+                switch (type)
+                {
+                    case DefType.s8: return "%d";
+                    case DefType.u8: return "%d";
+                    case DefType.s16: return "%d";
+                    case DefType.u16: return "%d";
+                    case DefType.s32: return "%d";
+                    case DefType.u32: return "%d";
+                    case DefType.f32: return "%f";
+                    case DefType.dummy8: return "";
+                    case DefType.fixstr: return "%d";
+                    case DefType.fixstrW: return "%d";
+
+                    default:
+                        throw new NotImplementedException($"No default format specified for {nameof(DefType)}.{type}");
+                }
+            }
+
+            private static float GetDefaultMinimum(DefType type)
+            {
+                switch (type)
+                {
+                    case DefType.s8: return sbyte.MinValue;
+                    case DefType.u8: return byte.MinValue;
+                    case DefType.s16: return short.MinValue;
+                    case DefType.u16: return ushort.MinValue;
+                    case DefType.s32: return int.MinValue;
+                    case DefType.u32: return uint.MinValue;
+                    case DefType.f32: return float.MinValue;
+                    case DefType.dummy8: return 0;
+                    case DefType.fixstr: return -1;
+                    case DefType.fixstrW: return -1;
+
+                    default:
+                        throw new NotImplementedException($"No default minimum specified for {nameof(DefType)}.{type}");
+                }
+            }
+
+            private static float GetDefaultMaximum(DefType type)
+            {
+                switch (type)
+                {
+                    case DefType.s8: return sbyte.MaxValue;
+                    case DefType.u8: return byte.MaxValue;
+                    case DefType.s16: return short.MaxValue;
+                    case DefType.u16: return ushort.MaxValue;
+                    case DefType.s32: return int.MaxValue;
+                    case DefType.u32: return uint.MaxValue;
+                    case DefType.f32: return float.MaxValue;
+                    case DefType.dummy8: return 0;
+                    case DefType.fixstr: return 1000000000;
+                    case DefType.fixstrW: return 1000000000;
+
+                    default:
+                        throw new NotImplementedException($"No default maximum specified for {nameof(DefType)}.{type}");
+                }
+            }
+
+            private static float GetDefaultIncrement(DefType type)
+            {
+                switch (type)
+                {
+                    case DefType.s8: return 1;
+                    case DefType.u8: return 1;
+                    case DefType.s16: return 1;
+                    case DefType.u16: return 1;
+                    case DefType.s32: return 1;
+                    case DefType.u32: return 1;
+                    case DefType.f32: return 0.01f;
+                    case DefType.dummy8: return 0;
+                    case DefType.fixstr: return 1;
+                    case DefType.fixstrW: return 1;
+
+                    default:
+                        throw new NotImplementedException($"No default increment specified for {nameof(DefType)}.{type}");
+                }
+            }
+
+            private static EditFlags GetDefaultEditFlags(DefType type)
+            {
+                switch (type)
+                {
+                    case DefType.s8: return EditFlags.Wrap;
+                    case DefType.u8: return EditFlags.Wrap;
+                    case DefType.s16: return EditFlags.Wrap;
+                    case DefType.u16: return EditFlags.Wrap;
+                    case DefType.s32: return EditFlags.Wrap;
+                    case DefType.u32: return EditFlags.Wrap;
+                    case DefType.f32: return EditFlags.Wrap;
+                    case DefType.dummy8: return EditFlags.None;
+                    case DefType.fixstr: return EditFlags.Wrap;
+                    case DefType.fixstrW: return EditFlags.Wrap;
+
+                    default:
+                        throw new NotImplementedException($"No default edit flags specified for {nameof(DefType)}.{type}");
+                }
+            }
+
+            private static bool IsArrayType(DefType type)
+            {
+                switch (type)
+                {
+                    case DefType.dummy8:
+                    case DefType.fixstr:
+                    case DefType.fixstrW:
+                        return true;
+
+                    default:
+                        return false;
+                }
+            }
+
+            private static int GetValueSize(DefType type)
+            {
+                switch (type)
+                {
+                    case DefType.s8: return 1;
+                    case DefType.u8: return 1;
+                    case DefType.s16: return 2;
+                    case DefType.u16: return 2;
+                    case DefType.s32: return 4;
+                    case DefType.u32: return 4;
+                    case DefType.f32: return 4;
+                    case DefType.dummy8: return 1;
+                    case DefType.fixstr: return 1;
+                    case DefType.fixstrW: return 2;
+
+                    default:
+                        throw new NotImplementedException($"No value size specified for {nameof(DefType)}.{type}");
+                }
             }
         }
     }
