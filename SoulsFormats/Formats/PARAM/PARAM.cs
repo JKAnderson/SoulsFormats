@@ -41,9 +41,9 @@ namespace SoulsFormats
         public short Unk08 { get; set; }
 
         /// <summary>
-        /// The param format ID of rows in this param.
+        /// Identifies corresponding params and paramdefs.
         /// </summary>
-        public string ID { get; set; }
+        public string ParamType { get; set; }
 
         /// <summary>
         /// Automatically determined based on spacing of row offsets; could be wrong in theory, but never seems to be.
@@ -86,7 +86,7 @@ namespace SoulsFormats
                 Unk06 = br.ReadInt16();
                 Unk08 = br.ReadInt16();
                 rowCount = br.ReadUInt16();
-                ID = br.ReadFixStr(0x20);
+                ParamType = br.ReadFixStr(0x20);
                 br.Skip(4); // Format
             }
             // DS2
@@ -97,7 +97,7 @@ namespace SoulsFormats
                 Unk06 = br.ReadInt16();
                 Unk08 = br.ReadInt16();
                 rowCount = br.ReadUInt16();
-                ID = br.ReadFixStr(0x20);
+                ParamType = br.ReadFixStr(0x20);
                 br.Skip(4); // Format
                 br.ReadUInt32(); // Data start
                 br.AssertInt32(0);
@@ -112,7 +112,7 @@ namespace SoulsFormats
                 Unk06 = br.ReadInt16();
                 Unk08 = br.ReadInt16();
                 rowCount = br.ReadUInt16();
-                ID = br.ReadFixStr(0x20);
+                ParamType = br.ReadFixStr(0x20);
                 br.Skip(4); // Format
                 br.ReadInt64(); // Data start
                 br.AssertInt64(0);
@@ -131,7 +131,7 @@ namespace SoulsFormats
                 br.Skip(4); // Format
                 br.ReadInt64(); // Data start
                 br.AssertInt64(0);
-                ID = br.GetASCII(idOffset);
+                ParamType = br.GetASCII(idOffset);
 
                 // This is stupid, but the strings offset is always aligned to 0x10,
                 // which can put it right in the middle of the ID string
@@ -173,7 +173,7 @@ namespace SoulsFormats
                 bw.WriteInt16(Unk06);
                 bw.WriteInt16(Unk08);
                 bw.WriteUInt16((ushort)Rows.Count);
-                bw.WriteFixStr(ID, 0x20, (byte)((Format2D & 0x7F) < 2 ? 0x20 : 0x00));
+                bw.WriteFixStr(ParamType, 0x20, (byte)((Format2D & 0x7F) < 2 ? 0x20 : 0x00));
                 WriteFormat();
             }
             // DS2
@@ -184,7 +184,7 @@ namespace SoulsFormats
                 bw.WriteInt16(Unk06);
                 bw.WriteInt16(Unk08);
                 bw.WriteUInt16((ushort)Rows.Count);
-                bw.WriteFixStr(ID, 0x20, 0x20);
+                bw.WriteFixStr(ParamType, 0x20, 0x20);
                 WriteFormat();
                 bw.ReserveUInt32("DataStart");
                 bw.WriteInt32(0);
@@ -199,7 +199,7 @@ namespace SoulsFormats
                 bw.WriteInt16(Unk06);
                 bw.WriteInt16(Unk08);
                 bw.WriteUInt16((ushort)Rows.Count);
-                bw.WriteFixStr(ID, 0x20, 0x00);
+                bw.WriteFixStr(ParamType, 0x20, 0x00);
                 WriteFormat();
                 bw.ReserveInt64("DataStart");
                 bw.WriteInt64(0);
@@ -240,7 +240,7 @@ namespace SoulsFormats
             if ((Format2D & 0x7F) > 4)
             {
                 bw.FillInt64("IDOffset", bw.Position);
-                bw.WriteASCII(ID, true);
+                bw.WriteASCII(ParamType, true);
             }
 
             for (int i = 0; i < Rows.Count; i++)
@@ -297,34 +297,10 @@ namespace SoulsFormats
                 for (int i = 0; i < paramdef.Fields.Count; i++)
                 {
                     PARAMDEF.Field field = paramdef.Fields[i];
-                    object value = CastDefaultValue(field);
+                    object value = ParamUtil.CastDefaultValue(field);
                     cells[i] = new Cell(field, value);
                 }
                 Cells = cells;
-            }
-
-            private static object CastDefaultValue(PARAMDEF.Field field)
-            {
-                switch (field.DisplayType)
-                {
-                    case PARAMDEF.DefType.s8: return (sbyte)field.Default;
-                    case PARAMDEF.DefType.u8: return (byte)field.Default;
-                    case PARAMDEF.DefType.s16: return (short)field.Default;
-                    case PARAMDEF.DefType.u16: return (ushort)field.Default;
-                    case PARAMDEF.DefType.s32: return (int)field.Default;
-                    case PARAMDEF.DefType.u32: return (uint)field.Default;
-                    case PARAMDEF.DefType.f32: return field.Default;
-                    case PARAMDEF.DefType.fixstr: return "";
-                    case PARAMDEF.DefType.fixstrW: return "";
-                    case PARAMDEF.DefType.dummy8:
-                        if (field.BitSize == -1)
-                            return new byte[field.ArrayLength];
-                        else
-                            return (byte)field.Default;
-
-                    default:
-                        throw new NotImplementedException($"Default not implemented for type {field.DisplayType}");
-                }
             }
 
             internal Row(BinaryReaderEx br, byte format2D, byte format2E)
@@ -407,7 +383,7 @@ namespace SoulsFormats
                     else
                     {
                         PARAMDEF.DefType newBitType = type == PARAMDEF.DefType.dummy8 ? PARAMDEF.DefType.u8 : type;
-                        int bitLimit = GetBitLimit(newBitType);
+                        int bitLimit = ParamUtil.GetBitLimit(newBitType);
 
                         if (field.BitSize == 0)
                             throw new NotImplementedException($"Bit size 0 is not supported.");
@@ -530,7 +506,7 @@ namespace SoulsFormats
                             {
                                 PARAMDEF.Field nextField = Cells[i + 1].Def;
                                 PARAMDEF.DefType nextType = nextField.DisplayType;
-                                int bitLimit = GetBitLimit(bitType);
+                                int bitLimit = ParamUtil.GetBitLimit(bitType);
                                 if (nextType != PARAMDEF.DefType.u8 && nextType != PARAMDEF.DefType.u16 && nextType != PARAMDEF.DefType.u32 && nextType != PARAMDEF.DefType.dummy8
                                     || nextField.BitSize == -1 || bitOffset + nextField.BitSize > bitLimit
                                     || (nextType == PARAMDEF.DefType.dummy8 ? PARAMDEF.DefType.u8 : nextType) != bitType)
@@ -586,18 +562,6 @@ namespace SoulsFormats
             /// Returns the first cell in the row with the given internal name.
             /// </summary>
             public Cell this[string name] => Cells.First(cell => cell.Def.InternalName == name);
-
-            private static int GetBitLimit(PARAMDEF.DefType type)
-            {
-                if (type == PARAMDEF.DefType.u8)
-                    return 8;
-                else if (type == PARAMDEF.DefType.u16)
-                    return 16;
-                else if (type == PARAMDEF.DefType.u32)
-                    return 32;
-                else
-                    throw new InvalidOperationException($"Bit type may only be u8, u16, or u32.");
-            }
         }
 
         /// <summary>

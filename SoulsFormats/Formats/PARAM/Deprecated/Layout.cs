@@ -126,6 +126,74 @@ namespace SoulsFormats
             }
 
             /// <summary>
+            /// Converts the layout to a paramdef with the given type, and all child enums to paramtdfs.
+            /// </summary>
+            public PARAMDEF ToParamdef(string paramType, out List<PARAMTDF> paramtdfs)
+            {
+                paramtdfs = new List<PARAMTDF>(Enums.Count);
+                foreach (string enumName in Enums.Keys)
+                    paramtdfs.Add(Enums[enumName].ToParamtdf(enumName));
+
+                var def = new PARAMDEF { ParamType = paramType, Unicode = true, Version = 201 };
+                foreach (Entry entry in this)
+                {
+                    PARAMDEF.DefType fieldType;
+                    switch (entry.Type)
+                    {
+                        case CellType.dummy8: fieldType = PARAMDEF.DefType.dummy8; break;
+                        case CellType.b8:
+                        case CellType.u8:
+                        case CellType.x8: fieldType = PARAMDEF.DefType.u8; break;
+                        case CellType.s8: fieldType = PARAMDEF.DefType.s8; break;
+                        case CellType.b16:
+                        case CellType.u16:
+                        case CellType.x16: fieldType = PARAMDEF.DefType.u16; break;
+                        case CellType.s16: fieldType = PARAMDEF.DefType.s16; break;
+                        case CellType.b32:
+                        case CellType.u32:
+                        case CellType.x32: fieldType = PARAMDEF.DefType.u32; break;
+                        case CellType.s32: fieldType = PARAMDEF.DefType.s32; break;
+                        case CellType.f32: fieldType = PARAMDEF.DefType.f32; break;
+                        case CellType.fixstr: fieldType = PARAMDEF.DefType.fixstr; break;
+                        case CellType.fixstrW: fieldType = PARAMDEF.DefType.fixstrW; break;
+
+                        default:
+                            throw new NotImplementedException($"DefType not specified for CellType {entry.Type}.");
+                    }
+
+                    var field = new PARAMDEF.Field(fieldType, entry.Name);
+                    field.Description = entry.Description;
+                    if (entry.Enum != null)
+                        field.InternalType = entry.Enum;
+
+                    if (entry.Type == CellType.s8)
+                        field.Default = (sbyte)entry.Default;
+                    else if (entry.Type == CellType.u8 || entry.Type == CellType.x8)
+                        field.Default = (byte)entry.Default;
+                    else if (entry.Type == CellType.s16)
+                        field.Default = (short)entry.Default;
+                    else if (entry.Type == CellType.u16 || entry.Type == CellType.x16)
+                        field.Default = (ushort)entry.Default;
+                    else if (entry.Type == CellType.s32)
+                        field.Default = (int)entry.Default;
+                    else if (entry.Type == CellType.u32 || entry.Type == CellType.x32)
+                        field.Default = (uint)entry.Default;
+                    else if (entry.Type == CellType.dummy8 || entry.Type == CellType.fixstr)
+                        field.ArrayLength = entry.Size;
+                    else if (entry.Type == CellType.fixstrW)
+                        field.ArrayLength = entry.Size / 2;
+                    else if (entry.Type == CellType.b8 || entry.Type == CellType.b16 || entry.Type == CellType.b32)
+                    {
+                        field.Default = (bool)entry.Default ? 1 : 0;
+                        field.BitSize = 1;
+                    }
+
+                    def.Fields.Add(field);
+                }
+                return def;
+            }
+
+            /// <summary>
             /// Parse a string according to the given param type and culture.
             /// </summary>
             public static object ParseParamValue(CellType type, string value, CultureInfo culture)

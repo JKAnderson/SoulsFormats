@@ -18,7 +18,7 @@ namespace SoulsFormats
         /// <summary>
         /// Identifies corresponding params and paramdefs.
         /// </summary>
-        public string ParamID { get; set; }
+        public string ParamType { get; set; }
 
         /// <summary>
         /// True for PS3 and X360 games, otherwise false.
@@ -50,7 +50,7 @@ namespace SoulsFormats
         /// </summary>
         public PARAMDEF()
         {
-            ParamID = "AI_STANDARD_INFO_BANK";
+            ParamType = "AI_STANDARD_INFO_BANK";
             Version = 104;
             Fields = new List<Field>();
         }
@@ -68,7 +68,7 @@ namespace SoulsFormats
             Unk06 = br.ReadInt16();
             short fieldCount = br.ReadInt16();
             short fieldSize = br.AssertInt16(0x6C, 0x8C, 0xAC, 0xB0, 0xD0);
-            ParamID = br.ReadFixStr(0x20);
+            ParamType = br.ReadFixStr(0x20);
             br.ReadByte(); // Big-endian
             Unicode = br.ReadBoolean();
             Version = br.AssertInt16(101, 102, 103, 104, 201);
@@ -99,7 +99,7 @@ namespace SoulsFormats
                 return false;
             }
 
-            if (!ValidateNull(ParamID, $"{nameof(ParamID)} may not be null.", out ex)
+            if (!ValidateNull(ParamType, $"{nameof(ParamType)} may not be null.", out ex)
                 || !ValidateNull(Fields, $"{nameof(Fields)} may not be null.", out ex))
                 return false;
 
@@ -143,7 +143,7 @@ namespace SoulsFormats
             else if (Version == 201)
                 bw.WriteInt16(0xD0);
 
-            bw.WriteFixStr(ParamID, 0x20, (byte)(Version >= 201 ? 0x00 : 0x20));
+            bw.WriteFixStr(ParamType, 0x20, (byte)(Version >= 201 ? 0x00 : 0x20));
             bw.WriteSByte((sbyte)(BigEndian ? -1 : 0));
             bw.WriteBoolean(Unicode);
             bw.WriteInt16(Version);
@@ -168,6 +168,43 @@ namespace SoulsFormats
                 bw.Pad(0x10);
             }
             bw.FillInt32("FileSize", (int)bw.Position);
+        }
+
+        /// <summary>
+        /// Calculates the size of cell data for each row.
+        /// </summary>
+        public int GetRowSize()
+        {
+            int size = 0;
+            for (int i = 0; i < Fields.Count; i++)
+            {
+                Field field = Fields[i];
+                DefType type = field.DisplayType;
+                if (ParamUtil.IsArrayType(type))
+                    size += ParamUtil.GetValueSize(type) * field.ArrayLength;
+                else
+                    size += ParamUtil.GetValueSize(type);
+
+                if ((type == DefType.u8 || type == DefType.u16 || type == DefType.u32 || type == DefType.dummy8)
+                    && field.BitSize != -1)
+                {
+                    int bitOffset = field.BitSize;
+                    DefType bitType = type == DefType.dummy8 ? DefType.u8 : type;
+                    int bitLimit = ParamUtil.GetBitLimit(bitType);
+
+                    for (; i < Fields.Count - 1; i++)
+                    {
+                        Field nextField = Fields[i + 1];
+                        DefType nextType = nextField.DisplayType;
+                        if (nextType != DefType.u8 && nextType != DefType.u16 && nextType != DefType.u32 && nextType != DefType.dummy8
+                            || (nextType == DefType.dummy8 ? DefType.u8 : nextType) != bitType
+                            || nextField.BitSize == -1 || bitOffset + nextField.BitSize > bitLimit)
+                            break;
+                        bitOffset += nextField.BitSize;
+                    }
+                }
+            }
+            return size;
         }
 
         /// <summary>
@@ -338,11 +375,11 @@ namespace SoulsFormats
             {
                 DisplayName = internalName;
                 DisplayType = displayType;
-                DisplayFormat = GetDefaultFormat(DisplayType);
-                Minimum = GetDefaultMinimum(DisplayType);
-                Maximum = GetDefaultMaximum(DisplayType);
-                Increment = GetDefaultIncrement(DisplayType);
-                EditFlags = GetDefaultEditFlags(DisplayType);
+                DisplayFormat = ParamUtil.GetDefaultFormat(DisplayType);
+                Minimum = ParamUtil.GetDefaultMinimum(DisplayType);
+                Maximum = ParamUtil.GetDefaultMaximum(DisplayType);
+                Increment = ParamUtil.GetDefaultIncrement(DisplayType);
+                EditFlags = ParamUtil.GetDefaultEditFlags(DisplayType);
                 ArrayLength = 1;
                 InternalType = DisplayType.ToString();
                 InternalName = internalName;
@@ -365,10 +402,10 @@ namespace SoulsFormats
                 EditFlags = (EditFlags)br.ReadInt32();
 
                 int byteCount = br.ReadInt32();
-                if (!IsArrayType(DisplayType) && byteCount != GetValueSize(DisplayType)
-                    || IsArrayType(DisplayType) && byteCount % GetValueSize(DisplayType) != 0)
+                if (!ParamUtil.IsArrayType(DisplayType) && byteCount != ParamUtil.GetValueSize(DisplayType)
+                    || ParamUtil.IsArrayType(DisplayType) && byteCount % ParamUtil.GetValueSize(DisplayType) != 0)
                     throw new InvalidDataException($"Unexpected byte count {byteCount} for type {DisplayType}.");
-                ArrayLength = byteCount / GetValueSize(DisplayType);
+                ArrayLength = byteCount / ParamUtil.GetValueSize(DisplayType);
 
                 long descriptionOffset;
                 if (def.Version >= 201)
@@ -390,7 +427,7 @@ namespace SoulsFormats
                         BitSize = int.Parse(match.Groups["size"].Value);
                     }
 
-                    if (IsArrayType(DisplayType))
+                    if (ParamUtil.IsArrayType(DisplayType))
                     {
                         match = arrayLengthRx.Match(InternalName);
                         int length = match.Success ? int.Parse(match.Groups["length"].Value) : 1;
@@ -431,7 +468,7 @@ namespace SoulsFormats
                 bw.WriteSingle(Maximum);
                 bw.WriteSingle(Increment);
                 bw.WriteInt32((int)EditFlags);
-                bw.WriteInt32(GetValueSize(DisplayType) * (IsArrayType(DisplayType) ? ArrayLength : 1));
+                bw.WriteInt32(ParamUtil.GetValueSize(DisplayType) * (ParamUtil.IsArrayType(DisplayType) ? ArrayLength : 1));
 
                 if (def.Version >= 201)
                     bw.ReserveInt64($"DescriptionOffset{index}");
@@ -447,7 +484,7 @@ namespace SoulsFormats
                     if (BitSize != -1)
                         internalName = $"{internalName}:{BitSize}";
                     // BB is not consistent about including [1] or not, but PTDE always does
-                    else if (IsArrayType(DisplayType))
+                    else if (ParamUtil.IsArrayType(DisplayType))
                         internalName = $"{internalName}[{ArrayLength}]";
                     bw.WriteFixStr(internalName, 0x20, padding);
                 }
@@ -475,140 +512,6 @@ namespace SoulsFormats
                     bw.FillInt64($"DescriptionOffset{index}", descriptionOffset);
                 else
                     bw.FillInt32($"DescriptionOffset{index}", (int)descriptionOffset);
-            }
-
-            private static string GetDefaultFormat(DefType type)
-            {
-                switch (type)
-                {
-                    case DefType.s8: return "%d";
-                    case DefType.u8: return "%d";
-                    case DefType.s16: return "%d";
-                    case DefType.u16: return "%d";
-                    case DefType.s32: return "%d";
-                    case DefType.u32: return "%d";
-                    case DefType.f32: return "%f";
-                    case DefType.dummy8: return "";
-                    case DefType.fixstr: return "%d";
-                    case DefType.fixstrW: return "%d";
-
-                    default:
-                        throw new NotImplementedException($"No default format specified for {nameof(DefType)}.{type}");
-                }
-            }
-
-            private static float GetDefaultMinimum(DefType type)
-            {
-                switch (type)
-                {
-                    case DefType.s8: return sbyte.MinValue;
-                    case DefType.u8: return byte.MinValue;
-                    case DefType.s16: return short.MinValue;
-                    case DefType.u16: return ushort.MinValue;
-                    case DefType.s32: return int.MinValue;
-                    case DefType.u32: return uint.MinValue;
-                    case DefType.f32: return float.MinValue;
-                    case DefType.dummy8: return 0;
-                    case DefType.fixstr: return -1;
-                    case DefType.fixstrW: return -1;
-
-                    default:
-                        throw new NotImplementedException($"No default minimum specified for {nameof(DefType)}.{type}");
-                }
-            }
-
-            private static float GetDefaultMaximum(DefType type)
-            {
-                switch (type)
-                {
-                    case DefType.s8: return sbyte.MaxValue;
-                    case DefType.u8: return byte.MaxValue;
-                    case DefType.s16: return short.MaxValue;
-                    case DefType.u16: return ushort.MaxValue;
-                    case DefType.s32: return int.MaxValue;
-                    case DefType.u32: return uint.MaxValue;
-                    case DefType.f32: return float.MaxValue;
-                    case DefType.dummy8: return 0;
-                    case DefType.fixstr: return 1000000000;
-                    case DefType.fixstrW: return 1000000000;
-
-                    default:
-                        throw new NotImplementedException($"No default maximum specified for {nameof(DefType)}.{type}");
-                }
-            }
-
-            private static float GetDefaultIncrement(DefType type)
-            {
-                switch (type)
-                {
-                    case DefType.s8: return 1;
-                    case DefType.u8: return 1;
-                    case DefType.s16: return 1;
-                    case DefType.u16: return 1;
-                    case DefType.s32: return 1;
-                    case DefType.u32: return 1;
-                    case DefType.f32: return 0.01f;
-                    case DefType.dummy8: return 0;
-                    case DefType.fixstr: return 1;
-                    case DefType.fixstrW: return 1;
-
-                    default:
-                        throw new NotImplementedException($"No default increment specified for {nameof(DefType)}.{type}");
-                }
-            }
-
-            private static EditFlags GetDefaultEditFlags(DefType type)
-            {
-                switch (type)
-                {
-                    case DefType.s8: return EditFlags.Wrap;
-                    case DefType.u8: return EditFlags.Wrap;
-                    case DefType.s16: return EditFlags.Wrap;
-                    case DefType.u16: return EditFlags.Wrap;
-                    case DefType.s32: return EditFlags.Wrap;
-                    case DefType.u32: return EditFlags.Wrap;
-                    case DefType.f32: return EditFlags.Wrap;
-                    case DefType.dummy8: return EditFlags.None;
-                    case DefType.fixstr: return EditFlags.Wrap;
-                    case DefType.fixstrW: return EditFlags.Wrap;
-
-                    default:
-                        throw new NotImplementedException($"No default edit flags specified for {nameof(DefType)}.{type}");
-                }
-            }
-
-            private static bool IsArrayType(DefType type)
-            {
-                switch (type)
-                {
-                    case DefType.dummy8:
-                    case DefType.fixstr:
-                    case DefType.fixstrW:
-                        return true;
-
-                    default:
-                        return false;
-                }
-            }
-
-            private static int GetValueSize(DefType type)
-            {
-                switch (type)
-                {
-                    case DefType.s8: return 1;
-                    case DefType.u8: return 1;
-                    case DefType.s16: return 2;
-                    case DefType.u16: return 2;
-                    case DefType.s32: return 4;
-                    case DefType.u32: return 4;
-                    case DefType.f32: return 4;
-                    case DefType.dummy8: return 1;
-                    case DefType.fixstr: return 1;
-                    case DefType.fixstrW: return 2;
-
-                    default:
-                        throw new NotImplementedException($"No value size specified for {nameof(DefType)}.{type}");
-                }
             }
         }
     }
