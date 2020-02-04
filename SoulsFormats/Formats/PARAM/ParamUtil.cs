@@ -120,6 +120,21 @@ namespace SoulsFormats
             }
         }
 
+        public static bool IsBitType(DefType type)
+        {
+            switch (type)
+            {
+                case DefType.u8:
+                case DefType.u16:
+                case DefType.u32:
+                case DefType.dummy8:
+                    return true;
+
+                default:
+                    return false;
+            }
+        }
+
         public static int GetValueSize(DefType type)
         {
             switch (type)

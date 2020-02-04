@@ -359,7 +359,7 @@ namespace SoulsFormats
                         value = br.ReadFixStr(field.ArrayLength);
                     else if (type == PARAMDEF.DefType.fixstrW)
                         value = br.ReadFixStrW(field.ArrayLength * 2);
-                    else if (type == PARAMDEF.DefType.u8 || type == PARAMDEF.DefType.u16 || type == PARAMDEF.DefType.u32 || type == PARAMDEF.DefType.dummy8)
+                    else if (ParamUtil.IsBitType(type))
                     {
                         if (field.BitSize == -1)
                         {
@@ -463,7 +463,7 @@ namespace SoulsFormats
                         bw.WriteFixStr((string)value, field.ArrayLength);
                     else if (type == PARAMDEF.DefType.fixstrW)
                         bw.WriteFixStrW((string)value, field.ArrayLength * 2);
-                    else if (type == PARAMDEF.DefType.u8 || type == PARAMDEF.DefType.u16 || type == PARAMDEF.DefType.u32 || type == PARAMDEF.DefType.dummy8)
+                    else if (ParamUtil.IsBitType(type))
                     {
                         if (field.BitSize == -1)
                         {
@@ -507,8 +507,7 @@ namespace SoulsFormats
                                 PARAMDEF.Field nextField = Cells[i + 1].Def;
                                 PARAMDEF.DefType nextType = nextField.DisplayType;
                                 int bitLimit = ParamUtil.GetBitLimit(bitType);
-                                if (nextType != PARAMDEF.DefType.u8 && nextType != PARAMDEF.DefType.u16 && nextType != PARAMDEF.DefType.u32 && nextType != PARAMDEF.DefType.dummy8
-                                    || nextField.BitSize == -1 || bitOffset + nextField.BitSize > bitLimit
+                                if (!ParamUtil.IsBitType(nextType) || nextField.BitSize == -1 || bitOffset + nextField.BitSize > bitLimit
                                     || (nextType == PARAMDEF.DefType.dummy8 ? PARAMDEF.DefType.u8 : nextType) != bitType)
                                 {
                                     write = true;

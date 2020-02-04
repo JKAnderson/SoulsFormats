@@ -1,7 +1,10 @@
-﻿using System;
+﻿using SoulsFormats.XmlExtensions;
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Xml;
 
 namespace SoulsFormats
 {
@@ -109,7 +112,6 @@ namespace SoulsFormats
                 string which = $"{nameof(Fields)}[{i}]";
                 if (!ValidateNull(field, $"{which}: {nameof(Field)} may not be null.", out ex)
                     || !ValidateNull(field.DisplayName, $"{which}: {nameof(Field.DisplayName)} may not be null.", out ex)
-                    || !ValidateNull(field.DisplayType, $"{which}: {nameof(Field.DisplayType)} may not be null.", out ex)
                     || !ValidateNull(field.DisplayFormat, $"{which}: {nameof(Field.DisplayFormat)} may not be null.", out ex)
                     || !ValidateNull(field.InternalType, $"{which}: {nameof(Field.InternalType)} may not be null.", out ex)
                     || Version >= 102 && !ValidateNull(field.InternalName, $"{which}: {nameof(Field.InternalName)} may not be null on version {Version}.", out ex))
@@ -185,8 +187,7 @@ namespace SoulsFormats
                 else
                     size += ParamUtil.GetValueSize(type);
 
-                if ((type == DefType.u8 || type == DefType.u16 || type == DefType.u32 || type == DefType.dummy8)
-                    && field.BitSize != -1)
+                if (ParamUtil.IsBitType(type) && field.BitSize != -1)
                 {
                     int bitOffset = field.BitSize;
                     DefType bitType = type == DefType.dummy8 ? DefType.u8 : type;
@@ -196,9 +197,8 @@ namespace SoulsFormats
                     {
                         Field nextField = Fields[i + 1];
                         DefType nextType = nextField.DisplayType;
-                        if (nextType != DefType.u8 && nextType != DefType.u16 && nextType != DefType.u32 && nextType != DefType.dummy8
-                            || (nextType == DefType.dummy8 ? DefType.u8 : nextType) != bitType
-                            || nextField.BitSize == -1 || bitOffset + nextField.BitSize > bitLimit)
+                        if (!ParamUtil.IsBitType(nextType) || nextField.BitSize == -1 || bitOffset + nextField.BitSize > bitLimit
+                            || (nextType == DefType.dummy8 ? DefType.u8 : nextType) != bitType)
                             break;
                         bitOffset += nextField.BitSize;
                     }
@@ -206,6 +206,74 @@ namespace SoulsFormats
             }
             return size;
         }
+
+        #region XML Serialization
+        private const int XML_VERSION = 0;
+
+        /// <summary>
+        /// Reads an XML-formatted PARAMDEF from a file.
+        /// </summary>
+        public static PARAMDEF XmlDeserialize(string path)
+        {
+            var xml = new XmlDocument();
+            xml.Load(path);
+            return new PARAMDEF(xml);
+        }
+
+        private PARAMDEF(XmlDocument xml)
+        {
+            XmlNode root = xml.SelectSingleNode("PARAMDEF");
+            int xmlVersion = int.Parse(root.Attributes["XmlVersion"].InnerText);
+            if (xmlVersion != XML_VERSION)
+                throw new InvalidDataException($"Mismatched XML version; current version: {XML_VERSION}, file version: {xmlVersion}");
+
+            ParamType = root.SelectSingleNode(nameof(ParamType)).InnerText;
+            Unk06 = root.ReadInt16(nameof(Unk06));
+            BigEndian = root.ReadBoolean(nameof(BigEndian));
+            Unicode = root.ReadBoolean(nameof(Unicode));
+            Version = root.ReadInt16(nameof(Version));
+
+            Fields = new List<Field>();
+            foreach (XmlNode node in root.SelectNodes($"{nameof(Fields)}/{nameof(Field)}"))
+            {
+                Fields.Add(new Field(node));
+            }
+        }
+
+        /// <summary>
+        /// Writes an XML-formatted PARAMDEF to a file.
+        /// </summary>
+        public void XmlSerialize(string path)
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            var xws = new XmlWriterSettings { Indent = true };
+            using (var xw = XmlWriter.Create(path, xws))
+                XmlSerialize(xw);
+        }
+
+        private void XmlSerialize(XmlWriter xw)
+        {
+            xw.WriteStartDocument();
+            xw.WriteStartElement(nameof(PARAMDEF));
+            xw.WriteAttributeString("XmlVersion", XML_VERSION.ToString());
+            xw.WriteElementString(nameof(ParamType), ParamType);
+            xw.WriteElementString(nameof(Unk06), Unk06.ToString());
+            xw.WriteElementString(nameof(BigEndian), BigEndian.ToString());
+            xw.WriteElementString(nameof(Unicode), Unicode.ToString());
+            xw.WriteElementString(nameof(Version), Version.ToString());
+
+            xw.WriteStartElement(nameof(Fields));
+            foreach (Field field in Fields)
+            {
+                xw.WriteStartElement(nameof(Field));
+                field.XmlSerialize(xw);
+                xw.WriteEndElement();
+            }
+            xw.WriteEndElement();
+
+            xw.WriteEndElement();
+        }
+        #endregion
 
         /// <summary>
         /// Flags that control editor behavior for a field.
@@ -418,7 +486,8 @@ namespace SoulsFormats
                 BitSize = -1;
                 if (def.Version >= 102)
                 {
-                    InternalName = br.ReadFixStr(0x20);
+                    // A few fields in DS1 FaceGenParam have a trailing space in the name
+                    InternalName = br.ReadFixStr(0x20).Trim();
 
                     Match match = bitSizeRx.Match(InternalName);
                     if (match.Success)
@@ -513,6 +582,85 @@ namespace SoulsFormats
                 else
                     bw.FillInt32($"DescriptionOffset{index}", (int)descriptionOffset);
             }
+
+            /// <summary>
+            /// Returns a string representation of the field.
+            /// </summary>
+            public override string ToString()
+            {
+                if (ParamUtil.IsBitType(DisplayType) && BitSize != -1)
+                    return $"{DisplayType} {InternalName}:{BitSize}";
+                else if (ParamUtil.IsArrayType(DisplayType))
+                    return $"{DisplayType} {InternalName}[{ArrayLength}]";
+                else
+                    return $"{DisplayType} {InternalName}";
+            }
+
+            #region XML Serialization
+            private static readonly Regex defOuterRx = new Regex($@"^(?<type>\S+)\s+(?<name>.+?)(?:\s*=\s*(?<default>\S+))?$");
+            private static readonly Regex defBitRx = new Regex($@"^(?<name>.+?)\s*:\s*(?<size>\d+)$");
+            private static readonly Regex defArrayRx = new Regex($@"^(?<name>.+?)\s*\[\s*(?<length>\d+)\]$");
+
+            internal Field(XmlNode node)
+            {
+                string def = node.Attributes["Def"].InnerText;
+                Match outerMatch = defOuterRx.Match(def);
+                DisplayType = (DefType)Enum.Parse(typeof(DefType), outerMatch.Groups["type"].Value.Trim());
+                if (outerMatch.Groups["default"].Success)
+                    Default = float.Parse(outerMatch.Groups["default"].Value, CultureInfo.InvariantCulture);
+
+                string internalName = outerMatch.Groups["name"].Value.Trim();
+                Match bitMatch = defBitRx.Match(internalName);
+                Match arrayMatch = defArrayRx.Match(internalName);
+                BitSize = -1;
+                ArrayLength = 1;
+                if (ParamUtil.IsBitType(DisplayType) && bitMatch.Success)
+                {
+                    BitSize = int.Parse(bitMatch.Groups["size"].Value);
+                    internalName = bitMatch.Groups["name"].Value;
+                }
+                else if (ParamUtil.IsArrayType(DisplayType))
+                {
+                    ArrayLength = int.Parse(arrayMatch.Groups["length"].Value);
+                    internalName = arrayMatch.Groups["name"].Value;
+                }
+                InternalName = internalName;
+
+                DisplayName = node.ReadStringOrDefault(nameof(DisplayName), InternalName);
+                InternalType = node.ReadStringOrDefault("Enum", DisplayType.ToString());
+                Description = node.ReadStringOrDefault(nameof(Description), null);
+                DisplayFormat = node.ReadStringOrDefault(nameof(DisplayFormat), ParamUtil.GetDefaultFormat(DisplayType));
+                EditFlags = (EditFlags)Enum.Parse(typeof(EditFlags),
+                    node.ReadStringOrDefault(nameof(EditFlags), ParamUtil.GetDefaultEditFlags(DisplayType).ToString()));
+                Minimum = node.ReadSingleOrDefault(nameof(Minimum), ParamUtil.GetDefaultMinimum(DisplayType), CultureInfo.InvariantCulture);
+                Maximum = node.ReadSingleOrDefault(nameof(Maximum), ParamUtil.GetDefaultMaximum(DisplayType), CultureInfo.InvariantCulture);
+                Increment = node.ReadSingleOrDefault(nameof(Increment), ParamUtil.GetDefaultIncrement(DisplayType), CultureInfo.InvariantCulture);
+                SortID = node.ReadInt32OrDefault(nameof(SortID), 0);
+            }
+
+            internal void XmlSerialize(XmlWriter xw)
+            {
+                string def = $"{DisplayType} {InternalName}";
+                if (ParamUtil.IsBitType(DisplayType) && BitSize != -1)
+                    def += $":{BitSize}";
+                else if (ParamUtil.IsArrayType(DisplayType))
+                    def += $"[{ArrayLength}]";
+
+                if (Default != 0)
+                    def += $" = {Default.ToString("R", CultureInfo.InvariantCulture)}";
+
+                xw.WriteAttributeString("Def", def);
+                xw.WriteDefaultElement(nameof(DisplayName), DisplayName, InternalName);
+                xw.WriteDefaultElement("Enum", InternalType, DisplayType.ToString());
+                xw.WriteDefaultElement(nameof(Description), Description, null);
+                xw.WriteDefaultElement(nameof(DisplayFormat), DisplayFormat, ParamUtil.GetDefaultFormat(DisplayType));
+                xw.WriteDefaultElement(nameof(EditFlags), EditFlags.ToString(), ParamUtil.GetDefaultEditFlags(DisplayType).ToString());
+                xw.WriteDefaultElement(nameof(Minimum), Minimum, ParamUtil.GetDefaultMinimum(DisplayType), "R", CultureInfo.InvariantCulture);
+                xw.WriteDefaultElement(nameof(Maximum), Maximum, ParamUtil.GetDefaultMaximum(DisplayType), "R", CultureInfo.InvariantCulture);
+                xw.WriteDefaultElement(nameof(Increment), Increment, ParamUtil.GetDefaultIncrement(DisplayType), "R", CultureInfo.InvariantCulture);
+                xw.WriteDefaultElement(nameof(SortID), SortID, 0);
+            }
+            #endregion
         }
     }
 }
