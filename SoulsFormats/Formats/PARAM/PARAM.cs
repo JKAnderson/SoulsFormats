@@ -55,8 +55,12 @@ namespace SoulsFormats
         /// </summary>
         public List<Row> Rows { get; set; }
 
+        /// <summary>
+        /// The current applied PARAMDEF.
+        /// </summary>
+        public PARAMDEF AppliedParamdef { get; private set; }
+
         private BinaryReaderEx RowReader;
-        private PARAMDEF Paramdef;
 
         /// <summary>
         /// Deserializes file data from a stream.
@@ -153,7 +157,7 @@ namespace SoulsFormats
         /// </summary>
         protected override void Write(BinaryWriterEx bw)
         {
-            if (Paramdef == null)
+            if (AppliedParamdef == null)
                 throw new InvalidOperationException("Params cannot be written without applying a paramdef.");
 
             bw.BigEndian = BigEndian;
@@ -253,9 +257,9 @@ namespace SoulsFormats
         /// </summary>
         public void ApplyParamdef(PARAMDEF paramdef)
         {
-            Paramdef = paramdef;
+            AppliedParamdef = paramdef;
             foreach (Row row in Rows)
-                row.ReadCells(RowReader, Paramdef);
+                row.ReadCells(RowReader, AppliedParamdef);
         }
 
         /// <summary>
