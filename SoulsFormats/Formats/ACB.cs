@@ -273,7 +273,7 @@ namespace SoulsFormats
                 public override AssetType Type => AssetType.Model;
 
                 /// <summary>
-                /// Unknown.
+                /// 0 for objects and characters, 1 for map pieces.
                 /// </summary>
                 public short Unk0A { get; set; }
 
@@ -283,14 +283,14 @@ namespace SoulsFormats
                 public MemberList Members { get; set; }
 
                 /// <summary>
-                /// Unknown.
+                /// Distance at which the model becomes invisible.
                 /// </summary>
-                public int Unk10 { get; set; }
+                public int DrawDistance { get; set; }
 
                 /// <summary>
-                /// Unknown.
+                /// Indirectly determines when lod facesets are used; observed values 0-3.
                 /// </summary>
-                public short Unk1C { get; set; }
+                public short MeshLodRate { get; set; }
 
                 /// <summary>
                 /// Whether the model appears in reflective surfaces like water.
@@ -298,9 +298,9 @@ namespace SoulsFormats
                 public bool Reflectible { get; set; }
 
                 /// <summary>
-                /// Unknown.
+                /// Enables interaction normals for water.
                 /// </summary>
-                public bool Unk1F { get; set; }
+                public bool NormalInteraction { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -308,9 +308,9 @@ namespace SoulsFormats
                 public int Unk20 { get; set; }
 
                 /// <summary>
-                /// Unknown.
+                /// Unknown; alters rendering mode somehow.
                 /// </summary>
-                public byte Unk24 { get; set; }
+                public byte RenderType { get; set; }
 
                 /// <summary>
                 /// If true, the model does not cast shadows.
@@ -348,14 +348,14 @@ namespace SoulsFormats
                 public bool Unk2E { get; set; }
 
                 /// <summary>
-                /// Unknown.
+                /// Distance at which low textures are used.
                 /// </summary>
-                public short Unk30 { get; set; }
+                public short LowTextureDistance { get; set; }
 
                 /// <summary>
-                /// Unknown.
+                /// Distance at which the model uses simplified rendering.
                 /// </summary>
-                public short Unk32 { get; set; }
+                public short CheapRenderDistance { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -363,7 +363,7 @@ namespace SoulsFormats
                 public byte Unk34 { get; set; }
 
                 /// <summary>
-                /// Unknown.
+                /// Unknown; disables lighting on water/transparencies.
                 /// </summary>
                 public bool Unk35 { get; set; }
 
@@ -389,14 +389,14 @@ namespace SoulsFormats
                 {
                     Unk0A = br.ReadInt16();
                     int membersOffset = br.ReadInt32();
-                    Unk10 = br.ReadInt32();
+                    DrawDistance = br.ReadInt32();
                     br.AssertInt32(0);
                     br.AssertInt32(0);
-                    Unk1C = br.ReadInt16();
+                    MeshLodRate = br.ReadInt16();
                     Reflectible = br.ReadBoolean();
-                    Unk1F = br.ReadBoolean();
+                    NormalInteraction = br.ReadBoolean();
                     Unk20 = br.ReadInt32();
-                    Unk24 = br.ReadByte();
+                    RenderType = br.ReadByte();
                     DisableShadowSource = br.ReadBoolean();
                     DisableShadowTarget = br.ReadBoolean();
                     Unk27 = br.ReadBoolean();
@@ -405,8 +405,8 @@ namespace SoulsFormats
                     FixToCamera = br.ReadBoolean();
                     Unk2E = br.ReadBoolean();
                     br.AssertByte(0);
-                    Unk30 = br.ReadInt16();
-                    Unk32 = br.ReadInt16();
+                    LowTextureDistance = br.ReadInt16();
+                    CheapRenderDistance = br.ReadInt16();
                     Unk34 = br.ReadByte();
                     Unk35 = br.ReadBoolean();
                     Unk36 = br.ReadBoolean();
@@ -428,14 +428,14 @@ namespace SoulsFormats
                     if (Members != null)
                         membersOffsetIndex[index].Add((int)bw.Position);
                     bw.ReserveInt32($"MembersOffset{index}");
-                    bw.WriteInt32(Unk10);
+                    bw.WriteInt32(DrawDistance);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
-                    bw.WriteInt16(Unk1C);
+                    bw.WriteInt16(MeshLodRate);
                     bw.WriteBoolean(Reflectible);
-                    bw.WriteBoolean(Unk1F);
+                    bw.WriteBoolean(NormalInteraction);
                     bw.WriteInt32(Unk20);
-                    bw.WriteByte(Unk24);
+                    bw.WriteByte(RenderType);
                     bw.WriteBoolean(DisableShadowSource);
                     bw.WriteBoolean(DisableShadowTarget);
                     bw.WriteBoolean(Unk27);
@@ -444,8 +444,8 @@ namespace SoulsFormats
                     bw.WriteBoolean(FixToCamera);
                     bw.WriteBoolean(Unk2E);
                     bw.WriteByte(0);
-                    bw.WriteInt16(Unk30);
-                    bw.WriteInt16(Unk32);
+                    bw.WriteInt16(LowTextureDistance);
+                    bw.WriteInt16(CheapRenderDistance);
                     bw.WriteByte(Unk34);
                     bw.WriteBoolean(Unk35);
                     bw.WriteBoolean(Unk36);
