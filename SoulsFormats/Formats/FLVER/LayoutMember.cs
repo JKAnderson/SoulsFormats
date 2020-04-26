@@ -38,6 +38,9 @@ namespace SoulsFormats
                 {
                     switch (Type)
                     {
+                        case LayoutType.EdgeCompressed:
+                            return 1;
+
                         case LayoutType.Byte4A:
                         case LayoutType.Byte4B:
                         case LayoutType.Short2toFloat2:
@@ -172,6 +175,11 @@ namespace SoulsFormats
             /// Unknown.
             /// </summary>
             Byte4E = 0x2F,
+
+            /// <summary>
+            /// Unknown but appears to be another form of edge compression; not actually supported.
+            /// </summary>
+            EdgeCompressed = 0xF0,
         }
 
         /// <summary>

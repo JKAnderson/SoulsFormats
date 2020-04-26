@@ -212,7 +212,7 @@ namespace SoulsFormats
                     {
                         Header.Unk1 = br.ReadInt32();
                         if (flag2 != 0)
-                            Header.Unk2 = br.AssertInt32(0, 0xAAE4);
+                            Header.Unk2 = br.AssertInt32(0, 0x69E0, 0xAAE4);
                     }
                     else if (platform == TPFPlatform.PS4 || platform == TPFPlatform.Xbone)
                     {

@@ -124,6 +124,10 @@ namespace SoulsFormats
                             Position = br.ReadVector3();
                             br.AssertSingle(0);
                         }
+                        else if (member.Type == LayoutType.EdgeCompressed)
+                        {
+                            // Sit in a corner and cry
+                        }
                         else
                             throw new NotImplementedException($"Read not implemented for {member.Type} {member.Semantic}.");
                     }

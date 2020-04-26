@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace SoulsFormats
@@ -9,7 +10,7 @@ namespace SoulsFormats
         /// <summary>
         /// Determines how vertices in a mesh are connected to form triangles.
         /// </summary>
-        public class FaceSet
+        public partial class FaceSet
         {
             /// <summary>
             /// Flags on a faceset, mostly just used to determine lod level.
@@ -25,17 +26,22 @@ namespace SoulsFormats
                 /// <summary>
                 /// Low detail mesh.
                 /// </summary>
-                LodLevel1 = 0x01000000,
+                LodLevel1 = 0x0100_0000,
 
                 /// <summary>
                 /// Really low detail mesh.
                 /// </summary>
-                LodLevel2 = 0x02000000,
+                LodLevel2 = 0x0200_0000,
+
+                /// <summary>
+                /// Not confirmed, but suspected to indicate when indices are edge-compressed.
+                /// </summary>
+                EdgeCompressed = 0x4000_0000,
 
                 /// <summary>
                 /// Many meshes have a copy of each faceset with and without this flag. If you remove them, motion blur stops working.
                 /// </summary>
-                MotionBlur = 0x80000000,
+                MotionBlur = 0x8000_0000,
             }
 
             /// <summary>
@@ -107,7 +113,18 @@ namespace SoulsFormats
                 if (indexSize == 0)
                     indexSize = headerIndexSize;
 
-                if (indexSize == 16)
+                if (indexSize == 8 ^ Flags.HasFlag(FSFlags.EdgeCompressed))
+                    throw new InvalidDataException("FSFlags.EdgeCompressed probably doesn't mean edge compression after all. Please investigate this.");
+
+                if (indexSize == 8)
+                {
+                    br.StepIn(dataOffset + indicesOffset);
+                    {
+                        Indices = EdgeIndexCompression.ReadEdgeIndexGroup(br, indexCount);
+                    }
+                    br.StepOut();
+                }
+                else if (indexSize == 16)
                 {
                     Indices = new List<int>(indexCount);
                     foreach (ushort index in br.GetUInt16s(dataOffset + indicesOffset, indexCount))
@@ -152,6 +169,10 @@ namespace SoulsFormats
                 else if (indexSize == 32)
                 {
                     bw.WriteInt32s(Indices);
+                }
+                else
+                {
+                    throw new NotImplementedException($"Unsupported index size: {indexSize}");
                 }
             }
 
