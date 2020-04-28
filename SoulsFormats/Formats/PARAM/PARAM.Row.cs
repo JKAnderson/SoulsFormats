@@ -15,7 +15,7 @@ namespace SoulsFormats
             /// <summary>
             /// The ID number of this row.
             /// </summary>
-            public long ID { get; set; }
+            public int ID { get; set; }
 
             /// <summary>
             /// A name given to this row; no functional significance, may be null.
@@ -32,7 +32,7 @@ namespace SoulsFormats
             /// <summary>
             /// Creates a new row based on the given paramdef with default values.
             /// </summary>
-            public Row(long id, string name, PARAMDEF paramdef)
+            public Row(int id, string name, PARAMDEF paramdef)
             {
                 ID = id;
                 Name = name;
@@ -47,28 +47,32 @@ namespace SoulsFormats
                 Cells = cells;
             }
 
-            internal Row(BinaryReaderEx br, byte format2D, byte format2E)
+            internal Row(BinaryReaderEx br, PARAM parent, ref long actualStringsOffset)
             {
                 long nameOffset;
-                if ((format2D & 0x7F) < 4)
+                if (parent.Format2D.HasFlag(FormatFlags1.LongDataOffset))
                 {
-                    ID = br.ReadUInt32();
-                    DataOffset = br.ReadUInt32();
-                    nameOffset = br.ReadUInt32();
+                    ID = br.ReadInt32();
+                    br.ReadInt32(); // I would like to assert 0, but some of the generatordbglocation params in DS2S have garbage here
+                    DataOffset = br.ReadInt64();
+                    nameOffset = br.ReadInt64();
                 }
                 else
                 {
-                    ID = br.ReadInt64();
-                    DataOffset = br.ReadInt64();
-                    nameOffset = br.ReadInt64();
+                    ID = br.ReadInt32();
+                    DataOffset = br.ReadUInt32();
+                    nameOffset = br.ReadUInt32();
                 }
 
                 if (nameOffset != 0)
                 {
-                    if (format2E < 7)
-                        Name = br.GetShiftJIS(nameOffset);
-                    else
+                    if (actualStringsOffset == 0 || nameOffset < actualStringsOffset)
+                        actualStringsOffset = nameOffset;
+
+                    if (parent.Format2E.HasFlag(FormatFlags2.UnicodeRowNames))
                         Name = br.GetUTF16(nameOffset);
+                    else
+                        Name = br.GetShiftJIS(nameOffset);
                 }
             }
 
@@ -161,28 +165,29 @@ namespace SoulsFormats
                 Cells = cells;
             }
 
-            internal void WriteHeader(BinaryWriterEx bw, byte format2D, int i)
+            internal void WriteHeader(BinaryWriterEx bw, PARAM parent, int i)
             {
-                if ((format2D & 0x7F) < 4)
+                if (parent.Format2D.HasFlag(FormatFlags1.LongDataOffset))
                 {
-                    bw.WriteUInt32((uint)ID);
-                    bw.ReserveUInt32($"RowOffset{i}");
-                    bw.ReserveUInt32($"NameOffset{i}");
-                }
-                else
-                {
-                    bw.WriteInt64(ID);
+                    bw.WriteInt32(ID);
+                    bw.WriteInt32(0);
                     bw.ReserveInt64($"RowOffset{i}");
                     bw.ReserveInt64($"NameOffset{i}");
                 }
+                else
+                {
+                    bw.WriteInt32(ID);
+                    bw.ReserveUInt32($"RowOffset{i}");
+                    bw.ReserveUInt32($"NameOffset{i}");
+                }
             }
 
-            internal void WriteCells(BinaryWriterEx bw, byte format2D, int index)
+            internal void WriteCells(BinaryWriterEx bw, PARAM parent, int index)
             {
-                if ((format2D & 0x7F) < 4)
-                    bw.FillUInt32($"RowOffset{index}", (uint)bw.Position);
-                else
+                if (parent.Format2D.HasFlag(FormatFlags1.LongDataOffset))
                     bw.FillInt64($"RowOffset{index}", bw.Position);
+                else
+                    bw.FillUInt32($"RowOffset{index}", (uint)bw.Position);
 
                 int bitOffset = -1;
                 PARAMDEF.DefType bitType = PARAMDEF.DefType.u8;
@@ -275,22 +280,22 @@ namespace SoulsFormats
                 }
             }
 
-            internal void WriteName(BinaryWriterEx bw, byte format2D, byte format2E, int i)
+            internal void WriteName(BinaryWriterEx bw, PARAM parent, int i)
             {
                 long nameOffset = 0;
                 if (Name != null)
                 {
                     nameOffset = bw.Position;
-                    if (format2E < 7)
-                        bw.WriteShiftJIS(Name, true);
-                    else
+                    if (parent.Format2E.HasFlag(FormatFlags2.UnicodeRowNames))
                         bw.WriteUTF16(Name, true);
+                    else
+                        bw.WriteShiftJIS(Name, true);
                 }
 
-                if ((format2D & 0x7F) < 4)
-                    bw.FillUInt32($"NameOffset{i}", (uint)nameOffset);
-                else
+                if (parent.Format2D.HasFlag(FormatFlags1.LongDataOffset))
                     bw.FillInt64($"NameOffset{i}", nameOffset);
+                else
+                    bw.FillUInt32($"NameOffset{i}", (uint)nameOffset);
             }
 
             /// <summary>

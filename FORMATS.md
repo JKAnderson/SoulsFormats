@@ -56,27 +56,29 @@ Each game's MSB is supported in a different class: MSB1 for DS1, MSB2 for DS2 (S
 <a name="param"></a>
 ## PARAM
 Params are commonly represented as a spreadsheet, and indeed FromSoft edits them as such. Each row has a unique ID number (sometimes accidentally *not* unique), a friendly name string (stripped out before release in later games), and a block of undifferentiated cell data.  
-Because the param itself provides no metadata about how many cells are in each row, what their types are, what they're named, etc, a paramdef must be supplied to parse it into a usable format. Paramdefs were shipped with DeS, DS1, and BB, but other games must have custom ones made. Both the param and paramdef specify a ParamType which should be used to correlate one to the other.  
-XML serialization of paramdefs is provided in the library for your convenience along with the original binary format.  
+Because the param itself provides no metadata about how many cells are in each row, what their types are, what they're named, etc, a paramdef must be supplied to parse it into a usable format. Paramdefs were shipped with DeS, DS1, and BB, but other games must have custom ones made.  
+A repository of customized paramdefs for most games in the series can be found [here](https://github.com/soulsmods/Paramdex). XML serialization of paramdefs is provided in the library for your convenience along with the original binary format.  
 ```cs
 // Reading an original paramdefbnd
-var paramdefs = new Dictionary<string, PARAMDEF>();
+var paramdefs = new List<PARAMDEF>();
 var paramdefbnd = BND3.Read(path);
 foreach (BinderFile file in paramdefbnd.Files)
 {
 	var paramdef = PARAMDEF.Read(file.Bytes);
-	paramdefs[paramdef.ParamType] = paramdef;
+	paramdefs.Add(paramdef);
 }
 ```
 ```cs
 // Reading custom XML paramdefs
-var paramdefs = new Dictionary<string, PARAMDEF>();
+var paramdefs = new List<PARAMDEF>();
 foreach (string path in Directory.GetFiles(dir, "*.xml"))
 {
 	var paramdef = PARAMDEF.XmlDeserialize(path);
-	paramdefs[paramdef.ParamType] = paramdef;
+	paramdefs.Add(paramdef);
 }
 ```
+The recommended method of applying paramdefs to params is to call ApplyParamdefCarefully; it will check the param type, data version, and calculated row size to ensure that a paramdef is valid for that param.  
+However, if you need to bypass those checks for whatever reason, you may call ApplyParamdef to apply it unconditionally.  
 ```cs
 // Loading a parambnd
 var parms = new Dictionary<string, PARAM>();
@@ -85,10 +87,17 @@ foreach (BinderFile file in parambnd.Files)
 {
 	string name = Path.GetFileNameWithoutExtension(file.Name);
 	var param = PARAM.Read(file.Bytes);
-	param.ApplyParamdef(paramdefs[param.ParamType]);
+	
+	// Recommended method: checks the list for any match, or you can test them one-by-one
+	if (param.ApplyParamdefCarefully(paramdefs))
+		parms[name] = param;
+	
+	// Alternative method: applies without any additional verification
+	param.ApplyParamdef(paramdefs.Find(def => def.ParamType == param.ParamType));
 	parms[name] = param;
 }
 
+// Editing param data
 PARAM weapons = parms["EquipParamWeapon"];
 // Paramdef must be supplied to new rows in order to initialize cells correctly
 weapons.Rows.Add(new PARAM.Row(9900000, "My Super Cool Weapon", weapons.AppliedParamdef));
@@ -99,7 +108,8 @@ weapons[9900000]["weight"].Value = 100f;
 foreach (BinderFile file in parambnd.Files)
 {
 	string name = Path.GetFileNameWithoutExtension(file.Name);
-	file.Bytes = parms[name].Write();
+	if (parms.ContainsKey(name))
+		file.Bytes = parms[name].Write();
 }
 parambnd.Write(path);
 ```

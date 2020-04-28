@@ -14,9 +14,9 @@ namespace SoulsFormats
     public class PARAMDEF : SoulsFile<PARAMDEF>
     {
         /// <summary>
-        /// Unknown; observed values 0, 1, and 3.
+        /// Indicates a revision of the row data structure.
         /// </summary>
-        public short Unk06 { get; set; }
+        public short DataVersion { get; set; }
 
         /// <summary>
         /// Identifies corresponding params and paramdefs.
@@ -41,7 +41,7 @@ namespace SoulsFormats
         // 103 - Ninja Blade, Another Century's Episode: R
         // 104 - Dark Souls, Steel Battalion: Heavy Armor
         // 201 - Bloodborne
-        public short Version { get; set; }
+        public short FormatVersion { get; set; }
 
         /// <summary>
         /// Fields in each param row, in order of appearance.
@@ -54,7 +54,7 @@ namespace SoulsFormats
         public PARAMDEF()
         {
             ParamType = "AI_STANDARD_INFO_BANK";
-            Version = 104;
+            FormatVersion = 104;
             Fields = new List<Field>();
         }
 
@@ -67,24 +67,24 @@ namespace SoulsFormats
             br.BigEndian = BigEndian;
 
             br.ReadInt32(); // File size
-            short unk04 = br.AssertInt16(0x30, 0xFF);
-            Unk06 = br.ReadInt16();
+            short headerSize = br.AssertInt16(0x30, 0xFF);
+            DataVersion = br.ReadInt16();
             short fieldCount = br.ReadInt16();
             short fieldSize = br.AssertInt16(0x6C, 0x8C, 0xAC, 0xB0, 0xD0);
             ParamType = br.ReadFixStr(0x20);
             br.ReadByte(); // Big-endian
             Unicode = br.ReadBoolean();
-            Version = br.AssertInt16(101, 102, 103, 104, 201);
-            if (Version >= 201)
+            FormatVersion = br.AssertInt16(101, 102, 103, 104, 201);
+            if (FormatVersion >= 200)
                 br.AssertInt64(0x38);
 
-            if (!(Version < 200 && unk04 == 0x30 || Version >= 200 && unk04 == 0xFF))
-                throw new InvalidDataException($"Unexpected unk04 0x{unk04:X} for version {Version}.");
+            if (!(FormatVersion < 200 && headerSize == 0x30 || FormatVersion >= 200 && headerSize == 0xFF))
+                throw new InvalidDataException($"Unexpected header size 0x{headerSize:X} for version {FormatVersion}.");
 
             // Please note that for version 103 this value is wrong.
-            if (!(Version == 101 && fieldSize == 0x8C || Version == 102 && fieldSize == 0xAC || Version == 103 && fieldSize == 0x6C
-                || Version == 104 && fieldSize == 0xB0 || Version == 201 && fieldSize == 0xD0))
-                throw new InvalidDataException($"Unexpected field size 0x{fieldSize:X} for version {Version}.");
+            if (!(FormatVersion == 101 && fieldSize == 0x8C || FormatVersion == 102 && fieldSize == 0xAC || FormatVersion == 103 && fieldSize == 0x6C
+                || FormatVersion == 104 && fieldSize == 0xB0 || FormatVersion == 201 && fieldSize == 0xD0))
+                throw new InvalidDataException($"Unexpected field size 0x{fieldSize:X} for version {FormatVersion}.");
 
             Fields = new List<Field>(fieldCount);
             for (int i = 0; i < fieldCount; i++)
@@ -96,9 +96,9 @@ namespace SoulsFormats
         /// </summary>
         public override bool Validate(out Exception ex)
         {
-            if (!(Version == 101 || Version == 102 || Version == 103 || Version == 104 || Version == 201))
+            if (!(FormatVersion == 101 || FormatVersion == 102 || FormatVersion == 103 || FormatVersion == 104 || FormatVersion == 201))
             {
-                ex = new InvalidDataException($"Unknown version: {Version}");
+                ex = new InvalidDataException($"Unknown version: {FormatVersion}");
                 return false;
             }
 
@@ -114,7 +114,7 @@ namespace SoulsFormats
                     || !ValidateNull(field.DisplayName, $"{which}: {nameof(Field.DisplayName)} may not be null.", out ex)
                     || !ValidateNull(field.DisplayFormat, $"{which}: {nameof(Field.DisplayFormat)} may not be null.", out ex)
                     || !ValidateNull(field.InternalType, $"{which}: {nameof(Field.InternalType)} may not be null.", out ex)
-                    || Version >= 102 && !ValidateNull(field.InternalName, $"{which}: {nameof(Field.InternalName)} may not be null on version {Version}.", out ex))
+                    || FormatVersion >= 102 && !ValidateNull(field.InternalName, $"{which}: {nameof(Field.InternalName)} may not be null on version {FormatVersion}.", out ex))
                     return false;
             }
 
@@ -130,26 +130,26 @@ namespace SoulsFormats
             bw.BigEndian = BigEndian;
 
             bw.ReserveInt32("FileSize");
-            bw.WriteInt16((short)(Version >= 201 ? 0xFF : 0x30));
-            bw.WriteInt16(Unk06);
+            bw.WriteInt16((short)(FormatVersion >= 200 ? 0xFF : 0x30));
+            bw.WriteInt16(DataVersion);
             bw.WriteInt16((short)Fields.Count);
 
-            if (Version == 101)
+            if (FormatVersion == 101)
                 bw.WriteInt16(0x8C);
-            else if (Version == 102)
+            else if (FormatVersion == 102)
                 bw.WriteInt16(0xAC);
-            else if (Version == 103)
+            else if (FormatVersion == 103)
                 bw.WriteInt16(0x6C);
-            else if (Version == 104)
+            else if (FormatVersion == 104)
                 bw.WriteInt16(0xB0);
-            else if (Version == 201)
+            else if (FormatVersion == 201)
                 bw.WriteInt16(0xD0);
 
-            bw.WriteFixStr(ParamType, 0x20, (byte)(Version >= 201 ? 0x00 : 0x20));
+            bw.WriteFixStr(ParamType, 0x20, (byte)(FormatVersion >= 200 ? 0x00 : 0x20));
             bw.WriteSByte((sbyte)(BigEndian ? -1 : 0));
             bw.WriteBoolean(Unicode);
-            bw.WriteInt16(Version);
-            if (Version >= 201)
+            bw.WriteInt16(FormatVersion);
+            if (FormatVersion >= 200)
                 bw.WriteInt64(0x38);
 
             for (int i = 0; i < Fields.Count; i++)
@@ -159,7 +159,7 @@ namespace SoulsFormats
             for (int i = 0; i < Fields.Count; i++)
                 Fields[i].WriteDescription(bw, this, i);
 
-            if (Version >= 104)
+            if (FormatVersion >= 104)
             {
                 long descriptionsLength = bw.Position - descriptionsStart;
                 if (descriptionsLength % 0x10 != 0)
@@ -208,7 +208,7 @@ namespace SoulsFormats
         }
 
         #region XML Serialization
-        private const int XML_VERSION = 0;
+        private const int CURRENT_XML_VERSION = 1;
 
         /// <summary>
         /// Reads an XML-formatted PARAMDEF from a file.
@@ -223,49 +223,59 @@ namespace SoulsFormats
         private PARAMDEF(XmlDocument xml)
         {
             XmlNode root = xml.SelectSingleNode("PARAMDEF");
-            int xmlVersion = int.Parse(root.Attributes["XmlVersion"].InnerText);
-            if (xmlVersion != XML_VERSION)
-                throw new InvalidDataException($"Mismatched XML version; current version: {XML_VERSION}, file version: {xmlVersion}");
+            // In the interest of maximum compatibility, we will no longer check the XML version;
+            // just try everything and hope it works.
 
-            ParamType = root.SelectSingleNode(nameof(ParamType)).InnerText;
-            Unk06 = root.ReadInt16(nameof(Unk06));
-            BigEndian = root.ReadBoolean(nameof(BigEndian));
-            Unicode = root.ReadBoolean(nameof(Unicode));
-            Version = root.ReadInt16(nameof(Version));
+            ParamType = root.SelectSingleNode("ParamType").InnerText;
+            DataVersion = root.ReadInt16IfExist("DataVersion") ?? root.ReadInt16("Unk06");
+            BigEndian = root.ReadBoolean("BigEndian");
+            Unicode = root.ReadBoolean("Unicode");
+            FormatVersion = root.ReadInt16IfExist("FormatVersion") ?? root.ReadInt16("Version");
 
             Fields = new List<Field>();
-            foreach (XmlNode node in root.SelectNodes($"{nameof(Fields)}/{nameof(Field)}"))
+            foreach (XmlNode node in root.SelectNodes("Fields/Field"))
             {
                 Fields.Add(new Field(node));
             }
         }
 
         /// <summary>
-        /// Writes an XML-formatted PARAMDEF to a file.
+        /// Writes an XML-formatted PARAMDEF to a file using the current XML version.
         /// </summary>
         public void XmlSerialize(string path)
+        {
+            XmlSerialize(path, CURRENT_XML_VERSION);
+        }
+
+        /// <summary>
+        /// Writes an XML-formatted PARAMDEF to a file using the given XML version.
+        /// </summary>
+        public void XmlSerialize(string path, int xmlVersion)
         {
             Directory.CreateDirectory(Path.GetDirectoryName(path));
             var xws = new XmlWriterSettings { Indent = true };
             using (var xw = XmlWriter.Create(path, xws))
-                XmlSerialize(xw);
+                XmlSerialize(xw, xmlVersion);
         }
 
-        private void XmlSerialize(XmlWriter xw)
+        private void XmlSerialize(XmlWriter xw, int xmlVersion)
         {
-            xw.WriteStartDocument();
-            xw.WriteStartElement(nameof(PARAMDEF));
-            xw.WriteAttributeString("XmlVersion", XML_VERSION.ToString());
-            xw.WriteElementString(nameof(ParamType), ParamType);
-            xw.WriteElementString(nameof(Unk06), Unk06.ToString());
-            xw.WriteElementString(nameof(BigEndian), BigEndian.ToString());
-            xw.WriteElementString(nameof(Unicode), Unicode.ToString());
-            xw.WriteElementString(nameof(Version), Version.ToString());
+            if (xmlVersion < 0 || xmlVersion > CURRENT_XML_VERSION)
+                throw new InvalidOperationException($"XML version {xmlVersion} not recognized.");
 
-            xw.WriteStartElement(nameof(Fields));
+            xw.WriteStartDocument();
+            xw.WriteStartElement("PARAMDEF");
+            xw.WriteAttributeString("XmlVersion", xmlVersion.ToString());
+            xw.WriteElementString("ParamType", ParamType);
+            xw.WriteElementString(xmlVersion == 0 ? "Unk06" : "DataVersion", DataVersion.ToString());
+            xw.WriteElementString("BigEndian", BigEndian.ToString());
+            xw.WriteElementString("Unicode", Unicode.ToString());
+            xw.WriteElementString(xmlVersion == 0 ? "Version" : "FormatVersion", FormatVersion.ToString());
+
+            xw.WriteStartElement("Fields");
             foreach (Field field in Fields)
             {
-                xw.WriteStartElement(nameof(Field));
+                xw.WriteStartElement("Field");
                 field.XmlSerialize(xw);
                 xw.WriteEndElement();
             }
@@ -476,7 +486,7 @@ namespace SoulsFormats
                 ArrayLength = byteCount / ParamUtil.GetValueSize(DisplayType);
 
                 long descriptionOffset;
-                if (def.Version >= 201)
+                if (def.FormatVersion >= 200)
                     descriptionOffset = br.ReadInt64();
                 else
                     descriptionOffset = br.ReadInt32();
@@ -484,7 +494,7 @@ namespace SoulsFormats
                 InternalType = br.ReadFixStr(0x20);
 
                 BitSize = -1;
-                if (def.Version >= 102)
+                if (def.FormatVersion >= 102)
                 {
                     // A few fields in DS1 FaceGenParam have a trailing space in the name
                     InternalName = br.ReadFixStr(0x20).Trim();
@@ -507,10 +517,10 @@ namespace SoulsFormats
                     }
                 }
 
-                if (def.Version >= 104)
+                if (def.FormatVersion >= 104)
                     SortID = br.ReadInt32();
 
-                if (def.Version >= 201)
+                if (def.FormatVersion >= 200)
                     br.AssertPattern(0x1C, 0x00);
 
                 if (descriptionOffset != 0)
@@ -525,11 +535,11 @@ namespace SoulsFormats
             internal void Write(BinaryWriterEx bw, PARAMDEF def, int index)
             {
                 if (def.Unicode)
-                    bw.WriteFixStrW(DisplayName, 0x40, (byte)(def.Version >= 104 ? 0x00 : 0x20));
+                    bw.WriteFixStrW(DisplayName, 0x40, (byte)(def.FormatVersion >= 104 ? 0x00 : 0x20));
                 else
-                    bw.WriteFixStr(DisplayName, 0x40, (byte)(def.Version >= 104 ? 0x00 : 0x20));
+                    bw.WriteFixStr(DisplayName, 0x40, (byte)(def.FormatVersion >= 104 ? 0x00 : 0x20));
 
-                byte padding = (byte)(def.Version >= 201 ? 0x00 : 0x20);
+                byte padding = (byte)(def.FormatVersion >= 200 ? 0x00 : 0x20);
                 bw.WriteFixStr(DisplayType.ToString(), 8, padding);
                 bw.WriteFixStr(DisplayFormat, 8, padding);
                 bw.WriteSingle(Default);
@@ -539,14 +549,14 @@ namespace SoulsFormats
                 bw.WriteInt32((int)EditFlags);
                 bw.WriteInt32(ParamUtil.GetValueSize(DisplayType) * (ParamUtil.IsArrayType(DisplayType) ? ArrayLength : 1));
 
-                if (def.Version >= 201)
+                if (def.FormatVersion >= 200)
                     bw.ReserveInt64($"DescriptionOffset{index}");
                 else
                     bw.ReserveInt32($"DescriptionOffset{index}");
 
                 bw.WriteFixStr(InternalType, 0x20, padding);
 
-                if (def.Version >= 102)
+                if (def.FormatVersion >= 102)
                 {
                     string internalName = InternalName;
                     // This is accurate except for "hasTarget : 1" in SpEffect
@@ -558,10 +568,10 @@ namespace SoulsFormats
                     bw.WriteFixStr(internalName, 0x20, padding);
                 }
 
-                if (def.Version >= 104)
+                if (def.FormatVersion >= 104)
                     bw.WriteInt32(SortID);
 
-                if (def.Version >= 201)
+                if (def.FormatVersion >= 200)
                     bw.WritePattern(0x1C, 0x00);
             }
 
@@ -577,7 +587,7 @@ namespace SoulsFormats
                         bw.WriteShiftJIS(Description, true);
                 }
 
-                if (def.Version >= 201)
+                if (def.FormatVersion >= 200)
                     bw.FillInt64($"DescriptionOffset{index}", descriptionOffset);
                 else
                     bw.FillInt32($"DescriptionOffset{index}", (int)descriptionOffset);
@@ -626,16 +636,16 @@ namespace SoulsFormats
                 }
                 InternalName = internalName;
 
-                DisplayName = node.ReadStringOrDefault(nameof(DisplayName), InternalName);
+                DisplayName = node.ReadStringOrDefault("DisplayName", InternalName);
                 InternalType = node.ReadStringOrDefault("Enum", DisplayType.ToString());
-                Description = node.ReadStringOrDefault(nameof(Description), null);
-                DisplayFormat = node.ReadStringOrDefault(nameof(DisplayFormat), ParamUtil.GetDefaultFormat(DisplayType));
+                Description = node.ReadStringOrDefault("Description", null);
+                DisplayFormat = node.ReadStringOrDefault("DisplayFormat", ParamUtil.GetDefaultFormat(DisplayType));
                 EditFlags = (EditFlags)Enum.Parse(typeof(EditFlags),
-                    node.ReadStringOrDefault(nameof(EditFlags), ParamUtil.GetDefaultEditFlags(DisplayType).ToString()));
-                Minimum = node.ReadSingleOrDefault(nameof(Minimum), ParamUtil.GetDefaultMinimum(DisplayType), CultureInfo.InvariantCulture);
-                Maximum = node.ReadSingleOrDefault(nameof(Maximum), ParamUtil.GetDefaultMaximum(DisplayType), CultureInfo.InvariantCulture);
-                Increment = node.ReadSingleOrDefault(nameof(Increment), ParamUtil.GetDefaultIncrement(DisplayType), CultureInfo.InvariantCulture);
-                SortID = node.ReadInt32OrDefault(nameof(SortID), 0);
+                    node.ReadStringOrDefault("EditFlags", ParamUtil.GetDefaultEditFlags(DisplayType).ToString()));
+                Minimum = node.ReadSingleOrDefault("Minimum", ParamUtil.GetDefaultMinimum(DisplayType), CultureInfo.InvariantCulture);
+                Maximum = node.ReadSingleOrDefault("Maximum", ParamUtil.GetDefaultMaximum(DisplayType), CultureInfo.InvariantCulture);
+                Increment = node.ReadSingleOrDefault("Increment", ParamUtil.GetDefaultIncrement(DisplayType), CultureInfo.InvariantCulture);
+                SortID = node.ReadInt32OrDefault("SortID", 0);
             }
 
             internal void XmlSerialize(XmlWriter xw)
@@ -650,15 +660,15 @@ namespace SoulsFormats
                     def += $" = {Default.ToString("R", CultureInfo.InvariantCulture)}";
 
                 xw.WriteAttributeString("Def", def);
-                xw.WriteDefaultElement(nameof(DisplayName), DisplayName, InternalName);
+                xw.WriteDefaultElement("DisplayName", DisplayName, InternalName);
                 xw.WriteDefaultElement("Enum", InternalType, DisplayType.ToString());
-                xw.WriteDefaultElement(nameof(Description), Description, null);
-                xw.WriteDefaultElement(nameof(DisplayFormat), DisplayFormat, ParamUtil.GetDefaultFormat(DisplayType));
-                xw.WriteDefaultElement(nameof(EditFlags), EditFlags.ToString(), ParamUtil.GetDefaultEditFlags(DisplayType).ToString());
-                xw.WriteDefaultElement(nameof(Minimum), Minimum, ParamUtil.GetDefaultMinimum(DisplayType), "R", CultureInfo.InvariantCulture);
-                xw.WriteDefaultElement(nameof(Maximum), Maximum, ParamUtil.GetDefaultMaximum(DisplayType), "R", CultureInfo.InvariantCulture);
-                xw.WriteDefaultElement(nameof(Increment), Increment, ParamUtil.GetDefaultIncrement(DisplayType), "R", CultureInfo.InvariantCulture);
-                xw.WriteDefaultElement(nameof(SortID), SortID, 0);
+                xw.WriteDefaultElement("Description", Description, null);
+                xw.WriteDefaultElement("DisplayFormat", DisplayFormat, ParamUtil.GetDefaultFormat(DisplayType));
+                xw.WriteDefaultElement("EditFlags", EditFlags.ToString(), ParamUtil.GetDefaultEditFlags(DisplayType).ToString());
+                xw.WriteDefaultElement("Minimum", Minimum, ParamUtil.GetDefaultMinimum(DisplayType), "R", CultureInfo.InvariantCulture);
+                xw.WriteDefaultElement("Maximum", Maximum, ParamUtil.GetDefaultMaximum(DisplayType), "R", CultureInfo.InvariantCulture);
+                xw.WriteDefaultElement("Increment", Increment, ParamUtil.GetDefaultIncrement(DisplayType), "R", CultureInfo.InvariantCulture);
+                xw.WriteDefaultElement("SortID", SortID, 0);
             }
             #endregion
         }
