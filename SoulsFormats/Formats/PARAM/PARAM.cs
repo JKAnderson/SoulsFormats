@@ -246,6 +246,16 @@ namespace SoulsFormats
         }
 
         /// <summary>
+        /// Returns a reader for the row passed for custom row reading logic
+        /// </summary>
+        public BinaryReaderEx GetRowReader(Row row)
+        {
+            RowReader.Position = row.DataOffset;
+
+            return RowReader;
+        }
+
+        /// <summary>
         /// Returns the first row with the given ID, or null if not found.
         /// </summary>
         public Row this[int id] => Rows.Find(row => row.ID == id);
