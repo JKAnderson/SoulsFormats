@@ -78,7 +78,7 @@ namespace SoulsFormats
 
         internal static BinderFileHeader ReadBinder3FileHeader(BinaryReaderEx br, Format format, bool bitBigEndian)
         {
-            FileFlags flags = ReadFileFlags(br, bitBigEndian, format);
+            FileFlags flags = ReadFileFlags(br, bitBigEndian);
             br.AssertByte(0);
             br.AssertByte(0);
             br.AssertByte(0);
@@ -111,7 +111,7 @@ namespace SoulsFormats
 
         internal static BinderFileHeader ReadBinder4FileHeader(BinaryReaderEx br, Format format, bool bitBigEndian, bool unicode)
         {
-            FileFlags flags = ReadFileFlags(br, bitBigEndian, format);
+            FileFlags flags = ReadFileFlags(br, bitBigEndian);
             br.AssertByte(0);
             br.AssertByte(0);
             br.AssertByte(0);
@@ -168,7 +168,7 @@ namespace SoulsFormats
 
         internal void WriteBinder3FileHeader(BinaryWriterEx bw, Format format, bool bitBigEndian, int index)
         {
-            WriteFileFlags(bw, bitBigEndian, format, Flags);
+            WriteFileFlags(bw, bitBigEndian, Flags);
             bw.WriteByte(0);
             bw.WriteByte(0);
             bw.WriteByte(0);
@@ -192,7 +192,7 @@ namespace SoulsFormats
 
         internal void WriteBinder4FileHeader(BinaryWriterEx bw, Format format, bool bitBigEndian, int index)
         {
-            WriteFileFlags(bw, bitBigEndian, format, Flags);
+            WriteFileFlags(bw, bitBigEndian, Flags);
             bw.WriteByte(0);
             bw.WriteByte(0);
             bw.WriteByte(0);
