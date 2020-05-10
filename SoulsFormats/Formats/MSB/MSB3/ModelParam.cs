@@ -66,6 +66,7 @@ namespace SoulsFormats
                     MapPieces, Objects, Enemies, Players, Collisions,
                     Others);
             }
+            IReadOnlyList<IMsbModel> IMsbParam<IMsbModel>.GetEntries() => GetEntries();
 
             internal override Model ReadEntry(BinaryReaderEx br)
             {
@@ -94,13 +95,6 @@ namespace SoulsFormats
                         throw new NotImplementedException($"Unsupported model type: {type}");
                 }
             }
-
-            internal override void WriteEntry(BinaryWriterEx bw, int id, Model entry)
-            {
-                entry.Write(bw, id);
-            }
-
-            IReadOnlyList<IMsbModel> IMsbParam<IMsbModel>.GetEntries() => GetEntries();
         }
 
         internal enum ModelType : uint
@@ -120,7 +114,7 @@ namespace SoulsFormats
         /// <summary>
         /// A model available for use by parts in this map.
         /// </summary>
-        public abstract class Model : Entry, IMsbModel
+        public abstract class Model : NamedEntry, IMsbModel
         {
             internal abstract ModelType Type { get; }
 
@@ -167,7 +161,7 @@ namespace SoulsFormats
                 br.Position = start + typeDataOffset;
             }
 
-            internal void Write(BinaryWriterEx bw, int id)
+            internal override void Write(BinaryWriterEx bw, int id)
             {
                 long start = bw.Position;
 

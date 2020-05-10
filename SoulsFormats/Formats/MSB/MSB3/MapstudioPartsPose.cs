@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 
 namespace SoulsFormats
@@ -8,7 +9,7 @@ namespace SoulsFormats
         /// <summary>
         /// A section containing fixed poses for different Parts in the map.
         /// </summary>
-        public class MapstudioPartsPose : Param<PartsPose>
+        internal class MapstudioPartsPose : Param<PartsPose>
         {
             internal override int Version => 0;
             internal override string Type => "MAPSTUDIO_PARTS_POSE_ST";
@@ -38,17 +39,12 @@ namespace SoulsFormats
             {
                 return Poses.EchoAdd(new PartsPose(br));
             }
-
-            internal override void WriteEntry(BinaryWriterEx bw, int index, PartsPose entry)
-            {
-                entry.Write(bw);
-            }
         }
 
         /// <summary>
         /// A set of bone transforms to pose an individual Part in the map.
         /// </summary>
-        public class PartsPose
+        public class PartsPose : Entry
         {
             /// <summary>
             /// The name of the part to pose.
@@ -82,7 +78,7 @@ namespace SoulsFormats
                     Bones.Add(new Bone(br));
             }
 
-            internal void Write(BinaryWriterEx bw)
+            internal override void Write(BinaryWriterEx bw, int id)
             {
                 bw.WriteInt16(PartIndex);
                 bw.WriteInt16((short)Bones.Count);
@@ -96,11 +92,15 @@ namespace SoulsFormats
             internal void GetNames(MSB3 msb, Entries entries)
             {
                 PartName = MSB.FindName(entries.Parts, PartIndex);
+                foreach (Bone bone in Bones)
+                    bone.GetNames(entries);
             }
 
             internal void GetIndices(MSB3 msb, Entries entries)
             {
                 PartIndex = (short)MSB.FindIndex(entries.Parts, PartName);
+                foreach (Bone bone in Bones)
+                    bone.GetIndices(entries);
             }
 
             /// <summary>
@@ -109,9 +109,10 @@ namespace SoulsFormats
             public class Bone
             {
                 /// <summary>
-                /// An index into the BoneNames section.
+                /// The name of the bone to transform.
                 /// </summary>
-                public int BoneNamesIndex { get; set; }
+                public string Name { get; set; }
+                private int NameIndex { get; set; }
 
                 /// <summary>
                 /// Translation of the bone.
@@ -131,14 +132,14 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new Bone with the given bone name index and default transforms.
                 /// </summary>
-                public Bone(int boneNamesIndex)
+                public Bone(string name)
                 {
-                    BoneNamesIndex = boneNamesIndex;
+                    Name = name;
                 }
 
                 internal Bone(BinaryReaderEx br)
                 {
-                    BoneNamesIndex = br.ReadInt32();
+                    NameIndex = br.ReadInt32();
                     Translation = br.ReadVector3();
                     Rotation = br.ReadVector3();
                     Scale = br.ReadVector3();
@@ -146,10 +147,22 @@ namespace SoulsFormats
 
                 internal void Write(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(BoneNamesIndex);
+                    bw.WriteInt32(NameIndex);
                     bw.WriteVector3(Translation);
                     bw.WriteVector3(Rotation);
                     bw.WriteVector3(Scale);
+                }
+
+                internal void GetNames(Entries entries)
+                {
+                    Name = MSB.FindName(entries.BoneNames, NameIndex);
+                }
+
+                internal void GetIndices(Entries entries)
+                {
+                    if (!entries.BoneNames.Any(bn => bn.Name == Name))
+                        entries.BoneNames.Add(new BoneName(Name));
+                    NameIndex = MSB.FindIndex(entries.BoneNames, Name);
                 }
 
                 /// <summary>
@@ -157,7 +170,7 @@ namespace SoulsFormats
                 /// </summary>
                 public override string ToString()
                 {
-                    return $"{BoneNamesIndex} : {Translation} {Rotation} {Scale}";
+                    return $"{Name} : {Translation} {Rotation} {Scale}";
                 }
             }
         }

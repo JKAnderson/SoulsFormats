@@ -7,7 +7,7 @@ namespace SoulsFormats
         /// <summary>
         /// A section containing layers, which probably don't actually do anything.
         /// </summary>
-        public class LayerParam : Param<Layer>
+        private class LayerParam : Param<Layer>
         {
             internal override int Version => 3;
             internal override string Type => "LAYER_PARAM_ST";
@@ -37,22 +37,17 @@ namespace SoulsFormats
             {
                 return Layers.EchoAdd(new Layer(br));
             }
-
-            internal override void WriteEntry(BinaryWriterEx bw, int index, Layer entry)
-            {
-                entry.Write(bw);
-            }
         }
 
         /// <summary>
         /// Unknown; seems to have been related to ceremonies but probably unused in release.
         /// </summary>
-        public class Layer
+        public class Layer : NamedEntry
         {
             /// <summary>
             /// The name of this layer.
             /// </summary>
-            public string Name { get; set; }
+            public override string Name { get; set; }
 
             /// <summary>
             /// Unknown; usually just counts up from 0.
@@ -89,7 +84,7 @@ namespace SoulsFormats
                 Name = br.GetUTF16(start + nameOffset);
             }
 
-            internal void Write(BinaryWriterEx bw)
+            internal override void Write(BinaryWriterEx bw, int id)
             {
                 long start = bw.Position;
 

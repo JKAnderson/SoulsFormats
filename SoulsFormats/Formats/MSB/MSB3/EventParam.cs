@@ -112,11 +112,6 @@ namespace SoulsFormats
                         throw new NotImplementedException($"Unsupported event type: {type}");
                 }
             }
-
-            internal override void WriteEntry(BinaryWriterEx bw, int id, Event entry)
-            {
-                entry.Write(bw, id);
-            }
         }
 
         internal enum EventType : uint
@@ -144,7 +139,7 @@ namespace SoulsFormats
         /// <summary>
         /// An interactive or dynamic feature of the map.
         /// </summary>
-        public abstract class Event : Entry
+        public abstract class Event : NamedEntry
         {
             internal abstract EventType Type { get; }
 
@@ -217,7 +212,7 @@ namespace SoulsFormats
 
             internal abstract void Read(BinaryReaderEx br);
 
-            internal void Write(BinaryWriterEx bw, int id)
+            internal override void Write(BinaryWriterEx bw, int id)
             {
                 long start = bw.Position;
 

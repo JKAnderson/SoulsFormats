@@ -7,7 +7,7 @@ namespace SoulsFormats
         /// <summary>
         /// A section containing routes. Purpose unknown.
         /// </summary>
-        public class RouteParam : Param<Route>
+        private class RouteParam : Param<Route>
         {
             internal override int Version => 3;
             internal override string Type => "ROUTE_PARAM_ST";
@@ -37,22 +37,17 @@ namespace SoulsFormats
             {
                 return Routes.EchoAdd(new Route(br));
             }
-
-            internal override void WriteEntry(BinaryWriterEx bw, int id, Route entry)
-            {
-                entry.Write(bw, id);
-            }
         }
 
         /// <summary>
         /// Unknown.
         /// </summary>
-        public class Route
+        public class Route : NamedEntry
         {
             /// <summary>
             /// The name of this route.
             /// </summary>
-            public string Name { get; set; }
+            public override string Name { get; set; }
 
             /// <summary>
             /// Unknown.
@@ -86,7 +81,7 @@ namespace SoulsFormats
                 Name = br.GetUTF16(start + nameOffset);
             }
 
-            internal void Write(BinaryWriterEx bw, int id)
+            internal override void Write(BinaryWriterEx bw, int id)
             {
                 long start = bw.Position;
 

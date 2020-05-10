@@ -113,11 +113,6 @@ namespace SoulsFormats
                         throw new NotImplementedException($"Unsupported part type: {type}");
                 }
             }
-
-            internal override void WriteEntry(BinaryWriterEx bw, int id, Part entry)
-            {
-                entry.Write(bw, id);
-            }
         }
 
         internal enum PartsType : uint
@@ -139,7 +134,7 @@ namespace SoulsFormats
         /// <summary>
         /// Any instance of some "thing" in a map.
         /// </summary>
-        public abstract class Part : Entry, IMsbPart
+        public abstract class Part : NamedEntry, IMsbPart
         {
             internal abstract PartsType Type { get; }
 
@@ -368,7 +363,7 @@ namespace SoulsFormats
                 UseDepthBiasFloat = br.ReadBoolean();
                 DisablePointLightEffect = br.ReadBoolean();
                 br.AssertByte(0);
-                UnkE18 = br.AssertInt32(0);
+                UnkE18 = br.ReadInt32();
                 EntityGroups = br.ReadInt32s(8);
                 br.AssertInt32(0);
 
@@ -400,7 +395,7 @@ namespace SoulsFormats
                 throw new InvalidOperationException("Unk struct 4 should not be read for parts with no unk struct 4.");
             }
 
-            internal void Write(BinaryWriterEx bw, int id)
+            internal override void Write(BinaryWriterEx bw, int id)
             {
                 long start = bw.Position;
 

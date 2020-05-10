@@ -205,11 +205,6 @@ namespace SoulsFormats
                         throw new NotImplementedException($"Unsupported region type: {type}");
                 }
             }
-
-            internal override void WriteEntry(BinaryWriterEx bw, int id, Region entry)
-            {
-                entry.Write(bw, id);
-            }
         }
 
         internal enum RegionType : uint
@@ -237,7 +232,7 @@ namespace SoulsFormats
         /// <summary>
         /// A point or volumetric area used for a variety of purposes.
         /// </summary>
-        public abstract class Region : Entry, IMsbRegion
+        public abstract class Region : NamedEntry, IMsbRegion
         {
             internal abstract RegionType Type { get; }
 
@@ -389,7 +384,7 @@ namespace SoulsFormats
 
             internal abstract void ReadSpecific(BinaryReaderEx br);
 
-            internal void Write(BinaryWriterEx bw, int id)
+            internal override void Write(BinaryWriterEx bw, int id)
             {
                 long start = bw.Position;
 
