@@ -17,92 +17,92 @@ namespace SoulsFormats
             /// <summary>
             /// General regions in the MSB.
             /// </summary>
-            public List<Region.General> General;
+            public List<Region.General> General { get; set; }
 
             /// <summary>
             /// Unk00 regions in the MSB.
             /// </summary>
-            public List<Region.Unk00> Unk00s;
+            public List<Region.Unk00> Unk00s { get; set; }
 
             /// <summary>
             /// InvasionPoints in the MSB.
             /// </summary>
-            public List<Region.InvasionPoint> InvasionPoints;
+            public List<Region.InvasionPoint> InvasionPoints { get; set; }
 
             /// <summary>
             /// EnvironmentMapPoints in the MSB.
             /// </summary>
-            public List<Region.EnvironmentMapPoint> EnvironmentMapPoints;
+            public List<Region.EnvironmentMapPoint> EnvironmentMapPoints { get; set; }
 
             /// <summary>
             /// Sound regions in the MSB.
             /// </summary>
-            public List<Region.Sound> Sounds;
+            public List<Region.Sound> Sounds { get; set; }
 
             /// <summary>
             /// SFX regions in the MSB.
             /// </summary>
-            public List<Region.SFX> SFX;
+            public List<Region.SFX> SFX { get; set; }
 
             /// <summary>
             /// WindSFX regions in the MSB.
             /// </summary>
-            public List<Region.WindSFX> WindSFX;
+            public List<Region.WindSFX> WindSFX { get; set; }
 
             /// <summary>
             /// SpawnPoints in the MSB.
             /// </summary>
-            public List<Region.SpawnPoint> SpawnPoints;
+            public List<Region.SpawnPoint> SpawnPoints { get; set; }
 
             /// <summary>
             /// Messages in the MSB.
             /// </summary>
-            public List<Region.Message> Messages;
+            public List<Region.Message> Messages { get; set; }
 
             /// <summary>
             /// WalkRoute points in the MSB.
             /// </summary>
-            public List<Region.WalkRoute> WalkRoutes;
+            public List<Region.WalkRoute> WalkRoutes { get; set; }
 
             /// <summary>
             /// Unk12 regions in the MSB.
             /// </summary>
-            public List<Region.Unk12> Unk12s;
+            public List<Region.Unk12> Unk12s { get; set; }
 
             /// <summary>
             /// WarpPoints in the MSB.
             /// </summary>
-            public List<Region.WarpPoint> WarpPoints;
+            public List<Region.WarpPoint> WarpPoints { get; set; }
 
             /// <summary>
             /// ActivationAreas in the MSB.
             /// </summary>
-            public List<Region.ActivationArea> ActivationAreas;
+            public List<Region.ActivationArea> ActivationAreas { get; set; }
 
             /// <summary>
             /// Event regions in the MSB.
             /// </summary>
-            public List<Region.Event> Events;
+            public List<Region.Event> Events { get; set; }
 
             /// <summary>
             /// EnvironmentMapEffectBoxes in the MSB.
             /// </summary>
-            public List<Region.EnvironmentMapEffectBox> EnvironmentMapEffectBoxes;
+            public List<Region.EnvironmentMapEffectBox> EnvironmentMapEffectBoxes { get; set; }
 
             /// <summary>
             /// WindAreas in the MSB.
             /// </summary>
-            public List<Region.WindArea> WindAreas;
+            public List<Region.WindArea> WindAreas { get; set; }
 
             /// <summary>
             /// MufflingBoxes in the MSB.
             /// </summary>
-            public List<Region.MufflingBox> MufflingBoxes;
+            public List<Region.MufflingBox> MufflingBoxes { get; set; }
 
             /// <summary>
             /// MufflingPortals in the MSB.
             /// </summary>
-            public List<Region.MufflingPortal> MufflingPortals;
+            public List<Region.MufflingPortal> MufflingPortals { get; set; }
 
             /// <summary>
             /// Creates a new PointParam with no regions.
@@ -249,22 +249,22 @@ namespace SoulsFormats
             /// <summary>
             /// Whether this region has additional type data. The only region type where this actually varies is Sound.
             /// </summary>
-            public bool HasTypeData;
+            public bool HasTypeData { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk2;
+            public int Unk2 { get; set; }
 
             /// <summary>
             /// The shape of this region.
             /// </summary>
-            public Shape Shape;
+            public Shape Shape { get; set; }
 
             /// <summary>
             /// Controls whether the event is present in different ceremonies. Maybe only used for Messages?
             /// </summary>
-            public uint MapStudioLayer;
+            public uint MapStudioLayer { get; set; }
 
             /// <summary>
             /// Center of the region.
@@ -279,18 +279,23 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public List<short> UnkA, UnkB;
+            public List<short> UnkA { get; set; }
+            
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public List<short> UnkB { get; set; }
 
             /// <summary>
             /// Region is inactive unless this part is drawn; null for always active.
             /// </summary>
-            public string ActivationPartName;
+            public string ActivationPartName { get; set; }
             private int ActivationPartIndex;
 
             /// <summary>
             /// An ID used to identify this region in event scripts.
             /// </summary>
-            public int EventEntityID;
+            public int EventEntityID { get; set; }
 
             internal Region(string name, bool hasTypeData)
             {
@@ -527,7 +532,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Not sure what this does.
                 /// </summary>
-                public int Priority;
+                public int Priority { get; set; }
 
                 /// <summary>
                 /// Creates a new InvasionPoint with the given name.
@@ -569,7 +574,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown. Only ever 1 bit set, so probably flags.
                 /// </summary>
-                public int UnkFlags;
+                public int UnkFlags { get; set; }
 
                 /// <summary>
                 /// Creates a new EnvironmentMapPoint with the given name.
@@ -632,12 +637,12 @@ namespace SoulsFormats
                 /// <summary>
                 /// Type of sound in this region; determines mixing behavior like muffling.
                 /// </summary>
-                public SndType SoundType;
+                public SndType SoundType { get; set; }
 
                 /// <summary>
                 /// ID of the sound to play in this region, or 0 for child regions.
                 /// </summary>
-                public int SoundID;
+                public int SoundID { get; set; }
 
                 /// <summary>
                 /// Names of other Sound regions which extend this one.
@@ -705,12 +710,12 @@ namespace SoulsFormats
                 /// <summary>
                 /// The ID of the .fxr file to play in this region.
                 /// </summary>
-                public int FFXID;
+                public int FFXID { get; set; }
 
                 /// <summary>
                 /// If true, the effect is off by default until enabled by event scripts.
                 /// </summary>
-                public bool StartDisabled;
+                public bool StartDisabled { get; set; }
 
                 /// <summary>
                 /// Creates a new SFX with the given name.
@@ -765,12 +770,12 @@ namespace SoulsFormats
                 /// <summary>
                 /// ID of an .fxr file.
                 /// </summary>
-                public int FFXID;
+                public int FFXID { get; set; }
 
                 /// <summary>
                 /// Name of a corresponding WindArea region.
                 /// </summary>
-                public string WindAreaName;
+                public string WindAreaName { get; set; }
                 private int WindAreaIndex;
 
                 /// <summary>
@@ -839,7 +844,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown; seems kind of like a region index, but also kind of doesn't.
                 /// </summary>
-                public int UnkT00;
+                public int UnkT00 { get; set; }
 
                 /// <summary>
                 /// Creates a new SpawnPoint with the given name.
@@ -887,17 +892,17 @@ namespace SoulsFormats
                 /// <summary>
                 /// ID of the message's text in the FMGs.
                 /// </summary>
-                public short MessageID;
+                public short MessageID { get; set; }
 
                 /// <summary>
                 /// Unknown. Always 0 or 2.
                 /// </summary>
-                public short UnkT02;
+                public short UnkT02 { get; set; }
 
                 /// <summary>
                 /// Whether the message requires Seek Guidance to appear.
                 /// </summary>
-                public bool Hidden;
+                public bool Hidden { get; set; }
 
                 /// <summary>
                 /// Creates a new Message with the given name.
@@ -1047,27 +1052,27 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public float UnkT00;
+                public float UnkT00 { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public float Compare;
+                public float Compare { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public bool UnkT08;
+                public bool UnkT08 { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public byte UnkT09;
+                public byte UnkT09 { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short UnkT0A;
+                public short UnkT0A { get; set; }
 
                 /// <summary>
                 /// Creates a new EnvironmentMapEffectBox with the given name.
@@ -1161,7 +1166,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT00;
+                public int UnkT00 { get; set; }
 
                 /// <summary>
                 /// Creates a new MufflingBox with the given name.
@@ -1200,7 +1205,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT00;
+                public int UnkT00 { get; set; }
 
                 /// <summary>
                 /// Creates a new MufflingPortal with the given name.

@@ -15,7 +15,7 @@ namespace SoulsFormats
             /// <summary>
             /// The routes in this section.
             /// </summary>
-            public List<Route> Routes;
+            public List<Route> Routes { get; set; }
 
             /// <summary>
             /// Creates a new RouteParam with no routes.
@@ -52,17 +52,17 @@ namespace SoulsFormats
             /// <summary>
             /// The name of this route.
             /// </summary>
-            public string Name;
+            public string Name { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk08;
-            
+            public int Unk08 { get; set; }
+
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk0C;
+            public int Unk0C { get; set; }
 
             /// <summary>
             /// Creates a new Route with default values.
