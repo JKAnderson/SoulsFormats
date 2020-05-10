@@ -10,6 +10,7 @@ namespace SoulsFormats
         /// </summary>
         public class MapstudioPartsPose : Param<PartsPose>
         {
+            internal override int Version => 0;
             internal override string Type => "MAPSTUDIO_PARTS_POSE_ST";
 
             /// <summary>
@@ -20,7 +21,7 @@ namespace SoulsFormats
             /// <summary>
             /// Creates a new PartsPoseSection with no entries.
             /// </summary>
-            public MapstudioPartsPose(int unk1 = 0) : base(unk1)
+            public MapstudioPartsPose()
             {
                 Poses = new List<PartsPose>();
             }

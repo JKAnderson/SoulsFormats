@@ -9,6 +9,7 @@ namespace SoulsFormats
         /// </summary>
         public class RouteParam : Param<Route>
         {
+            internal override int Version => 3;
             internal override string Type => "ROUTE_PARAM_ST";
 
             /// <summary>
@@ -19,7 +20,7 @@ namespace SoulsFormats
             /// <summary>
             /// Creates a new RouteParam with no routes.
             /// </summary>
-            public RouteParam(int unk1 = 3) : base(unk1)
+            public RouteParam()
             {
                 Routes = new List<Route>();
             }

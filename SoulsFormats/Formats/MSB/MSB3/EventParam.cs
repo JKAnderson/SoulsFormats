@@ -11,6 +11,7 @@ namespace SoulsFormats
         /// </summary>
         public class EventParam : Param<Event>
         {
+            internal override int Version => 3;
             internal override string Type => "EVENT_PARAM_ST";
 
             /// <summary>
@@ -56,7 +57,7 @@ namespace SoulsFormats
             /// <summary>
             /// Creates a new EventParam with no events.
             /// </summary>
-            public EventParam(int unk1 = 3) : base(unk1)
+            public EventParam()
             {
                 Treasures = new List<Event.Treasure>();
                 Generators = new List<Event.Generator>();

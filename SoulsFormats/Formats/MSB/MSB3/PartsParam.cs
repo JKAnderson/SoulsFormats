@@ -11,6 +11,7 @@ namespace SoulsFormats
         /// </summary>
         public class PartsParam : Param<Part>, IMsbParam<IMsbPart>
         {
+            internal override int Version => 3;
             internal override string Type => "PARTS_PARAM_ST";
 
             /// <summary>
@@ -56,7 +57,7 @@ namespace SoulsFormats
             /// <summary>
             /// Creates a new PartsParam with no parts.
             /// </summary>
-            public PartsParam(int unk1 = 3) : base(unk1)
+            public PartsParam()
             {
                 MapPieces = new List<Part.MapPiece>();
                 Objects = new List<Part.Object>();

@@ -9,6 +9,7 @@ namespace SoulsFormats
         /// </summary>
         public class LayerParam : Param<Layer>
         {
+            internal override int Version => 3;
             internal override string Type => "LAYER_PARAM_ST";
 
             /// <summary>
@@ -19,7 +20,7 @@ namespace SoulsFormats
             /// <summary>
             /// Creates a new LayerParam with no layers.
             /// </summary>
-            public LayerParam(int unk1 = 3) : base(unk1)
+            public LayerParam()
             {
                 Layers = new List<Layer>();
             }

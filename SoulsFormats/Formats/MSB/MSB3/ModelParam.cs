@@ -11,6 +11,7 @@ namespace SoulsFormats
         /// </summary>
         public class ModelParam : Param<Model>, IMsbParam<IMsbModel>
         {
+            internal override int Version => 3;
             internal override string Type => "MODEL_PARAM_ST";
 
             /// <summary>
@@ -46,7 +47,7 @@ namespace SoulsFormats
             /// <summary>
             /// Creates a new ModelParam with no models.
             /// </summary>
-            public ModelParam(int unk1 = 3) : base(unk1)
+            public ModelParam()
             {
                 MapPieces = new List<Model.MapPiece>();
                 Objects = new List<Model.Object>();

@@ -11,6 +11,7 @@ namespace SoulsFormats
         /// </summary>
         public class PointParam : Param<Region>, IMsbParam<IMsbRegion>
         {
+            internal override int Version => 3;
             internal override string Type => "POINT_PARAM_ST";
 
             /// <summary>
@@ -106,7 +107,7 @@ namespace SoulsFormats
             /// <summary>
             /// Creates a new PointParam with no regions.
             /// </summary>
-            public PointParam(int unk1 = 3) : base(unk1)
+            public PointParam()
             {
                 General = new List<Region.General>();
                 Unk00s = new List<Region.Unk00>();

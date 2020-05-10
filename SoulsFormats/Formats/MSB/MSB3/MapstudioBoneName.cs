@@ -9,6 +9,7 @@ namespace SoulsFormats
         /// </summary>
         public class MapstudioBoneName : Param<string>
         {
+            internal override int Version => 0;
             internal override string Type => "MAPSTUDIO_BONE_NAME_STRING";
 
             /// <summary>
@@ -19,7 +20,7 @@ namespace SoulsFormats
             /// <summary>
             /// Creates a new BoneNameSection with no bone names.
             /// </summary>
-            public MapstudioBoneName(int unk1 = 0) : base(unk1)
+            public MapstudioBoneName()
             {
                 Names = new List<string>();
             }

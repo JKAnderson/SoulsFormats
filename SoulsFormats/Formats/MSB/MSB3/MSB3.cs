@@ -200,17 +200,8 @@ namespace SoulsFormats
         /// </summary>
         public abstract class Param<T>
         {
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public int Version { get; set; }
-
+            internal abstract int Version { get; }
             internal abstract string Type { get; }
-
-            internal Param(int version)
-            {
-                Version = version;
-            }
 
             /// <summary>
             /// Returns every entry in this section in the order they will be written.
@@ -219,7 +210,7 @@ namespace SoulsFormats
 
             internal List<T> Read(BinaryReaderEx br)
             {
-                Version = br.ReadInt32();
+                br.AssertInt32(Version);
                 int offsetCount = br.ReadInt32();
                 long nameOffset = br.ReadInt64();
                 long[] entryOffsets = br.ReadInt64s(offsetCount - 1);
