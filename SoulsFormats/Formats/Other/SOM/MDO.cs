@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace SoulsFormats.KF1
+namespace SoulsFormats.SOM
 {
     /// <summary>
-    /// A model format used in King's Field 1 for basic models like items.
+    /// A model format used in Sword of Moonlight for basic models like items.
     /// </summary>
     public class MDO : SoulsFile<MDO>
     {
