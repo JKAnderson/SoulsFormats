@@ -132,22 +132,22 @@ namespace SoulsFormats
             public override string Name { get; set; }
 
             /// <summary>
-            /// The placeholder used for this model in MapStudio.
+            /// Unknown network path to a .sib file.
             /// </summary>
-            public string Placeholder { get; set; }
+            public string SibPath { get; set; }
 
             private int InstanceCount;
 
             internal Model(string name)
             {
                 Name = name;
-                Placeholder = "";
+                SibPath = "";
             }
 
             internal Model(Model clone)
             {
                 Name = clone.Name;
-                Placeholder = clone.Placeholder;
+                SibPath = clone.SibPath;
             }
 
             internal Model(BinaryReaderEx br)
@@ -157,13 +157,13 @@ namespace SoulsFormats
                 long nameOffset = br.ReadInt64();
                 br.AssertUInt32((uint)Type);
                 br.ReadInt32(); // ID
-                long placeholderOffset = br.ReadInt64();
+                long sibOffset = br.ReadInt64();
                 InstanceCount = br.ReadInt32();
                 br.AssertInt32(0);
                 long typeDataOffset = br.ReadInt64();
 
                 Name = br.GetUTF16(start + nameOffset);
-                Placeholder = br.GetUTF16(start + placeholderOffset);
+                SibPath = br.GetUTF16(start + sibOffset);
                 br.Position = start + typeDataOffset;
             }
 
@@ -174,15 +174,15 @@ namespace SoulsFormats
                 bw.ReserveInt64("NameOffset");
                 bw.WriteUInt32((uint)Type);
                 bw.WriteInt32(id);
-                bw.ReserveInt64("PlaceholderOffset");
+                bw.ReserveInt64("SibOffset");
                 bw.WriteInt32(InstanceCount);
                 bw.WriteInt32(0);
                 bw.ReserveInt64("TypeDataOffset");
 
                 bw.FillInt64("NameOffset", bw.Position - start);
                 bw.WriteUTF16(MSB.ReambiguateName(Name), true);
-                bw.FillInt64("PlaceholderOffset", bw.Position - start);
-                bw.WriteUTF16(Placeholder, true);
+                bw.FillInt64("SibOffset", bw.Position - start);
+                bw.WriteUTF16(SibPath, true);
                 bw.Pad(8);
 
                 if (HasTypeData)

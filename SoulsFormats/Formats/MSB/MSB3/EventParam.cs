@@ -173,13 +173,13 @@ namespace SoulsFormats
             /// <summary>
             /// Used to identify the event in event scripts.
             /// </summary>
-            public int EventEntityID { get; set; }
+            public int EntityID { get; set; }
 
             internal Event(string name)
             {
                 Name = name;
                 EventID = -1;
-                EventEntityID = -1;
+                EntityID = -1;
             }
 
             internal Event(Event clone)
@@ -188,7 +188,7 @@ namespace SoulsFormats
                 EventID = clone.EventID;
                 PartName = clone.PartName;
                 PointName = clone.PointName;
-                EventEntityID = clone.EventEntityID;
+                EntityID = clone.EntityID;
             }
 
             internal Event(BinaryReaderEx br)
@@ -208,7 +208,7 @@ namespace SoulsFormats
                 br.Position = start + baseDataOffset;
                 PartIndex = br.ReadInt32();
                 PointIndex = br.ReadInt32();
-                EventEntityID = br.ReadInt32();
+                EntityID = br.ReadInt32();
                 br.AssertInt32(0);
 
                 br.Position = start + typeDataOffset;
@@ -236,7 +236,7 @@ namespace SoulsFormats
                 bw.FillInt64("BaseDataOffset", bw.Position - start);
                 bw.WriteInt32(PartIndex);
                 bw.WriteInt32(PointIndex);
-                bw.WriteInt32(EventEntityID);
+                bw.WriteInt32(EntityID);
                 bw.WriteInt32(0);
 
                 bw.FillInt64("TypeDataOffset", bw.Position - start);
@@ -279,12 +279,12 @@ namespace SoulsFormats
                 private int PartIndex2;
 
                 /// <summary>
-                /// IDs in the item lot param given by this treasure.
+                /// First item lot given by this treasure.
                 /// </summary>
                 public int ItemLot1 { get; set; }
 
                 /// <summary>
-                /// IDs in the item lot param given by this treasure.
+                /// Second item lot given by this treasure; rarely used.
                 /// </summary>
                 public int ItemLot2 { get; set; }
 
@@ -605,13 +605,13 @@ namespace SoulsFormats
                 public int ObjActEntityID { get; set; }
 
                 /// <summary>
-                /// Unknown.
+                /// The object which is being interacted with.
                 /// </summary>
-                public string PartName2 { get; set; }
-                private int PartIndex2;
+                public string ObjActPartName { get; set; }
+                private int ObjActPartIndex;
 
                 /// <summary>
-                /// Unknown.
+                /// ID in ObjActParam that configures this ObjAct.
                 /// </summary>
                 public int ObjActParamID { get; set; }
 
@@ -640,7 +640,7 @@ namespace SoulsFormats
                 public ObjAct(ObjAct clone) : base(clone)
                 {
                     ObjActEntityID = clone.ObjActEntityID;
-                    PartName2 = clone.PartName2;
+                    ObjActPartName = clone.ObjActPartName;
                     ObjActParamID = clone.ObjActParamID;
                     ObjActStateType = clone.ObjActStateType;
                     EventFlagID = clone.EventFlagID;
@@ -651,7 +651,7 @@ namespace SoulsFormats
                 internal override void Read(BinaryReaderEx br)
                 {
                     ObjActEntityID = br.ReadInt32();
-                    PartIndex2 = br.ReadInt32();
+                    ObjActPartIndex = br.ReadInt32();
                     ObjActParamID = br.ReadInt32();
 
                     ObjActStateType = br.ReadEnum8<ObjActState>();
@@ -668,7 +668,7 @@ namespace SoulsFormats
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(ObjActEntityID);
-                    bw.WriteInt32(PartIndex2);
+                    bw.WriteInt32(ObjActPartIndex);
                     bw.WriteInt32(ObjActParamID);
 
                     bw.WriteByte((byte)ObjActStateType);
@@ -685,13 +685,13 @@ namespace SoulsFormats
                 internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    PartName2 = MSB.FindName(entries.Parts, PartIndex2);
+                    ObjActPartName = MSB.FindName(entries.Parts, ObjActPartIndex);
                 }
 
                 internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    PartIndex2 = MSB.FindIndex(entries.Parts, PartName2);
+                    ObjActPartIndex = MSB.FindIndex(entries.Parts, ObjActPartName);
                 }
             }
 
@@ -715,11 +715,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new MapOffset with the given name.
                 /// </summary>
-                public MapOffset(string name) : base(name)
-                {
-                    Position = Vector3.Zero;
-                    Degree = 0;
-                }
+                public MapOffset(string name) : base(name) { }
 
                 /// <summary>
                 /// Creates a new MapOffset with values copied from another.
@@ -753,34 +749,34 @@ namespace SoulsFormats
                 internal override EventType Type => EventType.PseudoMultiplayer;
 
                 /// <summary>
-                /// Unknown.
+                /// The NPC whose world you're entering.
                 /// </summary>
-                public int HostEventEntityID { get; set; }
+                public int HostEntityID { get; set; }
 
                 /// <summary>
-                /// Unknown.
+                /// Set when inside the event's region, unset when outside it.
                 /// </summary>
-                public int InvasionEventEntityID { get; set; }
+                public int EventFlagID { get; set; }
 
                 /// <summary>
-                /// Unknown.
+                /// ID of a goods item that is used to trigger the event.
                 /// </summary>
-                public int InvasionRegionIndex { get; set; }
+                public int ActivateGoodsID { get; set; }
 
                 /// <summary>
-                /// Unknown.
+                /// Unknown; possibly a sound ID.
                 /// </summary>
-                public int SoundIDMaybe { get; set; }
+                public int UnkT0C { get; set; }
 
                 /// <summary>
-                /// Unknown.
+                /// Unknown; possibly a map event ID.
                 /// </summary>
-                public int MapEventIDMaybe { get; set; }
+                public int UnkT10 { get; set; }
 
                 /// <summary>
-                /// Unknown.
+                /// Unknown; possibly flags.
                 /// </summary>
-                public int FlagsMaybe { get; set; }
+                public int UnkT14 { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -792,11 +788,11 @@ namespace SoulsFormats
                 /// </summary>
                 public PseudoMultiplayer(string name) : base(name)
                 {
-                    HostEventEntityID = -1;
-                    InvasionEventEntityID = -1;
-                    InvasionRegionIndex = -1;
-                    SoundIDMaybe = -1;
-                    MapEventIDMaybe = -1;
+                    HostEntityID = -1;
+                    EventFlagID = -1;
+                    ActivateGoodsID = -1;
+                    UnkT0C = -1;
+                    UnkT10 = -1;
                 }
 
                 /// <summary>
@@ -804,12 +800,12 @@ namespace SoulsFormats
                 /// </summary>
                 public PseudoMultiplayer(PseudoMultiplayer clone) : base(clone)
                 {
-                    HostEventEntityID = clone.HostEventEntityID;
-                    InvasionEventEntityID = clone.InvasionEventEntityID;
-                    InvasionRegionIndex = clone.InvasionRegionIndex;
-                    SoundIDMaybe = clone.SoundIDMaybe;
-                    MapEventIDMaybe = clone.MapEventIDMaybe;
-                    FlagsMaybe = clone.FlagsMaybe;
+                    HostEntityID = clone.HostEntityID;
+                    EventFlagID = clone.EventFlagID;
+                    ActivateGoodsID = clone.ActivateGoodsID;
+                    UnkT0C = clone.UnkT0C;
+                    UnkT10 = clone.UnkT10;
+                    UnkT14 = clone.UnkT14;
                     UnkT18 = clone.UnkT18;
                 }
 
@@ -817,24 +813,24 @@ namespace SoulsFormats
 
                 internal override void Read(BinaryReaderEx br)
                 {
-                    HostEventEntityID = br.ReadInt32();
-                    InvasionEventEntityID = br.ReadInt32();
-                    InvasionRegionIndex = br.ReadInt32();
-                    SoundIDMaybe = br.ReadInt32();
-                    MapEventIDMaybe = br.ReadInt32();
-                    FlagsMaybe = br.ReadInt32();
+                    HostEntityID = br.ReadInt32();
+                    EventFlagID = br.ReadInt32();
+                    ActivateGoodsID = br.ReadInt32();
+                    UnkT0C = br.ReadInt32();
+                    UnkT10 = br.ReadInt32();
+                    UnkT14 = br.ReadInt32();
                     UnkT18 = br.ReadInt32();
                     br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(HostEventEntityID);
-                    bw.WriteInt32(InvasionEventEntityID);
-                    bw.WriteInt32(InvasionRegionIndex);
-                    bw.WriteInt32(SoundIDMaybe);
-                    bw.WriteInt32(MapEventIDMaybe);
-                    bw.WriteInt32(FlagsMaybe);
+                    bw.WriteInt32(HostEntityID);
+                    bw.WriteInt32(EventFlagID);
+                    bw.WriteInt32(ActivateGoodsID);
+                    bw.WriteInt32(UnkT0C);
+                    bw.WriteInt32(UnkT10);
+                    bw.WriteInt32(UnkT14);
                     bw.WriteInt32(UnkT18);
                     bw.WriteInt32(0);
                 }
@@ -995,51 +991,43 @@ namespace SoulsFormats
                 internal override EventType Type => EventType.Other;
 
                 /// <summary>
-                /// Unknown.
+                /// Unknown; possibly a sound type.
                 /// </summary>
-                public int SoundTypeMaybe { get; set; }
+                public int UnkT00 { get; set; }
 
                 /// <summary>
-                /// Unknown.
+                /// Unknown; possibly a sound ID.
                 /// </summary>
-                public int SoundIDMaybe { get; set; }
+                public int UnkT04 { get; set; }
 
                 /// <summary>
                 /// Creates a new Other with the given name.
                 /// </summary>
-                public Other(string name) : base(name)
-                {
-                    SoundTypeMaybe = 0;
-                    SoundIDMaybe = 0;
-                }
+                public Other(string name) : base(name) { }
 
                 /// <summary>
                 /// Creates a new Other with values copied from another.
                 /// </summary>
                 public Other(Other clone) : base(clone)
                 {
-                    SoundTypeMaybe = clone.SoundTypeMaybe;
-                    SoundIDMaybe = clone.SoundIDMaybe;
+                    UnkT00 = clone.UnkT00;
+                    UnkT04 = clone.UnkT04;
                 }
 
                 internal Other(BinaryReaderEx br) : base(br) { }
 
                 internal override void Read(BinaryReaderEx br)
                 {
-                    SoundTypeMaybe = br.ReadInt32();
-                    SoundIDMaybe = br.ReadInt32();
-
-                    for (int i = 0; i < 16; i++)
-                        br.AssertInt32(-1);
+                    UnkT00 = br.ReadInt32();
+                    UnkT04 = br.ReadInt32();
+                    br.AssertPattern(0x40, 0xFF);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(SoundTypeMaybe);
-                    bw.WriteInt32(SoundIDMaybe);
-
-                    for (int i = 0; i < 16; i++)
-                        bw.WriteInt32(-1);
+                    bw.WriteInt32(UnkT00);
+                    bw.WriteInt32(UnkT04);
+                    bw.WritePattern(0x40, 0xFF);
                 }
             }
         }

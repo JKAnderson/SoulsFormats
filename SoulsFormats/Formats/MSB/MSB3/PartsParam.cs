@@ -152,15 +152,15 @@ namespace SoulsFormats
             public override string Name { get; set; }
 
             /// <summary>
-            /// The placeholder model for this part.
+            /// Unknown network path to a .sib file.
             /// </summary>
-            public string Placeholder { get; set; }
+            public string SibPath { get; set; }
 
-            private int modelIndex;
             /// <summary>
             /// The name of this part's model.
             /// </summary>
             public string ModelName { get; set; }
+            private int ModelIndex;
 
             /// <summary>
             /// The center of the part.
@@ -178,7 +178,7 @@ namespace SoulsFormats
             public Vector3 Scale { get; set; }
 
             /// <summary>
-            /// Unknown; related to which parts do or don't appear in different ceremonies.
+            /// A bitmask that determines which ceremonies the part appears in.
             /// </summary>
             public uint MapStudioLayer { get; set; }
 
@@ -200,32 +200,22 @@ namespace SoulsFormats
             /// <summary>
             /// Used to identify the part in event scripts.
             /// </summary>
-            public int EventEntityID { get; set; }
+            public int EntityID { get; set; }
 
             /// <summary>
             /// Used to identify multiple parts with the same ID in event scripts.
             /// </summary>
-            public int[] EventEntityGroups { get; private set; }
+            public int[] EntityGroups { get; private set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public sbyte OldLightID { get; set; }
+            public sbyte UnkE04 { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public sbyte OldFogID { get; set; }
-
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public sbyte OldScatterID { get; set; }
-
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public sbyte OldLensFlareID { get; set; }
+            public sbyte UnkE05 { get; set; }
 
             /// <summary>
             /// Unknown.
@@ -240,7 +230,7 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public sbyte UnkB0E { get; set; }
+            public sbyte UnkE0E { get; set; }
 
             /// <summary>
             /// Unknown.
@@ -285,12 +275,7 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public bool UnkB17 { get; set; }
-
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public int UnkB18 { get; set; }
+            public int UnkE18 { get; set; }
 
             internal Part(string name)
             {
@@ -302,14 +287,14 @@ namespace SoulsFormats
                     0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
                 BackreadGroups = new uint[8] { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
                     0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
-                EventEntityID = -1;
-                EventEntityGroups = new int[8] { -1, -1, -1, -1, -1, -1, -1, -1 };
+                EntityID = -1;
+                EntityGroups = new int[8] { -1, -1, -1, -1, -1, -1, -1, -1 };
             }
 
             internal Part(Part clone)
             {
                 Name = clone.Name;
-                Placeholder = clone.Placeholder;
+                SibPath = clone.SibPath;
                 ModelName = clone.ModelName;
                 Position = clone.Position;
                 Rotation = clone.Rotation;
@@ -318,14 +303,12 @@ namespace SoulsFormats
                 DrawGroups = (uint[])clone.DrawGroups.Clone();
                 DispGroups = (uint[])clone.DispGroups.Clone();
                 BackreadGroups = (uint[])clone.BackreadGroups.Clone();
-                EventEntityID = clone.EventEntityID;
-                OldLightID = clone.OldLightID;
-                OldFogID = clone.OldFogID;
-                OldScatterID = clone.OldScatterID;
-                OldLensFlareID = clone.OldLensFlareID;
+                EntityID = clone.EntityID;
+                UnkE04 = clone.UnkE04;
+                UnkE05 = clone.UnkE05;
                 LanternID = clone.LanternID;
                 LodParamID = clone.LodParamID;
-                UnkB0E = clone.UnkB0E;
+                UnkE0E = clone.UnkE0E;
                 PointLightShadowSource = clone.PointLightShadowSource;
                 ShadowSource = clone.ShadowSource;
                 ShadowDest = clone.ShadowDest;
@@ -334,9 +317,8 @@ namespace SoulsFormats
                 DrawOnlyReflectCam = clone.DrawOnlyReflectCam;
                 UseDepthBiasFloat = clone.UseDepthBiasFloat;
                 DisablePointLightEffect = clone.DisablePointLightEffect;
-                UnkB17 = clone.UnkB17;
-                UnkB18 = clone.UnkB18;
-                EventEntityGroups = (int[])clone.EventEntityGroups.Clone();
+                UnkE18 = clone.UnkE18;
+                EntityGroups = (int[])clone.EntityGroups.Clone();
             }
 
             internal Part(BinaryReaderEx br)
@@ -346,9 +328,9 @@ namespace SoulsFormats
                 long nameOffset = br.ReadInt64();
                 br.AssertUInt32((uint)Type);
                 br.ReadInt32(); // ID
-                modelIndex = br.ReadInt32();
+                ModelIndex = br.ReadInt32();
                 br.AssertInt32(0);
-                long placeholderOffset = br.ReadInt64();
+                long sibOffset = br.ReadInt64();
                 Position = br.ReadVector3();
                 Rotation = br.ReadVector3();
                 Scale = br.ReadVector3();
@@ -366,18 +348,17 @@ namespace SoulsFormats
                 long unkOffset4 = br.ReadInt64();
 
                 Name = br.GetUTF16(start + nameOffset);
-                Placeholder = br.GetUTF16(start + placeholderOffset);
+                SibPath = br.GetUTF16(start + sibOffset);
 
                 br.Position = start + baseDataOffset;
-                EventEntityID = br.ReadInt32();
-                OldLightID = br.ReadSByte();
-                OldFogID = br.ReadSByte();
-                OldScatterID = br.ReadSByte();
-                OldLensFlareID = br.ReadSByte();
+                EntityID = br.ReadInt32();
+                UnkE04 = br.ReadSByte();
+                UnkE05 = br.ReadSByte();
+                br.AssertInt16(0);
                 br.AssertInt32(0);
                 LanternID = br.ReadSByte();
                 LodParamID = br.ReadSByte();
-                UnkB0E = br.ReadSByte();
+                UnkE0E = br.ReadSByte();
                 PointLightShadowSource = br.ReadBoolean();
                 ShadowSource = br.ReadBoolean();
                 ShadowDest = br.ReadBoolean();
@@ -386,9 +367,9 @@ namespace SoulsFormats
                 DrawOnlyReflectCam = br.ReadBoolean();
                 UseDepthBiasFloat = br.ReadBoolean();
                 DisablePointLightEffect = br.ReadBoolean();
-                UnkB17 = br.ReadBoolean();
-                UnkB18 = br.ReadInt32();
-                EventEntityGroups = br.ReadInt32s(8);
+                br.AssertByte(0);
+                UnkE18 = br.AssertInt32(0);
+                EntityGroups = br.ReadInt32s(8);
                 br.AssertInt32(0);
 
                 br.Position = start + typeDataOffset;
@@ -426,9 +407,9 @@ namespace SoulsFormats
                 bw.ReserveInt64("NameOffset");
                 bw.WriteUInt32((uint)Type);
                 bw.WriteInt32(id);
-                bw.WriteInt32(modelIndex);
+                bw.WriteInt32(ModelIndex);
                 bw.WriteInt32(0);
-                bw.ReserveInt64("PlaceholderOffset");
+                bw.ReserveInt64("SibOffset");
                 bw.WriteVector3(Position);
                 bw.WriteVector3(Rotation);
                 bw.WriteVector3(Scale);
@@ -447,26 +428,25 @@ namespace SoulsFormats
 
                 bw.FillInt64("NameOffset", bw.Position - start);
                 bw.WriteUTF16(MSB.ReambiguateName(Name), true);
-                bw.FillInt64("PlaceholderOffset", bw.Position - start);
-                bw.WriteUTF16(Placeholder, true);
+                bw.FillInt64("SibOffset", bw.Position - start);
+                bw.WriteUTF16(SibPath, true);
                 // This is purely here for byte-perfect writes because From is nasty
-                if (Placeholder == "")
+                if (SibPath == "")
                     bw.WritePattern(0x24, 0x00);
                 bw.Pad(8);
 
                 bw.FillInt64("BaseDataOffset", bw.Position - start);
-                bw.WriteInt32(EventEntityID);
+                bw.WriteInt32(EntityID);
 
-                bw.WriteSByte(OldLightID);
-                bw.WriteSByte(OldFogID);
-                bw.WriteSByte(OldScatterID);
-                bw.WriteSByte(OldLensFlareID);
+                bw.WriteSByte(UnkE04);
+                bw.WriteSByte(UnkE05);
+                bw.WriteInt16(0);
 
                 bw.WriteInt32(0);
 
                 bw.WriteSByte(LanternID);
                 bw.WriteSByte(LodParamID);
-                bw.WriteSByte(UnkB0E);
+                bw.WriteSByte(UnkE0E);
                 bw.WriteBoolean(PointLightShadowSource);
 
                 bw.WriteBoolean(ShadowSource);
@@ -477,10 +457,10 @@ namespace SoulsFormats
                 bw.WriteBoolean(DrawOnlyReflectCam);
                 bw.WriteBoolean(UseDepthBiasFloat);
                 bw.WriteBoolean(DisablePointLightEffect);
-                bw.WriteBoolean(UnkB17);
+                bw.WriteByte(0);
 
-                bw.WriteInt32(UnkB18);
-                bw.WriteInt32s(EventEntityGroups);
+                bw.WriteInt32(UnkE18);
+                bw.WriteInt32s(EntityGroups);
                 bw.WriteInt32(0);
                 bw.Pad(8);
 
@@ -522,12 +502,12 @@ namespace SoulsFormats
 
             internal virtual void GetNames(MSB3 msb, Entries entries)
             {
-                ModelName = MSB.FindName(entries.Models, modelIndex);
+                ModelName = MSB.FindName(entries.Models, ModelIndex);
             }
 
             internal virtual void GetIndices(MSB3 msb, Entries entries)
             {
-                modelIndex = MSB.FindIndex(entries.Models, ModelName);
+                ModelIndex = MSB.FindIndex(entries.Models, ModelName);
             }
 
             /// <summary>
@@ -1048,7 +1028,7 @@ namespace SoulsFormats
             }
 
             /// <summary>
-            /// Unknown exactly what this is for.
+            /// A player spawn point.
             /// </summary>
             public class Player : Part
             {
@@ -1397,29 +1377,17 @@ namespace SoulsFormats
                 private int CollisionIndex;
 
                 /// <summary>
-                /// A map ID in format mXX_XX_XX_XX.
+                /// The map to load when on this collision.
                 /// </summary>
-                public byte MapID1 { get; set; }
-
-                /// <summary>
-                /// A map ID in format mXX_XX_XX_XX.
-                /// </summary>
-                public byte MapID2 { get; set; }
-
-                /// <summary>
-                /// A map ID in format mXX_XX_XX_XX.
-                /// </summary>
-                public byte MapID3 { get; set; }
-
-                /// <summary>
-                /// A map ID in format mXX_XX_XX_XX.
-                /// </summary>
-                public byte MapID4 { get; set; }
+                public byte[] MapID { get; private set; }
 
                 /// <summary>
                 /// Creates a new ConnectCollision with the given name.
                 /// </summary>
-                public ConnectCollision(string name) : base(name) { }
+                public ConnectCollision(string name) : base(name)
+                {
+                    MapID = new byte[4];
+                }
 
                 /// <summary>
                 /// Creates a new ConnectCollision with values copied from another.
@@ -1427,10 +1395,7 @@ namespace SoulsFormats
                 public ConnectCollision(ConnectCollision clone) : base(clone)
                 {
                     CollisionName = clone.CollisionName;
-                    MapID1 = clone.MapID1;
-                    MapID2 = clone.MapID2;
-                    MapID3 = clone.MapID3;
-                    MapID4 = clone.MapID4;
+                    MapID = clone.MapID;
                 }
 
                 internal ConnectCollision(BinaryReaderEx br) : base(br) { }
@@ -1438,10 +1403,7 @@ namespace SoulsFormats
                 internal override void ReadTypeData(BinaryReaderEx br)
                 {
                     CollisionIndex = br.ReadInt32();
-                    MapID1 = br.ReadByte();
-                    MapID2 = br.ReadByte();
-                    MapID3 = br.ReadByte();
-                    MapID4 = br.ReadByte();
+                    MapID = br.ReadBytes(4);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                 }
@@ -1449,10 +1411,7 @@ namespace SoulsFormats
                 internal override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(CollisionIndex);
-                    bw.WriteByte(MapID1);
-                    bw.WriteByte(MapID2);
-                    bw.WriteByte(MapID3);
-                    bw.WriteByte(MapID4);
+                    bw.WriteBytes(MapID);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                 }

@@ -254,7 +254,7 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk2 { get; set; }
+            public int Unk2C { get; set; }
 
             /// <summary>
             /// The shape of this region.
@@ -280,7 +280,7 @@ namespace SoulsFormats
             /// Unknown.
             /// </summary>
             public List<short> UnkA { get; set; }
-            
+
             /// <summary>
             /// Unknown.
             /// </summary>
@@ -295,16 +295,13 @@ namespace SoulsFormats
             /// <summary>
             /// An ID used to identify this region in event scripts.
             /// </summary>
-            public int EventEntityID { get; set; }
+            public int EntityID { get; set; }
 
             internal Region(string name, bool hasTypeData)
             {
                 Name = name;
-                Position = Vector3.Zero;
-                Rotation = Vector3.Zero;
                 Shape = new Shape.Point();
-                ActivationPartName = null;
-                EventEntityID = -1;
+                EntityID = -1;
                 UnkA = new List<short>();
                 UnkB = new List<short>();
                 HasTypeData = hasTypeData;
@@ -317,8 +314,8 @@ namespace SoulsFormats
                 Rotation = clone.Rotation;
                 Shape = clone.Shape.Clone();
                 ActivationPartName = clone.ActivationPartName;
-                EventEntityID = clone.EventEntityID;
-                Unk2 = clone.Unk2;
+                EntityID = clone.EntityID;
+                Unk2C = clone.Unk2C;
                 UnkA = new List<short>(clone.UnkA);
                 UnkB = new List<short>(clone.UnkB);
                 MapStudioLayer = clone.MapStudioLayer;
@@ -335,9 +332,9 @@ namespace SoulsFormats
                 ShapeType shapeType = br.ReadEnum32<ShapeType>();
                 Position = br.ReadVector3();
                 Rotation = br.ReadVector3();
-                Unk2 = br.ReadInt32();
+                Unk2C = br.ReadInt32();
                 long baseDataOffset1 = br.ReadInt64();
-                long baseDataOffset2 = br.AssertInt64(baseDataOffset1 + 4);
+                long baseDataOffset2 = br.ReadInt64();
                 br.AssertInt32(-1);
                 MapStudioLayer = br.ReadUInt32();
                 long shapeDataOffset = br.ReadInt64();
@@ -383,7 +380,7 @@ namespace SoulsFormats
 
                 br.Position = start + baseDataOffset3;
                 ActivationPartIndex = br.ReadInt32();
-                EventEntityID = br.ReadInt32();
+                EntityID = br.ReadInt32();
 
                 HasTypeData = typeDataOffset != 0 || Type == RegionType.MufflingBox || Type == RegionType.MufflingPortal;
                 if (HasTypeData)
@@ -402,7 +399,7 @@ namespace SoulsFormats
                 bw.WriteUInt32((uint)Shape.Type);
                 bw.WriteVector3(Position);
                 bw.WriteVector3(Rotation);
-                bw.WriteInt32(Unk2);
+                bw.WriteInt32(Unk2C);
                 bw.ReserveInt64("BaseDataOffset1");
                 bw.ReserveInt64("BaseDataOffset2");
                 bw.WriteInt32(-1);
@@ -430,7 +427,7 @@ namespace SoulsFormats
 
                 bw.FillInt64("BaseDataOffset3", bw.Position - start);
                 bw.WriteInt32(ActivationPartIndex);
-                bw.WriteInt32(EventEntityID);
+                bw.WriteInt32(EntityID);
 
                 if (HasTypeData)
                     WriteSpecific(bw, start);
@@ -537,10 +534,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new InvasionPoint with the given name.
                 /// </summary>
-                public InvasionPoint(string name) : base(name, true)
-                {
-                    Priority = 0;
-                }
+                public InvasionPoint(string name) : base(name, true) { }
 
                 /// <summary>
                 /// Creates a new InvasionPoint with values copied from another.
@@ -579,10 +573,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new EnvironmentMapPoint with the given name.
                 /// </summary>
-                public EnvironmentMapPoint(string name) : base(name, true)
-                {
-                    UnkFlags = 0;
-                }
+                public EnvironmentMapPoint(string name) : base(name, true) { }
 
                 /// <summary>
                 /// Creates a new EnvironmentMapPoint with values copied from another.
@@ -597,12 +588,14 @@ namespace SoulsFormats
                 internal override void ReadSpecific(BinaryReaderEx br)
                 {
                     UnkFlags = br.ReadInt32();
+                    br.AssertInt32(0);
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw, long start)
                 {
                     bw.FillInt64("TypeDataOffset", bw.Position - start);
                     bw.WriteInt32(UnkFlags);
+                    bw.WriteInt32(0);
                 }
             }
 
@@ -656,7 +649,6 @@ namespace SoulsFormats
                 public Sound(string name) : base(name, true)
                 {
                     SoundType = SndType.Environment;
-                    SoundID = 0;
                     ChildRegionNames = new string[16];
                 }
 
@@ -723,7 +715,6 @@ namespace SoulsFormats
                 public SFX(string name) : base(name, true)
                 {
                     FFXID = -1;
-                    StartDisabled = false;
                 }
 
                 /// <summary>
@@ -784,7 +775,6 @@ namespace SoulsFormats
                 public WindSFX(string name) : base(name, true)
                 {
                     FFXID = -1;
-                    WindAreaName = null;
                 }
 
                 /// <summary>
@@ -910,8 +900,6 @@ namespace SoulsFormats
                 public Message(string name) : base(name, true)
                 {
                     MessageID = -1;
-                    UnkT02 = 0;
-                    Hidden = false;
                 }
 
                 /// <summary>
@@ -1077,14 +1065,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new EnvironmentMapEffectBox with the given name.
                 /// </summary>
-                public EnvironmentMapEffectBox(string name) : base(name, true)
-                {
-                    UnkT00 = 0;
-                    Compare = 0;
-                    UnkT08 = false;
-                    UnkT09 = 0;
-                    UnkT0A = 0;
-                }
+                public EnvironmentMapEffectBox(string name) : base(name, true) { }
 
                 /// <summary>
                 /// Creates a new EnvironmentMapEffectBox with values copied from another.
