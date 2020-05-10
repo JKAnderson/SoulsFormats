@@ -17,32 +17,32 @@ namespace SoulsFormats
             /// <summary>
             /// Map piece models in this section.
             /// </summary>
-            public List<Model.MapPiece> MapPieces;
+            public List<Model.MapPiece> MapPieces { get; set; }
 
             /// <summary>
             /// Object models in this section.
             /// </summary>
-            public List<Model.Object> Objects;
+            public List<Model.Object> Objects { get; set; }
 
             /// <summary>
             /// Enemy models in this section.
             /// </summary>
-            public List<Model.Enemy> Enemies;
+            public List<Model.Enemy> Enemies { get; set; }
 
             /// <summary>
             /// Player models in this section.
             /// </summary>
-            public List<Model.Player> Players;
+            public List<Model.Player> Players { get; set; }
 
             /// <summary>
             /// Collision models in this section.
             /// </summary>
-            public List<Model.Collision> Collisions;
+            public List<Model.Collision> Collisions { get; set; }
 
             /// <summary>
             /// Other models in this section.
             /// </summary>
-            public List<Model.Other> Others;
+            public List<Model.Other> Others { get; set; }
 
             /// <summary>
             /// Creates a new ModelParam with no models.
@@ -63,44 +63,32 @@ namespace SoulsFormats
             public override List<Model> GetEntries()
             {
                 return SFUtil.ConcatAll<Model>(
-                    MapPieces, Objects, Enemies, Players, Collisions, Others);
+                    MapPieces, Objects, Enemies, Players, Collisions,
+                    Others);
             }
 
             internal override Model ReadEntry(BinaryReaderEx br)
             {
                 ModelType type = br.GetEnum32<ModelType>(br.Position + 8);
-
                 switch (type)
                 {
                     case ModelType.MapPiece:
-                        var mapPiece = new Model.MapPiece(br);
-                        MapPieces.Add(mapPiece);
-                        return mapPiece;
+                        return MapPieces.EchoAdd(new Model.MapPiece(br));
 
                     case ModelType.Object:
-                        var obj = new Model.Object(br);
-                        Objects.Add(obj);
-                        return obj;
+                        return Objects.EchoAdd(new Model.Object(br));
 
                     case ModelType.Enemy:
-                        var enemy = new Model.Enemy(br);
-                        Enemies.Add(enemy);
-                        return enemy;
+                        return Enemies.EchoAdd(new Model.Enemy(br));
 
                     case ModelType.Player:
-                        var player = new Model.Player(br);
-                        Players.Add(player);
-                        return player;
+                        return Players.EchoAdd(new Model.Player(br));
 
                     case ModelType.Collision:
-                        var collision = new Model.Collision(br);
-                        Collisions.Add(collision);
-                        return collision;
+                        return Collisions.EchoAdd(new Model.Collision(br));
 
                     case ModelType.Other:
-                        var other = new Model.Other(br);
-                        Others.Add(other);
-                        return other;
+                        return Others.EchoAdd(new Model.Other(br));
 
                     default:
                         throw new NotImplementedException($"Unsupported model type: {type}");
@@ -238,12 +226,22 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public byte UnkT00, UnkT01;
+                public byte UnkT00 { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public bool UnkT02, UnkT03;
+                public byte UnkT01 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public bool UnkT02 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public bool UnkT03 { get; set; }
 
                 /// <summary>
                 /// Creates a new MapPiece with the given name.
@@ -302,12 +300,22 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public byte UnkT00, UnkT01;
+                public byte UnkT00 { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public bool UnkT02, UnkT03;
+                public byte UnkT01 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public bool UnkT02 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public bool UnkT03 { get; set; }
 
                 /// <summary>
                 /// Creates a new Object with the given name.

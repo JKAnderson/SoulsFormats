@@ -17,42 +17,42 @@ namespace SoulsFormats
             /// <summary>
             /// Treasures in the MSB.
             /// </summary>
-            public List<Event.Treasure> Treasures;
+            public List<Event.Treasure> Treasures { get; set; }
 
             /// <summary>
             /// Generators in the MSB.
             /// </summary>
-            public List<Event.Generator> Generators;
+            public List<Event.Generator> Generators { get; set; }
 
             /// <summary>
             /// Object actions in the MSB.
             /// </summary>
-            public List<Event.ObjAct> ObjActs;
+            public List<Event.ObjAct> ObjActs { get; set; }
 
             /// <summary>
             /// Map offsets in the MSB.
             /// </summary>
-            public List<Event.MapOffset> MapOffsets;
+            public List<Event.MapOffset> MapOffsets { get; set; }
 
             /// <summary>
             /// Pseudo multiplayer events in the MSB.
             /// </summary>
-            public List<Event.PseudoMultiplayer> PseudoMultiplayers;
+            public List<Event.PseudoMultiplayer> PseudoMultiplayers { get; set; }
 
             /// <summary>
             /// Walk routes in the MSB.
             /// </summary>
-            public List<Event.WalkRoute> WalkRoutes;
+            public List<Event.WalkRoute> WalkRoutes { get; set; }
 
             /// <summary>
             /// Group tours in the MSB.
             /// </summary>
-            public List<Event.GroupTour> GroupTours;
+            public List<Event.GroupTour> GroupTours { get; set; }
 
             /// <summary>
             /// Other events in the MSB.
             /// </summary>
-            public List<Event.Other> Others;
+            public List<Event.Other> Others { get; set; }
 
             /// <summary>
             /// Creates a new EventParam with no events.
@@ -75,54 +75,38 @@ namespace SoulsFormats
             public override List<Event> GetEntries()
             {
                 return SFUtil.ConcatAll<Event>(
-                    Treasures, Generators, ObjActs, MapOffsets, PseudoMultiplayers, WalkRoutes, GroupTours, Others);
+                    Treasures, Generators, ObjActs, MapOffsets, PseudoMultiplayers,
+                    WalkRoutes, GroupTours, Others);
             }
 
             internal override Event ReadEntry(BinaryReaderEx br)
             {
                 EventType type = br.GetEnum32<EventType>(br.Position + 0xC);
-
                 switch (type)
                 {
                     case EventType.Treasure:
-                        var treasure = new Event.Treasure(br);
-                        Treasures.Add(treasure);
-                        return treasure;
+                        return Treasures.EchoAdd(new Event.Treasure(br));
 
                     case EventType.Generator:
-                        var generator = new Event.Generator(br);
-                        Generators.Add(generator);
-                        return generator;
+                        return Generators.EchoAdd(new Event.Generator(br));
 
                     case EventType.ObjAct:
-                        var objAct = new Event.ObjAct(br);
-                        ObjActs.Add(objAct);
-                        return objAct;
+                        return ObjActs.EchoAdd(new Event.ObjAct(br));
 
                     case EventType.MapOffset:
-                        var mapOffset = new Event.MapOffset(br);
-                        MapOffsets.Add(mapOffset);
-                        return mapOffset;
+                        return MapOffsets.EchoAdd(new Event.MapOffset(br));
 
                     case EventType.PseudoMultiplayer:
-                        var invasion = new Event.PseudoMultiplayer(br);
-                        PseudoMultiplayers.Add(invasion);
-                        return invasion;
+                        return PseudoMultiplayers.EchoAdd(new Event.PseudoMultiplayer(br));
 
                     case EventType.WalkRoute:
-                        var walkRoute = new Event.WalkRoute(br);
-                        WalkRoutes.Add(walkRoute);
-                        return walkRoute;
+                        return WalkRoutes.EchoAdd(new Event.WalkRoute(br));
 
                     case EventType.GroupTour:
-                        var groupTour = new Event.GroupTour(br);
-                        GroupTours.Add(groupTour);
-                        return groupTour;
+                        return GroupTours.EchoAdd(new Event.GroupTour(br));
 
                     case EventType.Other:
-                        var other = new Event.Other(br);
-                        Others.Add(other);
-                        return other;
+                        return Others.EchoAdd(new Event.Other(br));
 
                     default:
                         throw new NotImplementedException($"Unsupported event type: {type}");
@@ -137,23 +121,23 @@ namespace SoulsFormats
 
         internal enum EventType : uint
         {
-            Light = 0x0,
-            Sound = 0x1,
-            SFX = 0x2,
-            WindSFX = 0x3,
-            Treasure = 0x4,
-            Generator = 0x5,
-            Message = 0x6,
-            ObjAct = 0x7,
-            SpawnPoint = 0x8,
-            MapOffset = 0x9,
-            Navimesh = 0xA,
-            Environment = 0xB,
-            PseudoMultiplayer = 0xC,
-            Unk0D = 0xD,
-            WalkRoute = 0xE,
-            GroupTour = 0xF,
-            Unk10 = 0x10,
+            Light = 0,
+            Sound = 1,
+            SFX = 2,
+            WindSFX = 3,
+            Treasure = 4,
+            Generator = 5,
+            Message = 6,
+            ObjAct = 7,
+            SpawnPoint = 8,
+            MapOffset = 9,
+            Navimesh = 10,
+            Environment = 11,
+            PseudoMultiplayer = 12,
+            Unk0D = 13,
+            WalkRoute = 14,
+            GroupTour = 15,
+            Unk10 = 16,
             Other = 0xFFFFFFFF,
         }
 
@@ -172,24 +156,24 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int EventID;
+            public int EventID { get; set; }
 
             /// <summary>
             /// The name of a part the event is attached to.
             /// </summary>
-            public string PartName;
+            public string PartName { get; set; }
             private int PartIndex;
 
             /// <summary>
             /// The name of a region the event is attached to.
             /// </summary>
-            public string PointName;
+            public string PointName { get; set; }
             private int PointIndex;
 
             /// <summary>
             /// Used to identify the event in event scripts.
             /// </summary>
-            public int EventEntityID;
+            public int EventEntityID { get; set; }
 
             internal Event(string name)
             {
@@ -291,33 +275,38 @@ namespace SoulsFormats
                 /// <summary>
                 /// The part the treasure is attached to.
                 /// </summary>
-                public string PartName2;
+                public string PartName2 { get; set; }
                 private int PartIndex2;
 
                 /// <summary>
                 /// IDs in the item lot param given by this treasure.
                 /// </summary>
-                public int ItemLot1, ItemLot2;
+                public int ItemLot1 { get; set; }
+
+                /// <summary>
+                /// IDs in the item lot param given by this treasure.
+                /// </summary>
+                public int ItemLot2 { get; set; }
 
                 /// <summary>
                 /// Unknown; always -1 in vanilla.
                 /// </summary>
-                public int ActionButtonParamID;
+                public int ActionButtonParamID { get; set; }
 
                 /// <summary>
                 /// Animation to play when taking this treasure.
                 /// </summary>
-                public int PickupAnimID;
+                public int PickupAnimID { get; set; }
 
                 /// <summary>
                 /// Used for treasures inside chests, exact significance unknown.
                 /// </summary>
-                public bool InChest;
+                public bool InChest { get; set; }
 
                 /// <summary>
                 /// Used only for Yoel's ashes treasure; in DS1, used for corpses in barrels.
                 /// </summary>
-                public bool StartDisabled;
+                public bool StartDisabled { get; set; }
 
                 /// <summary>
                 /// Creates a new Treasure with the given name.
@@ -427,32 +416,32 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short MaxNum;
+                public short MaxNum { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short LimitNum;
+                public short LimitNum { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short MinGenNum;
+                public short MinGenNum { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short MaxGenNum;
+                public short MaxGenNum { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public float MinInterval;
+                public float MinInterval { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public float MaxInterval;
+                public float MaxInterval { get; set; }
 
                 /// <summary>
                 /// Regions that enemies can be spawned at.
@@ -469,12 +458,17 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int SessionCondition;
+                public int SessionCondition { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public float UnkT14, UnkT18;
+                public float UnkT14 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public float UnkT18 { get; set; }
 
                 /// <summary>
                 /// Creates a new Generator with the given name.
@@ -608,28 +602,28 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int ObjActEntityID;
+                public int ObjActEntityID { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public string PartName2;
+                public string PartName2 { get; set; }
                 private int PartIndex2;
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int ObjActParamID;
+                public int ObjActParamID { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public ObjActState ObjActStateType;
+                public ObjActState ObjActStateType { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int EventFlagID;
+                public int EventFlagID { get; set; }
 
                 /// <summary>
                 /// Creates a new ObjAct with the given name.
@@ -711,12 +705,12 @@ namespace SoulsFormats
                 /// <summary>
                 /// Position of the map offset.
                 /// </summary>
-                public Vector3 Position;
+                public Vector3 Position { get; set; }
 
                 /// <summary>
                 /// Rotation of the map offset.
                 /// </summary>
-                public float Degree;
+                public float Degree { get; set; }
 
                 /// <summary>
                 /// Creates a new MapOffset with the given name.
@@ -761,37 +755,37 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int HostEventEntityID;
+                public int HostEventEntityID { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int InvasionEventEntityID;
+                public int InvasionEventEntityID { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int InvasionRegionIndex;
+                public int InvasionRegionIndex { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int SoundIDMaybe;
+                public int SoundIDMaybe { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int MapEventIDMaybe;
+                public int MapEventIDMaybe { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int FlagsMaybe;
+                public int FlagsMaybe { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT18;
+                public int UnkT18 { get; set; }
 
                 /// <summary>
                 /// Creates a new Invasion with the given name.
@@ -856,7 +850,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown; probably some kind of route type.
                 /// </summary>
-                public int UnkT00;
+                public int UnkT00 { get; set; }
 
                 /// <summary>
                 /// List of points in the route.
@@ -929,7 +923,12 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int PlatoonIDScriptActivate, State;
+                public int PlatoonIDScriptActivate { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public int State { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -998,12 +997,12 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int SoundTypeMaybe;
+                public int SoundTypeMaybe { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int SoundIDMaybe;
+                public int SoundIDMaybe { get; set; }
 
                 /// <summary>
                 /// Creates a new Other with the given name.

@@ -35,9 +35,7 @@ namespace SoulsFormats
 
             internal override Route ReadEntry(BinaryReaderEx br)
             {
-                var route = new Route(br);
-                Routes.Add(route);
-                return route;
+                return Routes.EchoAdd(new Route(br));
             }
 
             internal override void WriteEntry(BinaryWriterEx bw, int id, Route entry)

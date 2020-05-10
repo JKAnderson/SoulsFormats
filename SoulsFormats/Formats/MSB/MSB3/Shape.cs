@@ -91,7 +91,7 @@
                 /// <summary>
                 /// The radius of the circle.
                 /// </summary>
-                public float Radius;
+                public float Radius { get; set; }
 
                 /// <summary>
                 /// Creates a new Circle with radius 1.
@@ -141,7 +141,7 @@
                 /// <summary>
                 /// The radius of the sphere.
                 /// </summary>
-                public float Radius;
+                public float Radius { get; set; }
 
                 /// <summary>
                 /// Creates a new Sphere with radius 1.
@@ -191,12 +191,12 @@
                 /// <summary>
                 /// The radius of the cylinder.
                 /// </summary>
-                public float Radius;
+                public float Radius { get; set; }
 
                 /// <summary>
                 /// The height of the cylinder.
                 /// </summary>
-                public float Height;
+                public float Height { get; set; }
 
                 /// <summary>
                 /// Creates a new Cylinder with radius and height 1.
@@ -249,17 +249,17 @@
                 /// <summary>
                 /// The width of the box.
                 /// </summary>
-                public float Width;
+                public float Width { get; set; }
 
                 /// <summary>
                 /// The depth of the box.
                 /// </summary>
-                public float Depth;
+                public float Depth { get; set; }
 
                 /// <summary>
                 /// The height of the box.
                 /// </summary>
-                public float Height;
+                public float Height { get; set; }
 
                 /// <summary>
                 /// Creates a new Box with width, depth, and height 1.

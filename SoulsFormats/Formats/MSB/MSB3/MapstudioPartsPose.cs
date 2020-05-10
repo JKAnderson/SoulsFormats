@@ -16,7 +16,7 @@ namespace SoulsFormats
             /// <summary>
             /// Parts pose entries in this section.
             /// </summary>
-            public List<PartsPose> Poses;
+            public List<PartsPose> Poses { get; set; }
 
             /// <summary>
             /// Creates a new PartsPoseSection with no entries.
@@ -36,9 +36,7 @@ namespace SoulsFormats
 
             internal override PartsPose ReadEntry(BinaryReaderEx br)
             {
-                var pose = new PartsPose(br);
-                Poses.Add(pose);
-                return pose;
+                return Poses.EchoAdd(new PartsPose(br));
             }
 
             internal override void WriteEntry(BinaryWriterEx bw, int index, PartsPose entry)
@@ -55,13 +53,13 @@ namespace SoulsFormats
             /// <summary>
             /// The name of the part to pose.
             /// </summary>
-            public string PartName;
+            public string PartName { get; set; }
             private short PartIndex;
 
             /// <summary>
             /// Transforms for each bone.
             /// </summary>
-            public List<Bone> Bones;
+            public List<Bone> Bones { get; set; }
 
             /// <summary>
             /// Creates a new PartsPose with no members.
@@ -113,22 +111,22 @@ namespace SoulsFormats
                 /// <summary>
                 /// An index into the BoneNames section.
                 /// </summary>
-                public int BoneNamesIndex;
+                public int BoneNamesIndex { get; set; }
 
                 /// <summary>
                 /// Translation of the bone.
                 /// </summary>
-                public Vector3 Translation;
+                public Vector3 Translation { get; set; }
 
                 /// <summary>
                 /// Rotation of the bone.
                 /// </summary>
-                public Vector3 Rotation;
+                public Vector3 Rotation { get; set; }
 
                 /// <summary>
                 /// Scale of the bone.
                 /// </summary>
-                public Vector3 Scale;
+                public Vector3 Scale { get; set; }
 
                 /// <summary>
                 /// Creates a new Bone with the given bone name index and default transforms.

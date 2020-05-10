@@ -15,7 +15,7 @@ namespace SoulsFormats
             /// <summary>
             /// The bone names in this section.
             /// </summary>
-            public List<string> Names;
+            public List<string> Names { get; set; }
 
             /// <summary>
             /// Creates a new BoneNameSection with no bone names.
@@ -35,9 +35,7 @@ namespace SoulsFormats
 
             internal override string ReadEntry(BinaryReaderEx br)
             {
-                var name = br.ReadUTF16();
-                Names.Add(name);
-                return name;
+                return Names.EchoAdd(br.ReadUTF16());
             }
 
             internal override void WriteEntry(BinaryWriterEx bw, int id, string entry)

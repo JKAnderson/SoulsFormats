@@ -15,7 +15,7 @@ namespace SoulsFormats
             /// <summary>
             /// The layers in this section.
             /// </summary>
-            public List<Layer> Layers;
+            public List<Layer> Layers { get; set; }
 
             /// <summary>
             /// Creates a new LayerParam with no layers.
@@ -35,9 +35,7 @@ namespace SoulsFormats
 
             internal override Layer ReadEntry(BinaryReaderEx br)
             {
-                var layer = new Layer(br);
-                Layers.Add(layer);
-                return layer;
+                return Layers.EchoAdd(new Layer(br));
             }
 
             internal override void WriteEntry(BinaryWriterEx bw, int index, Layer entry)
@@ -54,17 +52,22 @@ namespace SoulsFormats
             /// <summary>
             /// The name of this layer.
             /// </summary>
-            public string Name;
+            public string Name { get; set; }
 
             /// <summary>
             /// Unknown; usually just counts up from 0.
             /// </summary>
-            public int Unk08, Unk0C;
+            public int Unk08 { get; set; }
+
+            /// <summary>
+            /// Unknown; usually just counts up from 0.
+            /// </summary>
+            public int Unk0C { get; set; }
 
             /// <summary>
             /// Unknown; seems to always be 0.
             /// </summary>
-            public int Unk10;
+            public int Unk10 { get; set; }
 
             /// <summary>
             /// Creates a new Layer with default values.

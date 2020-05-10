@@ -17,42 +17,42 @@ namespace SoulsFormats
             /// <summary>
             /// Map pieces in the MSB.
             /// </summary>
-            public List<Part.MapPiece> MapPieces;
+            public List<Part.MapPiece> MapPieces { get; set; }
 
             /// <summary>
             /// Objects in the MSB.
             /// </summary>
-            public List<Part.Object> Objects;
+            public List<Part.Object> Objects { get; set; }
 
             /// <summary>
             /// Enemies in the MSB.
             /// </summary>
-            public List<Part.Enemy> Enemies;
+            public List<Part.Enemy> Enemies { get; set; }
 
             /// <summary>
             /// Players in the MSB.
             /// </summary>
-            public List<Part.Player> Players;
+            public List<Part.Player> Players { get; set; }
 
             /// <summary>
             /// Collisions in the MSB.
             /// </summary>
-            public List<Part.Collision> Collisions;
+            public List<Part.Collision> Collisions { get; set; }
 
             /// <summary>
             /// Dummy objects in the MSB.
             /// </summary>
-            public List<Part.DummyObject> DummyObjects;
+            public List<Part.DummyObject> DummyObjects { get; set; }
 
             /// <summary>
             /// Dummy enemies in the MSB.
             /// </summary>
-            public List<Part.DummyEnemy> DummyEnemies;
+            public List<Part.DummyEnemy> DummyEnemies { get; set; }
 
             /// <summary>
             /// Connect collisions in the MSB.
             /// </summary>
-            public List<Part.ConnectCollision> ConnectCollisions;
+            public List<Part.ConnectCollision> ConnectCollisions { get; set; }
 
             /// <summary>
             /// Creates a new PartsParam with no parts.
@@ -75,55 +75,39 @@ namespace SoulsFormats
             public override List<Part> GetEntries()
             {
                 return SFUtil.ConcatAll<Part>(
-                    MapPieces, Objects, Enemies, Players, Collisions, DummyObjects, DummyEnemies, ConnectCollisions);
+                    MapPieces, Objects, Enemies, Players, Collisions,
+                    DummyObjects, DummyEnemies, ConnectCollisions);
             }
             IReadOnlyList<IMsbPart> IMsbParam<IMsbPart>.GetEntries() => GetEntries();
 
             internal override Part ReadEntry(BinaryReaderEx br)
             {
                 PartsType type = br.GetEnum32<PartsType>(br.Position + 8);
-
                 switch (type)
                 {
                     case PartsType.MapPiece:
-                        var mapPiece = new Part.MapPiece(br);
-                        MapPieces.Add(mapPiece);
-                        return mapPiece;
+                        return MapPieces.EchoAdd(new Part.MapPiece(br));
 
                     case PartsType.Object:
-                        var obj = new Part.Object(br);
-                        Objects.Add(obj);
-                        return obj;
+                        return Objects.EchoAdd(new Part.Object(br));
 
                     case PartsType.Enemy:
-                        var enemy = new Part.Enemy(br);
-                        Enemies.Add(enemy);
-                        return enemy;
+                        return Enemies.EchoAdd(new Part.Enemy(br));
 
                     case PartsType.Player:
-                        var player = new Part.Player(br);
-                        Players.Add(player);
-                        return player;
+                        return Players.EchoAdd(new Part.Player(br));
 
                     case PartsType.Collision:
-                        var collision = new Part.Collision(br);
-                        Collisions.Add(collision);
-                        return collision;
+                        return Collisions.EchoAdd(new Part.Collision(br));
 
                     case PartsType.DummyObject:
-                        var dummyObj = new Part.DummyObject(br);
-                        DummyObjects.Add(dummyObj);
-                        return dummyObj;
+                        return DummyObjects.EchoAdd(new Part.DummyObject(br));
 
                     case PartsType.DummyEnemy:
-                        var dummyEne = new Part.DummyEnemy(br);
-                        DummyEnemies.Add(dummyEne);
-                        return dummyEne;
+                        return DummyEnemies.EchoAdd(new Part.DummyEnemy(br));
 
                     case PartsType.ConnectCollision:
-                        var connectColl = new Part.ConnectCollision(br);
-                        ConnectCollisions.Add(connectColl);
-                        return connectColl;
+                        return ConnectCollisions.EchoAdd(new Part.ConnectCollision(br));
 
                     default:
                         throw new NotImplementedException($"Unsupported part type: {type}");
@@ -138,18 +122,18 @@ namespace SoulsFormats
 
         internal enum PartsType : uint
         {
-            MapPiece = 0x0,
-            Object = 0x1,
-            Enemy = 0x2,
-            Item = 0x3,
-            Player = 0x4,
-            Collision = 0x5,
-            NPCWander = 0x6,
-            Protoboss = 0x7,
-            Navmesh = 0x8,
-            DummyObject = 0x9,
-            DummyEnemy = 0xA,
-            ConnectCollision = 0xB,
+            MapPiece = 0,
+            Object = 1,
+            Enemy = 2,
+            Item = 3,
+            Player = 4,
+            Collision = 5,
+            NPCWander = 6,
+            Protoboss = 7,
+            Navmesh = 8,
+            DummyObject = 9,
+            DummyEnemy = 10,
+            ConnectCollision = 11,
         }
 
         /// <summary>
@@ -170,7 +154,7 @@ namespace SoulsFormats
             /// <summary>
             /// The placeholder model for this part.
             /// </summary>
-            public string Placeholder;
+            public string Placeholder { get; set; }
 
             private int modelIndex;
             /// <summary>
@@ -196,7 +180,7 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown; related to which parts do or don't appear in different ceremonies.
             /// </summary>
-            public uint MapStudioLayer;
+            public uint MapStudioLayer { get; set; }
 
             /// <summary>
             /// Unknown.
@@ -216,7 +200,7 @@ namespace SoulsFormats
             /// <summary>
             /// Used to identify the part in event scripts.
             /// </summary>
-            public int EventEntityID;
+            public int EventEntityID { get; set; }
 
             /// <summary>
             /// Used to identify multiple parts with the same ID in event scripts.
@@ -226,23 +210,87 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public sbyte OldLightID, OldFogID, OldScatterID, OldLensFlareID;
+            public sbyte OldLightID { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public sbyte LanternID, LodParamID, UnkB0E;
+            public sbyte OldFogID { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public bool PointLightShadowSource, ShadowSource, ShadowDest, IsShadowOnly, DrawByReflectCam,
-                DrawOnlyReflectCam, UseDepthBiasFloat, DisablePointLightEffect, UnkB17;
+            public sbyte OldScatterID { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int UnkB18;
+            public sbyte OldLensFlareID { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public sbyte LanternID { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public sbyte LodParamID { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public sbyte UnkB0E { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public bool PointLightShadowSource { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public bool ShadowSource { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public bool ShadowDest { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public bool IsShadowOnly { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public bool DrawByReflectCam { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public bool DrawOnlyReflectCam { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public bool UseDepthBiasFloat { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public bool DisablePointLightEffect { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public bool UnkB17 { get; set; }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public int UnkB18 { get; set; }
 
             internal Part(string name)
             {
@@ -621,7 +669,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Gparam IDs for this map piece.
                 /// </summary>
-                public GparamConfig Gparam;
+                public GparamConfig Gparam { get; set; }
 
                 /// <summary>
                 /// Creates a new MapPiece with the given name.
@@ -792,49 +840,59 @@ namespace SoulsFormats
                 /// <summary>
                 /// Gparam IDs for this enemy.
                 /// </summary>
-                public GparamConfig Gparam;
+                public GparamConfig Gparam { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public string CollisionName;
+                public string CollisionName { get; set; }
                 private int CollisionPartIndex;
 
                 /// <summary>
                 /// Controls enemy AI.
                 /// </summary>
-                public int ThinkParamID;
+                public int ThinkParamID { get; set; }
 
                 /// <summary>
                 /// Controls enemy stats.
                 /// </summary>
-                public int NPCParamID;
+                public int NPCParamID { get; set; }
 
                 /// <summary>
                 /// Controls enemy speech.
                 /// </summary>
-                public int TalkID;
+                public int TalkID { get; set; }
 
                 /// <summary>
                 /// Controls enemy equipment.
                 /// </summary>
-                public int CharaInitID;
+                public int CharaInitID { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short UnkT04, ChrManipulatorAllocationParameter;
+                public short UnkT04 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public short ChrManipulatorAllocationParameter { get; set; }
 
                 /// <summary>
                 /// Walk route followed by this enemy.
                 /// </summary>
-                public string WalkRouteName;
+                public string WalkRouteName { get; set; }
                 private short WalkRouteIndex;
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int BackupEventAnimID, UnkT78;
+                public int BackupEventAnimID { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public int UnkT78 { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -1071,78 +1129,93 @@ namespace SoulsFormats
                 /// <summary>
                 /// Gparam IDs for this collision.
                 /// </summary>
-                public GparamConfig Gparam;
+                public GparamConfig Gparam { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public UnkStruct4 Unk4;
+                public UnkStruct4 Unk4 { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public byte HitFilterID;
+                public byte HitFilterID { get; set; }
 
                 /// <summary>
                 /// Modifies sounds while the player is touching this collision.
                 /// </summary>
-                public SoundSpace SoundSpaceType;
+                public SoundSpace SoundSpaceType { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short EnvLightMapSpotIndex;
+                public short EnvLightMapSpotIndex { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public float ReflectPlaneHeight;
+                public float ReflectPlaneHeight { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short MapNameID;
+                public short MapNameID { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public bool DisableStart;
+                public bool DisableStart { get; set; }
 
                 /// <summary>
                 /// Disables a bonfire with this entity ID when an enemy is touching this collision.
                 /// </summary>
-                public int DisableBonfireEntityID;
+                public int DisableBonfireEntityID { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int PlayRegionID;
+                public int PlayRegionID { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short LockCamID1, LockCamID2;
+                public short LockCamID1 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public short LockCamID2 { get; set; }
 
                 /// <summary>
                 /// Unknown. Always refers to another collision part.
                 /// </summary>
-                public string UnkHitName;
+                public string UnkHitName { get; set; }
                 private int UnkHitIndex;
 
                 /// <summary>
                 /// ID in MapMimicryEstablishmentParam.
                 /// </summary>
-                public int ChameleonParamID;
+                public int ChameleonParamID { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public byte UnkT34, UnkT35, UnkT36;
+                public byte UnkT34 { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public MapVisiblity MapVisType;
+                public byte UnkT35 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public byte UnkT36 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public MapVisiblity MapVisType { get; set; }
 
                 /// <summary>
                 /// Creates a new Collision with the given name.
@@ -1320,13 +1393,28 @@ namespace SoulsFormats
                 /// <summary>
                 /// The name of the associated collision part.
                 /// </summary>
-                public string CollisionName;
+                public string CollisionName { get; set; }
                 private int CollisionIndex;
 
                 /// <summary>
                 /// A map ID in format mXX_XX_XX_XX.
                 /// </summary>
-                public byte MapID1, MapID2, MapID3, MapID4;
+                public byte MapID1 { get; set; }
+
+                /// <summary>
+                /// A map ID in format mXX_XX_XX_XX.
+                /// </summary>
+                public byte MapID2 { get; set; }
+
+                /// <summary>
+                /// A map ID in format mXX_XX_XX_XX.
+                /// </summary>
+                public byte MapID3 { get; set; }
+
+                /// <summary>
+                /// A map ID in format mXX_XX_XX_XX.
+                /// </summary>
+                public byte MapID4 { get; set; }
 
                 /// <summary>
                 /// Creates a new ConnectCollision with the given name.

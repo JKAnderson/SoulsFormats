@@ -145,98 +145,61 @@ namespace SoulsFormats
             internal override Region ReadEntry(BinaryReaderEx br)
             {
                 RegionType type = br.GetEnum32<RegionType>(br.Position + 0x8);
-
                 switch (type)
                 {
                     case RegionType.General:
-                        var general = new Region.General(br);
-                        General.Add(general);
-                        return general;
+                        return General.EchoAdd(new Region.General(br));
 
                     case RegionType.Unk00:
-                        var unk00 = new Region.Unk00(br);
-                        Unk00s.Add(unk00);
-                        return unk00;
+                        return Unk00s.EchoAdd(new Region.Unk00(br));
 
                     case RegionType.InvasionPoint:
-                        var invasion = new Region.InvasionPoint(br);
-                        InvasionPoints.Add(invasion);
-                        return invasion;
+                        return InvasionPoints.EchoAdd(new Region.InvasionPoint(br));
 
                     case RegionType.EnvironmentMapPoint:
-                        var envMapPoint = new Region.EnvironmentMapPoint(br);
-                        EnvironmentMapPoints.Add(envMapPoint);
-                        return envMapPoint;
+                        return EnvironmentMapPoints.EchoAdd(new Region.EnvironmentMapPoint(br));
 
                     case RegionType.Sound:
-                        var sound = new Region.Sound(br);
-                        Sounds.Add(sound);
-                        return sound;
+                        return Sounds.EchoAdd(new Region.Sound(br));
 
                     case RegionType.SFX:
-                        var sfx = new Region.SFX(br);
-                        SFX.Add(sfx);
-                        return sfx;
+                        return SFX.EchoAdd(new Region.SFX(br));
 
                     case RegionType.WindSFX:
-                        var windSFX = new Region.WindSFX(br);
-                        WindSFX.Add(windSFX);
-                        return windSFX;
+                        return WindSFX.EchoAdd(new Region.WindSFX(br));
 
                     case RegionType.SpawnPoint:
-                        var spawnPoint = new Region.SpawnPoint(br);
-                        SpawnPoints.Add(spawnPoint);
-                        return spawnPoint;
+                        return SpawnPoints.EchoAdd(new Region.SpawnPoint(br));
 
                     case RegionType.Message:
-                        var message = new Region.Message(br);
-                        Messages.Add(message);
-                        return message;
+                        return Messages.EchoAdd(new Region.Message(br));
 
                     case RegionType.WalkRoute:
-                        var walkRoute = new Region.WalkRoute(br);
-                        WalkRoutes.Add(walkRoute);
-                        return walkRoute;
+                        return WalkRoutes.EchoAdd(new Region.WalkRoute(br));
 
                     case RegionType.Unk12:
-                        var unk12 = new Region.Unk12(br);
-                        Unk12s.Add(unk12);
-                        return unk12;
+                        return Unk12s.EchoAdd(new Region.Unk12(br));
 
                     case RegionType.WarpPoint:
-                        var warpPoint = new Region.WarpPoint(br);
-                        WarpPoints.Add(warpPoint);
-                        return warpPoint;
+                        return WarpPoints.EchoAdd(new Region.WarpPoint(br));
 
                     case RegionType.ActivationArea:
-                        var activationArea = new Region.ActivationArea(br);
-                        ActivationAreas.Add(activationArea);
-                        return activationArea;
+                        return ActivationAreas.EchoAdd(new Region.ActivationArea(br));
 
                     case RegionType.Event:
-                        var ev = new Region.Event(br);
-                        Events.Add(ev);
-                        return ev;
+                        return Events.EchoAdd(new Region.Event(br));
 
                     case RegionType.EnvironmentMapEffectBox:
-                        var envMapEffectBox = new Region.EnvironmentMapEffectBox(br);
-                        EnvironmentMapEffectBoxes.Add(envMapEffectBox);
-                        return envMapEffectBox;
+                        return EnvironmentMapEffectBoxes.EchoAdd(new Region.EnvironmentMapEffectBox(br));
 
                     case RegionType.WindArea:
-                        var windArea = new Region.WindArea(br);
-                        WindAreas.Add(windArea);
-                        return windArea;
+                        return WindAreas.EchoAdd(new Region.WindArea(br));
 
                     case RegionType.MufflingBox:
-                        var muffBox = new Region.MufflingBox(br);
-                        MufflingBoxes.Add(muffBox);
-                        return muffBox;
+                        return MufflingBoxes.EchoAdd(new Region.MufflingBox(br));
 
                     case RegionType.MufflingPortal:
-                        var muffPortal = new Region.MufflingPortal(br);
-                        MufflingPortals.Add(muffPortal);
-                        return muffPortal;
+                        return MufflingPortals.EchoAdd(new Region.MufflingPortal(br));
 
                     default:
                         throw new NotImplementedException($"Unsupported region type: {type}");
