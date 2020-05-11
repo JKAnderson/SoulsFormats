@@ -682,12 +682,10 @@ namespace SoulsFormats
             }
 
             /// <summary>
-            /// Any dynamic object such as elevators, crates, ladders, etc.
+            /// Common base data for objects and dummy objects.
             /// </summary>
-            public class Object : Part
+            public abstract class ObjectBase : Part
             {
-                internal override PartsType Type => PartsType.Object;
-
                 internal override bool HasGparamConfig => true;
                 internal override bool HasUnk4 => false;
 
@@ -732,20 +730,14 @@ namespace SoulsFormats
                 /// </summary>
                 public short[] ModelSfxParamRelativeIDs { get; private set; }
 
-                /// <summary>
-                /// Creates a new Object with the given name.
-                /// </summary>
-                public Object(string name) : base(name)
+                internal ObjectBase(string name) : base(name)
                 {
                     Gparam = new GparamConfig();
                     AnimIDs = new short[4] { -1, -1, -1, -1 };
                     ModelSfxParamRelativeIDs = new short[4] { -1, -1, -1, -1 };
                 }
 
-                /// <summary>
-                /// Creates a new Object with values copied from another.
-                /// </summary>
-                public Object(Object clone) : base(clone)
+                internal ObjectBase(ObjectBase clone) : base(clone)
                 {
                     Gparam = new GparamConfig(clone.Gparam);
                     CollisionName = clone.CollisionName;
@@ -757,7 +749,7 @@ namespace SoulsFormats
                     ModelSfxParamRelativeIDs = (short[])clone.ModelSfxParamRelativeIDs.Clone();
                 }
 
-                internal Object(BinaryReaderEx br) : base(br) { }
+                internal ObjectBase(BinaryReaderEx br) : base(br) { }
 
                 internal override void ReadTypeData(BinaryReaderEx br)
                 {
@@ -803,12 +795,30 @@ namespace SoulsFormats
             }
 
             /// <summary>
-            /// Any non-player character, not necessarily hostile.
+            /// Any dynamic object such as elevators, crates, ladders, etc.
             /// </summary>
-            public class Enemy : Part
+            public class Object : ObjectBase
             {
-                internal override PartsType Type => PartsType.Enemy;
+                internal override PartsType Type => PartsType.Object;
 
+                /// <summary>
+                /// Creates a new Object with the given name.
+                /// </summary>
+                public Object(string name) : base(name) { }
+
+                /// <summary>
+                /// Creates a new Object with values copied from another.
+                /// </summary>
+                public Object(Object clone) : base(clone) { }
+
+                internal Object(BinaryReaderEx br) : base(br) { }
+            }
+
+            /// <summary>
+            /// Common base data for enemies and dummy enemies.
+            /// </summary>
+            public abstract class EnemyBase : Part
+            {
                 internal override bool HasGparamConfig => true;
                 internal override bool HasUnk4 => false;
 
@@ -872,20 +882,14 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public float UnkT84;
+                public float UnkT84 { get; set; }
 
-                /// <summary>
-                /// Creates a new Enemy with the given name.
-                /// </summary>
-                public Enemy(string name) : base(name)
+                internal EnemyBase(string name) : base(name)
                 {
                     Gparam = new GparamConfig();
                 }
 
-                /// <summary>
-                /// Creates a new Enemy with values copied from another.
-                /// </summary>
-                public Enemy(Enemy clone) : base(clone)
+                internal EnemyBase(EnemyBase clone) : base(clone)
                 {
                     Gparam = new GparamConfig(clone.Gparam);
                     ThinkParamID = clone.ThinkParamID;
@@ -901,7 +905,7 @@ namespace SoulsFormats
                     UnkT84 = clone.UnkT84;
                 }
 
-                internal Enemy(BinaryReaderEx br) : base(br) { }
+                internal EnemyBase(BinaryReaderEx br) : base(br) { }
 
                 internal override void ReadTypeData(BinaryReaderEx br)
                 {
@@ -1020,6 +1024,26 @@ namespace SoulsFormats
                     CollisionPartIndex = MSB.FindIndex(entries.Parts, CollisionName);
                     WalkRouteIndex = (short)MSB.FindIndex(msb.Events.WalkRoutes, WalkRouteName);
                 }
+            }
+
+            /// <summary>
+            /// Any non-player character, not necessarily hostile.
+            /// </summary>
+            public class Enemy : EnemyBase
+            {
+                internal override PartsType Type => PartsType.Enemy;
+
+                /// <summary>
+                /// Creates a new Enemy with the given name.
+                /// </summary>
+                public Enemy(string name) : base(name) { }
+
+                /// <summary>
+                /// Creates a new Enemy with values copied from another.
+                /// </summary>
+                public Enemy(Enemy clone) : base(clone) { }
+
+                internal Enemy(BinaryReaderEx br) : base(br) { }
             }
 
             /// <summary>
@@ -1318,7 +1342,7 @@ namespace SoulsFormats
             /// <summary>
             /// An object that is either unused, or used for a cutscene.
             /// </summary>
-            public class DummyObject : Object
+            public class DummyObject : ObjectBase
             {
                 internal override PartsType Type => PartsType.DummyObject;
 
@@ -1338,7 +1362,7 @@ namespace SoulsFormats
             /// <summary>
             /// An enemy that is either unused, or used for a cutscene.
             /// </summary>
-            public class DummyEnemy : Enemy
+            public class DummyEnemy : EnemyBase
             {
                 internal override PartsType Type => PartsType.DummyEnemy;
 

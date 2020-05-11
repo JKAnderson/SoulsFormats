@@ -984,9 +984,156 @@ namespace SoulsFormats
             }
 
             /// <summary>
+            /// Common base data for objects and dummy objects.
+            /// </summary>
+            public abstract class ObjectBase : Part
+            {
+                internal override bool HasUnk2 => false;
+                internal override bool HasGparamConfig => true;
+                internal override bool HasUnk6 => false;
+                internal override bool HasUnk7 => false;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public GparamConfig Gparam { get; set; }
+
+                /// <summary>
+                /// Reference to a map piece or collision; believed to determine when the object is loaded.
+                /// </summary>
+                public string ObjPartName1 { get; set; }
+                private int ObjPartIndex1;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public byte UnkT0C { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public bool EnableObjAnimNetSyncStructure { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public byte UnkT0E { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public bool SetMainObjStructureBooleans { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public short AnimID { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public short UnkT18 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public short UnkT1A { get; set; }
+
+                /// <summary>
+                /// Reference to a collision; believed to be involved with loading when grappling to the object.
+                /// </summary>
+                public string ObjPartName2 { get; set; }
+                private int ObjPartIndex2;
+
+                /// <summary>
+                /// Reference to a collision; believed to be involved with loading when grappling to the object.
+                /// </summary>
+                public string ObjPartName3 { get; set; }
+                private int ObjPartIndex3;
+
+                internal ObjectBase() : base()
+                {
+                    Gparam = new GparamConfig();
+                }
+
+                internal ObjectBase(ObjectBase clone) : base(clone)
+                {
+                    Gparam = new GparamConfig(clone.Gparam);
+                    ObjPartName1 = clone.ObjPartName1;
+                    UnkT0C = clone.UnkT0C;
+                    EnableObjAnimNetSyncStructure = clone.EnableObjAnimNetSyncStructure;
+                    UnkT0E = clone.UnkT0E;
+                    SetMainObjStructureBooleans = clone.SetMainObjStructureBooleans;
+                    AnimID = clone.AnimID;
+                    UnkT18 = clone.UnkT18;
+                    UnkT1A = clone.UnkT1A;
+                    ObjPartName2 = clone.ObjPartName2;
+                    ObjPartName3 = clone.ObjPartName3;
+                }
+
+                internal ObjectBase(BinaryReaderEx br) : base(br)
+                {
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    ObjPartIndex1 = br.ReadInt32();
+                    UnkT0C = br.ReadByte();
+                    EnableObjAnimNetSyncStructure = br.ReadBoolean();
+                    UnkT0E = br.ReadByte();
+                    SetMainObjStructureBooleans = br.ReadBoolean();
+                    AnimID = br.ReadInt16();
+                    br.AssertInt16(-1);
+                    br.AssertInt32(-1);
+                    UnkT18 = br.ReadInt16();
+                    UnkT1A = br.ReadInt16();
+                    br.AssertInt32(-1);
+                    ObjPartIndex2 = br.ReadInt32();
+                    ObjPartIndex3 = br.ReadInt32();
+                }
+
+                internal override void ReadGparamConfig(BinaryReaderEx br) => Gparam = new GparamConfig(br);
+
+                internal override void WriteTypeData(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(ObjPartIndex1);
+                    bw.WriteByte(UnkT0C);
+                    bw.WriteBoolean(EnableObjAnimNetSyncStructure);
+                    bw.WriteByte(UnkT0E);
+                    bw.WriteBoolean(SetMainObjStructureBooleans);
+                    bw.WriteInt16(AnimID);
+                    bw.WriteInt16(-1);
+                    bw.WriteInt32(-1);
+                    bw.WriteInt16(UnkT18);
+                    bw.WriteInt16(UnkT1A);
+                    bw.WriteInt32(-1);
+                    bw.WriteInt32(ObjPartIndex2);
+                    bw.WriteInt32(ObjPartIndex3);
+                }
+
+                internal override void WriteGparamConfig(BinaryWriterEx bw) => Gparam.Write(bw);
+
+                internal override void GetNames(MSBS msb, Entries entries)
+                {
+                    base.GetNames(msb, entries);
+                    ObjPartName1 = MSB.FindName(entries.Parts, ObjPartIndex1);
+                    ObjPartName2 = MSB.FindName(entries.Parts, ObjPartIndex2);
+                    ObjPartName3 = MSB.FindName(entries.Parts, ObjPartIndex3);
+                }
+
+                internal override void GetIndices(MSBS msb, Entries entries)
+                {
+                    base.GetIndices(msb, entries);
+                    ObjPartIndex1 = MSB.FindIndex(entries.Parts, ObjPartName1);
+                    ObjPartIndex2 = MSB.FindIndex(entries.Parts, ObjPartName2);
+                    ObjPartIndex3 = MSB.FindIndex(entries.Parts, ObjPartName3);
+                }
+            }
+
+            /// <summary>
             /// A dynamic or interactible element in the map.
             /// </summary>
-            public class Object : DummyObject
+            public class Object : ObjectBase
             {
                 /// <summary>
                 /// PartType.Object
@@ -1034,7 +1181,7 @@ namespace SoulsFormats
             /// <summary>
             /// Any non-player character.
             /// </summary>
-            public class Enemy : DummyEnemy
+            public class Enemy : EnemyBase
             {
                 /// <summary>
                 /// PartType.Enemy
@@ -1345,7 +1492,7 @@ namespace SoulsFormats
             /// <summary>
             /// An object that either isn't used, or is used for a cutscene.
             /// </summary>
-            public class DummyObject : Part
+            public class DummyObject : ObjectBase
             {
                 /// <summary>
                 /// PartType.DummyObject
@@ -1353,158 +1500,24 @@ namespace SoulsFormats
                 public override PartType Type => PartType.DummyObject;
 
                 internal override bool HasUnk1 => false;
-                internal override bool HasUnk2 => false;
-                internal override bool HasGparamConfig => true;
-                internal override bool HasUnk6 => false;
-                internal override bool HasUnk7 => false;
-
-                /// <summary>
-                /// Unknown.
-                /// </summary>
-                public GparamConfig Gparam { get; set; }
-
-                /// <summary>
-                /// Reference to a map piece or collision; believed to determine when the object is loaded.
-                /// </summary>
-                public string ObjPartName1 { get; set; }
-                private int ObjPartIndex1;
-
-                /// <summary>
-                /// Unknown.
-                /// </summary>
-                public byte UnkT0C { get; set; }
-
-                /// <summary>
-                /// Unknown.
-                /// </summary>
-                public bool EnableObjAnimNetSyncStructure { get; set; }
-
-                /// <summary>
-                /// Unknown.
-                /// </summary>
-                public byte UnkT0E { get; set; }
-
-                /// <summary>
-                /// Unknown.
-                /// </summary>
-                public bool SetMainObjStructureBooleans { get; set; }
-
-                /// <summary>
-                /// Unknown.
-                /// </summary>
-                public short AnimID { get; set; }
-
-                /// <summary>
-                /// Unknown.
-                /// </summary>
-                public short UnkT18 { get; set; }
-
-                /// <summary>
-                /// Unknown.
-                /// </summary>
-                public short UnkT1A { get; set; }
-
-                /// <summary>
-                /// Reference to a collision; believed to be involved with loading when grappling to the object.
-                /// </summary>
-                public string ObjPartName2 { get; set; }
-                private int ObjPartIndex2;
-
-                /// <summary>
-                /// Reference to a collision; believed to be involved with loading when grappling to the object.
-                /// </summary>
-                public string ObjPartName3 { get; set; }
-                private int ObjPartIndex3;
 
                 /// <summary>
                 /// Creates a DummyObject with default values.
                 /// </summary>
-                public DummyObject() : base()
-                {
-                    Gparam = new GparamConfig();
-                }
+                public DummyObject() : base() { }
 
                 /// <summary>
                 /// Clones an existing DummyObject.
                 /// </summary>
-                public DummyObject(DummyObject clone) : base(clone)
-                {
-                    Gparam = new GparamConfig(clone.Gparam);
-                    ObjPartName1 = clone.ObjPartName1;
-                    UnkT0C = clone.UnkT0C;
-                    EnableObjAnimNetSyncStructure = clone.EnableObjAnimNetSyncStructure;
-                    UnkT0E = clone.UnkT0E;
-                    SetMainObjStructureBooleans = clone.SetMainObjStructureBooleans;
-                    AnimID = clone.AnimID;
-                    UnkT18 = clone.UnkT18;
-                    UnkT1A = clone.UnkT1A;
-                    ObjPartName2 = clone.ObjPartName2;
-                    ObjPartName3 = clone.ObjPartName3;
-                }
+                public DummyObject(DummyObject clone) : base(clone) { }
 
-                internal DummyObject(BinaryReaderEx br) : base(br)
-                {
-                    br.AssertInt32(0);
-                    br.AssertInt32(0);
-                    ObjPartIndex1 = br.ReadInt32();
-                    UnkT0C = br.ReadByte();
-                    EnableObjAnimNetSyncStructure = br.ReadBoolean();
-                    UnkT0E = br.ReadByte();
-                    SetMainObjStructureBooleans = br.ReadBoolean();
-                    AnimID = br.ReadInt16();
-                    br.AssertInt16(-1);
-                    br.AssertInt32(-1);
-                    UnkT18 = br.ReadInt16();
-                    UnkT1A = br.ReadInt16();
-                    br.AssertInt32(-1);
-                    ObjPartIndex2 = br.ReadInt32();
-                    ObjPartIndex3 = br.ReadInt32();
-                }
-
-                internal override void ReadGparamConfig(BinaryReaderEx br) => Gparam = new GparamConfig(br);
-
-                internal override void WriteTypeData(BinaryWriterEx bw)
-                {
-                    bw.WriteInt32(0);
-                    bw.WriteInt32(0);
-                    bw.WriteInt32(ObjPartIndex1);
-                    bw.WriteByte(UnkT0C);
-                    bw.WriteBoolean(EnableObjAnimNetSyncStructure);
-                    bw.WriteByte(UnkT0E);
-                    bw.WriteBoolean(SetMainObjStructureBooleans);
-                    bw.WriteInt16(AnimID);
-                    bw.WriteInt16(-1);
-                    bw.WriteInt32(-1);
-                    bw.WriteInt16(UnkT18);
-                    bw.WriteInt16(UnkT1A);
-                    bw.WriteInt32(-1);
-                    bw.WriteInt32(ObjPartIndex2);
-                    bw.WriteInt32(ObjPartIndex3);
-                }
-
-                internal override void WriteGparamConfig(BinaryWriterEx bw) => Gparam.Write(bw);
-
-                internal override void GetNames(MSBS msb, Entries entries)
-                {
-                    base.GetNames(msb, entries);
-                    ObjPartName1 = MSB.FindName(entries.Parts, ObjPartIndex1);
-                    ObjPartName2 = MSB.FindName(entries.Parts, ObjPartIndex2);
-                    ObjPartName3 = MSB.FindName(entries.Parts, ObjPartIndex3);
-                }
-
-                internal override void GetIndices(MSBS msb, Entries entries)
-                {
-                    base.GetIndices(msb, entries);
-                    ObjPartIndex1 = MSB.FindIndex(entries.Parts, ObjPartName1);
-                    ObjPartIndex2 = MSB.FindIndex(entries.Parts, ObjPartName2);
-                    ObjPartIndex3 = MSB.FindIndex(entries.Parts, ObjPartName3);
-                }
+                internal DummyObject(BinaryReaderEx br) : base(br) { }
             }
 
             /// <summary>
             /// An enemy that either isn't used, or is used for a cutscene.
             /// </summary>
-            public class DummyEnemy : Part
+            public class DummyEnemy : EnemyBase
             {
                 /// <summary>
                 /// PartType.DummyEnemy
@@ -1512,6 +1525,25 @@ namespace SoulsFormats
                 public override PartType Type => PartType.DummyEnemy;
 
                 internal override bool HasUnk1 => false;
+
+                /// <summary>
+                /// Creates a DummyEnemy with default values.
+                /// </summary>
+                public DummyEnemy() : base() { }
+
+                /// <summary>
+                /// Clones an existing DummyEnemy.
+                /// </summary>
+                public DummyEnemy(DummyEnemy clone) : base(clone) { }
+
+                internal DummyEnemy(BinaryReaderEx br) : base(br) { }
+            }
+
+            /// <summary>
+            /// Common base data for enemies and dummy enemies.
+            /// </summary>
+            public abstract class EnemyBase : Part
+            {
                 internal override bool HasUnk2 => false;
                 internal override bool HasGparamConfig => true;
                 internal override bool HasUnk6 => false;
@@ -1608,10 +1640,7 @@ namespace SoulsFormats
                 /// </summary>
                 public float UnkT84 { get; set; }
 
-                /// <summary>
-                /// Creates a DummyEnemy with default values.
-                /// </summary>
-                public DummyEnemy() : base()
+                internal EnemyBase() : base()
                 {
                     Gparam = new GparamConfig();
                     ThinkParamID = -1;
@@ -1622,10 +1651,7 @@ namespace SoulsFormats
                     EventFlagID = -1;
                 }
 
-                /// <summary>
-                /// Clones an existing DummyEnemy.
-                /// </summary>
-                public DummyEnemy(DummyEnemy clone) : base(clone)
+                internal EnemyBase(EnemyBase clone) : base(clone)
                 {
                     Gparam = new GparamConfig(clone.Gparam);
                     ThinkParamID = clone.ThinkParamID;
@@ -1647,7 +1673,7 @@ namespace SoulsFormats
                     UnkT84 = clone.UnkT84;
                 }
 
-                internal DummyEnemy(BinaryReaderEx br) : base(br)
+                internal EnemyBase(BinaryReaderEx br) : base(br)
                 {
                     br.AssertInt32(0);
                     br.AssertInt32(0);

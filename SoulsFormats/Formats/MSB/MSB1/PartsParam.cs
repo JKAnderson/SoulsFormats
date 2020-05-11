@@ -444,13 +444,26 @@ namespace SoulsFormats
             /// <summary>
             /// A dynamic or interactible part of the map.
             /// </summary>
-            public class Object : Part
+            public class Object : ObjectBase
             {
                 /// <summary>
                 /// PartType.Object
                 /// </summary>
                 public override PartType Type => PartType.Object;
 
+                /// <summary>
+                /// Creates an Object with default values.
+                /// </summary>
+                public Object() : base() { }
+
+                internal Object(BinaryReaderEx br) : base(br) { }
+            }
+
+            /// <summary>
+            /// Common base data for objects and dummy objects.
+            /// </summary>
+            public abstract class ObjectBase : Part
+            {
                 /// <summary>
                 /// Collision that controls loading of the object.
                 /// </summary>
@@ -477,12 +490,9 @@ namespace SoulsFormats
                 /// </summary>
                 public int UnkT10 { get; set; }
 
-                /// <summary>
-                /// Creates an Object with default values.
-                /// </summary>
-                public Object() : base() { }
+                internal ObjectBase() : base() { }
 
-                internal Object(BinaryReaderEx br) : base(br)
+                internal ObjectBase(BinaryReaderEx br) : base(br)
                 {
                     br.AssertInt32(0);
                     CollisionIndex = br.ReadInt32();
@@ -519,15 +529,10 @@ namespace SoulsFormats
             }
 
             /// <summary>
-            /// Any living entity besides the player character.
+            /// Common base data for enemies and dummy enemies.
             /// </summary>
-            public class Enemy : Part
+            public abstract class EnemyBase : Part
             {
-                /// <summary>
-                /// PartType.Enemy
-                /// </summary>
-                public override PartType Type => PartType.Enemy;
-
                 /// <summary>
                 /// ID in NPCThinkParam determining AI properties.
                 /// </summary>
@@ -575,10 +580,7 @@ namespace SoulsFormats
                 /// </summary>
                 public int UnkT3C { get; set; }
 
-                /// <summary>
-                /// Creates an Enemy with default values.
-                /// </summary>
-                public Enemy() : base()
+                internal EnemyBase() : base()
                 {
                     ThinkParamID = -1;
                     NPCParamID = -1;
@@ -587,7 +589,7 @@ namespace SoulsFormats
                     MovePointNames = new string[8];
                 }
 
-                internal Enemy(BinaryReaderEx br) : base(br)
+                internal EnemyBase(BinaryReaderEx br) : base(br)
                 {
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -641,6 +643,24 @@ namespace SoulsFormats
                     for (int i = 0; i < MovePointNames.Length; i++)
                         MovePointIndices[i] = (short)MSB.FindIndex(entries.Regions, MovePointNames[i]);
                 }
+            }
+
+            /// <summary>
+            /// Any living entity besides the player character.
+            /// </summary>
+            public class Enemy : EnemyBase
+            {
+                /// <summary>
+                /// PartType.Enemy
+                /// </summary>
+                public override PartType Type => PartType.Enemy;
+
+                /// <summary>
+                /// Creates an Enemy with default values.
+                /// </summary>
+                public Enemy() : base() { }
+
+                internal Enemy(BinaryReaderEx br) : base(br) { }
             }
 
             /// <summary>
@@ -855,7 +875,7 @@ namespace SoulsFormats
             /// <summary>
             /// A normally invisible object, either unused or for a cutscene.
             /// </summary>
-            public class DummyObject : Object
+            public class DummyObject : ObjectBase
             {
                 /// <summary>
                 /// PartType.DummyObject
@@ -873,7 +893,7 @@ namespace SoulsFormats
             /// <summary>
             /// A normally invisible enemy, either unused or for a cutscene.
             /// </summary>
-            public class DummyEnemy : Enemy
+            public class DummyEnemy : EnemyBase
             {
                 /// <summary>
                 /// PartType.DummyEnemy
