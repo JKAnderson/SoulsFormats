@@ -6,6 +6,22 @@ namespace SoulsFormats
 {
     public partial class MSB3
     {
+        internal enum PartsType : uint
+        {
+            MapPiece = 0,
+            Object = 1,
+            Enemy = 2,
+            Item = 3,
+            Player = 4,
+            Collision = 5,
+            NPCWander = 6,
+            Protoboss = 7,
+            Navmesh = 8,
+            DummyObject = 9,
+            DummyEnemy = 10,
+            ConnectCollision = 11,
+        }
+
         /// <summary>
         /// Instances of various "things" in this MSB.
         /// </summary>
@@ -70,6 +86,29 @@ namespace SoulsFormats
             }
 
             /// <summary>
+            /// Adds a part to the appropriate list for its type; returns the part.
+            /// </summary>
+            public Part Add(Part part)
+            {
+                switch (part)
+                {
+                    case Part.MapPiece p: MapPieces.Add(p); break;
+                    case Part.Object p: Objects.Add(p); break;
+                    case Part.Enemy p: Enemies.Add(p); break;
+                    case Part.Player p: Players.Add(p); break;
+                    case Part.Collision p: Collisions.Add(p); break;
+                    case Part.DummyObject p: DummyObjects.Add(p); break;
+                    case Part.DummyEnemy p: DummyEnemies.Add(p); break;
+                    case Part.ConnectCollision p: ConnectCollisions.Add(p); break;
+
+                    default:
+                        throw new ArgumentException($"Unrecognized type {part.GetType()}.", nameof(part));
+                }
+                return part;
+            }
+            IMsbPart IMsbParam<IMsbPart>.Add(IMsbPart item) => Add((Part)item);
+
+            /// <summary>
             /// Returns every part in the order they'll be written.
             /// </summary>
             public override List<Part> GetEntries()
@@ -115,31 +154,14 @@ namespace SoulsFormats
             }
         }
 
-        internal enum PartsType : uint
-        {
-            MapPiece = 0,
-            Object = 1,
-            Enemy = 2,
-            Item = 3,
-            Player = 4,
-            Collision = 5,
-            NPCWander = 6,
-            Protoboss = 7,
-            Navmesh = 8,
-            DummyObject = 9,
-            DummyEnemy = 10,
-            ConnectCollision = 11,
-        }
-
         /// <summary>
         /// Any instance of some "thing" in a map.
         /// </summary>
         public abstract class Part : NamedEntry, IMsbPart
         {
-            internal abstract PartsType Type { get; }
-
-            internal abstract bool HasGparamConfig { get; }
-            internal abstract bool HasUnk4 { get; }
+            private protected abstract PartsType Type { get; }
+            private protected abstract bool HasGparamConfig { get; }
+            private protected abstract bool HasUnk4 { get; }
 
             /// <summary>
             /// The name of this part.
@@ -272,7 +294,7 @@ namespace SoulsFormats
             /// </summary>
             public int UnkE18 { get; set; }
 
-            internal Part(string name)
+            private protected Part(string name)
             {
                 Name = name;
                 Scale = Vector3.One;
@@ -286,7 +308,7 @@ namespace SoulsFormats
                 EntityGroups = new int[8] { -1, -1, -1, -1, -1, -1, -1, -1 };
             }
 
-            internal Part(Part clone)
+            private protected Part(Part clone)
             {
                 Name = clone.Name;
                 SibPath = clone.SibPath;
@@ -316,7 +338,7 @@ namespace SoulsFormats
                 EntityGroups = (int[])clone.EntityGroups.Clone();
             }
 
-            internal Part(BinaryReaderEx br)
+            private protected Part(BinaryReaderEx br)
             {
                 long start = br.Position;
 
@@ -636,10 +658,9 @@ namespace SoulsFormats
             /// </summary>
             public class MapPiece : Part
             {
-                internal override PartsType Type => PartsType.MapPiece;
-
-                internal override bool HasGparamConfig => true;
-                internal override bool HasUnk4 => false;
+                private protected override PartsType Type => PartsType.MapPiece;
+                private protected override bool HasGparamConfig => true;
+                private protected override bool HasUnk4 => false;
 
                 /// <summary>
                 /// Gparam IDs for this map piece.
@@ -647,9 +668,9 @@ namespace SoulsFormats
                 public GparamConfig Gparam { get; set; }
 
                 /// <summary>
-                /// Creates a new MapPiece with the given name.
+                /// Creates a MapPiece with default values.
                 /// </summary>
-                public MapPiece(string name) : base(name)
+                public MapPiece() : base("mXXXXXX_XXXX")
                 {
                     Gparam = new GparamConfig();
                 }
@@ -686,8 +707,8 @@ namespace SoulsFormats
             /// </summary>
             public abstract class ObjectBase : Part
             {
-                internal override bool HasGparamConfig => true;
-                internal override bool HasUnk4 => false;
+                private protected override bool HasGparamConfig => true;
+                private protected override bool HasUnk4 => false;
 
                 /// <summary>
                 /// Gparam IDs for this object.
@@ -730,14 +751,14 @@ namespace SoulsFormats
                 /// </summary>
                 public short[] ModelSfxParamRelativeIDs { get; private set; }
 
-                internal ObjectBase(string name) : base(name)
+                private protected ObjectBase() : base("oXXXXXX_XXXX")
                 {
                     Gparam = new GparamConfig();
                     AnimIDs = new short[4] { -1, -1, -1, -1 };
                     ModelSfxParamRelativeIDs = new short[4] { -1, -1, -1, -1 };
                 }
 
-                internal ObjectBase(ObjectBase clone) : base(clone)
+                private protected ObjectBase(ObjectBase clone) : base(clone)
                 {
                     Gparam = new GparamConfig(clone.Gparam);
                     CollisionName = clone.CollisionName;
@@ -749,7 +770,7 @@ namespace SoulsFormats
                     ModelSfxParamRelativeIDs = (short[])clone.ModelSfxParamRelativeIDs.Clone();
                 }
 
-                internal ObjectBase(BinaryReaderEx br) : base(br) { }
+                private protected ObjectBase(BinaryReaderEx br) : base(br) { }
 
                 internal override void ReadTypeData(BinaryReaderEx br)
                 {
@@ -799,12 +820,12 @@ namespace SoulsFormats
             /// </summary>
             public class Object : ObjectBase
             {
-                internal override PartsType Type => PartsType.Object;
+                private protected override PartsType Type => PartsType.Object;
 
                 /// <summary>
-                /// Creates a new Object with the given name.
+                /// Creates an Object with default values.
                 /// </summary>
-                public Object(string name) : base(name) { }
+                public Object() : base() { }
 
                 /// <summary>
                 /// Creates a new Object with values copied from another.
@@ -819,8 +840,8 @@ namespace SoulsFormats
             /// </summary>
             public abstract class EnemyBase : Part
             {
-                internal override bool HasGparamConfig => true;
-                internal override bool HasUnk4 => false;
+                private protected override bool HasGparamConfig => true;
+                private protected override bool HasUnk4 => false;
 
                 /// <summary>
                 /// Gparam IDs for this enemy.
@@ -884,12 +905,12 @@ namespace SoulsFormats
                 /// </summary>
                 public float UnkT84 { get; set; }
 
-                internal EnemyBase(string name) : base(name)
+                private protected EnemyBase() : base("cXXXX_XXXX")
                 {
                     Gparam = new GparamConfig();
                 }
 
-                internal EnemyBase(EnemyBase clone) : base(clone)
+                private protected EnemyBase(EnemyBase clone) : base(clone)
                 {
                     Gparam = new GparamConfig(clone.Gparam);
                     ThinkParamID = clone.ThinkParamID;
@@ -905,7 +926,7 @@ namespace SoulsFormats
                     UnkT84 = clone.UnkT84;
                 }
 
-                internal EnemyBase(BinaryReaderEx br) : base(br) { }
+                private protected EnemyBase(BinaryReaderEx br) : base(br) { }
 
                 internal override void ReadTypeData(BinaryReaderEx br)
                 {
@@ -1031,12 +1052,12 @@ namespace SoulsFormats
             /// </summary>
             public class Enemy : EnemyBase
             {
-                internal override PartsType Type => PartsType.Enemy;
+                private protected override PartsType Type => PartsType.Enemy;
 
                 /// <summary>
-                /// Creates a new Enemy with the given name.
+                /// Creates an Enemy with default values.
                 /// </summary>
-                public Enemy(string name) : base(name) { }
+                public Enemy() : base() { }
 
                 /// <summary>
                 /// Creates a new Enemy with values copied from another.
@@ -1051,15 +1072,14 @@ namespace SoulsFormats
             /// </summary>
             public class Player : Part
             {
-                internal override PartsType Type => PartsType.Player;
-
-                internal override bool HasGparamConfig => false;
-                internal override bool HasUnk4 => false;
+                private protected override PartsType Type => PartsType.Player;
+                private protected override bool HasGparamConfig => false;
+                private protected override bool HasUnk4 => false;
 
                 /// <summary>
-                /// Creates a new Player with the given name.
+                /// Creates a Player with default values.
                 /// </summary>
-                public Player(string name) : base(name) { }
+                public Player() : base("c0000_XXXX") { }
 
                 /// <summary>
                 /// Creates a new Player with values copied from another.
@@ -1120,10 +1140,9 @@ namespace SoulsFormats
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
                 }
 
-                internal override PartsType Type => PartsType.Collision;
-
-                internal override bool HasGparamConfig => true;
-                internal override bool HasUnk4 => true;
+                private protected override PartsType Type => PartsType.Collision;
+                private protected override bool HasGparamConfig => true;
+                private protected override bool HasUnk4 => true;
 
                 /// <summary>
                 /// Gparam IDs for this collision.
@@ -1217,9 +1236,9 @@ namespace SoulsFormats
                 public MapVisiblity MapVisType { get; set; }
 
                 /// <summary>
-                /// Creates a new Collision with the given name.
+                /// Creates a Collision with default values.
                 /// </summary>
-                public Collision(string name) : base(name)
+                public Collision() : base("hXXXXXX")
                 {
                     Gparam = new GparamConfig();
                     Unk4 = new UnkStruct4();
@@ -1344,12 +1363,12 @@ namespace SoulsFormats
             /// </summary>
             public class DummyObject : ObjectBase
             {
-                internal override PartsType Type => PartsType.DummyObject;
+                private protected override PartsType Type => PartsType.DummyObject;
 
                 /// <summary>
-                /// Creates a new DummyObject with the given name.
+                /// Creates a DummyObject with default values.
                 /// </summary>
-                public DummyObject(string name) : base(name) { }
+                public DummyObject() : base() { }
 
                 /// <summary>
                 /// Creates a new DummyObject with values copied from another.
@@ -1364,12 +1383,12 @@ namespace SoulsFormats
             /// </summary>
             public class DummyEnemy : EnemyBase
             {
-                internal override PartsType Type => PartsType.DummyEnemy;
+                private protected override PartsType Type => PartsType.DummyEnemy;
 
                 /// <summary>
-                /// Creates a new DummyEnemy with the given name.
+                /// Creates a DummyEnemy with default values.
                 /// </summary>
-                public DummyEnemy(string name) : base(name) { }
+                public DummyEnemy() : base() { }
 
                 /// <summary>
                 /// Creates a new DummyEnemy with values copied from another.
@@ -1384,10 +1403,9 @@ namespace SoulsFormats
             /// </summary>
             public class ConnectCollision : Part
             {
-                internal override PartsType Type => PartsType.ConnectCollision;
-
-                internal override bool HasGparamConfig => false;
-                internal override bool HasUnk4 => false;
+                private protected override PartsType Type => PartsType.ConnectCollision;
+                private protected override bool HasGparamConfig => false;
+                private protected override bool HasUnk4 => false;
 
                 /// <summary>
                 /// The name of the associated collision part.
@@ -1401,9 +1419,9 @@ namespace SoulsFormats
                 public byte[] MapID { get; private set; }
 
                 /// <summary>
-                /// Creates a new ConnectCollision with the given name.
+                /// Creates a new ConnectCollision with default values.
                 /// </summary>
-                public ConnectCollision(string name) : base(name)
+                public ConnectCollision() : base("hXXXXXX_XXXX")
                 {
                     MapID = new byte[4];
                 }

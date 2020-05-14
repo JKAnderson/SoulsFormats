@@ -65,11 +65,11 @@ namespace SoulsFormats
             public int Unk10 { get; set; }
 
             /// <summary>
-            /// Creates a new Layer with default values.
+            /// Creates a Layer with default values.
             /// </summary>
             public Layer()
             {
-                Name = "";
+                Name = "Layer";
             }
 
             internal Layer(BinaryReaderEx br)

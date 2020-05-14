@@ -7,12 +7,8 @@ namespace SoulsFormats
 {
     public partial class MSB2
     {
-        /// <summary>
-        /// Types of region used in DS2.
-        /// </summary>
-        public enum RegionType : byte
+        internal enum RegionType : byte
         {
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
             Region0 = 0,
             Light = 3,
             StartPoint = 5,
@@ -21,7 +17,6 @@ namespace SoulsFormats
             Wind = 13,
             EnvLight = 14,
             Fog = 15,
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
         }
 
         /// <summary>
@@ -29,8 +24,8 @@ namespace SoulsFormats
         /// </summary>
         public class PointParam : Param<Region>, IMsbParam<IMsbRegion>
         {
-            internal override string Name => "POINT_PARAM_ST";
             internal override int Version => 5;
+            internal override string Name => "POINT_PARAM_ST";
 
             /// <summary>
             /// Unknown, possibly walk points for enemies.
@@ -87,55 +82,28 @@ namespace SoulsFormats
                 Fogs = new List<Region.Fog>();
             }
 
-            internal override Region ReadEntry(BinaryReaderEx br)
+            /// <summary>
+            /// Adds a region to the appropriate list for its type; returns the region.
+            /// </summary>
+            public Region Add(Region region)
             {
-                RegionType type = br.GetEnum8<RegionType>(br.Position + 0xA);
-                switch (type)
+                switch (region)
                 {
-                    case RegionType.Region0:
-                        var region0 = new Region.Region0(br);
-                        Region0s.Add(region0);
-                        return region0;
-
-                    case RegionType.Light:
-                        var light = new Region.Light(br);
-                        Lights.Add(light);
-                        return light;
-
-                    case RegionType.StartPoint:
-                        var startPoint = new Region.StartPoint(br);
-                        StartPoints.Add(startPoint);
-                        return startPoint;
-
-                    case RegionType.Sound:
-                        var sound = new Region.Sound(br);
-                        Sounds.Add(sound);
-                        return sound;
-
-                    case RegionType.SFX:
-                        var sfx = new Region.SFX(br);
-                        SFXs.Add(sfx);
-                        return sfx;
-
-                    case RegionType.Wind:
-                        var wind = new Region.Wind(br);
-                        Winds.Add(wind);
-                        return wind;
-
-                    case RegionType.EnvLight:
-                        var envLight = new Region.EnvLight(br);
-                        EnvLights.Add(envLight);
-                        return envLight;
-
-                    case RegionType.Fog:
-                        var fog = new Region.Fog(br);
-                        Fogs.Add(fog);
-                        return fog;
+                    case Region.Region0 r: Region0s.Add(r); break;
+                    case Region.Light r: Lights.Add(r); break;
+                    case Region.StartPoint r: StartPoints.Add(r); break;
+                    case Region.Sound r: Sounds.Add(r); break;
+                    case Region.SFX r: SFXs.Add(r); break;
+                    case Region.Wind r: Winds.Add(r); break;
+                    case Region.EnvLight r: EnvLights.Add(r); break;
+                    case Region.Fog r: Fogs.Add(r); break;
 
                     default:
-                        throw new NotImplementedException($"Unimplemented region type: {type}");
+                        throw new ArgumentException($"Unrecognized type {region.GetType()}.", nameof(region));
                 }
+                return region;
             }
+            IMsbRegion IMsbParam<IMsbRegion>.Add(IMsbRegion item) => Add((Region)item);
 
             /// <summary>
             /// Returns every Region in the order they'll be written.
@@ -147,6 +115,40 @@ namespace SoulsFormats
                     Winds, EnvLights, Fogs);
             }
             IReadOnlyList<IMsbRegion> IMsbParam<IMsbRegion>.GetEntries() => GetEntries();
+
+            internal override Region ReadEntry(BinaryReaderEx br)
+            {
+                RegionType type = br.GetEnum8<RegionType>(br.Position + 0xA);
+                switch (type)
+                {
+                    case RegionType.Region0:
+                        return Region0s.EchoAdd(new Region.Region0(br));
+
+                    case RegionType.Light:
+                        return Lights.EchoAdd(new Region.Light(br));
+
+                    case RegionType.StartPoint:
+                        return StartPoints.EchoAdd(new Region.StartPoint(br));
+
+                    case RegionType.Sound:
+                        return Sounds.EchoAdd(new Region.Sound(br));
+
+                    case RegionType.SFX:
+                        return SFXs.EchoAdd(new Region.SFX(br));
+
+                    case RegionType.Wind:
+                        return Winds.EchoAdd(new Region.Wind(br));
+
+                    case RegionType.EnvLight:
+                        return EnvLights.EchoAdd(new Region.EnvLight(br));
+
+                    case RegionType.Fog:
+                        return Fogs.EchoAdd(new Region.Fog(br));
+
+                    default:
+                        throw new NotImplementedException($"Unimplemented region type: {type}");
+                }
+            }
         }
 
         /// <summary>
@@ -154,12 +156,8 @@ namespace SoulsFormats
         /// </summary>
         public abstract class Region : NamedEntry, IMsbRegion
         {
-            /// <summary>
-            /// The specific type of this region.
-            /// </summary>
-            public abstract RegionType Type { get; }
-
-            internal abstract bool HasTypeData { get; }
+            private protected abstract RegionType Type { get; }
+            private protected abstract bool HasTypeData { get; }
 
             /// <summary>
             /// Unknown.
@@ -186,13 +184,13 @@ namespace SoulsFormats
             /// </summary>
             public Vector3 Rotation { get; set; }
 
-            internal Region(string name = "")
+            private protected Region(string name)
             {
                 Name = name;
                 Shape = new Shape.Point();
             }
 
-            internal Region(BinaryReaderEx br)
+            private protected Region(BinaryReaderEx br)
             {
                 long start = br.Position;
                 long nameOffset = br.ReadInt64();
@@ -333,17 +331,13 @@ namespace SoulsFormats
             /// </summary>
             public class Region0 : Region
             {
-                /// <summary>
-                /// RegionType.Region0
-                /// </summary>
-                public override RegionType Type => RegionType.Region0;
-
-                internal override bool HasTypeData => false;
+                private protected override RegionType Type => RegionType.Region0;
+                private protected override bool HasTypeData => false;
 
                 /// <summary>
                 /// Creates a Region0 with default values.
                 /// </summary>
-                public Region0(string name = "") : base(name) { }
+                public Region0() : base($"{nameof(Region)}: {nameof(Region0)}") { }
 
                 internal Region0(BinaryReaderEx br) : base(br) { }
             }
@@ -353,12 +347,8 @@ namespace SoulsFormats
             /// </summary>
             public class Light : Region
             {
-                /// <summary>
-                /// RegionType.Light
-                /// </summary>
-                public override RegionType Type => RegionType.Light;
-
-                internal override bool HasTypeData => true;
+                private protected override RegionType Type => RegionType.Light;
+                private protected override bool HasTypeData => true;
 
                 /// <summary>
                 /// Unknown.
@@ -383,7 +373,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a Light with default values.
                 /// </summary>
-                public Light(string name = "") : base(name) { }
+                public Light() : base($"{nameof(Region)}: {nameof(Light)}") { }
 
                 internal Light(BinaryReaderEx br) : base(br) { }
 
@@ -411,17 +401,13 @@ namespace SoulsFormats
             /// </summary>
             public class StartPoint : Region
             {
-                /// <summary>
-                /// RegionType.StartPoint
-                /// </summary>
-                public override RegionType Type => RegionType.StartPoint;
-
-                internal override bool HasTypeData => false;
+                private protected override RegionType Type => RegionType.StartPoint;
+                private protected override bool HasTypeData => false;
 
                 /// <summary>
                 /// Creates a StartPoint with default values.
                 /// </summary>
-                public StartPoint(string name = "") : base(name) { }
+                public StartPoint() : base($"{nameof(Region)}: {nameof(StartPoint)}") { }
 
                 internal StartPoint(BinaryReaderEx br) : base(br) { }
             }
@@ -431,12 +417,8 @@ namespace SoulsFormats
             /// </summary>
             public class Sound : Region
             {
-                /// <summary>
-                /// RegionType.Sound
-                /// </summary>
-                public override RegionType Type => RegionType.Sound;
-
-                internal override bool HasTypeData => true;
+                private protected override RegionType Type => RegionType.Sound;
+                private protected override bool HasTypeData => true;
 
                 /// <summary>
                 /// Unknown; possibly sound type.
@@ -456,7 +438,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a Sound with default values.
                 /// </summary>
-                public Sound(string name = "") : base(name) { }
+                public Sound() : base($"{nameof(Region)}: {nameof(Sound)}") { }
 
                 internal Sound(BinaryReaderEx br) : base(br) { }
 
@@ -482,12 +464,8 @@ namespace SoulsFormats
             /// </summary>
             public class SFX : Region
             {
-                /// <summary>
-                /// RegionType.SFX
-                /// </summary>
-                public override RegionType Type => RegionType.SFX;
-
-                internal override bool HasTypeData => true;
+                private protected override RegionType Type => RegionType.SFX;
+                private protected override bool HasTypeData => true;
 
                 /// <summary>
                 /// The effect to play at this region.
@@ -502,7 +480,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates an SFX with default values.
                 /// </summary>
-                public SFX(string name = "") : base(name) { }
+                public SFX() : base($"{nameof(Region)}: {nameof(SFX)}") { }
 
                 internal SFX(BinaryReaderEx br) : base(br) { }
 
@@ -526,12 +504,8 @@ namespace SoulsFormats
             /// </summary>
             public class Wind : Region
             {
-                /// <summary>
-                /// RegionType.Wind
-                /// </summary>
-                public override RegionType Type => RegionType.Wind;
-
-                internal override bool HasTypeData => true;
+                private protected override RegionType Type => RegionType.Wind;
+                private protected override bool HasTypeData => true;
 
                 /// <summary>
                 /// Unknown.
@@ -571,7 +545,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a Wind with default values.
                 /// </summary>
-                public Wind(string name = "") : base(name) { }
+                public Wind() : base($"{nameof(Region)}: {nameof(Wind)}") { }
 
                 internal Wind(BinaryReaderEx br) : base(br) { }
 
@@ -605,12 +579,8 @@ namespace SoulsFormats
             /// </summary>
             public class EnvLight : Region
             {
-                /// <summary>
-                /// RegionType.EnvLight
-                /// </summary>
-                public override RegionType Type => RegionType.EnvLight;
-
-                internal override bool HasTypeData => true;
+                private protected override RegionType Type => RegionType.EnvLight;
+                private protected override bool HasTypeData => true;
 
                 /// <summary>
                 /// Unknown.
@@ -630,7 +600,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates an EnvLight with default values.
                 /// </summary>
-                public EnvLight(string name = "") : base(name) { }
+                public EnvLight() : base($"{nameof(Region)}: {nameof(EnvLight)}") { }
 
                 internal EnvLight(BinaryReaderEx br) : base(br) { }
 
@@ -656,12 +626,8 @@ namespace SoulsFormats
             /// </summary>
             public class Fog : Region
             {
-                /// <summary>
-                /// RegionType.Fog
-                /// </summary>
-                public override RegionType Type => RegionType.Fog;
-
-                internal override bool HasTypeData => true;
+                private protected override RegionType Type => RegionType.Fog;
+                private protected override bool HasTypeData => true;
 
                 /// <summary>
                 /// Unknown.
@@ -676,7 +642,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a Fog with default values.
                 /// </summary>
-                public Fog(string name = "") : base(name) { }
+                public Fog() : base($"{nameof(Region)}: {nameof(Fog)}") { }
 
                 internal Fog(BinaryReaderEx br) : base(br) { }
 

@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Numerics;
 
 namespace SoulsFormats
 {
     public partial class MSBS
     {
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-        public enum RegionType : uint
+        internal enum RegionType : uint
         {
             Region0 = 0,
             InvasionPoint = 1,
@@ -30,7 +30,6 @@ namespace SoulsFormats
             AutoDrawGroup = 26,
             Other = 0xFFFFFFFF,
         }
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 
         /// <summary>
         /// Points and volumes used to trigger various effects.
@@ -138,9 +137,9 @@ namespace SoulsFormats
             public List<Region.Other> Others { get; set; }
 
             /// <summary>
-            /// Creates an empty PointParam with the given version.
+            /// Creates an empty PointParam with the default version.
             /// </summary>
-            public PointParam(int unk00 = 0x23) : base(unk00, "POINT_PARAM_ST")
+            public PointParam() : base(35, "POINT_PARAM_ST")
             {
                 Region0s = new List<Region.Region0>();
                 InvasionPoints = new List<Region.InvasionPoint>();
@@ -164,115 +163,40 @@ namespace SoulsFormats
                 Others = new List<Region.Other>();
             }
 
-            internal override Region ReadEntry(BinaryReaderEx br)
+            /// <summary>
+            /// Adds a region to the appropriate list for its type; returns the region.
+            /// </summary>
+            public Region Add(Region region)
             {
-                RegionType type = br.GetEnum32<RegionType>(br.Position + 8);
-                switch (type)
+                switch (region)
                 {
-                    case RegionType.Region0:
-                        var region0 = new Region.Region0(br);
-                        Region0s.Add(region0);
-                        return region0;
-
-                    case RegionType.InvasionPoint:
-                        var invasionPoint = new Region.InvasionPoint(br);
-                        InvasionPoints.Add(invasionPoint);
-                        return invasionPoint;
-
-                    case RegionType.EnvironmentMapPoint:
-                        var environmentMapPoint = new Region.EnvironmentMapPoint(br);
-                        EnvironmentMapPoints.Add(environmentMapPoint);
-                        return environmentMapPoint;
-
-                    case RegionType.Sound:
-                        var sound = new Region.Sound(br);
-                        Sounds.Add(sound);
-                        return sound;
-
-                    case RegionType.SFX:
-                        var sfx = new Region.SFX(br);
-                        SFXs.Add(sfx);
-                        return sfx;
-
-                    case RegionType.WindSFX:
-                        var windSFX = new Region.WindSFX(br);
-                        WindSFXs.Add(windSFX);
-                        return windSFX;
-
-                    case RegionType.SpawnPoint:
-                        var spawnPoint = new Region.SpawnPoint(br);
-                        SpawnPoints.Add(spawnPoint);
-                        return spawnPoint;
-
-                    case RegionType.WalkRoute:
-                        var walkRoute = new Region.WalkRoute(br);
-                        WalkRoutes.Add(walkRoute);
-                        return walkRoute;
-
-                    case RegionType.WarpPoint:
-                        var warpPoint = new Region.WarpPoint(br);
-                        WarpPoints.Add(warpPoint);
-                        return warpPoint;
-
-                    case RegionType.ActivationArea:
-                        var activationArea = new Region.ActivationArea(br);
-                        ActivationAreas.Add(activationArea);
-                        return activationArea;
-
-                    case RegionType.Event:
-                        var evt = new Region.Event(br);
-                        Events.Add(evt);
-                        return evt;
-
-                    case RegionType.EnvironmentMapEffectBox:
-                        var environmentMapEffectBox = new Region.EnvironmentMapEffectBox(br);
-                        EnvironmentMapEffectBoxes.Add(environmentMapEffectBox);
-                        return environmentMapEffectBox;
-
-                    case RegionType.WindArea:
-                        var windArea = new Region.WindArea(br);
-                        WindAreas.Add(windArea);
-                        return windArea;
-
-                    case RegionType.MufflingBox:
-                        var mufflingBox = new Region.MufflingBox(br);
-                        MufflingBoxes.Add(mufflingBox);
-                        return mufflingBox;
-
-                    case RegionType.MufflingPortal:
-                        var mufflingPortal = new Region.MufflingPortal(br);
-                        MufflingPortals.Add(mufflingPortal);
-                        return mufflingPortal;
-
-                    case RegionType.Region23:
-                        var region23 = new Region.Region23(br);
-                        Region23s.Add(region23);
-                        return region23;
-
-                    case RegionType.Region24:
-                        var region24 = new Region.Region24(br);
-                        Region24s.Add(region24);
-                        return region24;
-
-                    case RegionType.PartsGroup:
-                        var partsGroup = new Region.PartsGroup(br);
-                        PartsGroups.Add(partsGroup);
-                        return partsGroup;
-
-                    case RegionType.AutoDrawGroup:
-                        var autoDrawGroup = new Region.AutoDrawGroup(br);
-                        AutoDrawGroups.Add(autoDrawGroup);
-                        return autoDrawGroup;
-
-                    case RegionType.Other:
-                        var other = new Region.Other(br);
-                        Others.Add(other);
-                        return other;
+                    case Region.Region0 r: Region0s.Add(r); break;
+                    case Region.InvasionPoint r: InvasionPoints.Add(r); break;
+                    case Region.EnvironmentMapPoint r: EnvironmentMapPoints.Add(r); break;
+                    case Region.Sound r: Sounds.Add(r); break;
+                    case Region.SFX r: SFXs.Add(r); break;
+                    case Region.WindSFX r: WindSFXs.Add(r); break;
+                    case Region.SpawnPoint r: SpawnPoints.Add(r); break;
+                    case Region.WalkRoute r: WalkRoutes.Add(r); break;
+                    case Region.WarpPoint r: WarpPoints.Add(r); break;
+                    case Region.ActivationArea r: ActivationAreas.Add(r); break;
+                    case Region.Event r: Events.Add(r); break;
+                    case Region.EnvironmentMapEffectBox r: EnvironmentMapEffectBoxes.Add(r); break;
+                    case Region.WindArea r: WindAreas.Add(r); break;
+                    case Region.MufflingBox r: MufflingBoxes.Add(r); break;
+                    case Region.MufflingPortal r: MufflingPortals.Add(r); break;
+                    case Region.Region23 r: Region23s.Add(r); break;
+                    case Region.Region24 r: Region24s.Add(r); break;
+                    case Region.PartsGroup r: PartsGroups.Add(r); break;
+                    case Region.AutoDrawGroup r: AutoDrawGroups.Add(r); break;
+                    case Region.Other r: Others.Add(r); break;
 
                     default:
-                        throw new NotImplementedException($"Unimplemented region type: {type}");
+                        throw new ArgumentException($"Unrecognized type {region.GetType()}.", nameof(region));
                 }
+                return region;
             }
+            IMsbRegion IMsbParam<IMsbRegion>.Add(IMsbRegion item) => Add((Region)item);
 
             /// <summary>
             /// Returns every region in the order they'll be written.
@@ -286,6 +210,76 @@ namespace SoulsFormats
                     Region23s, Region24s, PartsGroups, AutoDrawGroups, Others);
             }
             IReadOnlyList<IMsbRegion> IMsbParam<IMsbRegion>.GetEntries() => GetEntries();
+
+            internal override Region ReadEntry(BinaryReaderEx br)
+            {
+                RegionType type = br.GetEnum32<RegionType>(br.Position + 8);
+                switch (type)
+                {
+                    case RegionType.Region0:
+                        return Region0s.EchoAdd(new Region.Region0(br));
+
+                    case RegionType.InvasionPoint:
+                        return InvasionPoints.EchoAdd(new Region.InvasionPoint(br));
+
+                    case RegionType.EnvironmentMapPoint:
+                        return EnvironmentMapPoints.EchoAdd(new Region.EnvironmentMapPoint(br));
+
+                    case RegionType.Sound:
+                        return Sounds.EchoAdd(new Region.Sound(br));
+
+                    case RegionType.SFX:
+                        return SFXs.EchoAdd(new Region.SFX(br));
+
+                    case RegionType.WindSFX:
+                        return WindSFXs.EchoAdd(new Region.WindSFX(br));
+
+                    case RegionType.SpawnPoint:
+                        return SpawnPoints.EchoAdd(new Region.SpawnPoint(br));
+
+                    case RegionType.WalkRoute:
+                        return WalkRoutes.EchoAdd(new Region.WalkRoute(br));
+
+                    case RegionType.WarpPoint:
+                        return WarpPoints.EchoAdd(new Region.WarpPoint(br));
+
+                    case RegionType.ActivationArea:
+                        return ActivationAreas.EchoAdd(new Region.ActivationArea(br));
+
+                    case RegionType.Event:
+                        return Events.EchoAdd(new Region.Event(br));
+
+                    case RegionType.EnvironmentMapEffectBox:
+                        return EnvironmentMapEffectBoxes.EchoAdd(new Region.EnvironmentMapEffectBox(br));
+
+                    case RegionType.WindArea:
+                        return WindAreas.EchoAdd(new Region.WindArea(br));
+
+                    case RegionType.MufflingBox:
+                        return MufflingBoxes.EchoAdd(new Region.MufflingBox(br));
+
+                    case RegionType.MufflingPortal:
+                        return MufflingPortals.EchoAdd(new Region.MufflingPortal(br));
+
+                    case RegionType.Region23:
+                        return Region23s.EchoAdd(new Region.Region23(br));
+
+                    case RegionType.Region24:
+                        return Region24s.EchoAdd(new Region.Region24(br));
+
+                    case RegionType.PartsGroup:
+                        return PartsGroups.EchoAdd(new Region.PartsGroup(br));
+
+                    case RegionType.AutoDrawGroup:
+                        return AutoDrawGroups.EchoAdd(new Region.AutoDrawGroup(br));
+
+                    case RegionType.Other:
+                        return Others.EchoAdd(new Region.Other(br));
+
+                    default:
+                        throw new NotImplementedException($"Unimplemented region type: {type}");
+                }
+            }
         }
 
         /// <summary>
@@ -293,12 +287,8 @@ namespace SoulsFormats
         /// </summary>
         public abstract class Region : Entry, IMsbRegion
         {
-            /// <summary>
-            /// The specific type of the region.
-            /// </summary>
-            public abstract RegionType Type { get; }
-
-            internal abstract bool HasTypeData { get; }
+            private protected abstract RegionType Type { get; }
+            private protected abstract bool HasTypeData { get; }
 
             /// <summary>
             /// The shape of the region.
@@ -346,9 +336,9 @@ namespace SoulsFormats
             /// </summary>
             public int EntityID { get; set; }
 
-            internal Region()
+            private protected Region(string name)
             {
-                Name = "";
+                Name = name;
                 Shape = new Shape.Point();
                 MapStudioLayer = 0xFFFFFFFF;
                 UnkA = new List<short>();
@@ -356,7 +346,7 @@ namespace SoulsFormats
                 EntityID = -1;
             }
 
-            internal Region(BinaryReaderEx br)
+            private protected Region(BinaryReaderEx br)
             {
                 long start = br.Position;
                 long nameOffset = br.ReadInt64();
@@ -523,17 +513,13 @@ namespace SoulsFormats
             /// </summary>
             public class Region0 : Region
             {
-                /// <summary>
-                /// RegionType.Region0
-                /// </summary>
-                public override RegionType Type => RegionType.Region0;
-
-                internal override bool HasTypeData => false;
+                private protected override RegionType Type => RegionType.Region0;
+                private protected override bool HasTypeData => false;
 
                 /// <summary>
                 /// Creates a Region0 with default values.
                 /// </summary>
-                public Region0() : base() { }
+                public Region0() : base($"{nameof(Region)}: {nameof(Region0)}") { }
 
                 internal Region0(BinaryReaderEx br) : base(br) { }
             }
@@ -543,12 +529,8 @@ namespace SoulsFormats
             /// </summary>
             public class InvasionPoint : Region
             {
-                /// <summary>
-                /// RegionType.InvasionPoint
-                /// </summary>
-                public override RegionType Type => RegionType.InvasionPoint;
-
-                internal override bool HasTypeData => true;
+                private protected override RegionType Type => RegionType.InvasionPoint;
+                private protected override bool HasTypeData => true;
 
                 /// <summary>
                 /// Unknown.
@@ -558,7 +540,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates an InvasionPoint with default values.
                 /// </summary>
-                public InvasionPoint() : base() { }
+                public InvasionPoint() : base($"{nameof(Region)}: {nameof(InvasionPoint)}") { }
 
                 internal InvasionPoint(BinaryReaderEx br) : base(br)
                 {
@@ -576,12 +558,8 @@ namespace SoulsFormats
             /// </summary>
             public class EnvironmentMapPoint : Region
             {
-                /// <summary>
-                /// RegionType.EnvironmentMapPoint
-                /// </summary>
-                public override RegionType Type => RegionType.EnvironmentMapPoint;
-
-                internal override bool HasTypeData => true;
+                private protected override RegionType Type => RegionType.EnvironmentMapPoint;
+                private protected override bool HasTypeData => true;
 
                 /// <summary>
                 /// Unknown.
@@ -636,7 +614,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates an EnvironmentMapPoint with default values.
                 /// </summary>
-                public EnvironmentMapPoint() : base() { }
+                public EnvironmentMapPoint() : base($"{nameof(Region)}: {nameof(EnvironmentMapPoint)}") { }
 
                 internal EnvironmentMapPoint(BinaryReaderEx br) : base(br)
                 {
@@ -678,12 +656,8 @@ namespace SoulsFormats
             /// </summary>
             public class Sound : Region
             {
-                /// <summary>
-                /// RegionType.Sound
-                /// </summary>
-                public override RegionType Type => RegionType.Sound;
-
-                internal override bool HasTypeData => true;
+                private protected override RegionType Type => RegionType.Sound;
+                private protected override bool HasTypeData => true;
 
                 /// <summary>
                 /// The category of the sound.
@@ -709,7 +683,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a Sound with default values.
                 /// </summary>
-                public Sound() : base()
+                public Sound() : base($"{nameof(Region)}: {nameof(Sound)}")
                 {
                     ChildRegionNames = new string[16];
                 }
@@ -748,12 +722,8 @@ namespace SoulsFormats
             /// </summary>
             public class SFX : Region
             {
-                /// <summary>
-                /// RegionType.SFX
-                /// </summary>
-                public override RegionType Type => RegionType.SFX;
-
-                internal override bool HasTypeData => true;
+                private protected override RegionType Type => RegionType.SFX;
+                private protected override bool HasTypeData => true;
 
                 /// <summary>
                 /// The ID of the particle effect FFX.
@@ -773,7 +743,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates an SFX with default values.
                 /// </summary>
-                public SFX() : base() { }
+                public SFX() : base($"{nameof(Region)}: {nameof(SFX)}") { }
 
                 internal SFX(BinaryReaderEx br) : base(br)
                 {
@@ -801,12 +771,8 @@ namespace SoulsFormats
             /// </summary>
             public class WindSFX : Region
             {
-                /// <summary>
-                /// RegionType.WindSFX
-                /// </summary>
-                public override RegionType Type => RegionType.WindSFX;
-
-                internal override bool HasTypeData => true;
+                private protected override RegionType Type => RegionType.WindSFX;
+                private protected override bool HasTypeData => true;
 
                 /// <summary>
                 /// ID of the effect FFX.
@@ -816,7 +782,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Reference to a WindArea region.
                 /// </summary>
-                public string WindAreaName;
+                public string WindAreaName { get; set; }
                 private int WindAreaIndex;
 
                 /// <summary>
@@ -827,7 +793,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a WindSFX with default values.
                 /// </summary>
-                public WindSFX() : base() { }
+                public WindSFX() : base($"{nameof(Region)}: {nameof(WindSFX)}") { }
 
                 internal WindSFX(BinaryReaderEx br) : base(br)
                 {
@@ -865,17 +831,13 @@ namespace SoulsFormats
             /// </summary>
             public class SpawnPoint : Region
             {
-                /// <summary>
-                /// RegionType.SpawnPoint
-                /// </summary>
-                public override RegionType Type => RegionType.SpawnPoint;
-
-                internal override bool HasTypeData => true;
+                private protected override RegionType Type => RegionType.SpawnPoint;
+                private protected override bool HasTypeData => true;
 
                 /// <summary>
                 /// Creates a SpawnPoint with default values.
                 /// </summary>
-                public SpawnPoint() : base() { }
+                public SpawnPoint() : base($"{nameof(Region)}: {nameof(SpawnPoint)}") { }
 
                 internal SpawnPoint(BinaryReaderEx br) : base(br)
                 {
@@ -899,17 +861,13 @@ namespace SoulsFormats
             /// </summary>
             public class WalkRoute : Region
             {
-                /// <summary>
-                /// RegionType.WalkRoute
-                /// </summary>
-                public override RegionType Type => RegionType.WalkRoute;
+                private protected override RegionType Type => RegionType.WalkRoute;
+                private protected override bool HasTypeData => false;
 
-                internal override bool HasTypeData => false;
-                
                 /// <summary>
                 /// Creates a WalkRoute with default values.
                 /// </summary>
-                public WalkRoute() : base() { }
+                public WalkRoute() : base($"{nameof(Region)}: {nameof(WalkRoute)}") { }
 
                 internal WalkRoute(BinaryReaderEx br) : base(br) { }
             }
@@ -919,17 +877,13 @@ namespace SoulsFormats
             /// </summary>
             public class WarpPoint : Region
             {
-                /// <summary>
-                /// RegionType.WarpPoint
-                /// </summary>
-                public override RegionType Type => RegionType.WarpPoint;
-
-                internal override bool HasTypeData => false;
+                private protected override RegionType Type => RegionType.WarpPoint;
+                private protected override bool HasTypeData => false;
 
                 /// <summary>
                 /// Creates a WarpPoint with default values.
                 /// </summary>
-                public WarpPoint() : base() { }
+                public WarpPoint() : base($"{nameof(Region)}: {nameof(WarpPoint)}") { }
 
                 internal WarpPoint(BinaryReaderEx br) : base(br) { }
             }
@@ -939,17 +893,13 @@ namespace SoulsFormats
             /// </summary>
             public class ActivationArea : Region
             {
-                /// <summary>
-                /// RegionType.ActivationArea
-                /// </summary>
-                public override RegionType Type => RegionType.ActivationArea;
-
-                internal override bool HasTypeData => false;
+                private protected override RegionType Type => RegionType.ActivationArea;
+                private protected override bool HasTypeData => false;
 
                 /// <summary>
                 /// Creates an ActivationArea with default values.
                 /// </summary>
-                public ActivationArea() : base() { }
+                public ActivationArea() : base($"{nameof(Region)}: {nameof(ActivationArea)}") { }
 
                 internal ActivationArea(BinaryReaderEx br) : base(br) { }
             }
@@ -959,17 +909,13 @@ namespace SoulsFormats
             /// </summary>
             public class Event : Region
             {
-                /// <summary>
-                /// RegionType.Event
-                /// </summary>
-                public override RegionType Type => RegionType.Event;
-
-                internal override bool HasTypeData => false;
+                private protected override RegionType Type => RegionType.Event;
+                private protected override bool HasTypeData => false;
 
                 /// <summary>
                 /// Creates an Event with default values.
                 /// </summary>
-                public Event() : base() { }
+                public Event() : base($"{nameof(Region)}: {nameof(Event)}") { }
 
                 internal Event(BinaryReaderEx br) : base(br) { }
             }
@@ -979,12 +925,8 @@ namespace SoulsFormats
             /// </summary>
             public class EnvironmentMapEffectBox : Region
             {
-                /// <summary>
-                /// RegionType.EnvironmentMapEffectBox
-                /// </summary>
-                public override RegionType Type => RegionType.EnvironmentMapEffectBox;
-
-                internal override bool HasTypeData => true;
+                private protected override RegionType Type => RegionType.EnvironmentMapEffectBox;
+                private protected override bool HasTypeData => true;
 
                 /// <summary>
                 /// Unknown.
@@ -1029,7 +971,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates an EnvironmentMapEffectBox with default values.
                 /// </summary>
-                public EnvironmentMapEffectBox() : base() { }
+                public EnvironmentMapEffectBox() : base($"{nameof(Region)}: {nameof(EnvironmentMapEffectBox)}") { }
 
                 internal EnvironmentMapEffectBox(BinaryReaderEx br) : base(br)
                 {
@@ -1065,17 +1007,13 @@ namespace SoulsFormats
             /// </summary>
             public class WindArea : Region
             {
-                /// <summary>
-                /// RegionType.WindArea
-                /// </summary>
-                public override RegionType Type => RegionType.WindArea;
-
-                internal override bool HasTypeData => false;
+                private protected override RegionType Type => RegionType.WindArea;
+                private protected override bool HasTypeData => false;
 
                 /// <summary>
                 /// Creates a WindArea with default values.
                 /// </summary>
-                public WindArea() : base() { }
+                public WindArea() : base($"{nameof(Region)}: {nameof(WindArea)}") { }
 
                 internal WindArea(BinaryReaderEx br) : base(br) { }
             }
@@ -1085,12 +1023,8 @@ namespace SoulsFormats
             /// </summary>
             public class MufflingBox : Region
             {
-                /// <summary>
-                /// RegionType.MufflingBox
-                /// </summary>
-                public override RegionType Type => RegionType.MufflingBox;
-
-                internal override bool HasTypeData => true;
+                private protected override RegionType Type => RegionType.MufflingBox;
+                private protected override bool HasTypeData => true;
 
                 /// <summary>
                 /// Unknown.
@@ -1100,7 +1034,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a MufflingBox with default values.
                 /// </summary>
-                public MufflingBox() : base() { }
+                public MufflingBox() : base($"{nameof(Region)}: {nameof(MufflingBox)}") { }
 
                 internal MufflingBox(BinaryReaderEx br) : base(br)
                 {
@@ -1118,12 +1052,8 @@ namespace SoulsFormats
             /// </summary>
             public class MufflingPortal : Region
             {
-                /// <summary>
-                /// RegionType.MufflingPortal
-                /// </summary>
-                public override RegionType Type => RegionType.MufflingPortal;
-
-                internal override bool HasTypeData => true;
+                private protected override RegionType Type => RegionType.MufflingPortal;
+                private protected override bool HasTypeData => true;
 
                 /// <summary>
                 /// Unknown.
@@ -1133,7 +1063,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a MufflingPortal with default values.
                 /// </summary>
-                public MufflingPortal() : base() { }
+                public MufflingPortal() : base($"{nameof(Region)}: {nameof(MufflingPortal)}") { }
 
                 internal MufflingPortal(BinaryReaderEx br) : base(br)
                 {
@@ -1153,12 +1083,8 @@ namespace SoulsFormats
             /// </summary>
             public class Region23 : Region
             {
-                /// <summary>
-                /// RegionType.Region23
-                /// </summary>
-                public override RegionType Type => RegionType.Region23;
-
-                internal override bool HasTypeData => true;
+                private protected override RegionType Type => RegionType.Region23;
+                private protected override bool HasTypeData => true;
 
                 /// <summary>
                 /// Unknown.
@@ -1168,7 +1094,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a Region23 with default values.
                 /// </summary>
-                public Region23() : base() { }
+                public Region23() : base($"{nameof(Region)}: {nameof(Region23)}") { }
 
                 internal Region23(BinaryReaderEx br) : base(br)
                 {
@@ -1188,17 +1114,13 @@ namespace SoulsFormats
             /// </summary>
             public class Region24 : Region
             {
-                /// <summary>
-                /// RegionType.Region24
-                /// </summary>
-                public override RegionType Type => RegionType.Region24;
-
-                internal override bool HasTypeData => false;
+                private protected override RegionType Type => RegionType.Region24;
+                private protected override bool HasTypeData => false;
 
                 /// <summary>
                 /// Creates a Region24 with default values.
                 /// </summary>
-                public Region24() : base() { }
+                public Region24() : base($"{nameof(Region)}: {nameof(Region24)}") { }
 
                 internal Region24(BinaryReaderEx br) : base(br) { }
             }
@@ -1208,12 +1130,8 @@ namespace SoulsFormats
             /// </summary>
             public class PartsGroup : Region
             {
-                /// <summary>
-                /// RegionType.PartsGroup
-                /// </summary>
-                public override RegionType Type => RegionType.PartsGroup;
-
-                internal override bool HasTypeData => true;
+                private protected override RegionType Type => RegionType.PartsGroup;
+                private protected override bool HasTypeData => true;
 
                 /// <summary>
                 /// Unknown.
@@ -1223,7 +1141,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a PartsGroup with default values.
                 /// </summary>
-                public PartsGroup() : base() { }
+                public PartsGroup() : base($"{nameof(Region)}: {nameof(PartsGroup)}") { }
 
                 internal PartsGroup(BinaryReaderEx br) : base(br)
                 {
@@ -1241,12 +1159,8 @@ namespace SoulsFormats
             /// </summary>
             public class AutoDrawGroup : Region
             {
-                /// <summary>
-                /// RegionType.AutoDrawGroup
-                /// </summary>
-                public override RegionType Type => RegionType.AutoDrawGroup;
-
-                internal override bool HasTypeData => true;
+                private protected override RegionType Type => RegionType.AutoDrawGroup;
+                private protected override bool HasTypeData => true;
 
                 /// <summary>
                 /// Unknown.
@@ -1256,7 +1170,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates an AutoDrawGroup with default values.
                 /// </summary>
-                public AutoDrawGroup() : base() { }
+                public AutoDrawGroup() : base($"{nameof(Region)}: {nameof(AutoDrawGroup)}") { }
 
                 internal AutoDrawGroup(BinaryReaderEx br) : base(br)
                 {
@@ -1276,17 +1190,13 @@ namespace SoulsFormats
             /// </summary>
             public class Other : Region
             {
-                /// <summary>
-                /// RegionType.Other
-                /// </summary>
-                public override RegionType Type => RegionType.Other;
-
-                internal override bool HasTypeData => false;
+                private protected override RegionType Type => RegionType.Other;
+                private protected override bool HasTypeData => false;
 
                 /// <summary>
                 /// Creates an Other with default values.
                 /// </summary>
-                public Other() : base() { }
+                public Other() : base($"{nameof(Region)}: {nameof(Other)}") { }
 
                 internal Other(BinaryReaderEx br) : base(br) { }
             }

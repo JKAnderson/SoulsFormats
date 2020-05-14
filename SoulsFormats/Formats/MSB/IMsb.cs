@@ -8,13 +8,17 @@ namespace SoulsFormats
     {
         IMsbParam<IMsbModel> Models { get; }
 
-        IMsbParam<IMsbPart> Parts { get; }
+        IMsbParam<IMsbEvent> Events { get; }
 
         IMsbParam<IMsbRegion> Regions { get; }
+
+        IMsbParam<IMsbPart> Parts { get; }
     }
 
     public interface IMsbParam<T> where T : IMsbEntry
     {
+        T Add(T item);
+
         IReadOnlyList<T> GetEntries();
     }
 
@@ -25,6 +29,15 @@ namespace SoulsFormats
 
     public interface IMsbModel : IMsbEntry { }
 
+    public interface IMsbEvent : IMsbEntry { }
+
+    public interface IMsbRegion : IMsbEntry
+    {
+        Vector3 Position { get; set; }
+
+        Vector3 Rotation { get; set; }
+    }
+
     public interface IMsbPart : IMsbEntry
     {
         string ModelName { get; set; }
@@ -34,13 +47,6 @@ namespace SoulsFormats
         Vector3 Rotation { get; set; }
 
         Vector3 Scale { get; set; }
-    }
-
-    public interface IMsbRegion : IMsbEntry
-    {
-        Vector3 Position { get; set; }
-
-        Vector3 Rotation { get; set; }
     }
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 }

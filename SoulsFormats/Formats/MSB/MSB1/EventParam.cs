@@ -6,8 +6,7 @@ namespace SoulsFormats
 {
     public partial class MSB1
     {
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-        public enum EventType : uint
+        internal enum EventType : uint
         {
             Light = 0,
             Sound = 1,
@@ -23,12 +22,11 @@ namespace SoulsFormats
             Environment = 11,
             PseudoMultiplayer = 12,
         }
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 
         /// <summary>
         /// Contains abstract entities that control various dynamic elements in the map.
         /// </summary>
-        public class EventParam : Param<Event>
+        public class EventParam : Param<Event>, IMsbParam<IMsbEvent>
         {
             internal override string Name => "EVENT_PARAM_ST";
 
@@ -118,6 +116,34 @@ namespace SoulsFormats
             }
 
             /// <summary>
+            /// Adds an event to the appropriate list for its type; returns the event.
+            /// </summary>
+            public Event Add(Event evnt)
+            {
+                switch (evnt)
+                {
+                    case Event.Light e: Lights.Add(e); break;
+                    case Event.Sound e: Sounds.Add(e); break;
+                    case Event.SFX e: SFXs.Add(e); break;
+                    case Event.WindSFX e: WindSFXs.Add(e); break;
+                    case Event.Treasure e: Treasures.Add(e); break;
+                    case Event.Generator e: Generators.Add(e); break;
+                    case Event.Message e: Messages.Add(e); break;
+                    case Event.ObjAct e: ObjActs.Add(e); break;
+                    case Event.SpawnPoint e: SpawnPoints.Add(e); break;
+                    case Event.MapOffset e: MapOffsets.Add(e); break;
+                    case Event.Navmesh e: Navmeshes.Add(e); break;
+                    case Event.Environment e: Environments.Add(e); break;
+                    case Event.PseudoMultiplayer e: PseudoMultiplayers.Add(e); break;
+
+                    default:
+                        throw new ArgumentException($"Unrecognized type {evnt.GetType()}.", nameof(evnt));
+                }
+                return evnt;
+            }
+            IMsbEvent IMsbParam<IMsbEvent>.Add(IMsbEvent item) => Add((Event)item);
+
+            /// <summary>
             /// Returns a list of every event in the order they'll be written.
             /// </summary>
             public override List<Event> GetEntries()
@@ -127,6 +153,7 @@ namespace SoulsFormats
                     Generators, Messages, ObjActs, SpawnPoints, MapOffsets,
                     Navmeshes, Environments, PseudoMultiplayers);
             }
+            IReadOnlyList<IMsbEvent> IMsbParam<IMsbEvent>.GetEntries() => GetEntries();
 
             internal override Event ReadEntry(BinaryReaderEx br)
             {
@@ -134,69 +161,43 @@ namespace SoulsFormats
                 switch (type)
                 {
                     case EventType.Light:
-                        var light = new Event.Light(br);
-                        Lights.Add(light);
-                        return light;
+                        return Lights.EchoAdd(new Event.Light(br));
 
                     case EventType.Sound:
-                        var sound = new Event.Sound(br);
-                        Sounds.Add(sound);
-                        return sound;
+                        return Sounds.EchoAdd(new Event.Sound(br));
 
                     case EventType.SFX:
-                        var sfx = new Event.SFX(br);
-                        SFXs.Add(sfx);
-                        return sfx;
+                        return SFXs.EchoAdd(new Event.SFX(br));
 
                     case EventType.WindSFX:
-                        var windSFX = new Event.WindSFX(br);
-                        WindSFXs.Add(windSFX);
-                        return windSFX;
+                        return WindSFXs.EchoAdd(new Event.WindSFX(br));
 
                     case EventType.Treasure:
-                        var treasure = new Event.Treasure(br);
-                        Treasures.Add(treasure);
-                        return treasure;
+                        return Treasures.EchoAdd(new Event.Treasure(br));
 
                     case EventType.Generator:
-                        var generator = new Event.Generator(br);
-                        Generators.Add(generator);
-                        return generator;
+                        return Generators.EchoAdd(new Event.Generator(br));
 
                     case EventType.Message:
-                        var message = new Event.Message(br);
-                        Messages.Add(message);
-                        return message;
+                        return Messages.EchoAdd(new Event.Message(br));
 
                     case EventType.ObjAct:
-                        var objAct = new Event.ObjAct(br);
-                        ObjActs.Add(objAct);
-                        return objAct;
+                        return ObjActs.EchoAdd(new Event.ObjAct(br));
 
                     case EventType.SpawnPoint:
-                        var spawnPoint = new Event.SpawnPoint(br);
-                        SpawnPoints.Add(spawnPoint);
-                        return spawnPoint;
+                        return SpawnPoints.EchoAdd(new Event.SpawnPoint(br));
 
                     case EventType.MapOffset:
-                        var mapOffset = new Event.MapOffset(br);
-                        MapOffsets.Add(mapOffset);
-                        return mapOffset;
+                        return MapOffsets.EchoAdd(new Event.MapOffset(br));
 
                     case EventType.Navmesh:
-                        var navmesh = new Event.Navmesh(br);
-                        Navmeshes.Add(navmesh);
-                        return navmesh;
+                        return Navmeshes.EchoAdd(new Event.Navmesh(br));
 
                     case EventType.Environment:
-                        var environment = new Event.Environment(br);
-                        Environments.Add(environment);
-                        return environment;
+                        return Environments.EchoAdd(new Event.Environment(br));
 
                     case EventType.PseudoMultiplayer:
-                        var pseudoMultiplayer = new Event.PseudoMultiplayer(br);
-                        PseudoMultiplayers.Add(pseudoMultiplayer);
-                        return pseudoMultiplayer;
+                        return PseudoMultiplayers.EchoAdd(new Event.PseudoMultiplayer(br));
 
                     default:
                         throw new NotImplementedException($"Unsupported event type: {type}");
@@ -207,17 +208,14 @@ namespace SoulsFormats
         /// <summary>
         /// Common data for all dynamic events.
         /// </summary>
-        public abstract class Event : Entry
+        public abstract class Event : Entry, IMsbEvent
         {
+            private protected abstract EventType Type { get; }
+
             /// <summary>
             /// Unknown, should be unique.
             /// </summary>
             public int EventID { get; set; }
-
-            /// <summary>
-            /// The type of this event.
-            /// </summary>
-            public abstract EventType Type { get; }
 
             /// <summary>
             /// Part referenced by the event.
@@ -236,14 +234,14 @@ namespace SoulsFormats
             /// </summary>
             public int EntityID { get; set; }
 
-            internal Event()
+            private protected Event(string name)
             {
-                Name = "";
+                Name = name;
                 EventID = -1;
                 EntityID = -1;
             }
 
-            internal Event(BinaryReaderEx br)
+            private protected Event(BinaryReaderEx br)
             {
                 long start = br.Position;
                 int nameOffset = br.ReadInt32();
@@ -314,10 +312,7 @@ namespace SoulsFormats
             /// </summary>
             public class Light : Event
             {
-                /// <summary>
-                /// EventType.Light
-                /// </summary>
-                public override EventType Type => EventType.Light;
+                private protected override EventType Type => EventType.Light;
 
                 /// <summary>
                 /// Unknown.
@@ -327,7 +322,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a Light with default values.
                 /// </summary>
-                public Light() : base() { }
+                public Light() : base($"{nameof(Event)}: {nameof(Light)}") { }
 
                 internal Light(BinaryReaderEx br) : base(br)
                 {
@@ -346,10 +341,7 @@ namespace SoulsFormats
             /// </summary>
             public class Sound : Event
             {
-                /// <summary>
-                /// EventType.Sound
-                /// </summary>
-                public override EventType Type => EventType.Sound;
+                private protected override EventType Type => EventType.Sound;
 
                 /// <summary>
                 /// Category of sound.
@@ -364,7 +356,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a Sound with default values.
                 /// </summary>
-                public Sound() : base() { }
+                public Sound() : base($"{nameof(Event)}: {nameof(Sound)}") { }
 
                 internal Sound(BinaryReaderEx br) : base(br)
                 {
@@ -385,10 +377,7 @@ namespace SoulsFormats
             /// </summary>
             public class SFX : Event
             {
-                /// <summary>
-                /// EventType.SFX
-                /// </summary>
-                public override EventType Type => EventType.SFX;
+                private protected override EventType Type => EventType.SFX;
 
                 /// <summary>
                 /// ID of the effect in the ffxbnds.
@@ -398,7 +387,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates an SFX with default values.
                 /// </summary>
-                public SFX() : base() { }
+                public SFX() : base($"{nameof(Event)}: {nameof(SFX)}") { }
 
                 internal SFX(BinaryReaderEx br) : base(br)
                 {
@@ -417,10 +406,7 @@ namespace SoulsFormats
             /// </summary>
             public class WindSFX : Event
             {
-                /// <summary>
-                /// EventType.WindSFX
-                /// </summary>
-                public override EventType Type => EventType.WindSFX;
+                private protected override EventType Type => EventType.WindSFX;
 
                 /// <summary>
                 /// Unknown.
@@ -505,7 +491,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a WindSFX with default values.
                 /// </summary>
-                public WindSFX() : base() { }
+                public WindSFX() : base($"{nameof(Event)}: {nameof(WindSFX)}") { }
 
                 internal WindSFX(BinaryReaderEx br) : base(br)
                 {
@@ -554,10 +540,7 @@ namespace SoulsFormats
             /// </summary>
             public class Treasure : Event
             {
-                /// <summary>
-                /// EventType.Treasure
-                /// </summary>
-                public override EventType Type => EventType.Treasure;
+                private protected override EventType Type => EventType.Treasure;
 
                 /// <summary>
                 /// The part that the treasure is attached to, such as an item corpse.
@@ -583,7 +566,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a Treasure with default values.
                 /// </summary>
-                public Treasure() : base()
+                public Treasure() : base($"{nameof(Event)}: {nameof(Treasure)}")
                 {
                     ItemLots = new int[5] { -1, -1, -1, -1, -1 };
                 }
@@ -636,10 +619,7 @@ namespace SoulsFormats
             /// </summary>
             public class Generator : Event
             {
-                /// <summary>
-                /// EventType.Generator
-                /// </summary>
-                public override EventType Type => EventType.Generator;
+                private protected override EventType Type => EventType.Generator;
 
                 /// <summary>
                 /// Unknown.
@@ -691,7 +671,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a Generator with default values.
                 /// </summary>
-                public Generator() : base()
+                public Generator() : base($"{nameof(Event)}: {nameof(Generator)}")
                 {
                     SpawnPointNames = new string[4];
                     SpawnPartNames = new string[32];
@@ -748,10 +728,7 @@ namespace SoulsFormats
             /// </summary>
             public class Message : Event
             {
-                /// <summary>
-                /// EventType.Message
-                /// </summary>
-                public override EventType Type => EventType.Message;
+                private protected override EventType Type => EventType.Message;
 
                 /// <summary>
                 /// FMG text ID to display.
@@ -771,7 +748,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a Message with default values.
                 /// </summary>
-                public Message() : base() { }
+                public Message() : base($"{nameof(Event)}: {nameof(Message)}") { }
 
                 internal Message(BinaryReaderEx br) : base(br)
                 {
@@ -798,10 +775,7 @@ namespace SoulsFormats
             /// </summary>
             public class ObjAct : Event
             {
-                /// <summary>
-                /// EventType.ObjAct
-                /// </summary>
-                public override EventType Type => EventType.ObjAct;
+                private protected override EventType Type => EventType.ObjAct;
 
                 /// <summary>
                 /// Unknown how this differs from the Event EntityID.
@@ -832,7 +806,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates an ObjAct with default values.
                 /// </summary>
-                public ObjAct() : base()
+                public ObjAct() : base($"{nameof(Event)}: {nameof(ObjAct)}")
                 {
                     ObjActEntityID = -1;
                     ObjActParamID = -1;
@@ -876,10 +850,7 @@ namespace SoulsFormats
             /// </summary>
             public class SpawnPoint : Event
             {
-                /// <summary>
-                /// EventType.SpawnPoint
-                /// </summary>
-                public override EventType Type => EventType.SpawnPoint;
+                private protected override EventType Type => EventType.SpawnPoint;
 
                 /// <summary>
                 /// Point for the SpawnPoint to spawn at.
@@ -890,7 +861,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a SpawnPoint with default values.
                 /// </summary>
-                public SpawnPoint() : base() { }
+                public SpawnPoint() : base($"{nameof(Event)}: {nameof(SpawnPoint)}") { }
 
                 internal SpawnPoint(BinaryReaderEx br) : base(br)
                 {
@@ -927,10 +898,7 @@ namespace SoulsFormats
             /// </summary>
             public class MapOffset : Event
             {
-                /// <summary>
-                /// EventType.MapOffset
-                /// </summary>
-                public override EventType Type => EventType.MapOffset;
+                private protected override EventType Type => EventType.MapOffset;
 
                 /// <summary>
                 /// Position of the map.
@@ -945,7 +913,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a MapOffset with default values.
                 /// </summary>
-                public MapOffset() : base() { }
+                public MapOffset() : base($"{nameof(Event)}: {nameof(MapOffset)}") { }
 
                 internal MapOffset(BinaryReaderEx br) : base(br)
                 {
@@ -966,10 +934,7 @@ namespace SoulsFormats
             /// </summary>
             public class Navmesh : Event
             {
-                /// <summary>
-                /// EventType.Navmesh
-                /// </summary>
-                public override EventType Type => EventType.Navmesh;
+                private protected override EventType Type => EventType.Navmesh;
 
                 /// <summary>
                 /// Unknown.
@@ -980,7 +945,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a Navmesh with default values.
                 /// </summary>
-                public Navmesh() : base() { }
+                public Navmesh() : base($"{nameof(Event)}: {nameof(Navmesh)}") { }
 
                 internal Navmesh(BinaryReaderEx br) : base(br)
                 {
@@ -1017,10 +982,7 @@ namespace SoulsFormats
             /// </summary>
             public class Environment : Event
             {
-                /// <summary>
-                /// EventType.Environment
-                /// </summary>
-                public override EventType Type => EventType.Environment;
+                private protected override EventType Type => EventType.Environment;
 
                 /// <summary>
                 /// Unknown.
@@ -1055,7 +1017,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates an Environment with default values.
                 /// </summary>
-                public Environment() : base() { }
+                public Environment() : base($"{nameof(Event)}: {nameof(Environment)}") { }
 
                 internal Environment(BinaryReaderEx br) : base(br)
                 {
@@ -1088,10 +1050,7 @@ namespace SoulsFormats
             /// </summary>
             public class PseudoMultiplayer : Event
             {
-                /// <summary>
-                /// EventType.PseudoMultiplayer
-                /// </summary>
-                public override EventType Type => EventType.PseudoMultiplayer;
+                private protected override EventType Type => EventType.PseudoMultiplayer;
 
                 /// <summary>
                 /// The NPC whose world you're entering.
@@ -1111,7 +1070,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a PseudoMultiplayer with default values.
                 /// </summary>
-                public PseudoMultiplayer() : base()
+                public PseudoMultiplayer() : base($"{nameof(Event)}: {nameof(PseudoMultiplayer)}")
                 {
                     HostEntityID = -1;
                     EventFlagID = -1;

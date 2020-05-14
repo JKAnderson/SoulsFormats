@@ -6,10 +6,32 @@ namespace SoulsFormats
 {
     public partial class MSB3
     {
+        internal enum EventType : uint
+        {
+            Light = 0,
+            Sound = 1,
+            SFX = 2,
+            WindSFX = 3,
+            Treasure = 4,
+            Generator = 5,
+            Message = 6,
+            ObjAct = 7,
+            SpawnPoint = 8,
+            MapOffset = 9,
+            Navimesh = 10,
+            Environment = 11,
+            PseudoMultiplayer = 12,
+            Unk0D = 13,
+            WalkRoute = 14,
+            GroupTour = 15,
+            Unk10 = 16,
+            Other = 0xFFFFFFFF,
+        }
+
         /// <summary>
         /// Events controlling various interactive or dynamic features in the map.
         /// </summary>
-        public class EventParam : Param<Event>
+        public class EventParam : Param<Event>, IMsbParam<IMsbEvent>
         {
             internal override int Version => 3;
             internal override string Type => "EVENT_PARAM_ST";
@@ -68,6 +90,29 @@ namespace SoulsFormats
                 GroupTours = new List<Event.GroupTour>();
                 Others = new List<Event.Other>();
             }
+            
+            /// <summary>
+            /// Adds an event to the appropriate list for its type; returns the event.
+            /// </summary>
+            public Event Add(Event evnt)
+            {
+                switch (evnt)
+                {
+                    case Event.Treasure e: Treasures.Add(e); break;
+                    case Event.Generator e: Generators.Add(e); break;
+                    case Event.ObjAct e: ObjActs.Add(e); break;
+                    case Event.MapOffset e: MapOffsets.Add(e); break;
+                    case Event.PseudoMultiplayer e: PseudoMultiplayers.Add(e); break;
+                    case Event.WalkRoute e: WalkRoutes.Add(e); break;
+                    case Event.GroupTour e: GroupTours.Add(e); break;
+                    case Event.Other e: Others.Add(e); break;
+
+                    default:
+                        throw new ArgumentException($"Unrecognized type {evnt.GetType()}.", nameof(evnt));
+                }
+                return evnt;
+            }
+            IMsbEvent IMsbParam<IMsbEvent>.Add(IMsbEvent item) => Add((Event)item);
 
             /// <summary>
             /// Returns every Event in the order they'll be written.
@@ -78,6 +123,7 @@ namespace SoulsFormats
                     Treasures, Generators, ObjActs, MapOffsets, PseudoMultiplayers,
                     WalkRoutes, GroupTours, Others);
             }
+            IReadOnlyList<IMsbEvent> IMsbParam<IMsbEvent>.GetEntries() => GetEntries();
 
             internal override Event ReadEntry(BinaryReaderEx br)
             {
@@ -114,32 +160,10 @@ namespace SoulsFormats
             }
         }
 
-        internal enum EventType : uint
-        {
-            Light = 0,
-            Sound = 1,
-            SFX = 2,
-            WindSFX = 3,
-            Treasure = 4,
-            Generator = 5,
-            Message = 6,
-            ObjAct = 7,
-            SpawnPoint = 8,
-            MapOffset = 9,
-            Navimesh = 10,
-            Environment = 11,
-            PseudoMultiplayer = 12,
-            Unk0D = 13,
-            WalkRoute = 14,
-            GroupTour = 15,
-            Unk10 = 16,
-            Other = 0xFFFFFFFF,
-        }
-
         /// <summary>
         /// An interactive or dynamic feature of the map.
         /// </summary>
-        public abstract class Event : NamedEntry
+        public abstract class Event : NamedEntry, IMsbEvent
         {
             internal abstract EventType Type { get; }
 
@@ -170,14 +194,14 @@ namespace SoulsFormats
             /// </summary>
             public int EntityID { get; set; }
 
-            internal Event(string name)
+            private protected Event(string name)
             {
                 Name = name;
                 EventID = -1;
                 EntityID = -1;
             }
 
-            internal Event(Event clone)
+            private protected Event(Event clone)
             {
                 Name = clone.Name;
                 EventID = clone.EventID;
@@ -186,7 +210,7 @@ namespace SoulsFormats
                 EntityID = clone.EntityID;
             }
 
-            internal Event(BinaryReaderEx br)
+            private protected Event(BinaryReaderEx br)
             {
                 long start = br.Position;
 
@@ -304,9 +328,9 @@ namespace SoulsFormats
                 public bool StartDisabled { get; set; }
 
                 /// <summary>
-                /// Creates a new Treasure with the given name.
+                /// Creates a Treasure with default values.
                 /// </summary>
-                public Treasure(string name) : base(name)
+                public Treasure() : base($"{nameof(Event)}: {nameof(Treasure)}")
                 {
                     ItemLot1 = -1;
                     ItemLot2 = -1;
@@ -466,9 +490,9 @@ namespace SoulsFormats
                 public float UnkT18 { get; set; }
 
                 /// <summary>
-                /// Creates a new Generator with the given name.
+                /// Creates a Generator with default values.
                 /// </summary>
-                public Generator(string name) : base(name)
+                public Generator() : base($"{nameof(Event)}: {nameof(Generator)}")
                 {
                     SpawnPointNames = new string[8];
                     SpawnPartNames = new string[32];
@@ -621,9 +645,9 @@ namespace SoulsFormats
                 public int EventFlagID { get; set; }
 
                 /// <summary>
-                /// Creates a new ObjAct with the given name.
+                /// Creates an ObjAct with default values.
                 /// </summary>
-                public ObjAct(string name) : base(name)
+                public ObjAct() : base($"{nameof(Event)}: {nameof(ObjAct)}")
                 {
                     ObjActEntityID = -1;
                     ObjActStateType = ObjActState.OneState;
@@ -708,9 +732,9 @@ namespace SoulsFormats
                 public float Degree { get; set; }
 
                 /// <summary>
-                /// Creates a new MapOffset with the given name.
+                /// Creates a MapOffset with default values.
                 /// </summary>
-                public MapOffset(string name) : base(name) { }
+                public MapOffset() : base($"{nameof(Event)}: {nameof(MapOffset)}") { }
 
                 /// <summary>
                 /// Creates a new MapOffset with values copied from another.
@@ -781,7 +805,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new Invasion with the given name.
                 /// </summary>
-                public PseudoMultiplayer(string name) : base(name)
+                public PseudoMultiplayer() : base($"{nameof(Event)}: {nameof(PseudoMultiplayer)}")
                 {
                     HostEntityID = -1;
                     EventFlagID = -1;
@@ -791,7 +815,7 @@ namespace SoulsFormats
                 }
 
                 /// <summary>
-                /// Creates a new Invasion with values copied from another.
+                /// Creates an Invasion with default values.
                 /// </summary>
                 public PseudoMultiplayer(PseudoMultiplayer clone) : base(clone)
                 {
@@ -850,11 +874,10 @@ namespace SoulsFormats
                 private short[] WalkPointIndices;
 
                 /// <summary>
-                /// Creates a new WalkRoute with the given name.
+                /// Creates a WalkRoute with default values.
                 /// </summary>
-                public WalkRoute(string name) : base(name)
+                public WalkRoute() : base($"{nameof(Event)}: {nameof(WalkRoute)}")
                 {
-                    UnkT00 = 0;
                     WalkPointNames = new string[32];
                 }
 
@@ -928,9 +951,9 @@ namespace SoulsFormats
                 private int[] GroupPartsIndices;
 
                 /// <summary>
-                /// Creates a new GroupTour with the given name.
+                /// Creates a GroupTour with default values.
                 /// </summary>
-                public GroupTour(string name) : base(name)
+                public GroupTour() : base($"{nameof(Event)}: {nameof(GroupTour)}")
                 {
                     GroupPartsNames = new string[32];
                 }
@@ -996,9 +1019,9 @@ namespace SoulsFormats
                 public int UnkT04 { get; set; }
 
                 /// <summary>
-                /// Creates a new Other with the given name.
+                /// Creates an Other with default values.
                 /// </summary>
-                public Other(string name) : base(name) { }
+                public Other() : base($"{nameof(Event)}: {nameof(Other)}") { }
 
                 /// <summary>
                 /// Creates a new Other with values copied from another.

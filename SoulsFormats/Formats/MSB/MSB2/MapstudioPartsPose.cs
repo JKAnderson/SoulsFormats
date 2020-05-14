@@ -7,8 +7,8 @@ namespace SoulsFormats
     {
         private class MapstudioPartsPose : Param<PartPose>
         {
-            internal override string Name => "MAPSTUDIO_PARTS_POSE_ST";
             internal override int Version => 0;
+            internal override string Name => "MAPSTUDIO_PARTS_POSE_ST";
 
             public List<PartPose> Poses { get; set; }
 
@@ -19,9 +19,7 @@ namespace SoulsFormats
 
             internal override PartPose ReadEntry(BinaryReaderEx br)
             {
-                var pose = new PartPose(br);
-                Poses.Add(pose);
-                return pose;
+                return Poses.EchoAdd(new PartPose(br));
             }
 
             public override List<PartPose> GetEntries()
@@ -49,9 +47,8 @@ namespace SoulsFormats
             /// <summary>
             /// Creates an empty PartPose.
             /// </summary>
-            public PartPose(string partName = null)
+            public PartPose()
             {
-                PartName = partName;
                 Bones = new List<Bone>();
             }
 
@@ -129,9 +126,9 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a Bone with default values.
                 /// </summary>
-                public Bone(string name = "")
+                public Bone()
                 {
-                    Name = name;
+                    Name = "Master";
                     Scale = Vector3.One;
                 }
 
@@ -161,7 +158,7 @@ namespace SoulsFormats
                     if (!lookups.BoneNames.ContainsKey(Name))
                     {
                         lookups.BoneNames[Name] = entries.BoneNames.Count;
-                        entries.BoneNames.Add(new BoneName(Name));
+                        entries.BoneNames.Add(new BoneName() { Name = Name });
                     }
                     NameIndex = FindIndex(lookups.BoneNames, Name);
                 }

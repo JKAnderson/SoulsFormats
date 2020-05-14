@@ -50,11 +50,11 @@ namespace SoulsFormats
             public override string Name { get; set; }
 
             /// <summary>
-            /// Creates a BoneName with the given value.
+            /// Creates a BoneName with default values.
             /// </summary>
-            public BoneName(string name)
+            public BoneName()
             {
-                Name = name;
+                Name = "Master";
             }
 
             internal BoneName(BinaryReaderEx br)

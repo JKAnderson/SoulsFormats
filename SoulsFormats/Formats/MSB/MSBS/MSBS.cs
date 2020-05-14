@@ -19,6 +19,7 @@ namespace SoulsFormats
         /// Dynamic or interactive systems such as item pickups, levers, enemy spawners, etc.
         /// </summary>
         public EventParam Events { get; set; }
+        IMsbParam<IMsbEvent> IMsb.Events => Events;
 
         /// <summary>
         /// Points or areas of space that trigger some sort of behavior.
@@ -193,22 +194,19 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown; probably some kind of version number.
             /// </summary>
-            public int Unk00 { get; set; }
+            public int Version { get; set; }
 
-            /// <summary>
-            /// A string identifying the type of entries in the param.
-            /// </summary>
-            public string Name { get; }
+            private protected string Name { get; }
 
-            internal Param(int unk00, string name)
+            internal Param(int version, string name)
             {
-                Unk00 = unk00;
+                Version = version;
                 Name = name;
             }
 
             internal List<T> Read(BinaryReaderEx br)
             {
-                Unk00 = br.ReadInt32();
+                Version = br.ReadInt32();
                 int offsetCount = br.ReadInt32();
                 long nameOffset = br.ReadInt64();
                 long[] entryOffsets = br.ReadInt64s(offsetCount - 1);
@@ -232,7 +230,7 @@ namespace SoulsFormats
 
             internal virtual void Write(BinaryWriterEx bw, List<T> entries)
             {
-                bw.WriteInt32(Unk00);
+                bw.WriteInt32(Version);
                 bw.WriteInt32(entries.Count + 1);
                 bw.ReserveInt64("ParamNameOffset");
                 for (int i = 0; i < entries.Count; i++)
@@ -269,7 +267,7 @@ namespace SoulsFormats
             /// </summary>
             public override string ToString()
             {
-                return $"0x{Unk00:X2} {Name}";
+                return $"0x{Version:X2} {Name}";
             }
         }
 
@@ -294,7 +292,7 @@ namespace SoulsFormats
             /// <summary>
             /// Creates an EmptyParam with the given values.
             /// </summary>
-            public EmptyParam(int unk00, string name) : base(unk00, name) { }
+            public EmptyParam(int version, string name) : base(version, name) { }
 
             internal override Entry ReadEntry(BinaryReaderEx br)
             {

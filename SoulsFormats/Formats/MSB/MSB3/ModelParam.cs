@@ -6,6 +6,20 @@ namespace SoulsFormats
 {
     public partial class MSB3
     {
+        internal enum ModelType : uint
+        {
+            MapPiece = 0,
+            Object = 1,
+            Enemy = 2,
+            Item = 3,
+            Player = 4,
+            Collision = 5,
+            Navmesh = 6,
+            DummyObject = 7,
+            DummyEnemy = 8,
+            Other = 0xFFFFFFFF
+        }
+
         /// <summary>
         /// A section containing all the models available to parts in this map.
         /// </summary>
@@ -58,6 +72,27 @@ namespace SoulsFormats
             }
 
             /// <summary>
+            /// Adds a model to the appropriate list for its type; returns the model.
+            /// </summary>
+            public Model Add(Model model)
+            {
+                switch (model)
+                {
+                    case Model.MapPiece m: MapPieces.Add(m); break;
+                    case Model.Object m: Objects.Add(m); break;
+                    case Model.Enemy m: Enemies.Add(m); break;
+                    case Model.Player m: Players.Add(m); break;
+                    case Model.Collision m: Collisions.Add(m); break;
+                    case Model.Other m: Others.Add(m); break;
+
+                    default:
+                        throw new ArgumentException($"Unrecognized type {model.GetType()}.", nameof(model));
+                }
+                return model;
+            }
+            IMsbModel IMsbParam<IMsbModel>.Add(IMsbModel item) => Add((Model)item);
+
+            /// <summary>
             /// Returns every model in the order they will be written.
             /// </summary>
             public override List<Model> GetEntries()
@@ -97,28 +132,13 @@ namespace SoulsFormats
             }
         }
 
-        internal enum ModelType : uint
-        {
-            MapPiece = 0,
-            Object = 1,
-            Enemy = 2,
-            Item = 3,
-            Player = 4,
-            Collision = 5,
-            Navmesh = 6,
-            DummyObject = 7,
-            DummyEnemy = 8,
-            Other = 0xFFFFFFFF
-        }
-
         /// <summary>
         /// A model available for use by parts in this map.
         /// </summary>
         public abstract class Model : NamedEntry, IMsbModel
         {
-            internal abstract ModelType Type { get; }
-
-            internal abstract bool HasTypeData { get; }
+            private protected abstract ModelType Type { get; }
+            private protected abstract bool HasTypeData { get; }
 
             /// <summary>
             /// The name of this model.
@@ -132,19 +152,19 @@ namespace SoulsFormats
 
             private int InstanceCount;
 
-            internal Model(string name)
+            private protected Model(string name)
             {
                 Name = name;
                 SibPath = "";
             }
 
-            internal Model(Model clone)
+            private protected Model(Model clone)
             {
                 Name = clone.Name;
                 SibPath = clone.SibPath;
             }
 
-            internal Model(BinaryReaderEx br)
+            private protected Model(BinaryReaderEx br)
             {
                 long start = br.Position;
 
@@ -213,9 +233,8 @@ namespace SoulsFormats
             /// </summary>
             public class MapPiece : Model
             {
-                internal override ModelType Type => ModelType.MapPiece;
-
-                internal override bool HasTypeData => true;
+                private protected override ModelType Type => ModelType.MapPiece;
+                private protected override bool HasTypeData => true;
 
                 /// <summary>
                 /// Unknown.
@@ -238,9 +257,9 @@ namespace SoulsFormats
                 public bool UnkT03 { get; set; }
 
                 /// <summary>
-                /// Creates a new MapPiece with the given name.
+                /// Creates a MapPiece with default values.
                 /// </summary>
-                public MapPiece(string name) : base(name)
+                public MapPiece() : base("mXXXXXX")
                 {
                     UnkT02 = true;
                     UnkT03 = true;
@@ -287,9 +306,8 @@ namespace SoulsFormats
             /// </summary>
             public class Object : Model
             {
-                internal override ModelType Type => ModelType.Object;
-
-                internal override bool HasTypeData => true;
+                private protected override ModelType Type => ModelType.Object;
+                private protected override bool HasTypeData => true;
 
                 /// <summary>
                 /// Unknown.
@@ -312,9 +330,9 @@ namespace SoulsFormats
                 public bool UnkT03 { get; set; }
 
                 /// <summary>
-                /// Creates a new Object with the given name.
+                /// Creates an Object with default values.
                 /// </summary>
-                public Object(string name) : base(name)
+                public Object() : base("oXXXXXX")
                 {
                     UnkT02 = true;
                     UnkT03 = true;
@@ -361,14 +379,13 @@ namespace SoulsFormats
             /// </summary>
             public class Enemy : Model
             {
-                internal override ModelType Type => ModelType.Enemy;
-
-                internal override bool HasTypeData => false;
+                private protected override ModelType Type => ModelType.Enemy;
+                private protected override bool HasTypeData => false;
 
                 /// <summary>
-                /// Creates a new Enemy with the given name.
+                /// Creates an Enemy with default values.
                 /// </summary>
-                public Enemy(string name) : base(name) { }
+                public Enemy() : base("cXXXX") { }
 
                 /// <summary>
                 /// Creates a new Enemy with values copied from another.
@@ -383,14 +400,13 @@ namespace SoulsFormats
             /// </summary>
             public class Player : Model
             {
-                internal override ModelType Type => ModelType.Player;
-
-                internal override bool HasTypeData => false;
+                private protected override ModelType Type => ModelType.Player;
+                private protected override bool HasTypeData => false;
 
                 /// <summary>
-                /// Creates a new Player with the given name.
+                /// Creates a Player with default values.
                 /// </summary>
-                public Player(string name) : base(name) { }
+                public Player() : base("c0000") { }
 
                 /// <summary>
                 /// Creates a new Player with values copied from another.
@@ -405,14 +421,13 @@ namespace SoulsFormats
             /// </summary>
             public class Collision : Model
             {
-                internal override ModelType Type => ModelType.Collision;
-
-                internal override bool HasTypeData => false;
+                private protected override ModelType Type => ModelType.Collision;
+                private protected override bool HasTypeData => false;
 
                 /// <summary>
-                /// Creates a new Collision with the given name.
+                /// Creates a Collision with default values.
                 /// </summary>
-                public Collision(string name) : base(name) { }
+                public Collision() : base("hXXXXXX") { }
 
                 /// <summary>
                 /// Creates a new Collision with values copied from another.
@@ -427,14 +442,13 @@ namespace SoulsFormats
             /// </summary>
             public class Other : Model
             {
-                internal override ModelType Type => ModelType.Other;
-
-                internal override bool HasTypeData => false;
+                private protected override ModelType Type => ModelType.Other;
+                private protected override bool HasTypeData => false;
 
                 /// <summary>
-                /// Creates a new Other with the given name.
+                /// Creates an Other with default values.
                 /// </summary>
-                public Other(string name) : base(name) { }
+                public Other() : base("lXXXXXX") { }
 
                 /// <summary>
                 /// Creates a new Other with values copied from another.

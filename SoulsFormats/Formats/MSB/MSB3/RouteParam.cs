@@ -64,7 +64,7 @@ namespace SoulsFormats
             /// </summary>
             public Route()
             {
-                Name = "";
+                Name = "XX-XX";
             }
 
             internal Route(BinaryReaderEx br)

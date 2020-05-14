@@ -27,6 +27,16 @@ namespace SoulsFormats
             }
 
             /// <summary>
+            /// Adds a region to the list; returns the region.
+            /// </summary>
+            public Region Add(Region region)
+            {
+                Regions.Add(region);
+                return region;
+            }
+            IMsbRegion IMsbParam<IMsbRegion>.Add(IMsbRegion item) => Add((Region)item);
+
+            /// <summary>
             /// Returns the list of regions.
             /// </summary>
             public override List<Region> GetEntries()
@@ -37,9 +47,7 @@ namespace SoulsFormats
 
             internal override Region ReadEntry(BinaryReaderEx br)
             {
-                var region = new Region(br);
-                Regions.Add(region);
-                return region;
+                return Regions.EchoAdd(new Region(br));
             }
         }
 
@@ -73,7 +81,7 @@ namespace SoulsFormats
             /// </summary>
             public Region()
             {
-                Name = "";
+                Name = "Region";
                 Shape = new Shape.Point();
                 EntityID = -1;
             }

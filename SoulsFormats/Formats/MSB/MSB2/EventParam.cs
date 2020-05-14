@@ -7,12 +7,8 @@ namespace SoulsFormats
 {
     public partial class MSB2
     {
-        /// <summary>
-        /// Types of event used in DS2.
-        /// </summary>
-        public enum EventType : ushort
+        internal enum EventType : ushort
         {
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
             Light = 1,
             Shadow = 2,
             Fog = 3,
@@ -20,16 +16,15 @@ namespace SoulsFormats
             MapOffset = 5,
             Warp = 6,
             CheapMode = 7,
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
         }
 
         /// <summary>
         /// Abstract entities that control map properties or behaviors.
         /// </summary>
-        public class EventParam : Param<Event>
+        public class EventParam : Param<Event>, IMsbParam<IMsbEvent>
         {
-            internal override string Name => "EVENT_PARAM_ST";
             internal override int Version => 5;
+            internal override string Name => "EVENT_PARAM_ST";
 
             /// <summary>
             /// Unknown if these do anything.
@@ -80,50 +75,27 @@ namespace SoulsFormats
                 CheapModes = new List<Event.CheapMode>();
             }
 
-            internal override Event ReadEntry(BinaryReaderEx br)
+            /// <summary>
+            /// Adds an event to the appropriate list for its type; returns the event.
+            /// </summary>
+            public Event Add(Event evnt)
             {
-                EventType type = br.GetEnum16<EventType>(br.Position + 0xC);
-                switch (type)
+                switch (evnt)
                 {
-                    case EventType.Light:
-                        var light = new Event.Light(br);
-                        Lights.Add(light);
-                        return light;
-
-                    case EventType.Shadow:
-                        var shadow = new Event.Shadow(br);
-                        Shadows.Add(shadow);
-                        return shadow;
-
-                    case EventType.Fog:
-                        var fog = new Event.Fog(br);
-                        Fogs.Add(fog);
-                        return fog;
-
-                    case EventType.BGColor:
-                        var bgColor = new Event.BGColor(br);
-                        BGColors.Add(bgColor);
-                        return bgColor;
-
-                    case EventType.MapOffset:
-                        var mapOffset = new Event.MapOffset(br);
-                        MapOffsets.Add(mapOffset);
-                        return mapOffset;
-
-                    case EventType.Warp:
-                        var warp = new Event.Warp(br);
-                        Warps.Add(warp);
-                        return warp;
-
-                    case EventType.CheapMode:
-                        var cheapMode = new Event.CheapMode(br);
-                        CheapModes.Add(cheapMode);
-                        return cheapMode;
+                    case Event.Light e: Lights.Add(e); break;
+                    case Event.Shadow e: Shadows.Add(e); break;
+                    case Event.Fog e: Fogs.Add(e); break;
+                    case Event.BGColor e: BGColors.Add(e); break;
+                    case Event.MapOffset e: MapOffsets.Add(e); break;
+                    case Event.Warp e: Warps.Add(e); break;
+                    case Event.CheapMode e: CheapModes.Add(e); break;
 
                     default:
-                        throw new NotImplementedException($"Unimplemented event type: {type}");
+                        throw new ArgumentException($"Unrecognized type {evnt.GetType()}.", nameof(evnt));
                 }
+                return evnt;
             }
+            IMsbEvent IMsbParam<IMsbEvent>.Add(IMsbEvent item) => Add((Event)item);
 
             /// <summary>
             /// Returns every Event in the order they'll be written.
@@ -134,30 +106,59 @@ namespace SoulsFormats
                     Lights, Shadows, Fogs, BGColors, MapOffsets,
                     Warps, CheapModes);
             }
+            IReadOnlyList<IMsbEvent> IMsbParam<IMsbEvent>.GetEntries() => GetEntries();
+
+            internal override Event ReadEntry(BinaryReaderEx br)
+            {
+                EventType type = br.GetEnum16<EventType>(br.Position + 0xC);
+                switch (type)
+                {
+                    case EventType.Light:
+                        return Lights.EchoAdd(new Event.Light(br));
+
+                    case EventType.Shadow:
+                        return Shadows.EchoAdd(new Event.Shadow(br));
+
+                    case EventType.Fog:
+                        return Fogs.EchoAdd(new Event.Fog(br));
+
+                    case EventType.BGColor:
+                        return BGColors.EchoAdd(new Event.BGColor(br));
+
+                    case EventType.MapOffset:
+                        return MapOffsets.EchoAdd(new Event.MapOffset(br));
+
+                    case EventType.Warp:
+                        return Warps.EchoAdd(new Event.Warp(br));
+
+                    case EventType.CheapMode:
+                        return CheapModes.EchoAdd(new Event.CheapMode(br));
+
+                    default:
+                        throw new NotImplementedException($"Unimplemented event type: {type}");
+                }
+            }
         }
 
         /// <summary>
         /// An abstract entity that controls map properties or behaviors.
         /// </summary>
-        public abstract class Event : NamedEntry
+        public abstract class Event : NamedEntry, IMsbEvent
         {
-            /// <summary>
-            /// Specific type of this event.
-            /// </summary>
-            public abstract EventType Type { get; }
+            private protected abstract EventType Type { get; }
 
             /// <summary>
             /// Uniquely identifies the event in the map.
             /// </summary>
             public int EventID { get; set; }
 
-            internal Event(string name = "")
+            private protected Event(string name)
             {
                 Name = name;
                 EventID = -1;
             }
 
-            internal Event(BinaryReaderEx br)
+            private protected Event(BinaryReaderEx br)
             {
                 long start = br.Position;
                 long nameOffset = br.ReadInt64();
@@ -205,10 +206,7 @@ namespace SoulsFormats
             /// </summary>
             public class Light : Event
             {
-                /// <summary>
-                /// EventType.Light
-                /// </summary>
-                public override EventType Type => EventType.Light;
+                private protected override EventType Type => EventType.Light;
 
                 /// <summary>
                 /// Unknown.
@@ -283,7 +281,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a Light with default values.
                 /// </summary>
-                public Light(string name = "") : base(name) { }
+                public Light() : base($"{nameof(Event)}: {nameof(Light)}") { }
 
                 internal Light(BinaryReaderEx br) : base(br) { }
 
@@ -341,10 +339,7 @@ namespace SoulsFormats
             /// </summary>
             public class Shadow : Event
             {
-                /// <summary>
-                /// EventType.Shadow
-                /// </summary>
-                public override EventType Type => EventType.Shadow;
+                private protected override EventType Type => EventType.Shadow;
 
                 /// <summary>
                 /// Unknown.
@@ -399,7 +394,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a Shadow with default values.
                 /// </summary>
-                public Shadow(string name = "") : base(name) { }
+                public Shadow() : base($"{nameof(Event)}: {nameof(Shadow)}") { }
 
                 internal Shadow(BinaryReaderEx br) : base(br) { }
 
@@ -439,10 +434,7 @@ namespace SoulsFormats
             /// </summary>
             public class Fog : Event
             {
-                /// <summary>
-                /// EventType.Fog
-                /// </summary>
-                public override EventType Type => EventType.Fog;
+                private protected override EventType Type => EventType.Fog;
 
                 /// <summary>
                 /// Unknown.
@@ -477,7 +469,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a Fog with default values.
                 /// </summary>
-                public Fog(string name = "") : base(name) { }
+                public Fog() : base($"{nameof(Event)}: {nameof(Fog)}") { }
 
                 internal Fog(BinaryReaderEx br) : base(br) { }
 
@@ -509,10 +501,7 @@ namespace SoulsFormats
             /// </summary>
             public class BGColor : Event
             {
-                /// <summary>
-                /// EventType.BGColor
-                /// </summary>
-                public override EventType Type => EventType.BGColor;
+                private protected override EventType Type => EventType.BGColor;
 
                 /// <summary>
                 /// The background color.
@@ -522,7 +511,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a BGColor with default values.
                 /// </summary>
-                public BGColor(string name = "") : base(name) { }
+                public BGColor() : base($"{nameof(Event)}: {nameof(BGColor)}") { }
 
                 internal BGColor(BinaryReaderEx br) : base(br) { }
 
@@ -544,10 +533,7 @@ namespace SoulsFormats
             /// </summary>
             public class MapOffset : Event
             {
-                /// <summary>
-                /// EventType.MapOffset
-                /// </summary>
-                public override EventType Type => EventType.MapOffset;
+                private protected override EventType Type => EventType.MapOffset;
 
                 /// <summary>
                 /// The origin of the map.
@@ -557,7 +543,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a MapOffset with default values.
                 /// </summary>
-                public MapOffset(string name = "") : base(name) { }
+                public MapOffset() : base($"{nameof(Event)}: {nameof(MapOffset)}") { }
 
                 internal MapOffset(BinaryReaderEx br) : base(br) { }
 
@@ -579,10 +565,7 @@ namespace SoulsFormats
             /// </summary>
             public class Warp : Event
             {
-                /// <summary>
-                /// EventType.Warp
-                /// </summary>
-                public override EventType Type => EventType.Warp;
+                private protected override EventType Type => EventType.Warp;
 
                 /// <summary>
                 /// Unknown.
@@ -597,7 +580,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a Warp with default values.
                 /// </summary>
-                public Warp(string name = "") : base(name) { }
+                public Warp() : base($"{nameof(Event)}: {nameof(Warp)}") { }
 
                 internal Warp(BinaryReaderEx br) : base(br) { }
 
@@ -619,10 +602,7 @@ namespace SoulsFormats
             /// </summary>
             public class CheapMode : Event
             {
-                /// <summary>
-                /// EventType.CheapMode
-                /// </summary>
-                public override EventType Type => EventType.CheapMode;
+                private protected override EventType Type => EventType.CheapMode;
 
                 /// <summary>
                 /// Unknown.
@@ -632,7 +612,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a CheapMode with default values.
                 /// </summary>
-                public CheapMode(string name = "") : base(name) { }
+                public CheapMode() : base($"{nameof(Event)}: {nameof(CheapMode)}") { }
 
                 internal CheapMode(BinaryReaderEx br) : base(br) { }
 

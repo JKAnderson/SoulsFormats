@@ -6,6 +6,28 @@ namespace SoulsFormats
 {
     public partial class MSB3
     {
+        internal enum RegionType : uint
+        {
+            General = 0xFFFFFFFF,
+            Unk00 = 0,
+            InvasionPoint = 1,
+            EnvironmentMapPoint = 2,
+            Sound = 4,
+            SFX = 5,
+            WindSFX = 6,
+            SpawnPoint = 8,
+            Message = 9,
+            WalkRoute = 11,
+            Unk12 = 12,
+            WarpPoint = 13,
+            ActivationArea = 14,
+            Event = 15,
+            EnvironmentMapEffectBox = 17,
+            WindArea = 18,
+            MufflingBox = 20,
+            MufflingPortal = 21,
+        }
+
         /// <summary>
         /// A section containing points and volumes for various purposes.
         /// </summary>
@@ -130,6 +152,39 @@ namespace SoulsFormats
             }
 
             /// <summary>
+            /// Adds a region to the appropriate list for its type; returns the region.
+            /// </summary>
+            public Region Add(Region region)
+            {
+                switch (region)
+                {
+                    case Region.General r: General.Add(r); break;
+                    case Region.Unk00 r: Unk00s.Add(r); break;
+                    case Region.InvasionPoint r: InvasionPoints.Add(r); break;
+                    case Region.EnvironmentMapPoint r: EnvironmentMapPoints.Add(r); break;
+                    case Region.Sound r: Sounds.Add(r); break;
+                    case Region.SFX r: SFX.Add(r); break;
+                    case Region.WindSFX r: WindSFX.Add(r); break;
+                    case Region.SpawnPoint r: SpawnPoints.Add(r); break;
+                    case Region.Message r: Messages.Add(r); break;
+                    case Region.WalkRoute r: WalkRoutes.Add(r); break;
+                    case Region.Unk12 r: Unk12s.Add(r); break;
+                    case Region.WarpPoint r: WarpPoints.Add(r); break;
+                    case Region.ActivationArea r: ActivationAreas.Add(r); break;
+                    case Region.Event r: Events.Add(r); break;
+                    case Region.EnvironmentMapEffectBox r: EnvironmentMapEffectBoxes.Add(r); break;
+                    case Region.WindArea r: WindAreas.Add(r); break;
+                    case Region.MufflingBox r: MufflingBoxes.Add(r); break;
+                    case Region.MufflingPortal r: MufflingPortals.Add(r); break;
+
+                    default:
+                        throw new ArgumentException($"Unrecognized type {region.GetType()}.", nameof(region));
+                }
+                return region;
+            }
+            IMsbRegion IMsbParam<IMsbRegion>.Add(IMsbRegion item) => Add((Region)item);
+
+            /// <summary>
             /// Returns every region in the order they will be written.
             /// </summary>
             public override List<Region> GetEntries()
@@ -144,7 +199,7 @@ namespace SoulsFormats
 
             internal override Region ReadEntry(BinaryReaderEx br)
             {
-                RegionType type = br.GetEnum32<RegionType>(br.Position + 0x8);
+                RegionType type = br.GetEnum32<RegionType>(br.Position + 8);
                 switch (type)
                 {
                     case RegionType.General:
@@ -207,34 +262,12 @@ namespace SoulsFormats
             }
         }
 
-        internal enum RegionType : uint
-        {
-            General = 0xFFFFFFFF,
-            Unk00 = 0,
-            InvasionPoint = 1,
-            EnvironmentMapPoint = 2,
-            Sound = 4,
-            SFX = 5,
-            WindSFX = 6,
-            SpawnPoint = 8,
-            Message = 9,
-            WalkRoute = 11,
-            Unk12 = 12,
-            WarpPoint = 13,
-            ActivationArea = 14,
-            Event = 15,
-            EnvironmentMapEffectBox = 17,
-            WindArea = 18,
-            MufflingBox = 20,
-            MufflingPortal = 21,
-        }
-
         /// <summary>
         /// A point or volumetric area used for a variety of purposes.
         /// </summary>
         public abstract class Region : NamedEntry, IMsbRegion
         {
-            internal abstract RegionType Type { get; }
+            private protected abstract RegionType Type { get; }
 
             /// <summary>
             /// The name of this region.
@@ -292,7 +325,7 @@ namespace SoulsFormats
             /// </summary>
             public int EntityID { get; set; }
 
-            internal Region(string name, bool hasTypeData)
+            private protected Region(string name, bool hasTypeData)
             {
                 Name = name;
                 Shape = new Shape.Point();
@@ -302,7 +335,7 @@ namespace SoulsFormats
                 HasTypeData = hasTypeData;
             }
 
-            internal Region(Region clone)
+            private protected Region(Region clone)
             {
                 Name = clone.Name;
                 Position = clone.Position;
@@ -317,7 +350,7 @@ namespace SoulsFormats
                 HasTypeData = clone.HasTypeData;
             }
 
-            internal Region(BinaryReaderEx br)
+            private protected Region(BinaryReaderEx br)
             {
                 long start = br.Position;
 
@@ -479,12 +512,12 @@ namespace SoulsFormats
             /// </summary>
             public class General : SimpleRegion
             {
-                internal override RegionType Type => RegionType.General;
+                private protected override RegionType Type => RegionType.General;
 
                 /// <summary>
-                /// Creates a new General with the given name.
+                /// Creates a General with default values.
                 /// </summary>
-                public General(string name) : base(name) { }
+                public General() : base($"{nameof(Region)}: {nameof(General)}") { }
 
                 /// <summary>
                 /// Creates a new General region with values copied from another.
@@ -499,12 +532,12 @@ namespace SoulsFormats
             /// </summary>
             public class Unk00 : SimpleRegion
             {
-                internal override RegionType Type => RegionType.Unk00;
+                private protected override RegionType Type => RegionType.Unk00;
 
                 /// <summary>
-                /// Creates a new Unk00 with the given name.
+                /// Creates a Unk00 with default values.
                 /// </summary>
-                public Unk00(string name) : base(name) { }
+                public Unk00() : base($"{nameof(Region)}: {nameof(Unk00)}") { }
 
                 /// <summary>
                 /// Creates a new Unk00 with values copied from another.
@@ -519,7 +552,7 @@ namespace SoulsFormats
             /// </summary>
             public class InvasionPoint : Region
             {
-                internal override RegionType Type => RegionType.InvasionPoint;
+                private protected override RegionType Type => RegionType.InvasionPoint;
 
                 /// <summary>
                 /// Not sure what this does.
@@ -527,9 +560,9 @@ namespace SoulsFormats
                 public int Priority { get; set; }
 
                 /// <summary>
-                /// Creates a new InvasionPoint with the given name.
+                /// Creates an InvasionPoint with default values.
                 /// </summary>
-                public InvasionPoint(string name) : base(name, true) { }
+                public InvasionPoint() : base($"{nameof(Region)}: {nameof(InvasionPoint)}", true) { }
 
                 /// <summary>
                 /// Creates a new InvasionPoint with values copied from another.
@@ -558,7 +591,7 @@ namespace SoulsFormats
             /// </summary>
             public class EnvironmentMapPoint : Region
             {
-                internal override RegionType Type => RegionType.EnvironmentMapPoint;
+                private protected override RegionType Type => RegionType.EnvironmentMapPoint;
 
                 /// <summary>
                 /// Unknown. Only ever 1 bit set, so probably flags.
@@ -566,9 +599,9 @@ namespace SoulsFormats
                 public int UnkFlags { get; set; }
 
                 /// <summary>
-                /// Creates a new EnvironmentMapPoint with the given name.
+                /// Creates an EnvironmentMapPoint with default values.
                 /// </summary>
-                public EnvironmentMapPoint(string name) : base(name, true) { }
+                public EnvironmentMapPoint() : base($"{nameof(Region)}: {nameof(EnvironmentMapPoint)}", true) { }
 
                 /// <summary>
                 /// Creates a new EnvironmentMapPoint with values copied from another.
@@ -620,7 +653,7 @@ namespace SoulsFormats
                     Voice = 7,
                 }
 
-                internal override RegionType Type => RegionType.Sound;
+                private protected override RegionType Type => RegionType.Sound;
 
                 /// <summary>
                 /// Type of sound in this region; determines mixing behavior like muffling.
@@ -639,9 +672,9 @@ namespace SoulsFormats
                 private int[] ChildRegionIndices;
 
                 /// <summary>
-                /// Creates a new Sound with the given name.
+                /// Creates a Sound with default values.
                 /// </summary>
-                public Sound(string name) : base(name, true)
+                public Sound() : base($"{nameof(Region)}: {nameof(Sound)}", true)
                 {
                     SoundType = SndType.Environment;
                     ChildRegionNames = new string[16];
@@ -692,7 +725,7 @@ namespace SoulsFormats
             /// </summary>
             public class SFX : Region
             {
-                internal override RegionType Type => RegionType.SFX;
+                private protected override RegionType Type => RegionType.SFX;
 
                 /// <summary>
                 /// The ID of the .fxr file to play in this region.
@@ -705,9 +738,9 @@ namespace SoulsFormats
                 public bool StartDisabled { get; set; }
 
                 /// <summary>
-                /// Creates a new SFX with the given name.
+                /// Creates a SFX with default values.
                 /// </summary>
-                public SFX(string name) : base(name, true)
+                public SFX() : base($"{nameof(Region)}: {nameof(SFX)}", true)
                 {
                     FFXID = -1;
                 }
@@ -751,7 +784,7 @@ namespace SoulsFormats
             /// </summary>
             public class WindSFX : Region
             {
-                internal override RegionType Type => RegionType.WindSFX;
+                private protected override RegionType Type => RegionType.WindSFX;
 
                 /// <summary>
                 /// ID of an .fxr file.
@@ -765,9 +798,9 @@ namespace SoulsFormats
                 private int WindAreaIndex;
 
                 /// <summary>
-                /// Creates a new WindSFX with the given name.
+                /// Creates a WindSFX with default values.
                 /// </summary>
-                public WindSFX(string name) : base(name, true)
+                public WindSFX() : base($"{nameof(Region)}: {nameof(WindSFX)}", true)
                 {
                     FFXID = -1;
                 }
@@ -824,7 +857,7 @@ namespace SoulsFormats
             /// </summary>
             public class SpawnPoint : Region
             {
-                internal override RegionType Type => RegionType.SpawnPoint;
+                private protected override RegionType Type => RegionType.SpawnPoint;
 
                 /// <summary>
                 /// Unknown; seems kind of like a region index, but also kind of doesn't.
@@ -832,9 +865,9 @@ namespace SoulsFormats
                 public int UnkT00 { get; set; }
 
                 /// <summary>
-                /// Creates a new SpawnPoint with the given name.
+                /// Creates a SpawnPoint with default values.
                 /// </summary>
-                public SpawnPoint(string name) : base(name, true)
+                public SpawnPoint() : base($"{nameof(Region)}: {nameof(SpawnPoint)}", true)
                 {
                     UnkT00 = -1;
                 }
@@ -872,7 +905,7 @@ namespace SoulsFormats
             /// </summary>
             public class Message : Region
             {
-                internal override RegionType Type => RegionType.Message;
+                private protected override RegionType Type => RegionType.Message;
 
                 /// <summary>
                 /// ID of the message's text in the FMGs.
@@ -890,9 +923,9 @@ namespace SoulsFormats
                 public bool Hidden { get; set; }
 
                 /// <summary>
-                /// Creates a new Message with the given name.
+                /// Creates a Message with default values.
                 /// </summary>
-                public Message(string name) : base(name, true)
+                public Message() : base($"{nameof(Region)}: {nameof(Message)}", true)
                 {
                     MessageID = -1;
                 }
@@ -930,12 +963,12 @@ namespace SoulsFormats
             /// </summary>
             public class WalkRoute : SimpleRegion
             {
-                internal override RegionType Type => RegionType.WalkRoute;
+                private protected override RegionType Type => RegionType.WalkRoute;
 
                 /// <summary>
-                /// Creates a new WalkRoute with the given name.
+                /// Creates a WalkRoute with default values.
                 /// </summary>
-                public WalkRoute(string name) : base(name) { }
+                public WalkRoute() : base($"{nameof(Region)}: {nameof(WalkRoute)}") { }
 
                 /// <summary>
                 /// Creates a new WalkRoute with values copied from another.
@@ -950,12 +983,12 @@ namespace SoulsFormats
             /// </summary>
             public class Unk12 : SimpleRegion
             {
-                internal override RegionType Type => RegionType.Unk12;
+                private protected override RegionType Type => RegionType.Unk12;
 
                 /// <summary>
-                /// Creates a new Unk12 with the given name.
+                /// Creates an Unk12 with default values.
                 /// </summary>
-                public Unk12(string name) : base(name) { }
+                public Unk12() : base($"{nameof(Region)}: {nameof(Unk12)}") { }
 
                 /// <summary>
                 /// Creates a new Unk12 with values copied from another.
@@ -970,12 +1003,12 @@ namespace SoulsFormats
             /// </summary>
             public class WarpPoint : SimpleRegion
             {
-                internal override RegionType Type => RegionType.WarpPoint;
+                private protected override RegionType Type => RegionType.WarpPoint;
 
                 /// <summary>
-                /// Creates a new WarpPoint with the given name.
+                /// Creates a WarpPoint with default values.
                 /// </summary>
-                public WarpPoint(string name) : base(name) { }
+                public WarpPoint() : base($"{nameof(Region)}: {nameof(WarpPoint)}") { }
 
                 /// <summary>
                 /// Creates a new WarpPoint with values copied from another.
@@ -990,12 +1023,12 @@ namespace SoulsFormats
             /// </summary>
             public class ActivationArea : SimpleRegion
             {
-                internal override RegionType Type => RegionType.ActivationArea;
+                private protected override RegionType Type => RegionType.ActivationArea;
 
                 /// <summary>
-                /// Creates a new ActivationArea with the given name.
+                /// Creates an ActivationArea with default values.
                 /// </summary>
-                public ActivationArea(string name) : base(name) { }
+                public ActivationArea() : base($"{nameof(Region)}: {nameof(ActivationArea)}") { }
 
                 /// <summary>
                 /// Creates a new ActivationArea with values copied from another.
@@ -1010,12 +1043,12 @@ namespace SoulsFormats
             /// </summary>
             public class Event : SimpleRegion
             {
-                internal override RegionType Type => RegionType.Event;
+                private protected override RegionType Type => RegionType.Event;
 
                 /// <summary>
-                /// Creates a new Event with the given name.
+                /// Creates an Event with default values.
                 /// </summary>
-                public Event(string name) : base(name) { }
+                public Event() : base($"{nameof(Region)}: {nameof(Event)}") { }
 
                 /// <summary>
                 /// Creates a new Event with values copied from another.
@@ -1030,7 +1063,7 @@ namespace SoulsFormats
             /// </summary>
             public class EnvironmentMapEffectBox : Region
             {
-                internal override RegionType Type => RegionType.EnvironmentMapEffectBox;
+                private protected override RegionType Type => RegionType.EnvironmentMapEffectBox;
 
                 /// <summary>
                 /// Unknown.
@@ -1058,9 +1091,9 @@ namespace SoulsFormats
                 public short UnkT0A { get; set; }
 
                 /// <summary>
-                /// Creates a new EnvironmentMapEffectBox with the given name.
+                /// Creates an EnvironmentMapEffectBox with default values.
                 /// </summary>
-                public EnvironmentMapEffectBox(string name) : base(name, true) { }
+                public EnvironmentMapEffectBox() : base($"{nameof(Region)}: {nameof(EnvironmentMapEffectBox)}", true) { }
 
                 /// <summary>
                 /// Creates a new EnvironmentMapEffectBox with values copied from another.
@@ -1117,12 +1150,12 @@ namespace SoulsFormats
             /// </summary>
             public class WindArea : SimpleRegion
             {
-                internal override RegionType Type => RegionType.WindArea;
+                private protected override RegionType Type => RegionType.WindArea;
 
                 /// <summary>
-                /// Creates a new WindArea with the given name.
+                /// Creates a WindArea with default values.
                 /// </summary>
-                public WindArea(string name) : base(name) { }
+                public WindArea() : base($"{nameof(Region)}: {nameof(WindArea)}") { }
 
                 /// <summary>
                 /// Creates a new WindArea with values copied from another.
@@ -1137,7 +1170,7 @@ namespace SoulsFormats
             /// </summary>
             public class MufflingBox : Region
             {
-                internal override RegionType Type => RegionType.MufflingBox;
+                private protected override RegionType Type => RegionType.MufflingBox;
 
                 /// <summary>
                 /// Unknown.
@@ -1145,9 +1178,9 @@ namespace SoulsFormats
                 public int UnkT00 { get; set; }
 
                 /// <summary>
-                /// Creates a new MufflingBox with the given name.
+                /// Creates a MufflingBox with default values.
                 /// </summary>
-                public MufflingBox(string name) : base(name, true) { }
+                public MufflingBox() : base($"{nameof(Region)}: {nameof(MufflingBox)}", true) { }
 
                 /// <summary>
                 /// Creates a new MufflingBox with values copied from another.
@@ -1176,7 +1209,7 @@ namespace SoulsFormats
             /// </summary>
             public class MufflingPortal : Region
             {
-                internal override RegionType Type => RegionType.MufflingPortal;
+                private protected override RegionType Type => RegionType.MufflingPortal;
 
                 /// <summary>
                 /// Unknown.
@@ -1184,9 +1217,9 @@ namespace SoulsFormats
                 public int UnkT00 { get; set; }
 
                 /// <summary>
-                /// Creates a new MufflingPortal with the given name.
+                /// Creates a MufflingPortal with default values.
                 /// </summary>
-                public MufflingPortal(string name) : base(name, true) { }
+                public MufflingPortal() : base($"{nameof(Region)}: {nameof(MufflingPortal)}", true) { }
 
                 /// <summary>
                 /// Creates a new MufflingPortal with values copied from another.

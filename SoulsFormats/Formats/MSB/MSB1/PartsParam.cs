@@ -6,8 +6,7 @@ namespace SoulsFormats
 {
     public partial class MSB1
     {
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-        public enum PartType : uint
+        internal enum PartType : uint
         {
             MapPiece = 0,
             Object = 1,
@@ -19,7 +18,6 @@ namespace SoulsFormats
             DummyEnemy = 10,
             ConnectCollision = 11,
         }
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 
         /// <summary>
         /// All instances of concrete things in the map.
@@ -89,60 +87,29 @@ namespace SoulsFormats
                 ConnectCollisions = new List<Part.ConnectCollision>();
             }
 
-            internal override Part ReadEntry(BinaryReaderEx br)
+            /// <summary>
+            /// Adds a part to the appropriate list for its type; returns the part.
+            /// </summary>
+            public Part Add(Part part)
             {
-                PartType type = br.GetEnum32<PartType>(br.Position + 4);
-                switch (type)
+                switch (part)
                 {
-                    case PartType.MapPiece:
-                        var mapPiece = new Part.MapPiece(br);
-                        MapPieces.Add(mapPiece);
-                        return mapPiece;
-
-                    case PartType.Object:
-                        var obj = new Part.Object(br);
-                        Objects.Add(obj);
-                        return obj;
-
-                    case PartType.Enemy:
-                        var enemy = new Part.Enemy(br);
-                        Enemies.Add(enemy);
-                        return enemy;
-
-                    case PartType.Player:
-                        var player = new Part.Player(br);
-                        Players.Add(player);
-                        return player;
-
-                    case PartType.Collision:
-                        var collision = new Part.Collision(br);
-                        Collisions.Add(collision);
-                        return collision;
-
-                    case PartType.Navmesh:
-                        var navmesh = new Part.Navmesh(br);
-                        Navmeshes.Add(navmesh);
-                        return navmesh;
-
-                    case PartType.DummyObject:
-                        var dummyObject = new Part.DummyObject(br);
-                        DummyObjects.Add(dummyObject);
-                        return dummyObject;
-
-                    case PartType.DummyEnemy:
-                        var dummyEnemy = new Part.DummyEnemy(br);
-                        DummyEnemies.Add(dummyEnemy);
-                        return dummyEnemy;
-
-                    case PartType.ConnectCollision:
-                        var connectCollision = new Part.ConnectCollision(br);
-                        ConnectCollisions.Add(connectCollision);
-                        return connectCollision;
+                    case Part.MapPiece p: MapPieces.Add(p); break;
+                    case Part.Object p: Objects.Add(p); break;
+                    case Part.Enemy p: Enemies.Add(p); break;
+                    case Part.Player p: Players.Add(p); break;
+                    case Part.Collision p: Collisions.Add(p); break;
+                    case Part.Navmesh p: Navmeshes.Add(p); break;
+                    case Part.DummyObject p: DummyObjects.Add(p); break;
+                    case Part.DummyEnemy p: DummyEnemies.Add(p); break;
+                    case Part.ConnectCollision p: ConnectCollisions.Add(p); break;
 
                     default:
-                        throw new NotImplementedException($"Unimplemented part type: {type}");
+                        throw new ArgumentException($"Unrecognized type {part.GetType()}.", nameof(part));
                 }
+                return part;
             }
+            IMsbPart IMsbParam<IMsbPart>.Add(IMsbPart item) => Add((Part)item);
 
             /// <summary>
             /// Returns every Part in the order they'll be written.
@@ -154,6 +121,43 @@ namespace SoulsFormats
                     Navmeshes, DummyObjects, DummyEnemies, ConnectCollisions);
             }
             IReadOnlyList<IMsbPart> IMsbParam<IMsbPart>.GetEntries() => GetEntries();
+
+            internal override Part ReadEntry(BinaryReaderEx br)
+            {
+                PartType type = br.GetEnum32<PartType>(br.Position + 4);
+                switch (type)
+                {
+                    case PartType.MapPiece:
+                        return MapPieces.EchoAdd(new Part.MapPiece(br));
+
+                    case PartType.Object:
+                        return Objects.EchoAdd(new Part.Object(br));
+
+                    case PartType.Enemy:
+                        return Enemies.EchoAdd(new Part.Enemy(br));
+
+                    case PartType.Player:
+                        return Players.EchoAdd(new Part.Player(br));
+
+                    case PartType.Collision:
+                        return Collisions.EchoAdd(new Part.Collision(br));
+
+                    case PartType.Navmesh:
+                        return Navmeshes.EchoAdd(new Part.Navmesh(br));
+
+                    case PartType.DummyObject:
+                        return DummyObjects.EchoAdd(new Part.DummyObject(br));
+
+                    case PartType.DummyEnemy:
+                        return DummyEnemies.EchoAdd(new Part.DummyEnemy(br));
+
+                    case PartType.ConnectCollision:
+                        return ConnectCollisions.EchoAdd(new Part.ConnectCollision(br));
+
+                    default:
+                        throw new NotImplementedException($"Unimplemented part type: {type}");
+                }
+            }
         }
 
         /// <summary>
@@ -161,10 +165,7 @@ namespace SoulsFormats
         /// </summary>
         public abstract class Part : Entry, IMsbPart
         {
-            /// <summary>
-            /// The type of the Part.
-            /// </summary>
-            public abstract PartType Type { get; }
+            private protected abstract PartType Type { get; }
 
             /// <summary>
             /// The model of the Part, corresponding to an entry in the ModelParam.
@@ -175,7 +176,7 @@ namespace SoulsFormats
             /// <summary>
             /// A path to a .sib file, presumed to be some kind of editor placeholder.
             /// </summary>
-            public string Placeholder { get; set; }
+            public string SibPath { get; set; }
 
             /// <summary>
             /// Location of the part.
@@ -292,10 +293,10 @@ namespace SoulsFormats
             /// </summary>
             public byte DisablePointLightEffect { get; set; }
 
-            internal Part()
+            private protected Part(string name)
             {
-                Name = "";
-                Placeholder = "";
+                Name = name;
+                SibPath = "";
                 Scale = Vector3.One;
                 DrawGroups = new uint[4] {
                     0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
@@ -304,7 +305,7 @@ namespace SoulsFormats
                 EntityID = -1;
             }
 
-            internal Part(BinaryReaderEx br)
+            private protected Part(BinaryReaderEx br)
             {
                 long start = br.Position;
                 int nameOffset = br.ReadInt32();
@@ -322,7 +323,7 @@ namespace SoulsFormats
                 br.AssertInt32(0);
 
                 Name = br.GetShiftJIS(start + nameOffset);
-                Placeholder = br.GetShiftJIS(start + sibOffset);
+                SibPath = br.GetShiftJIS(start + sibOffset);
 
                 br.Position = start + entityDataOffset;
                 EntityID = br.ReadInt32();
@@ -371,7 +372,7 @@ namespace SoulsFormats
                 bw.FillInt32("NameOffset", (int)(bw.Position - start));
                 bw.WriteShiftJIS(MSB.ReambiguateName(Name), true);
                 bw.FillInt32("SibOffset", (int)(bw.Position - start));
-                bw.WriteShiftJIS(Placeholder, true);
+                bw.WriteShiftJIS(SibPath, true);
                 bw.Pad(4);
                 if (bw.Position - stringsStart < 0x14)
                     bw.WritePattern((int)(0x14 - (bw.Position - stringsStart)), 0x00);
@@ -417,15 +418,12 @@ namespace SoulsFormats
             /// </summary>
             public class MapPiece : Part
             {
-                /// <summary>
-                /// PartType.MapPiece
-                /// </summary>
-                public override PartType Type => PartType.MapPiece;
+                private protected override PartType Type => PartType.MapPiece;
 
                 /// <summary>
                 /// Creates a MapPiece with default values.
                 /// </summary>
-                public MapPiece() : base() { }
+                public MapPiece() : base("mXXXXBX") { }
 
                 internal MapPiece(BinaryReaderEx br) : base(br)
                 {
@@ -439,24 +437,6 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                 }
-            }
-
-            /// <summary>
-            /// A dynamic or interactible part of the map.
-            /// </summary>
-            public class Object : ObjectBase
-            {
-                /// <summary>
-                /// PartType.Object
-                /// </summary>
-                public override PartType Type => PartType.Object;
-
-                /// <summary>
-                /// Creates an Object with default values.
-                /// </summary>
-                public Object() : base() { }
-
-                internal Object(BinaryReaderEx br) : base(br) { }
             }
 
             /// <summary>
@@ -490,9 +470,9 @@ namespace SoulsFormats
                 /// </summary>
                 public int UnkT10 { get; set; }
 
-                internal ObjectBase() : base() { }
+                private protected ObjectBase() : base("oXXXX_XXXX") { }
 
-                internal ObjectBase(BinaryReaderEx br) : base(br)
+                private protected ObjectBase(BinaryReaderEx br) : base(br)
                 {
                     br.AssertInt32(0);
                     CollisionIndex = br.ReadInt32();
@@ -526,6 +506,21 @@ namespace SoulsFormats
                     base.GetIndices(msb, entries);
                     CollisionIndex = MSB.FindIndex(entries.Parts, CollisionName);
                 }
+            }
+
+            /// <summary>
+            /// A dynamic or interactible part of the map.
+            /// </summary>
+            public class Object : ObjectBase
+            {
+                private protected override PartType Type => PartType.Object;
+
+                /// <summary>
+                /// Creates an Object with default values.
+                /// </summary>
+                public Object() : base() { }
+
+                internal Object(BinaryReaderEx br) : base(br) { }
             }
 
             /// <summary>
@@ -580,7 +575,7 @@ namespace SoulsFormats
                 /// </summary>
                 public int UnkT3C { get; set; }
 
-                internal EnemyBase() : base()
+                private protected EnemyBase() : base("cXXXX_XXXX")
                 {
                     ThinkParamID = -1;
                     NPCParamID = -1;
@@ -589,7 +584,7 @@ namespace SoulsFormats
                     MovePointNames = new string[8];
                 }
 
-                internal EnemyBase(BinaryReaderEx br) : base(br)
+                private protected EnemyBase(BinaryReaderEx br) : base(br)
                 {
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -650,10 +645,7 @@ namespace SoulsFormats
             /// </summary>
             public class Enemy : EnemyBase
             {
-                /// <summary>
-                /// PartType.Enemy
-                /// </summary>
-                public override PartType Type => PartType.Enemy;
+                private protected override PartType Type => PartType.Enemy;
 
                 /// <summary>
                 /// Creates an Enemy with default values.
@@ -668,15 +660,12 @@ namespace SoulsFormats
             /// </summary>
             public class Player : Part
             {
-                /// <summary>
-                /// PartType.Player
-                /// </summary>
-                public override PartType Type => PartType.Player;
+                private protected override PartType Type => PartType.Player;
 
                 /// <summary>
                 /// Creates a Player with default values.
                 /// </summary>
-                public Player() : base() { }
+                public Player() : base("c0000_XXXX") { }
 
                 internal Player(BinaryReaderEx br) : base(br)
                 {
@@ -701,10 +690,7 @@ namespace SoulsFormats
             /// </summary>
             public class Collision : Part
             {
-                /// <summary>
-                /// PartType.Collision
-                /// </summary>
-                public override PartType Type => PartType.Collision;
+                private protected override PartType Type => PartType.Collision;
 
                 /// <summary>
                 /// Unknown.
@@ -769,7 +755,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a Collision with default values.
                 /// </summary>
-                public Collision() : base()
+                public Collision() : base("hXXXXBX")
                 {
                     NvmGroups = new uint[4]{
                         0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
@@ -833,10 +819,7 @@ namespace SoulsFormats
             /// </summary>
             public class Navmesh : Part
             {
-                /// <summary>
-                /// PartType.Navmesh
-                /// </summary>
-                public override PartType Type => PartType.Navmesh;
+                private protected override PartType Type => PartType.Navmesh;
 
                 /// <summary>
                 /// Unknown.
@@ -846,7 +829,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a Navmesh with default values.
                 /// </summary>
-                public Navmesh() : base()
+                public Navmesh() : base("nXXXXBX")
                 {
                     NvmGroups = new uint[4] {
                         0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
@@ -877,10 +860,7 @@ namespace SoulsFormats
             /// </summary>
             public class DummyObject : ObjectBase
             {
-                /// <summary>
-                /// PartType.DummyObject
-                /// </summary>
-                public override PartType Type => PartType.DummyObject;
+                private protected override PartType Type => PartType.DummyObject;
 
                 /// <summary>
                 /// Creates a DummyObject with default values.
@@ -895,10 +875,7 @@ namespace SoulsFormats
             /// </summary>
             public class DummyEnemy : EnemyBase
             {
-                /// <summary>
-                /// PartType.DummyEnemy
-                /// </summary>
-                public override PartType Type => PartType.DummyEnemy;
+                private protected override PartType Type => PartType.DummyEnemy;
 
                 /// <summary>
                 /// Creates a DummyEnemy with default values.
@@ -913,10 +890,7 @@ namespace SoulsFormats
             /// </summary>
             public class ConnectCollision : Part
             {
-                /// <summary>
-                /// PartType.ConnectCollision
-                /// </summary>
-                public override PartType Type => PartType.ConnectCollision;
+                private protected override PartType Type => PartType.ConnectCollision;
 
                 /// <summary>
                 /// The collision which will load another map.
@@ -932,7 +906,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a ConnectCollision with default values.
                 /// </summary>
-                public ConnectCollision() : base()
+                public ConnectCollision() : base("hXXXXBX_XXXX")
                 {
                     MapID = new byte[4] { 10, 2, 0, 0 };
                 }

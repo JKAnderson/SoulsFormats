@@ -58,11 +58,10 @@ namespace SoulsFormats
             public List<Bone> Bones { get; set; }
 
             /// <summary>
-            /// Creates a new PartsPose with no members.
+            /// Creates an empty PartsPose.
             /// </summary>
-            public PartsPose(string partName)
+            public PartsPose()
             {
-                PartName = partName;
                 Bones = new List<Bone>();
             }
 
@@ -130,11 +129,12 @@ namespace SoulsFormats
                 public Vector3 Scale { get; set; }
 
                 /// <summary>
-                /// Creates a new Bone with the given bone name index and default transforms.
+                /// Creates a Bone with default values.
                 /// </summary>
-                public Bone(string name)
+                public Bone()
                 {
-                    Name = name;
+                    Name = "Master";
+                    Scale = Vector3.One;
                 }
 
                 internal Bone(BinaryReaderEx br)
@@ -161,7 +161,7 @@ namespace SoulsFormats
                 internal void GetIndices(Entries entries)
                 {
                     if (!entries.BoneNames.Any(bn => bn.Name == Name))
-                        entries.BoneNames.Add(new BoneName(Name));
+                        entries.BoneNames.Add(new BoneName() { Name = Name });
                     NameIndex = MSB.FindIndex(entries.BoneNames, Name);
                 }
 
