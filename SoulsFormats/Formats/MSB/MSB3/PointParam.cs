@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Numerics;
 
 namespace SoulsFormats
@@ -267,17 +268,22 @@ namespace SoulsFormats
         /// </summary>
         public abstract class Region : NamedEntry, IMsbRegion
         {
+            private protected enum TypeDataPresence
+            {
+                Never,
+                Sometimes,
+                Always,
+                AlwaysNull,
+            }
+
             private protected abstract RegionType Type { get; }
+            private protected abstract TypeDataPresence ShouldHaveTypeData { get; }
+            private protected abstract bool DoesHaveTypeData { get; }
 
             /// <summary>
             /// The name of this region.
             /// </summary>
             public override string Name { get; set; }
-
-            /// <summary>
-            /// Whether this region has additional type data. The only region type where this actually varies is Sound.
-            /// </summary>
-            public bool HasTypeData { get; set; }
 
             /// <summary>
             /// Unknown.
@@ -325,14 +331,13 @@ namespace SoulsFormats
             /// </summary>
             public int EntityID { get; set; }
 
-            private protected Region(string name, bool hasTypeData)
+            private protected Region(string name)
             {
                 Name = name;
                 Shape = new Shape.Point();
                 EntityID = -1;
                 UnkA = new List<short>();
                 UnkB = new List<short>();
-                HasTypeData = hasTypeData;
             }
 
             private protected Region(Region clone)
@@ -347,7 +352,6 @@ namespace SoulsFormats
                 UnkA = new List<short>(clone.UnkA);
                 UnkB = new List<short>(clone.UnkB);
                 MapStudioLayer = clone.MapStudioLayer;
-                HasTypeData = clone.HasTypeData;
             }
 
             private protected Region(BinaryReaderEx br)
@@ -369,7 +373,22 @@ namespace SoulsFormats
                 long baseDataOffset3 = br.ReadInt64();
                 long typeDataOffset = br.ReadInt64();
 
-                Name = br.GetUTF16(start + nameOffset);
+                if (nameOffset == 0)
+                    throw new InvalidDataException($"{nameof(nameOffset)} must not be 0.");
+                if (baseDataOffset1 == 0)
+                    throw new InvalidDataException($"{nameof(baseDataOffset1)} must not be 0.");
+                if (baseDataOffset2 == 0)
+                    throw new InvalidDataException($"{nameof(baseDataOffset2)} must not be 0.");
+                // TODO validate shape offset
+                if (baseDataOffset3 == 0)
+                    throw new InvalidDataException($"{nameof(baseDataOffset3)} must not be 0.");
+                if (ShouldHaveTypeData == TypeDataPresence.Never && typeDataOffset != 0
+                    || ShouldHaveTypeData == TypeDataPresence.Always && typeDataOffset == 0
+                    || ShouldHaveTypeData == TypeDataPresence.AlwaysNull && typeDataOffset != 0)
+                    throw new InvalidDataException($"Unexpected {nameof(typeDataOffset)} 0x{typeDataOffset:X}.");
+
+                br.Position = start + nameOffset;
+                Name = br.ReadUTF16();
 
                 br.Position = start + baseDataOffset1;
                 short countA = br.ReadInt16();
@@ -410,12 +429,16 @@ namespace SoulsFormats
                 ActivationPartIndex = br.ReadInt32();
                 EntityID = br.ReadInt32();
 
-                HasTypeData = typeDataOffset != 0 || Type == RegionType.MufflingBox || Type == RegionType.MufflingPortal;
-                if (HasTypeData)
-                    ReadSpecific(br);
+                if (typeDataOffset != 0 || ShouldHaveTypeData == TypeDataPresence.AlwaysNull)
+                {
+                    if (typeDataOffset != 0)
+                        br.Position = start + typeDataOffset;
+                    ReadTypeData(br);
+                }
             }
 
-            internal abstract void ReadSpecific(BinaryReaderEx br);
+            private protected virtual void ReadTypeData(BinaryReaderEx br)
+                => throw new NotImplementedException($"Type {GetType()} missing valid {nameof(ReadTypeData)}.");
 
             internal override void Write(BinaryWriterEx bw, int id)
             {
@@ -457,15 +480,19 @@ namespace SoulsFormats
                 bw.WriteInt32(ActivationPartIndex);
                 bw.WriteInt32(EntityID);
 
-                if (HasTypeData)
-                    WriteSpecific(bw, start);
+                if (DoesHaveTypeData && ShouldHaveTypeData != TypeDataPresence.AlwaysNull)
+                    bw.FillInt64("TypeDataOffset", bw.Position - start);
                 else
                     bw.FillInt64("TypeDataOffset", 0);
+
+                if (DoesHaveTypeData)
+                    WriteTypeData(bw);
 
                 bw.Pad(8);
             }
 
-            internal abstract void WriteSpecific(BinaryWriterEx bw, long start);
+            private protected virtual void WriteTypeData(BinaryWriterEx bw)
+                => throw new NotImplementedException($"Type {GetType()} missing valid {nameof(WriteTypeData)}.");
 
             internal virtual void GetNames(MSB3 msb, Entries entries)
             {
@@ -486,33 +513,13 @@ namespace SoulsFormats
             }
 
             /// <summary>
-            /// A region type with no type data.
-            /// </summary>
-            public abstract class SimpleRegion : Region
-            {
-                internal SimpleRegion(string name) : base(name, false) { }
-
-                internal SimpleRegion(SimpleRegion clone) : base(clone) { }
-
-                internal SimpleRegion(BinaryReaderEx br) : base(br) { }
-
-                internal override void ReadSpecific(BinaryReaderEx br)
-                {
-                    throw new InvalidOperationException("SimpleRegions should never have type data.");
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw, long start)
-                {
-                    throw new InvalidOperationException("SimpleRegions should never have type data.");
-                }
-            }
-
-            /// <summary>
             /// Regions for random things.
             /// </summary>
-            public class General : SimpleRegion
+            public class General : Region
             {
                 private protected override RegionType Type => RegionType.General;
+                private protected override TypeDataPresence ShouldHaveTypeData => TypeDataPresence.Never;
+                private protected override bool DoesHaveTypeData => false;
 
                 /// <summary>
                 /// Creates a General with default values.
@@ -530,9 +537,11 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown; only used 3 times in Catacombs.
             /// </summary>
-            public class Unk00 : SimpleRegion
+            public class Unk00 : Region
             {
                 private protected override RegionType Type => RegionType.Unk00;
+                private protected override TypeDataPresence ShouldHaveTypeData => TypeDataPresence.Never;
+                private protected override bool DoesHaveTypeData => false;
 
                 /// <summary>
                 /// Creates a Unk00 with default values.
@@ -553,6 +562,8 @@ namespace SoulsFormats
             public class InvasionPoint : Region
             {
                 private protected override RegionType Type => RegionType.InvasionPoint;
+                private protected override TypeDataPresence ShouldHaveTypeData => TypeDataPresence.Always;
+                private protected override bool DoesHaveTypeData => true;
 
                 /// <summary>
                 /// Not sure what this does.
@@ -562,7 +573,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates an InvasionPoint with default values.
                 /// </summary>
-                public InvasionPoint() : base($"{nameof(Region)}: {nameof(InvasionPoint)}", true) { }
+                public InvasionPoint() : base($"{nameof(Region)}: {nameof(InvasionPoint)}") { }
 
                 /// <summary>
                 /// Creates a new InvasionPoint with values copied from another.
@@ -574,14 +585,13 @@ namespace SoulsFormats
 
                 internal InvasionPoint(BinaryReaderEx br) : base(br) { }
 
-                internal override void ReadSpecific(BinaryReaderEx br)
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     Priority = br.ReadInt32();
                 }
 
-                internal override void WriteSpecific(BinaryWriterEx bw, long start)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.FillInt64("TypeDataOffset", bw.Position - start);
                     bw.WriteInt32(Priority);
                 }
             }
@@ -592,37 +602,49 @@ namespace SoulsFormats
             public class EnvironmentMapPoint : Region
             {
                 private protected override RegionType Type => RegionType.EnvironmentMapPoint;
+                private protected override TypeDataPresence ShouldHaveTypeData => TypeDataPresence.Sometimes;
+                private protected override bool DoesHaveTypeData => SaveTypeData;
 
                 /// <summary>
-                /// Unknown. Only ever 1 bit set, so probably flags.
+                /// Whether or not the UnkFlags will be written to the file.
                 /// </summary>
-                public int UnkFlags { get; set; }
+                public bool SaveTypeData { get; set; }
+
+                /// <summary>
+                /// Unknown; observed values 0x80 and 0x100.
+                /// </summary>
+                public int UnkT00 { get; set; }
 
                 /// <summary>
                 /// Creates an EnvironmentMapPoint with default values.
                 /// </summary>
-                public EnvironmentMapPoint() : base($"{nameof(Region)}: {nameof(EnvironmentMapPoint)}", true) { }
+                public EnvironmentMapPoint() : base($"{nameof(Region)}: {nameof(EnvironmentMapPoint)}")
+                {
+                    SaveTypeData = true;
+                    UnkT00 = 0x80;
+                }
 
                 /// <summary>
                 /// Creates a new EnvironmentMapPoint with values copied from another.
                 /// </summary>
                 public EnvironmentMapPoint(EnvironmentMapPoint clone) : base(clone)
                 {
-                    UnkFlags = clone.UnkFlags;
+                    SaveTypeData = clone.SaveTypeData;
+                    UnkT00 = clone.UnkT00;
                 }
 
                 internal EnvironmentMapPoint(BinaryReaderEx br) : base(br) { }
 
-                internal override void ReadSpecific(BinaryReaderEx br)
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
-                    UnkFlags = br.ReadInt32();
+                    SaveTypeData = true;
+                    UnkT00 = br.ReadInt32();
                     br.AssertInt32(0);
                 }
 
-                internal override void WriteSpecific(BinaryWriterEx bw, long start)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.FillInt64("TypeDataOffset", bw.Position - start);
-                    bw.WriteInt32(UnkFlags);
+                    bw.WriteInt32(UnkT00);
                     bw.WriteInt32(0);
                 }
             }
@@ -654,6 +676,8 @@ namespace SoulsFormats
                 }
 
                 private protected override RegionType Type => RegionType.Sound;
+                private protected override TypeDataPresence ShouldHaveTypeData => TypeDataPresence.Always;
+                private protected override bool DoesHaveTypeData => true;
 
                 /// <summary>
                 /// Type of sound in this region; determines mixing behavior like muffling.
@@ -674,7 +698,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a Sound with default values.
                 /// </summary>
-                public Sound() : base($"{nameof(Region)}: {nameof(Sound)}", true)
+                public Sound() : base($"{nameof(Region)}: {nameof(Sound)}")
                 {
                     SoundType = SndType.Environment;
                     ChildRegionNames = new string[16];
@@ -692,16 +716,15 @@ namespace SoulsFormats
 
                 internal Sound(BinaryReaderEx br) : base(br) { }
 
-                internal override void ReadSpecific(BinaryReaderEx br)
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     SoundType = br.ReadEnum32<SndType>();
                     SoundID = br.ReadInt32();
                     ChildRegionIndices = br.ReadInt32s(16);
                 }
 
-                internal override void WriteSpecific(BinaryWriterEx bw, long start)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.FillInt64("TypeDataOffset", bw.Position - start);
                     bw.WriteUInt32((uint)SoundType);
                     bw.WriteInt32(SoundID);
                     bw.WriteInt32s(ChildRegionIndices);
@@ -726,6 +749,8 @@ namespace SoulsFormats
             public class SFX : Region
             {
                 private protected override RegionType Type => RegionType.SFX;
+                private protected override TypeDataPresence ShouldHaveTypeData => TypeDataPresence.Always;
+                private protected override bool DoesHaveTypeData => true;
 
                 /// <summary>
                 /// The ID of the .fxr file to play in this region.
@@ -740,7 +765,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a SFX with default values.
                 /// </summary>
-                public SFX() : base($"{nameof(Region)}: {nameof(SFX)}", true)
+                public SFX() : base($"{nameof(Region)}: {nameof(SFX)}")
                 {
                     FFXID = -1;
                 }
@@ -756,7 +781,7 @@ namespace SoulsFormats
 
                 internal SFX(BinaryReaderEx br) : base(br) { }
 
-                internal override void ReadSpecific(BinaryReaderEx br)
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     FFXID = br.ReadInt32();
                     // These are not additional FFX IDs, I checked
@@ -767,9 +792,8 @@ namespace SoulsFormats
                     StartDisabled = br.AssertInt32(0, 1) == 1;
                 }
 
-                internal override void WriteSpecific(BinaryWriterEx bw, long start)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.FillInt64("TypeDataOffset", bw.Position - start);
                     bw.WriteInt32(FFXID);
                     bw.WriteInt32(-1);
                     bw.WriteInt32(-1);
@@ -785,6 +809,8 @@ namespace SoulsFormats
             public class WindSFX : Region
             {
                 private protected override RegionType Type => RegionType.WindSFX;
+                private protected override TypeDataPresence ShouldHaveTypeData => TypeDataPresence.Always;
+                private protected override bool DoesHaveTypeData => true;
 
                 /// <summary>
                 /// ID of an .fxr file.
@@ -800,7 +826,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a WindSFX with default values.
                 /// </summary>
-                public WindSFX() : base($"{nameof(Region)}: {nameof(WindSFX)}", true)
+                public WindSFX() : base($"{nameof(Region)}: {nameof(WindSFX)}")
                 {
                     FFXID = -1;
                 }
@@ -816,7 +842,7 @@ namespace SoulsFormats
 
                 internal WindSFX(BinaryReaderEx br) : base(br) { }
 
-                internal override void ReadSpecific(BinaryReaderEx br)
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     FFXID = br.ReadInt32();
                     br.AssertInt32(-1);
@@ -827,9 +853,8 @@ namespace SoulsFormats
                     br.AssertSingle(-1);
                 }
 
-                internal override void WriteSpecific(BinaryWriterEx bw, long start)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.FillInt64("TypeDataOffset", bw.Position - start);
                     bw.WriteInt32(FFXID);
                     bw.WriteInt32(-1);
                     bw.WriteInt32(-1);
@@ -858,6 +883,8 @@ namespace SoulsFormats
             public class SpawnPoint : Region
             {
                 private protected override RegionType Type => RegionType.SpawnPoint;
+                private protected override TypeDataPresence ShouldHaveTypeData => TypeDataPresence.Always;
+                private protected override bool DoesHaveTypeData => true;
 
                 /// <summary>
                 /// Unknown; seems kind of like a region index, but also kind of doesn't.
@@ -867,7 +894,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a SpawnPoint with default values.
                 /// </summary>
-                public SpawnPoint() : base($"{nameof(Region)}: {nameof(SpawnPoint)}", true)
+                public SpawnPoint() : base($"{nameof(Region)}: {nameof(SpawnPoint)}")
                 {
                     UnkT00 = -1;
                 }
@@ -882,7 +909,7 @@ namespace SoulsFormats
 
                 internal SpawnPoint(BinaryReaderEx br) : base(br) { }
 
-                internal override void ReadSpecific(BinaryReaderEx br)
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     UnkT00 = br.ReadInt32();
                     br.AssertInt32(0);
@@ -890,9 +917,8 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                 }
 
-                internal override void WriteSpecific(BinaryWriterEx bw, long start)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.FillInt64("TypeDataOffset", bw.Position - start);
                     bw.WriteInt32(UnkT00);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
@@ -906,6 +932,8 @@ namespace SoulsFormats
             public class Message : Region
             {
                 private protected override RegionType Type => RegionType.Message;
+                private protected override TypeDataPresence ShouldHaveTypeData => TypeDataPresence.Always;
+                private protected override bool DoesHaveTypeData => true;
 
                 /// <summary>
                 /// ID of the message's text in the FMGs.
@@ -925,7 +953,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a Message with default values.
                 /// </summary>
-                public Message() : base($"{nameof(Region)}: {nameof(Message)}", true)
+                public Message() : base($"{nameof(Region)}: {nameof(Message)}")
                 {
                     MessageID = -1;
                 }
@@ -942,16 +970,15 @@ namespace SoulsFormats
 
                 internal Message(BinaryReaderEx br) : base(br) { }
 
-                internal override void ReadSpecific(BinaryReaderEx br)
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     MessageID = br.ReadInt16();
                     UnkT02 = br.ReadInt16();
                     Hidden = br.AssertInt32(0, 1) == 1;
                 }
 
-                internal override void WriteSpecific(BinaryWriterEx bw, long start)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.FillInt64("TypeDataOffset", bw.Position - start);
                     bw.WriteInt16(MessageID);
                     bw.WriteInt16(UnkT02);
                     bw.WriteInt32(Hidden ? 1 : 0);
@@ -961,9 +988,11 @@ namespace SoulsFormats
             /// <summary>
             /// A point in a WalkRoute.
             /// </summary>
-            public class WalkRoute : SimpleRegion
+            public class WalkRoute : Region
             {
                 private protected override RegionType Type => RegionType.WalkRoute;
+                private protected override TypeDataPresence ShouldHaveTypeData => TypeDataPresence.Never;
+                private protected override bool DoesHaveTypeData => false;
 
                 /// <summary>
                 /// Creates a WalkRoute with default values.
@@ -981,9 +1010,11 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public class Unk12 : SimpleRegion
+            public class Unk12 : Region
             {
                 private protected override RegionType Type => RegionType.Unk12;
+                private protected override TypeDataPresence ShouldHaveTypeData => TypeDataPresence.Never;
+                private protected override bool DoesHaveTypeData => false;
 
                 /// <summary>
                 /// Creates an Unk12 with default values.
@@ -1001,9 +1032,11 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown; seems to be used for moving enemies around.
             /// </summary>
-            public class WarpPoint : SimpleRegion
+            public class WarpPoint : Region
             {
                 private protected override RegionType Type => RegionType.WarpPoint;
+                private protected override TypeDataPresence ShouldHaveTypeData => TypeDataPresence.Never;
+                private protected override bool DoesHaveTypeData => false;
 
                 /// <summary>
                 /// Creates a WarpPoint with default values.
@@ -1021,9 +1054,11 @@ namespace SoulsFormats
             /// <summary>
             /// Triggers an enemy when entered.
             /// </summary>
-            public class ActivationArea : SimpleRegion
+            public class ActivationArea : Region
             {
                 private protected override RegionType Type => RegionType.ActivationArea;
+                private protected override TypeDataPresence ShouldHaveTypeData => TypeDataPresence.Never;
+                private protected override bool DoesHaveTypeData => false;
 
                 /// <summary>
                 /// Creates an ActivationArea with default values.
@@ -1041,9 +1076,11 @@ namespace SoulsFormats
             /// <summary>
             /// Any kind of region for use with event scripts.
             /// </summary>
-            public class Event : SimpleRegion
+            public class Event : Region
             {
                 private protected override RegionType Type => RegionType.Event;
+                private protected override TypeDataPresence ShouldHaveTypeData => TypeDataPresence.Never;
+                private protected override bool DoesHaveTypeData => false;
 
                 /// <summary>
                 /// Creates an Event with default values.
@@ -1064,6 +1101,8 @@ namespace SoulsFormats
             public class EnvironmentMapEffectBox : Region
             {
                 private protected override RegionType Type => RegionType.EnvironmentMapEffectBox;
+                private protected override TypeDataPresence ShouldHaveTypeData => TypeDataPresence.Always;
+                private protected override bool DoesHaveTypeData => true;
 
                 /// <summary>
                 /// Unknown.
@@ -1093,7 +1132,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates an EnvironmentMapEffectBox with default values.
                 /// </summary>
-                public EnvironmentMapEffectBox() : base($"{nameof(Region)}: {nameof(EnvironmentMapEffectBox)}", true) { }
+                public EnvironmentMapEffectBox() : base($"{nameof(Region)}: {nameof(EnvironmentMapEffectBox)}") { }
 
                 /// <summary>
                 /// Creates a new EnvironmentMapEffectBox with values copied from another.
@@ -1109,7 +1148,7 @@ namespace SoulsFormats
 
                 internal EnvironmentMapEffectBox(BinaryReaderEx br) : base(br) { }
 
-                internal override void ReadSpecific(BinaryReaderEx br)
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     UnkT00 = br.ReadSingle();
                     Compare = br.ReadSingle();
@@ -1126,9 +1165,8 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                 }
 
-                internal override void WriteSpecific(BinaryWriterEx bw, long start)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.FillInt64("TypeDataOffset", bw.Position - start);
                     bw.WriteSingle(UnkT00);
                     bw.WriteSingle(Compare);
                     bw.WriteBoolean(UnkT08);
@@ -1148,9 +1186,11 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown; each WindSFX has a reference to a WindArea.
             /// </summary>
-            public class WindArea : SimpleRegion
+            public class WindArea : Region
             {
                 private protected override RegionType Type => RegionType.WindArea;
+                private protected override TypeDataPresence ShouldHaveTypeData => TypeDataPresence.Never;
+                private protected override bool DoesHaveTypeData => false;
 
                 /// <summary>
                 /// Creates a WindArea with default values.
@@ -1171,6 +1211,8 @@ namespace SoulsFormats
             public class MufflingBox : Region
             {
                 private protected override RegionType Type => RegionType.MufflingBox;
+                private protected override TypeDataPresence ShouldHaveTypeData => TypeDataPresence.AlwaysNull;
+                private protected override bool DoesHaveTypeData => true;
 
                 /// <summary>
                 /// Unknown.
@@ -1180,7 +1222,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a MufflingBox with default values.
                 /// </summary>
-                public MufflingBox() : base($"{nameof(Region)}: {nameof(MufflingBox)}", true) { }
+                public MufflingBox() : base($"{nameof(Region)}: {nameof(MufflingBox)}") { }
 
                 /// <summary>
                 /// Creates a new MufflingBox with values copied from another.
@@ -1192,14 +1234,13 @@ namespace SoulsFormats
 
                 internal MufflingBox(BinaryReaderEx br) : base(br) { }
 
-                internal override void ReadSpecific(BinaryReaderEx br)
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     UnkT00 = br.ReadInt32();
                 }
 
-                internal override void WriteSpecific(BinaryWriterEx bw, long start)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.FillInt64("TypeDataOffset", 0);
                     bw.WriteInt32(UnkT00);
                 }
             }
@@ -1210,6 +1251,8 @@ namespace SoulsFormats
             public class MufflingPortal : Region
             {
                 private protected override RegionType Type => RegionType.MufflingPortal;
+                private protected override TypeDataPresence ShouldHaveTypeData => TypeDataPresence.AlwaysNull;
+                private protected override bool DoesHaveTypeData => true;
 
                 /// <summary>
                 /// Unknown.
@@ -1219,7 +1262,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a MufflingPortal with default values.
                 /// </summary>
-                public MufflingPortal() : base($"{nameof(Region)}: {nameof(MufflingPortal)}", true) { }
+                public MufflingPortal() : base($"{nameof(Region)}: {nameof(MufflingPortal)}") { }
 
                 /// <summary>
                 /// Creates a new MufflingPortal with values copied from another.
@@ -1231,7 +1274,7 @@ namespace SoulsFormats
 
                 internal MufflingPortal(BinaryReaderEx br) : base(br) { }
 
-                internal override void ReadSpecific(BinaryReaderEx br)
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     UnkT00 = br.ReadInt32();
                     br.AssertInt32(0);
@@ -1239,9 +1282,8 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                 }
 
-                internal override void WriteSpecific(BinaryWriterEx bw, long start)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.FillInt64("TypeDataOffset", 0);
                     bw.WriteInt32(UnkT00);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
