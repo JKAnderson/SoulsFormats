@@ -167,7 +167,17 @@ namespace SoulsFormats
             /// <summary>
             /// Describes the space encompassed by the region.
             /// </summary>
-            public MSB.Shape Shape { get; set; }
+            public MSB.Shape Shape
+            {
+                get => _shape;
+                set
+                {
+                    if (value is MSB.Shape.Composite)
+                        throw new ArgumentException("Dark Souls 2 does not support composite shapes.");
+                    _shape = value;
+                }
+            }
+            private MSB.Shape _shape;
 
             /// <summary>
             /// Unknown.

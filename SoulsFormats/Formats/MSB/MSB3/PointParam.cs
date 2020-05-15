@@ -293,7 +293,17 @@ namespace SoulsFormats
             /// <summary>
             /// The shape of this region.
             /// </summary>
-            public MSB.Shape Shape { get; set; }
+            public MSB.Shape Shape
+            {
+                get => _shape;
+                set
+                {
+                    if (value is MSB.Shape.Composite)
+                        throw new ArgumentException("Dark Souls 3 does not support composite shapes.");
+                    _shape = value;
+                }
+            }
+            private MSB.Shape _shape;
 
             /// <summary>
             /// Controls whether the event is present in different ceremonies. Maybe only used for Messages?

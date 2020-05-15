@@ -59,7 +59,17 @@ namespace SoulsFormats
             /// <summary>
             /// Describes the physical shape of the region.
             /// </summary>
-            public MSB.Shape Shape { get; set; }
+            public MSB.Shape Shape
+            {
+                get => _shape;
+                set
+                {
+                    if (value is MSB.Shape.Composite)
+                        throw new ArgumentException("Dark Souls 1 does not support composite shapes.");
+                    _shape = value;
+                }
+            }
+            private MSB.Shape _shape;
 
             /// <summary>
             /// Location of the region.
