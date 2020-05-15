@@ -6,7 +6,7 @@ namespace SoulsFormats
     /// <summary>
     /// A generic map layout file.
     /// </summary>
-    public interface IMsb
+    public interface IMsb : ISoulsFile
     {
         /// <summary>
         /// Models available for use in the map.
