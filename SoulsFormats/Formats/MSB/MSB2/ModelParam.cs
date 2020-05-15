@@ -156,11 +156,7 @@ namespace SoulsFormats
                 if (HasTypeData)
                 {
                     bw.FillInt64("TypeDataOffset", bw.Position - start);
-                }
-                if (Type == ModelType.Object)
-                {
-                    bw.FillInt64("TypeDataOffset", bw.Position - start);
-                    bw.WriteInt64(0);
+                    WriteTypeData(bw);
                 }
                 else
                 {
