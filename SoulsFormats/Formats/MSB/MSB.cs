@@ -3,9 +3,12 @@ using System.Text.RegularExpressions;
 
 namespace SoulsFormats
 {
-    internal static class MSB
+    /// <summary>
+    /// Common classes and functions for MSB formats.
+    /// </summary>
+    public static partial class MSB
     {
-        public static void DisambiguateNames<T>(List<T> entries) where T : IMsbEntry
+        internal static void DisambiguateNames<T>(List<T> entries) where T : IMsbEntry
         {
             bool ambiguous;
             do
@@ -30,12 +33,12 @@ namespace SoulsFormats
             while (ambiguous);
         }
 
-        public static string ReambiguateName(string name)
+        internal static string ReambiguateName(string name)
         {
             return Regex.Replace(name, @" \{\d+\}", "");
         }
 
-        public static string FindName<T>(List<T> list, int index) where T : IMsbEntry
+        internal static string FindName<T>(List<T> list, int index) where T : IMsbEntry
         {
             if (index == -1)
                 return null;
@@ -43,7 +46,7 @@ namespace SoulsFormats
                 return list[index].Name;
         }
 
-        public static string[] FindNames<T>(List<T> list, int[] indices) where T : IMsbEntry
+        internal static string[] FindNames<T>(List<T> list, int[] indices) where T : IMsbEntry
         {
             var names = new string[indices.Length];
             for (int i = 0; i < indices.Length; i++)
@@ -51,7 +54,7 @@ namespace SoulsFormats
             return names;
         }
 
-        public static int FindIndex<T>(List<T> list, string name) where T : IMsbEntry
+        internal static int FindIndex<T>(List<T> list, string name) where T : IMsbEntry
         {
             if (name == null)
             {
@@ -66,7 +69,7 @@ namespace SoulsFormats
             }
         }
 
-        public static int[] FindIndices<T>(List<T> list, string[] names) where T : IMsbEntry
+        internal static int[] FindIndices<T>(List<T> list, string[] names) where T : IMsbEntry
         {
             var indices = new int[names.Length];
             for (int i = 0; i < names.Length; i++)

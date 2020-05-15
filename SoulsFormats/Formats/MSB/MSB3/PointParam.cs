@@ -293,7 +293,7 @@ namespace SoulsFormats
             /// <summary>
             /// The shape of this region.
             /// </summary>
-            public Shape Shape { get; set; }
+            public MSB.Shape Shape { get; set; }
 
             /// <summary>
             /// Controls whether the event is present in different ceremonies. Maybe only used for Messages?
@@ -334,7 +334,7 @@ namespace SoulsFormats
             private protected Region(string name)
             {
                 Name = name;
-                Shape = new Shape.Point();
+                Shape = new MSB.Shape.Point();
                 EntityID = -1;
                 UnkA = new List<short>();
                 UnkB = new List<short>();
@@ -345,7 +345,7 @@ namespace SoulsFormats
                 Name = clone.Name;
                 Position = clone.Position;
                 Rotation = clone.Rotation;
-                Shape = clone.Shape.Clone();
+                Shape = clone.Shape.DeepCopy();
                 ActivationPartName = clone.ActivationPartName;
                 EntityID = clone.EntityID;
                 Unk2C = clone.Unk2C;
@@ -361,7 +361,7 @@ namespace SoulsFormats
                 long nameOffset = br.ReadInt64();
                 br.AssertUInt32((uint)Type);
                 br.ReadInt32(); // ID
-                ShapeType shapeType = br.ReadEnum32<ShapeType>();
+                MSB.ShapeType shapeType = br.ReadEnum32<MSB.ShapeType>();
                 Position = br.ReadVector3();
                 Rotation = br.ReadVector3();
                 Unk2C = br.ReadInt32();
@@ -373,13 +373,16 @@ namespace SoulsFormats
                 long baseDataOffset3 = br.ReadInt64();
                 long typeDataOffset = br.ReadInt64();
 
+                Shape = MSB.Shape.Create(shapeType);
+
                 if (nameOffset == 0)
                     throw new InvalidDataException($"{nameof(nameOffset)} must not be 0.");
                 if (baseDataOffset1 == 0)
                     throw new InvalidDataException($"{nameof(baseDataOffset1)} must not be 0.");
                 if (baseDataOffset2 == 0)
                     throw new InvalidDataException($"{nameof(baseDataOffset2)} must not be 0.");
-                // TODO validate shape offset
+                if (Shape.HasShapeData ^ shapeDataOffset != 0)
+                    throw new InvalidDataException($"Unexpected {nameof(shapeDataOffset)} 0x{shapeDataOffset:X}.");
                 if (baseDataOffset3 == 0)
                     throw new InvalidDataException($"{nameof(baseDataOffset3)} must not be 0.");
                 if (ShouldHaveTypeData == TypeDataPresence.Never && typeDataOffset != 0
@@ -398,31 +401,10 @@ namespace SoulsFormats
                 short countB = br.ReadInt16();
                 UnkB = new List<short>(br.ReadInt16s(countB));
 
-                br.Position = start + shapeDataOffset;
-                switch (shapeType)
+                if (Shape.HasShapeData)
                 {
-                    case ShapeType.Point:
-                        Shape = new Shape.Point();
-                        break;
-
-                    case ShapeType.Circle:
-                        Shape = new Shape.Circle(br);
-                        break;
-
-                    case ShapeType.Sphere:
-                        Shape = new Shape.Sphere(br);
-                        break;
-
-                    case ShapeType.Cylinder:
-                        Shape = new Shape.Cylinder(br);
-                        break;
-
-                    case ShapeType.Box:
-                        Shape = new Shape.Box(br);
-                        break;
-
-                    default:
-                        throw new NotImplementedException($"Unsupported shape type: {shapeType}");
+                    br.Position = start + shapeDataOffset;
+                    Shape.ReadShapeData(br);
                 }
 
                 br.Position = start + baseDataOffset3;
@@ -474,7 +456,15 @@ namespace SoulsFormats
                 bw.WriteInt16s(UnkB);
                 bw.Pad(8);
 
-                Shape.Write(bw, start);
+                if (Shape.HasShapeData)
+                {
+                    bw.FillInt64("ShapeDataOffset", bw.Position - start);
+                    Shape.WriteShapeData(bw);
+                }
+                else
+                {
+                    bw.FillInt64("ShapeDataOffset", 0);
+                }
 
                 bw.FillInt64("BaseDataOffset3", bw.Position - start);
                 bw.WriteInt32(ActivationPartIndex);

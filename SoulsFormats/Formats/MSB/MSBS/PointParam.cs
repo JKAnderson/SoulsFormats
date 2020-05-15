@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Numerics;
 
 namespace SoulsFormats
@@ -293,7 +292,7 @@ namespace SoulsFormats
             /// <summary>
             /// The shape of the region.
             /// </summary>
-            public Shape Shape { get; set; }
+            public MSB.Shape Shape { get; set; }
 
             /// <summary>
             /// The location of the region.
@@ -339,7 +338,7 @@ namespace SoulsFormats
             private protected Region(string name)
             {
                 Name = name;
-                Shape = new Shape.Point();
+                Shape = new MSB.Shape.Point();
                 MapStudioLayer = 0xFFFFFFFF;
                 UnkA = new List<short>();
                 UnkB = new List<short>();
@@ -352,7 +351,7 @@ namespace SoulsFormats
                 long nameOffset = br.ReadInt64();
                 br.AssertUInt32((uint)Type);
                 br.ReadInt32(); // ID
-                ShapeType shapeType = br.ReadEnum32<ShapeType>();
+                MSB.ShapeType shapeType = br.ReadEnum32<MSB.ShapeType>();
                 Position = br.ReadVector3();
                 Rotation = br.ReadVector3();
                 Unk2C = br.ReadInt32();
@@ -364,6 +363,8 @@ namespace SoulsFormats
                 long baseDataOffset3 = br.ReadInt64();
                 long typeDataOffset = br.ReadInt64();
 
+                Shape = MSB.Shape.Create(shapeType);
+
                 Name = br.GetUTF16(start + nameOffset);
                 br.Position = start + baseDataOffset1;
                 short countA = br.ReadInt16();
@@ -372,44 +373,16 @@ namespace SoulsFormats
                 short countB = br.ReadInt16();
                 UnkB = new List<short>(br.ReadInt16s(countB));
 
-                br.Position = start + shapeDataOffset;
-                switch (shapeType)
+                if (Shape.HasShapeData)
                 {
-                    case ShapeType.Point:
-                        Shape = new Shape.Point();
-                        break;
-
-                    case ShapeType.Circle:
-                        Shape = new Shape.Circle(br);
-                        break;
-
-                    case ShapeType.Sphere:
-                        Shape = new Shape.Sphere(br);
-                        break;
-
-                    case ShapeType.Cylinder:
-                        Shape = new Shape.Cylinder(br);
-                        break;
-
-                    case ShapeType.Rect:
-                        Shape = new Shape.Rect(br);
-                        break;
-
-                    case ShapeType.Box:
-                        Shape = new Shape.Box(br);
-                        break;
-
-                    case ShapeType.Composite:
-                        Shape = new Shape.Composite(br);
-                        break;
-
-                    default:
-                        throw new NotImplementedException($"Unimplemented shape type: {shapeType}");
+                    br.Position = start + shapeDataOffset;
+                    Shape.ReadShapeData(br);
                 }
 
                 br.Position = start + baseDataOffset3;
                 ActivationPartIndex = br.ReadInt32();
                 EntityID = br.ReadInt32();
+
                 br.Position = start + typeDataOffset;
             }
 
@@ -482,21 +455,15 @@ namespace SoulsFormats
             internal virtual void GetNames(Entries entries)
             {
                 ActivationPartName = MSB.FindName(entries.Parts, ActivationPartIndex);
-                if (Shape is Shape.Composite composite)
-                {
-                    foreach (Shape.Composite.Child child in composite.Children)
-                        child.GetNames(entries);
-                }
+                if (Shape is MSB.Shape.Composite composite)
+                    composite.GetNames(entries.Regions);
             }
 
             internal virtual void GetIndices(Entries entries)
             {
                 ActivationPartIndex = MSB.FindIndex(entries.Parts, ActivationPartName);
-                if (Shape is Shape.Composite composite)
-                {
-                    foreach (Shape.Composite.Child child in composite.Children)
-                        child.GetIndices(entries);
-                }
+                if (Shape is MSB.Shape.Composite composite)
+                    composite.GetIndices(entries.Regions);
             }
 
             /// <summary>

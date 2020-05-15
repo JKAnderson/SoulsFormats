@@ -59,7 +59,7 @@ namespace SoulsFormats
             /// <summary>
             /// Describes the physical shape of the region.
             /// </summary>
-            public Shape Shape { get; set; }
+            public MSB.Shape Shape { get; set; }
 
             /// <summary>
             /// Location of the region.
@@ -82,7 +82,7 @@ namespace SoulsFormats
             public Region()
             {
                 Name = "Region";
-                Shape = new Shape.Point();
+                Shape = new MSB.Shape.Point();
                 EntityID = -1;
             }
 
@@ -92,7 +92,7 @@ namespace SoulsFormats
                 int nameOffset = br.ReadInt32();
                 br.AssertInt32(0);
                 br.ReadInt32(); // ID
-                ShapeType shapeType = br.ReadEnum32<ShapeType>();
+                MSB.ShapeType shapeType = br.ReadEnum32<MSB.ShapeType>();
                 Position = br.ReadVector3();
                 Rotation = br.ReadVector3();
                 int unkOffsetA = br.ReadInt32();
@@ -101,6 +101,8 @@ namespace SoulsFormats
                 int entityDataOffset = br.ReadInt32();
                 br.AssertInt32(0);
 
+                Shape = MSB.Shape.Create(shapeType);
+
                 Name = br.GetShiftJIS(start + nameOffset);
 
                 br.Position = start + unkOffsetA;
@@ -108,35 +110,10 @@ namespace SoulsFormats
                 br.Position = start + unkOffsetB;
                 br.AssertInt32(0);
 
-                br.Position = start + shapeDataOffset;
-                switch (shapeType)
+                if (Shape.HasShapeData)
                 {
-                    case ShapeType.Point:
-                        Shape = new Shape.Point();
-                        break;
-
-                    case ShapeType.Circle:
-                        Shape = new Shape.Circle(br);
-                        break;
-
-                    case ShapeType.Sphere:
-                        Shape = new Shape.Sphere(br);
-                        break;
-
-                    case ShapeType.Cylinder:
-                        Shape = new Shape.Cylinder(br);
-                        break;
-
-                    case ShapeType.Rect:
-                        Shape = new Shape.Rect(br);
-                        break;
-
-                    case ShapeType.Box:
-                        Shape = new Shape.Box(br);
-                        break;
-
-                    default:
-                        throw new NotImplementedException($"Unimplemented shape type: {shapeType}");
+                    br.Position = start + shapeDataOffset;
+                    Shape.ReadShapeData(br);
                 }
 
                 br.Position = start + entityDataOffset;
