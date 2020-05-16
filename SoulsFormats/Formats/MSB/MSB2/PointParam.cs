@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Numerics;
 
 namespace SoulsFormats
@@ -222,7 +223,19 @@ namespace SoulsFormats
 
                 Shape = MSB.Shape.Create(shapeType);
 
-                Name = br.GetUTF16(start + nameOffset);
+                if (nameOffset == 0)
+                    throw new InvalidDataException($"{nameof(nameOffset)} must not be 0 in type {GetType()}.");
+                if (unkOffsetA == 0)
+                    throw new InvalidDataException($"{nameof(unkOffsetA)} must not be 0 in type {GetType()}.");
+                if (unkOffsetB == 0)
+                    throw new InvalidDataException($"{nameof(unkOffsetB)} must not be 0 in type {GetType()}.");
+                if (Shape.HasShapeData ^ shapeDataOffset != 0)
+                    throw new InvalidDataException($"Unexpected {nameof(shapeDataOffset)} 0x{shapeDataOffset:X} in type {GetType()}.");
+                if (HasTypeData ^ typeDataOffset != 0)
+                    throw new InvalidDataException($"Unexpected {nameof(typeDataOffset)} 0x{typeDataOffset:X} in type {GetType()}.");
+
+                br.Position = start + nameOffset;
+                Name = br.ReadUTF16();
 
                 br.Position = start + unkOffsetA;
                 br.AssertInt32(0);
@@ -243,10 +256,8 @@ namespace SoulsFormats
                 }
             }
 
-            internal virtual void ReadTypeData(BinaryReaderEx br)
-            {
-                throw new InvalidOperationException("Type data should not be read for regions with no type data.");
-            }
+            private protected virtual void ReadTypeData(BinaryReaderEx br)
+                => throw new NotImplementedException($"Type {GetType()} missing valid {nameof(ReadTypeData)}.");
 
             internal override void Write(BinaryWriterEx bw, int index)
             {
@@ -300,10 +311,8 @@ namespace SoulsFormats
                 }
             }
 
-            internal virtual void WriteTypeData(BinaryWriterEx bw)
-            {
-                throw new InvalidOperationException("Type data should not be written for regions with no type data.");
-            }
+            private protected virtual void WriteTypeData(BinaryWriterEx bw)
+                => throw new NotImplementedException($"Type {GetType()} missing valid {nameof(WriteTypeData)}.");
 
             /// <summary>
             /// Returns a string representation of the region.
@@ -364,7 +373,7 @@ namespace SoulsFormats
 
                 internal Light(BinaryReaderEx br) : base(br) { }
 
-                internal override void ReadTypeData(BinaryReaderEx br)
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     UnkT00 = br.ReadInt32();
                     ColorT04 = br.ReadRGBA();
@@ -373,7 +382,7 @@ namespace SoulsFormats
                     br.AssertPattern(0x14, 0x00);
                 }
 
-                internal override void WriteTypeData(BinaryWriterEx bw)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(UnkT00);
                     bw.WriteRGBA(ColorT04);
@@ -429,7 +438,7 @@ namespace SoulsFormats
 
                 internal Sound(BinaryReaderEx br) : base(br) { }
 
-                internal override void ReadTypeData(BinaryReaderEx br)
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     UnkT00 = br.ReadInt32();
                     SoundID = br.ReadInt32();
@@ -437,7 +446,7 @@ namespace SoulsFormats
                     br.AssertPattern(0x14, 0x00);
                 }
 
-                internal override void WriteTypeData(BinaryWriterEx bw)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(UnkT00);
                     bw.WriteInt32(SoundID);
@@ -471,14 +480,14 @@ namespace SoulsFormats
 
                 internal SFX(BinaryReaderEx br) : base(br) { }
 
-                internal override void ReadTypeData(BinaryReaderEx br)
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     EffectID = br.ReadInt32();
                     UnkT04 = br.ReadInt32();
                     br.AssertPattern(0x18, 0x00);
                 }
 
-                internal override void WriteTypeData(BinaryWriterEx bw)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(EffectID);
                     bw.WriteInt32(UnkT04);
@@ -536,7 +545,7 @@ namespace SoulsFormats
 
                 internal Wind(BinaryReaderEx br) : base(br) { }
 
-                internal override void ReadTypeData(BinaryReaderEx br)
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     UnkT00 = br.ReadInt32();
                     UnkT04 = br.ReadSingle();
@@ -548,7 +557,7 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                 }
 
-                internal override void WriteTypeData(BinaryWriterEx bw)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(UnkT00);
                     bw.WriteSingle(UnkT04);
@@ -591,7 +600,7 @@ namespace SoulsFormats
 
                 internal EnvLight(BinaryReaderEx br) : base(br) { }
 
-                internal override void ReadTypeData(BinaryReaderEx br)
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     UnkT00 = br.ReadInt32();
                     UnkT04 = br.ReadSingle();
@@ -599,7 +608,7 @@ namespace SoulsFormats
                     br.AssertPattern(0x14, 0x00);
                 }
 
-                internal override void WriteTypeData(BinaryWriterEx bw)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(UnkT00);
                     bw.WriteSingle(UnkT04);
@@ -633,14 +642,14 @@ namespace SoulsFormats
 
                 internal Fog(BinaryReaderEx br) : base(br) { }
 
-                internal override void ReadTypeData(BinaryReaderEx br)
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     UnkT00 = br.ReadInt32();
                     UnkT04 = br.ReadInt32();
                     br.AssertPattern(0x1C, 0x00);
                 }
 
-                internal override void WriteTypeData(BinaryWriterEx bw)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(UnkT00);
                     bw.WriteInt32(UnkT04);

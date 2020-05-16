@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace SoulsFormats
@@ -151,16 +152,24 @@ namespace SoulsFormats
             {
                 long start = br.Position;
                 int nameOffset = br.ReadInt32();
-                br.ReadEnum32<ModelType>();
-                br.ReadInt32();
+                br.AssertUInt32((uint)Type);
+                br.ReadInt32(); // ID
                 int sibOffset = br.ReadInt32();
                 InstanceCount = br.ReadInt32();
                 br.AssertInt32(0);
                 br.AssertInt32(0);
                 br.AssertInt32(0);
 
-                Name = br.GetShiftJIS(start + nameOffset);
-                SibPath = br.GetShiftJIS(start + sibOffset);
+                if (nameOffset == 0)
+                    throw new InvalidDataException($"{nameof(nameOffset)} must not be 0 in type {GetType()}.");
+                if (sibOffset == 0)
+                    throw new InvalidDataException($"{nameof(sibOffset)} must not be 0 in type {GetType()}.");
+
+                br.Position = start + nameOffset;
+                Name = br.ReadShiftJIS();
+
+                br.Position = start + sibOffset;
+                SibPath = br.ReadShiftJIS();
             }
 
             internal override void Write(BinaryWriterEx bw, int id)
@@ -177,6 +186,7 @@ namespace SoulsFormats
 
                 bw.FillInt32("NameOffset", (int)(bw.Position - start));
                 bw.WriteShiftJIS(MSB.ReambiguateName(Name), true);
+
                 bw.FillInt32("SibOffset", (int)(bw.Position - start));
                 bw.WriteShiftJIS(SibPath, true);
                 bw.Pad(4);

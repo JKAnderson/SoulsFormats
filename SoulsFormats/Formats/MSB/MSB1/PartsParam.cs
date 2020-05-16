@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Numerics;
 
 namespace SoulsFormats
@@ -322,10 +323,30 @@ namespace SoulsFormats
                 int typeDataOffset = br.ReadInt32();
                 br.AssertInt32(0);
 
-                Name = br.GetShiftJIS(start + nameOffset);
-                SibPath = br.GetShiftJIS(start + sibOffset);
+                if (nameOffset == 0)
+                    throw new InvalidDataException($"{nameof(nameOffset)} must not be 0 in type {GetType()}.");
+                if (sibOffset == 0)
+                    throw new InvalidDataException($"{nameof(sibOffset)} must not be 0 in type {GetType()}.");
+                if (entityDataOffset == 0)
+                    throw new InvalidDataException($"{nameof(entityDataOffset)} must not be 0 in type {GetType()}.");
+                if (typeDataOffset == 0)
+                    throw new InvalidDataException($"{nameof(typeDataOffset)} must not be 0 in type {GetType()}.");
+
+                br.Position = start + nameOffset;
+                Name = br.ReadShiftJIS();
+
+                br.Position = start + sibOffset;
+                SibPath = br.ReadShiftJIS();
 
                 br.Position = start + entityDataOffset;
+                ReadEntityData(br);
+
+                br.Position = start + typeDataOffset;
+                ReadTypeData(br);
+            }
+
+            private void ReadEntityData(BinaryReaderEx br)
+            {
                 EntityID = br.ReadInt32();
                 LightID = br.ReadByte();
                 FogID = br.ReadByte();
@@ -347,9 +368,9 @@ namespace SoulsFormats
                 DisablePointLightEffect = br.ReadByte();
                 br.AssertByte(0);
                 br.AssertByte(0);
-
-                br.Position = start + typeDataOffset;
             }
+
+            private protected abstract void ReadTypeData(BinaryReaderEx br);
 
             internal override void Write(BinaryWriterEx bw, int id)
             {
@@ -371,6 +392,7 @@ namespace SoulsFormats
                 long stringsStart = bw.Position;
                 bw.FillInt32("NameOffset", (int)(bw.Position - start));
                 bw.WriteShiftJIS(MSB.ReambiguateName(Name), true);
+
                 bw.FillInt32("SibOffset", (int)(bw.Position - start));
                 bw.WriteShiftJIS(SibPath, true);
                 bw.Pad(4);
@@ -378,6 +400,14 @@ namespace SoulsFormats
                     bw.WritePattern((int)(0x14 - (bw.Position - stringsStart)), 0x00);
 
                 bw.FillInt32("EntityDataOffset", (int)(bw.Position - start));
+                WriteEntityData(bw);
+
+                bw.FillInt32("TypeDataOffset", (int)(bw.Position - start));
+                WriteTypeData(bw);
+            }
+
+            private void WriteEntityData(BinaryWriterEx bw)
+            {
                 bw.WriteInt32(EntityID);
                 bw.WriteByte(LightID);
                 bw.WriteByte(FogID);
@@ -399,9 +429,9 @@ namespace SoulsFormats
                 bw.WriteByte(DisablePointLightEffect);
                 bw.WriteByte(0);
                 bw.WriteByte(0);
-
-                bw.FillInt32("TypeDataOffset", (int)(bw.Position - start));
             }
+
+            private protected abstract void WriteTypeData(BinaryWriterEx bw);
 
             internal virtual void GetNames(MSB1 msb, Entries entries)
             {
@@ -425,15 +455,16 @@ namespace SoulsFormats
                 /// </summary>
                 public MapPiece() : base("mXXXXBX") { }
 
-                internal MapPiece(BinaryReaderEx br) : base(br)
+                internal MapPiece(BinaryReaderEx br) : base(br) { }
+
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                 }
 
-                internal override void Write(BinaryWriterEx bw, int id)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    base.Write(bw, id);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                 }
@@ -472,7 +503,9 @@ namespace SoulsFormats
 
                 private protected ObjectBase() : base("oXXXX_XXXX") { }
 
-                private protected ObjectBase(BinaryReaderEx br) : base(br)
+                private protected ObjectBase(BinaryReaderEx br) : base(br) { }
+
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     br.AssertInt32(0);
                     CollisionIndex = br.ReadInt32();
@@ -483,9 +516,8 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                 }
 
-                internal override void Write(BinaryWriterEx bw, int id)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    base.Write(bw, id);
                     bw.WriteInt32(0);
                     bw.WriteInt32(CollisionIndex);
                     bw.WriteInt32(UnkT08);
@@ -584,7 +616,9 @@ namespace SoulsFormats
                     MovePointNames = new string[8];
                 }
 
-                private protected EnemyBase(BinaryReaderEx br) : base(br)
+                private protected EnemyBase(BinaryReaderEx br) : base(br) { }
+
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -601,9 +635,8 @@ namespace SoulsFormats
                     UnkT3C = br.ReadInt32();
                 }
 
-                internal override void Write(BinaryWriterEx bw, int id)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    base.Write(bw, id);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(ThinkParamID);
@@ -667,7 +700,9 @@ namespace SoulsFormats
                 /// </summary>
                 public Player() : base("c0000_XXXX") { }
 
-                internal Player(BinaryReaderEx br) : base(br)
+                internal Player(BinaryReaderEx br) : base(br) { }
+
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -675,9 +710,8 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                 }
 
-                internal override void Write(BinaryWriterEx bw, int id)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    base.Write(bw, id);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
@@ -766,7 +800,9 @@ namespace SoulsFormats
                     LockCamParamID2 = -1;
                 }
 
-                internal Collision(BinaryReaderEx br) : base(br)
+                internal Collision(BinaryReaderEx br) : base(br) { }
+
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     HitFilterID = br.ReadByte();
                     SoundSpaceType = br.ReadByte();
@@ -789,9 +825,8 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                 }
 
-                internal override void Write(BinaryWriterEx bw, int id)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    base.Write(bw, id);
                     bw.WriteByte(HitFilterID);
                     bw.WriteByte(SoundSpaceType);
                     bw.WriteInt16(EnvLightMapSpotIndex);
@@ -835,7 +870,9 @@ namespace SoulsFormats
                         0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
                 }
 
-                internal Navmesh(BinaryReaderEx br) : base(br)
+                internal Navmesh(BinaryReaderEx br) : base(br) { }
+
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     NvmGroups = br.ReadUInt32s(4);
                     br.AssertInt32(0);
@@ -844,9 +881,8 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                 }
 
-                internal override void Write(BinaryWriterEx bw, int id)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    base.Write(bw, id);
                     bw.WriteUInt32s(NvmGroups);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
@@ -911,7 +947,9 @@ namespace SoulsFormats
                     MapID = new byte[4] { 10, 2, 0, 0 };
                 }
 
-                internal ConnectCollision(BinaryReaderEx br) : base(br)
+                internal ConnectCollision(BinaryReaderEx br) : base(br) { }
+
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     CollisionIndex = br.ReadInt32();
                     MapID = br.ReadBytes(4);
@@ -919,9 +957,8 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                 }
 
-                internal override void Write(BinaryWriterEx bw, int id)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    base.Write(bw, id);
                     bw.WriteInt32(CollisionIndex);
                     bw.WriteBytes(MapID);
                     bw.WriteInt32(0);

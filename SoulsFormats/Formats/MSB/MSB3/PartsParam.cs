@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Numerics;
 
 namespace SoulsFormats
@@ -161,7 +162,7 @@ namespace SoulsFormats
         {
             private protected abstract PartsType Type { get; }
             private protected abstract bool HasGparamConfig { get; }
-            private protected abstract bool HasUnk4 { get; }
+            private protected abstract bool HasSceneGparamConfig { get; }
 
             /// <summary>
             /// The name of this part.
@@ -359,15 +360,51 @@ namespace SoulsFormats
                 BackreadGroups = br.ReadUInt32s(8);
                 br.AssertInt32(0);
 
-                long baseDataOffset = br.ReadInt64();
+                long entityDataOffset = br.ReadInt64();
                 long typeDataOffset = br.ReadInt64();
                 long gparamOffset = br.ReadInt64();
-                long unkOffset4 = br.ReadInt64();
+                long sceneGparamOffset = br.ReadInt64();
 
-                Name = br.GetUTF16(start + nameOffset);
-                SibPath = br.GetUTF16(start + sibOffset);
+                if (nameOffset == 0)
+                    throw new InvalidDataException($"{nameof(nameOffset)} must not be 0 in type {GetType()}.");
+                if (sibOffset == 0)
+                    throw new InvalidDataException($"{nameof(sibOffset)} must not be 0 in type {GetType()}.");
+                if (entityDataOffset == 0)
+                    throw new InvalidDataException($"{nameof(entityDataOffset)} must not be 0 in type {GetType()}.");
+                if (typeDataOffset == 0)
+                    throw new InvalidDataException($"{nameof(typeDataOffset)} must not be 0 in type {GetType()}.");
+                if (HasGparamConfig ^ gparamOffset != 0)
+                    throw new InvalidDataException($"Unexpected {nameof(gparamOffset)} 0x{gparamOffset:X} in type {GetType()}.");
+                if (HasSceneGparamConfig ^ sceneGparamOffset != 0)
+                    throw new InvalidDataException($"Unexpected {nameof(sceneGparamOffset)} 0x{sceneGparamOffset:X} in type {GetType()}.");
 
-                br.Position = start + baseDataOffset;
+                br.Position = start + nameOffset;
+                Name = br.ReadUTF16();
+
+                br.Position = start + sibOffset;
+                SibPath = br.ReadUTF16();
+
+                br.Position = start + entityDataOffset;
+                ReadEntityData(br);
+
+                br.Position = start + typeDataOffset;
+                ReadTypeData(br);
+
+                if (HasGparamConfig)
+                {
+                    br.Position = start + gparamOffset;
+                    ReadGparamConfig(br);
+                }
+
+                if (HasSceneGparamConfig)
+                {
+                    br.Position = start + sceneGparamOffset;
+                    ReadSceneGparamConfig(br);
+                }
+            }
+
+            private void ReadEntityData(BinaryReaderEx br)
+            {
                 EntityID = br.ReadInt32();
                 UnkE04 = br.ReadSByte();
                 UnkE05 = br.ReadSByte();
@@ -388,34 +425,15 @@ namespace SoulsFormats
                 UnkE18 = br.ReadInt32();
                 EntityGroups = br.ReadInt32s(8);
                 br.AssertInt32(0);
-
-                br.Position = start + typeDataOffset;
-                ReadTypeData(br);
-
-                if (HasGparamConfig)
-                {
-                    br.Position = start + gparamOffset;
-                    ReadGparamConfig(br);
-                }
-
-                if (HasUnk4)
-                {
-                    br.Position = start + unkOffset4;
-                    ReadUnk4(br);
-                }
             }
 
-            internal abstract void ReadTypeData(BinaryReaderEx br);
+            private protected abstract void ReadTypeData(BinaryReaderEx br);
 
-            internal virtual void ReadGparamConfig(BinaryReaderEx br)
-            {
-                throw new InvalidOperationException("Gparam config should not be read for parts with no gparam config.");
-            }
+            private protected virtual void ReadGparamConfig(BinaryReaderEx br)
+                => throw new NotImplementedException($"Type {GetType()} missing valid {nameof(ReadGparamConfig)}.");
 
-            internal virtual void ReadUnk4(BinaryReaderEx br)
-            {
-                throw new InvalidOperationException("Unk struct 4 should not be read for parts with no unk struct 4.");
-            }
+            private protected virtual void ReadSceneGparamConfig(BinaryReaderEx br)
+                => throw new NotImplementedException($"Type {GetType()} missing valid {nameof(ReadSceneGparamConfig)}.");
 
             internal override void Write(BinaryWriterEx bw, int id)
             {
@@ -438,13 +456,14 @@ namespace SoulsFormats
                 bw.WriteUInt32s(BackreadGroups);
                 bw.WriteInt32(0);
 
-                bw.ReserveInt64("BaseDataOffset");
+                bw.ReserveInt64("EntityDataOffset");
                 bw.ReserveInt64("TypeDataOffset");
                 bw.ReserveInt64("GparamOffset");
-                bw.ReserveInt64("UnkOffset4");
+                bw.ReserveInt64("SceneGparamOffset");
 
                 bw.FillInt64("NameOffset", bw.Position - start);
                 bw.WriteUTF16(MSB.ReambiguateName(Name), true);
+
                 bw.FillInt64("SibOffset", bw.Position - start);
                 bw.WriteUTF16(SibPath, true);
                 // This is purely here for byte-perfect writes because From is nasty
@@ -452,7 +471,35 @@ namespace SoulsFormats
                     bw.WritePattern(0x24, 0x00);
                 bw.Pad(8);
 
-                bw.FillInt64("BaseDataOffset", bw.Position - start);
+                bw.FillInt64("EntityDataOffset", bw.Position - start);
+                WriteEntityData(bw);
+
+                bw.FillInt64("TypeDataOffset", bw.Position - start);
+                WriteTypeData(bw);
+
+                if (HasGparamConfig)
+                {
+                    bw.FillInt64("GparamOffset", bw.Position - start);
+                    WriteGparamConfig(bw);
+                }
+                else
+                {
+                    bw.FillInt64("GparamOffset", 0);
+                }
+
+                if (HasSceneGparamConfig)
+                {
+                    bw.FillInt64("SceneGparamOffset", bw.Position - start);
+                    WriteSceneGparamConfig(bw);
+                }
+                else
+                {
+                    bw.FillInt64("SceneGparamOffset", 0);
+                }
+            }
+
+            private void WriteEntityData(BinaryWriterEx bw)
+            {
                 bw.WriteInt32(EntityID);
 
                 bw.WriteSByte(UnkE04);
@@ -480,42 +527,15 @@ namespace SoulsFormats
                 bw.WriteInt32s(EntityGroups);
                 bw.WriteInt32(0);
                 bw.Pad(8);
-
-                bw.FillInt64("TypeDataOffset", bw.Position - start);
-                WriteTypeData(bw);
-
-                if (HasGparamConfig)
-                {
-                    bw.FillInt64("GparamOffset", bw.Position - start);
-                    WriteGparamConfig(bw);
-                }
-                else
-                {
-                    bw.FillInt64("GparamOffset", 0);
-                }
-
-                if (HasUnk4)
-                {
-                    bw.FillInt64("UnkOffset4", bw.Position - start);
-                    WriteUnk4(bw);
-                }
-                else
-                {
-                    bw.FillInt64("UnkOffset4", 0);
-                }
             }
 
-            internal abstract void WriteTypeData(BinaryWriterEx bw);
+            private protected abstract void WriteTypeData(BinaryWriterEx bw);
 
-            internal virtual void WriteGparamConfig(BinaryWriterEx bw)
-            {
-                throw new InvalidOperationException("Gparam config should not be written for parts with no gparam config.");
-            }
+            private protected virtual void WriteGparamConfig(BinaryWriterEx bw)
+                => throw new NotImplementedException($"Type {GetType()} missing valid {nameof(WriteGparamConfig)}.");
 
-            internal virtual void WriteUnk4(BinaryWriterEx bw)
-            {
-                throw new InvalidOperationException("Unk struct 4 should not be written for parts with no unk struct 4.");
-            }
+            private protected virtual void WriteSceneGparamConfig(BinaryWriterEx bw)
+                => throw new NotImplementedException($"Type {GetType()} missing valid {nameof(WriteSceneGparamConfig)}.");
 
             internal virtual void GetNames(MSB3 msb, Entries entries)
             {
@@ -606,12 +626,12 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public class UnkStruct4
+            public class SceneGparamConfig
             {
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int Unk3C { get; set; }
+                public sbyte[] EventIDs { get; private set; }
 
                 /// <summary>
                 /// Unknown.
@@ -619,23 +639,26 @@ namespace SoulsFormats
                 public float Unk40 { get; set; }
 
                 /// <summary>
-                /// Creates an UnkStruct4 with default values.
+                /// Creates a SceneGparamConfig with default values.
                 /// </summary>
-                public UnkStruct4() { }
+                public SceneGparamConfig()
+                {
+                    EventIDs = new sbyte[4];
+                }
 
                 /// <summary>
-                /// Clones an existing UnkStruct4.
+                /// Clones an existing SceneGparamConfig.
                 /// </summary>
-                public UnkStruct4(UnkStruct4 clone)
+                public SceneGparamConfig(SceneGparamConfig clone)
                 {
-                    Unk3C = clone.Unk3C;
+                    EventIDs = (sbyte[])clone.EventIDs.Clone();
                     Unk40 = clone.Unk40;
                 }
 
-                internal UnkStruct4(BinaryReaderEx br)
+                internal SceneGparamConfig(BinaryReaderEx br)
                 {
                     br.AssertPattern(0x3C, 0x00);
-                    Unk3C = br.ReadInt32();
+                    EventIDs = br.ReadSBytes(4);
                     Unk40 = br.ReadSingle();
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -645,7 +668,7 @@ namespace SoulsFormats
                 internal void Write(BinaryWriterEx bw)
                 {
                     bw.WritePattern(0x3C, 0x00);
-                    bw.WriteInt32(Unk3C);
+                    bw.WriteSBytes(EventIDs);
                     bw.WriteSingle(Unk40);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
@@ -660,7 +683,7 @@ namespace SoulsFormats
             {
                 private protected override PartsType Type => PartsType.MapPiece;
                 private protected override bool HasGparamConfig => true;
-                private protected override bool HasUnk4 => false;
+                private protected override bool HasSceneGparamConfig => false;
 
                 /// <summary>
                 /// Gparam IDs for this map piece.
@@ -685,21 +708,21 @@ namespace SoulsFormats
 
                 internal MapPiece(BinaryReaderEx br) : base(br) { }
 
-                internal override void ReadTypeData(BinaryReaderEx br)
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                 }
 
-                internal override void ReadGparamConfig(BinaryReaderEx br) => Gparam = new GparamConfig(br);
+                private protected override void ReadGparamConfig(BinaryReaderEx br) => Gparam = new GparamConfig(br);
 
-                internal override void WriteTypeData(BinaryWriterEx bw)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                 }
 
-                internal override void WriteGparamConfig(BinaryWriterEx bw) => Gparam.Write(bw);
+                private protected override void WriteGparamConfig(BinaryWriterEx bw) => Gparam.Write(bw);
             }
 
             /// <summary>
@@ -708,7 +731,7 @@ namespace SoulsFormats
             public abstract class ObjectBase : Part
             {
                 private protected override bool HasGparamConfig => true;
-                private protected override bool HasUnk4 => false;
+                private protected override bool HasSceneGparamConfig => false;
 
                 /// <summary>
                 /// Gparam IDs for this object.
@@ -772,7 +795,7 @@ namespace SoulsFormats
 
                 private protected ObjectBase(BinaryReaderEx br) : base(br) { }
 
-                internal override void ReadTypeData(BinaryReaderEx br)
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -785,9 +808,9 @@ namespace SoulsFormats
                     ModelSfxParamRelativeIDs = br.ReadInt16s(4);
                 }
 
-                internal override void ReadGparamConfig(BinaryReaderEx br) => Gparam = new GparamConfig(br);
+                private protected override void ReadGparamConfig(BinaryReaderEx br) => Gparam = new GparamConfig(br);
 
-                internal override void WriteTypeData(BinaryWriterEx bw)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
@@ -800,7 +823,7 @@ namespace SoulsFormats
                     bw.WriteInt16s(ModelSfxParamRelativeIDs);
                 }
 
-                internal override void WriteGparamConfig(BinaryWriterEx bw) => Gparam.Write(bw);
+                private protected override void WriteGparamConfig(BinaryWriterEx bw) => Gparam.Write(bw);
 
                 internal override void GetNames(MSB3 msb, Entries entries)
                 {
@@ -841,7 +864,7 @@ namespace SoulsFormats
             public abstract class EnemyBase : Part
             {
                 private protected override bool HasGparamConfig => true;
-                private protected override bool HasUnk4 => false;
+                private protected override bool HasSceneGparamConfig => false;
 
                 /// <summary>
                 /// Gparam IDs for this enemy.
@@ -928,7 +951,7 @@ namespace SoulsFormats
 
                 private protected EnemyBase(BinaryReaderEx br) : base(br) { }
 
-                internal override void ReadTypeData(BinaryReaderEx br)
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -978,9 +1001,9 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                 }
 
-                internal override void ReadGparamConfig(BinaryReaderEx br) => Gparam = new GparamConfig(br);
+                private protected override void ReadGparamConfig(BinaryReaderEx br) => Gparam = new GparamConfig(br);
 
-                internal override void WriteTypeData(BinaryWriterEx bw)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
@@ -1030,7 +1053,7 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                 }
 
-                internal override void WriteGparamConfig(BinaryWriterEx bw) => Gparam.Write(bw);
+                private protected override void WriteGparamConfig(BinaryWriterEx bw) => Gparam.Write(bw);
 
                 internal override void GetNames(MSB3 msb, Entries entries)
                 {
@@ -1074,7 +1097,7 @@ namespace SoulsFormats
             {
                 private protected override PartsType Type => PartsType.Player;
                 private protected override bool HasGparamConfig => false;
-                private protected override bool HasUnk4 => false;
+                private protected override bool HasSceneGparamConfig => false;
 
                 /// <summary>
                 /// Creates a Player with default values.
@@ -1088,7 +1111,7 @@ namespace SoulsFormats
 
                 internal Player(BinaryReaderEx br) : base(br) { }
 
-                internal override void ReadTypeData(BinaryReaderEx br)
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -1096,7 +1119,7 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                 }
 
-                internal override void WriteTypeData(BinaryWriterEx bw)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
@@ -1142,7 +1165,7 @@ namespace SoulsFormats
 
                 private protected override PartsType Type => PartsType.Collision;
                 private protected override bool HasGparamConfig => true;
-                private protected override bool HasUnk4 => true;
+                private protected override bool HasSceneGparamConfig => true;
 
                 /// <summary>
                 /// Gparam IDs for this collision.
@@ -1152,7 +1175,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public UnkStruct4 Unk4 { get; set; }
+                public SceneGparamConfig SceneGparam { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -1241,7 +1264,7 @@ namespace SoulsFormats
                 public Collision() : base("hXXXXXX")
                 {
                     Gparam = new GparamConfig();
-                    Unk4 = new UnkStruct4();
+                    SceneGparam = new SceneGparamConfig();
                     SoundSpaceType = SoundSpace.NoReverb;
                     MapNameID = -1;
                     DisableStart = false;
@@ -1256,7 +1279,7 @@ namespace SoulsFormats
                 public Collision(Collision clone) : base(clone)
                 {
                     Gparam = new GparamConfig(clone.Gparam);
-                    Unk4 = new UnkStruct4(clone.Unk4);
+                    SceneGparam = new SceneGparamConfig(clone.SceneGparam);
                     HitFilterID = clone.HitFilterID;
                     SoundSpaceType = clone.SoundSpaceType;
                     EnvLightMapSpotIndex = clone.EnvLightMapSpotIndex;
@@ -1277,7 +1300,7 @@ namespace SoulsFormats
 
                 internal Collision(BinaryReaderEx br) : base(br) { }
 
-                internal override void ReadTypeData(BinaryReaderEx br)
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     HitFilterID = br.ReadByte();
                     SoundSpaceType = br.ReadEnum8<SoundSpace>();
@@ -1308,10 +1331,10 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                 }
 
-                internal override void ReadGparamConfig(BinaryReaderEx br) => Gparam = new GparamConfig(br);
-                internal override void ReadUnk4(BinaryReaderEx br) => Unk4 = new UnkStruct4(br);
+                private protected override void ReadGparamConfig(BinaryReaderEx br) => Gparam = new GparamConfig(br);
+                private protected override void ReadSceneGparamConfig(BinaryReaderEx br) => SceneGparam = new SceneGparamConfig(br);
 
-                internal override void WriteTypeData(BinaryWriterEx bw)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteByte(HitFilterID);
                     bw.WriteByte((byte)SoundSpaceType);
@@ -1342,8 +1365,8 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                 }
 
-                internal override void WriteGparamConfig(BinaryWriterEx bw) => Gparam.Write(bw);
-                internal override void WriteUnk4(BinaryWriterEx bw) => Unk4.Write(bw);
+                private protected override void WriteGparamConfig(BinaryWriterEx bw) => Gparam.Write(bw);
+                private protected override void WriteSceneGparamConfig(BinaryWriterEx bw) => SceneGparam.Write(bw);
 
                 internal override void GetNames(MSB3 msb, Entries entries)
                 {
@@ -1405,7 +1428,7 @@ namespace SoulsFormats
             {
                 private protected override PartsType Type => PartsType.ConnectCollision;
                 private protected override bool HasGparamConfig => false;
-                private protected override bool HasUnk4 => false;
+                private protected override bool HasSceneGparamConfig => false;
 
                 /// <summary>
                 /// The name of the associated collision part.
@@ -1437,7 +1460,7 @@ namespace SoulsFormats
 
                 internal ConnectCollision(BinaryReaderEx br) : base(br) { }
 
-                internal override void ReadTypeData(BinaryReaderEx br)
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     CollisionIndex = br.ReadInt32();
                     MapID = br.ReadBytes(4);
@@ -1445,7 +1468,7 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                 }
 
-                internal override void WriteTypeData(BinaryWriterEx bw)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(CollisionIndex);
                     bw.WriteBytes(MapID);

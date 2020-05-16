@@ -157,7 +157,7 @@ namespace SoulsFormats
             private protected abstract bool HasUnk1 { get; }
             private protected abstract bool HasUnk2 { get; }
             private protected abstract bool HasGparamConfig { get; }
-            private protected abstract bool HasUnk6 { get; }
+            private protected abstract bool HasSceneGparamConfig { get; }
             private protected abstract bool HasUnk7 { get; }
 
             /// <summary>
@@ -384,23 +384,23 @@ namespace SoulsFormats
                 br.AssertInt64(0);
 
                 if (nameOffset == 0)
-                    throw new InvalidDataException($"{nameof(nameOffset)} must not be 0.");
+                    throw new InvalidDataException($"{nameof(nameOffset)} must not be 0 in type {GetType()}.");
                 if (sibOffset == 0)
-                    throw new InvalidDataException($"{nameof(sibOffset)} must not be 0.");
+                    throw new InvalidDataException($"{nameof(sibOffset)} must not be 0 in type {GetType()}.");
                 if (HasUnk1 ^ unkOffset1 != 0)
-                    throw new InvalidDataException($"Unexpected {nameof(unkOffset1)} 0x{unkOffset1:X}.");
+                    throw new InvalidDataException($"Unexpected {nameof(unkOffset1)} 0x{unkOffset1:X} in type {GetType()}.");
                 if (HasUnk2 ^ unkOffset2 != 0)
-                    throw new InvalidDataException($"Unexpected {nameof(unkOffset2)} 0x{unkOffset2:X}.");
+                    throw new InvalidDataException($"Unexpected {nameof(unkOffset2)} 0x{unkOffset2:X} in type {GetType()}.");
                 if (entityDataOffset == 0)
-                    throw new InvalidDataException($"{nameof(entityDataOffset)} must not be 0.");
+                    throw new InvalidDataException($"{nameof(entityDataOffset)} must not be 0 in type {GetType()}.");
                 if (typeDataOffset == 0)
-                    throw new InvalidDataException($"{nameof(typeDataOffset)} must not be 0.");
+                    throw new InvalidDataException($"{nameof(typeDataOffset)} must not be 0 in type {GetType()}.");
                 if (HasGparamConfig ^ gparamOffset != 0)
-                    throw new InvalidDataException($"Unexpected {nameof(gparamOffset)} 0x{gparamOffset:X}.");
-                if (HasUnk6 ^ unkOffset6 != 0)
-                    throw new InvalidDataException($"Unexpected {nameof(unkOffset6)} 0x{unkOffset6:X}.");
+                    throw new InvalidDataException($"Unexpected {nameof(gparamOffset)} 0x{gparamOffset:X} in type {GetType()}.");
+                if (HasSceneGparamConfig ^ unkOffset6 != 0)
+                    throw new InvalidDataException($"Unexpected {nameof(unkOffset6)} 0x{unkOffset6:X} in type {GetType()}.");
                 if (HasUnk7 ^ unkOffset7 != 0)
-                    throw new InvalidDataException($"Unexpected {nameof(unkOffset7)} 0x{unkOffset7:X}.");
+                    throw new InvalidDataException($"Unexpected {nameof(unkOffset7)} 0x{unkOffset7:X} in type {GetType()}.");
 
                 br.Position = start + nameOffset;
                 Name = br.ReadUTF16();
@@ -432,10 +432,10 @@ namespace SoulsFormats
                     ReadGparamConfig(br);
                 }
 
-                if (HasUnk6)
+                if (HasSceneGparamConfig)
                 {
                     br.Position = start + unkOffset6;
-                    ReadUnk6(br);
+                    ReadSceneGparamConfig(br);
                 }
 
                 if (HasUnk7)
@@ -486,8 +486,8 @@ namespace SoulsFormats
             private protected virtual void ReadGparamConfig(BinaryReaderEx br)
                 => throw new NotImplementedException($"Type {GetType()} missing valid {nameof(ReadGparamConfig)}.");
 
-            private protected virtual void ReadUnk6(BinaryReaderEx br)
-                => throw new NotImplementedException($"Type {GetType()} missing valid {nameof(ReadUnk6)}.");
+            private protected virtual void ReadSceneGparamConfig(BinaryReaderEx br)
+                => throw new NotImplementedException($"Type {GetType()} missing valid {nameof(ReadSceneGparamConfig)}.");
 
             private protected virtual void ReadUnk7(BinaryReaderEx br)
                 => throw new NotImplementedException($"Type {GetType()} missing valid {nameof(ReadUnk7)}.");
@@ -512,7 +512,7 @@ namespace SoulsFormats
                 bw.ReserveInt64("EntityDataOffset");
                 bw.ReserveInt64("TypeDataOffset");
                 bw.ReserveInt64("GparamOffset");
-                bw.ReserveInt64("UnkOffset6");
+                bw.ReserveInt64("SceneGparamOffset");
                 bw.ReserveInt64("UnkOffset7");
                 bw.WriteInt64(0);
                 bw.WriteInt64(0);
@@ -561,14 +561,14 @@ namespace SoulsFormats
                     bw.FillInt64("GparamOffset", 0);
                 }
 
-                if (HasUnk6)
+                if (HasSceneGparamConfig)
                 {
-                    bw.FillInt64("UnkOffset6", bw.Position - start);
-                    WriteUnk6(bw);
+                    bw.FillInt64("SceneGparamOffset", bw.Position - start);
+                    WriteSceneGparamConfig(bw);
                 }
                 else
                 {
-                    bw.FillInt64("UnkOffset6", 0);
+                    bw.FillInt64("SceneGparamOffset", 0);
                 }
 
                 if (HasUnk7)
@@ -624,8 +624,8 @@ namespace SoulsFormats
             private protected virtual void WriteGparamConfig(BinaryWriterEx bw)
                 => throw new NotImplementedException($"Type {GetType()} missing valid {nameof(WriteGparamConfig)}.");
 
-            private protected virtual void WriteUnk6(BinaryWriterEx bw)
-                => throw new NotImplementedException($"Type {GetType()} missing valid {nameof(WriteUnk6)}.");
+            private protected virtual void WriteSceneGparamConfig(BinaryWriterEx bw)
+                => throw new NotImplementedException($"Type {GetType()} missing valid {nameof(WriteSceneGparamConfig)}.");
 
             private protected virtual void WriteUnk7(BinaryWriterEx bw)
                 => throw new NotImplementedException($"Type {GetType()} missing valid {nameof(WriteUnk7)}.");
@@ -830,10 +830,10 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown; sceneGParam Struct according to Pav.
             /// </summary>
-            public class UnkStruct6
+            public class SceneGparamConfig
             {
                 /// <summary>
-                /// Unknown; 4 bytes.
+                /// Unknown.
                 /// </summary>
                 public sbyte[] EventIDs { get; private set; }
 
@@ -843,14 +843,14 @@ namespace SoulsFormats
                 public float Unk40 { get; set; }
 
                 /// <summary>
-                /// Creates an UnkStruct6 with default values.
+                /// Creates a SceneGparamConfig with default values.
                 /// </summary>
-                public UnkStruct6()
+                public SceneGparamConfig()
                 {
                     EventIDs = new sbyte[4];
                 }
 
-                internal UnkStruct6(BinaryReaderEx br)
+                internal SceneGparamConfig(BinaryReaderEx br)
                 {
                     br.AssertPattern(0x3C, 0x00);
                     EventIDs = br.ReadSBytes(4);
@@ -953,7 +953,7 @@ namespace SoulsFormats
                 private protected override bool HasUnk1 => true;
                 private protected override bool HasUnk2 => false;
                 private protected override bool HasGparamConfig => true;
-                private protected override bool HasUnk6 => false;
+                private protected override bool HasSceneGparamConfig => false;
                 private protected override bool HasUnk7 => true;
 
                 /// <summary>
@@ -1011,7 +1011,7 @@ namespace SoulsFormats
             {
                 private protected override bool HasUnk2 => false;
                 private protected override bool HasGparamConfig => true;
-                private protected override bool HasUnk6 => false;
+                private protected override bool HasSceneGparamConfig => false;
                 private protected override bool HasUnk7 => false;
 
                 /// <summary>
@@ -1204,7 +1204,7 @@ namespace SoulsFormats
             {
                 private protected override bool HasUnk2 => false;
                 private protected override bool HasGparamConfig => true;
-                private protected override bool HasUnk6 => false;
+                private protected override bool HasSceneGparamConfig => false;
                 private protected override bool HasUnk7 => false;
 
                 /// <summary>
@@ -1481,7 +1481,7 @@ namespace SoulsFormats
                 private protected override bool HasUnk1 => false;
                 private protected override bool HasUnk2 => false;
                 private protected override bool HasGparamConfig => false;
-                private protected override bool HasUnk6 => false;
+                private protected override bool HasSceneGparamConfig => false;
                 private protected override bool HasUnk7 => false;
 
                 /// <summary>
@@ -1511,7 +1511,7 @@ namespace SoulsFormats
                 private protected override bool HasUnk1 => true;
                 private protected override bool HasUnk2 => true;
                 private protected override bool HasGparamConfig => true;
-                private protected override bool HasUnk6 => true;
+                private protected override bool HasSceneGparamConfig => true;
                 private protected override bool HasUnk7 => false;
 
                 /// <summary>
@@ -1532,7 +1532,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public UnkStruct6 Unk6 { get; set; }
+                public SceneGparamConfig SceneGparam { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -1642,7 +1642,7 @@ namespace SoulsFormats
                     Unk1 = new UnkStruct1();
                     Unk2 = new UnkStruct2();
                     Gparam = new GparamConfig();
-                    Unk6 = new UnkStruct6();
+                    SceneGparam = new SceneGparamConfig();
                     DisableBonfireEntityID = -1;
                 }
 
@@ -1687,7 +1687,7 @@ namespace SoulsFormats
                 private protected override void ReadUnk1(BinaryReaderEx br) => Unk1 = new UnkStruct1(br);
                 private protected override void ReadUnk2(BinaryReaderEx br) => Unk2 = new UnkStruct2(br);
                 private protected override void ReadGparamConfig(BinaryReaderEx br) => Gparam = new GparamConfig(br);
-                private protected override void ReadUnk6(BinaryReaderEx br) => Unk6 = new UnkStruct6(br);
+                private protected override void ReadSceneGparamConfig(BinaryReaderEx br) => SceneGparam = new SceneGparamConfig(br);
 
                 private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
@@ -1728,7 +1728,7 @@ namespace SoulsFormats
                 private protected override void WriteUnk1(BinaryWriterEx bw) => Unk1.Write(bw);
                 private protected override void WriteUnk2(BinaryWriterEx bw) => Unk2.Write(bw);
                 private protected override void WriteGparamConfig(BinaryWriterEx bw) => Gparam.Write(bw);
-                private protected override void WriteUnk6(BinaryWriterEx bw) => Unk6.Write(bw);
+                private protected override void WriteSceneGparamConfig(BinaryWriterEx bw) => SceneGparam.Write(bw);
             }
 
             /// <summary>
@@ -1782,7 +1782,7 @@ namespace SoulsFormats
                 private protected override bool HasUnk1 => false;
                 private protected override bool HasUnk2 => true;
                 private protected override bool HasGparamConfig => false;
-                private protected override bool HasUnk6 => false;
+                private protected override bool HasSceneGparamConfig => false;
                 private protected override bool HasUnk7 => false;
 
                 /// <summary>

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 
 namespace SoulsFormats
 {
@@ -78,7 +79,11 @@ namespace SoulsFormats
                 br.ReadInt32(); // ID
                 br.AssertPattern(0x68, 0x00);
 
-                Name = br.GetUTF16(start + nameOffset);
+                if (nameOffset == 0)
+                    throw new InvalidDataException($"{nameof(nameOffset)} must not be 0.");
+
+                br.Position = start + nameOffset;
+                Name = br.ReadUTF16();
             }
 
             internal override void Write(BinaryWriterEx bw, int id)

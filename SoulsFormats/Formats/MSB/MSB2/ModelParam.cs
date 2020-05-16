@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace SoulsFormats
 {
@@ -51,7 +52,7 @@ namespace SoulsFormats
                 Collisions = new List<Model.Collision>();
                 Navmeshes = new List<Model.Navmesh>();
             }
-            
+
             /// <summary>
             /// Returns every Model in the order they'll be written.
             /// </summary>
@@ -127,7 +128,13 @@ namespace SoulsFormats
                 long typeDataOffset = br.ReadInt64();
                 br.AssertInt64(0);
 
-                Name = br.GetUTF16(start + nameOffset);
+                if (nameOffset == 0)
+                    throw new InvalidDataException($"{nameof(nameOffset)} must not be 0 in type {GetType()}.");
+                if (HasTypeData ^ typeDataOffset != 0)
+                    throw new InvalidDataException($"Unexpected {nameof(typeDataOffset)} 0x{typeDataOffset:X} in type {GetType()}.");
+
+                br.Position = start + nameOffset;
+                Name = br.ReadUTF16();
 
                 if (HasTypeData)
                 {

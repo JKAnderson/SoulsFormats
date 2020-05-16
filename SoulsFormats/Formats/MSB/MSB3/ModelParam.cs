@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace SoulsFormats
@@ -176,10 +177,28 @@ namespace SoulsFormats
                 br.AssertInt32(0);
                 long typeDataOffset = br.ReadInt64();
 
-                Name = br.GetUTF16(start + nameOffset);
-                SibPath = br.GetUTF16(start + sibOffset);
-                br.Position = start + typeDataOffset;
+                if (nameOffset == 0)
+                    throw new InvalidDataException($"{nameof(nameOffset)} must not be 0 in type {GetType()}.");
+                if (sibOffset == 0)
+                    throw new InvalidDataException($"{nameof(sibOffset)} must not be 0 in type {GetType()}.");
+                if (HasTypeData ^ typeDataOffset != 0)
+                    throw new InvalidDataException($"Unexpected {nameof(typeDataOffset)} 0x{typeDataOffset:X} in type {GetType()}.");
+
+                br.Position = start + nameOffset;
+                Name = br.ReadUTF16();
+
+                br.Position = start + sibOffset;
+                SibPath = br.ReadUTF16();
+
+                if (HasTypeData)
+                {
+                    br.Position = start + typeDataOffset;
+                    ReadTypeData(br);
+                }
             }
+
+            private protected virtual void ReadTypeData(BinaryReaderEx br)
+                => throw new NotImplementedException($"Type {GetType()} missing valid {nameof(ReadTypeData)}.");
 
             internal override void Write(BinaryWriterEx bw, int id)
             {
@@ -210,10 +229,8 @@ namespace SoulsFormats
                 }
             }
 
-            internal virtual void WriteTypeData(BinaryWriterEx bw)
-            {
-                throw new InvalidOperationException("Type data should not be written for models with no type data.");
-            }
+            private protected virtual void WriteTypeData(BinaryWriterEx bw)
+                => throw new NotImplementedException($"Type {GetType()} missing valid {nameof(ReadTypeData)}.");
 
             internal void CountInstances(List<Part> parts)
             {
@@ -276,7 +293,9 @@ namespace SoulsFormats
                     UnkT03 = clone.UnkT03;
                 }
 
-                internal MapPiece(BinaryReaderEx br) : base(br)
+                internal MapPiece(BinaryReaderEx br) : base(br) { }
+
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     UnkT00 = br.ReadByte();
                     UnkT01 = br.ReadByte();
@@ -288,7 +307,7 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                 }
 
-                internal override void WriteTypeData(BinaryWriterEx bw)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteByte(UnkT00);
                     bw.WriteByte(UnkT01);
@@ -349,7 +368,9 @@ namespace SoulsFormats
                     UnkT03 = clone.UnkT03;
                 }
 
-                internal Object(BinaryReaderEx br) : base(br)
+                internal Object(BinaryReaderEx br) : base(br) { }
+
+                private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     UnkT00 = br.ReadByte();
                     UnkT01 = br.ReadByte();
@@ -361,7 +382,7 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                 }
 
-                internal override void WriteTypeData(BinaryWriterEx bw)
+                private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteByte(UnkT00);
                     bw.WriteByte(UnkT01);

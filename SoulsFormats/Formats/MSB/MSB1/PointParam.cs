@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Numerics;
 
 namespace SoulsFormats
@@ -113,10 +114,21 @@ namespace SoulsFormats
 
                 Shape = MSB.Shape.Create(shapeType);
 
-                Name = br.GetShiftJIS(start + nameOffset);
+                if (nameOffset == 0)
+                    throw new InvalidDataException($"{nameof(nameOffset)} must not be 0 in type {GetType()}.");
+                if (unkOffsetA == 0)
+                    throw new InvalidDataException($"{nameof(unkOffsetA)} must not be 0 in type {GetType()}.");
+                if (unkOffsetB == 0)
+                    throw new InvalidDataException($"{nameof(unkOffsetB)} must not be 0 in type {GetType()}.");
+                if (Shape.HasShapeData ^ shapeDataOffset != 0)
+                    throw new InvalidDataException($"Unexpected {nameof(shapeDataOffset)} 0x{shapeDataOffset:X} in type {GetType()}.");
+
+                br.Position = start + nameOffset;
+                Name = br.ReadShiftJIS();
 
                 br.Position = start + unkOffsetA;
                 br.AssertInt32(0);
+
                 br.Position = start + unkOffsetB;
                 br.AssertInt32(0);
 
@@ -151,6 +163,7 @@ namespace SoulsFormats
 
                 bw.FillInt32("UnkOffsetA", (int)(bw.Position - start));
                 bw.WriteInt32(0);
+
                 bw.FillInt32("UnkOffsetB", (int)(bw.Position - start));
                 bw.WriteInt32(0);
 
