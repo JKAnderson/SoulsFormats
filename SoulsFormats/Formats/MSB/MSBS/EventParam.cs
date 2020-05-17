@@ -468,7 +468,12 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short MaxNum { get; set; }
+                public byte MaxNum { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public sbyte GenType { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -542,7 +547,8 @@ namespace SoulsFormats
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {
-                    MaxNum = br.ReadInt16();
+                    MaxNum = br.ReadByte();
+                    GenType = br.ReadSByte();
                     LimitNum = br.ReadInt16();
                     MinGenNum = br.ReadInt16();
                     MaxGenNum = br.ReadInt16();
@@ -560,7 +566,8 @@ namespace SoulsFormats
 
                 private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.WriteInt16(MaxNum);
+                    bw.WriteByte(MaxNum);
+                    bw.WriteSByte(GenType);
                     bw.WriteInt16(LimitNum);
                     bw.WriteInt16(MinGenNum);
                     bw.WriteInt16(MaxGenNum);

@@ -731,12 +731,12 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public byte UnkT0C { get; set; }
+                public byte BreakTerm { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public bool EnableObjAnimNetSyncStructure { get; set; }
+                public bool NetSyncType { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -780,8 +780,8 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     CollisionPartIndex = br.ReadInt32();
-                    UnkT0C = br.ReadByte();
-                    EnableObjAnimNetSyncStructure = br.ReadBoolean();
+                    BreakTerm = br.ReadByte();
+                    NetSyncType = br.ReadBoolean();
                     CollisionFilter = br.ReadBoolean();
                     SetMainObjStructureBooleans = br.ReadBoolean();
                     AnimIDs = br.ReadInt16s(4);
@@ -795,8 +795,8 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(CollisionPartIndex);
-                    bw.WriteByte(UnkT0C);
-                    bw.WriteBoolean(EnableObjAnimNetSyncStructure);
+                    bw.WriteByte(BreakTerm);
+                    bw.WriteBoolean(NetSyncType);
                     bw.WriteBoolean(CollisionFilter);
                     bw.WriteBoolean(SetMainObjStructureBooleans);
                     bw.WriteInt16s(AnimIDs);
@@ -875,12 +875,12 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short UnkT04 { get; set; }
+                public byte PointMoveType { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short ChrManipulatorAllocationParameter { get; set; }
+                public short PlatoonID { get; set; }
 
                 /// <summary>
                 /// Walk route followed by this enemy.
@@ -923,8 +923,9 @@ namespace SoulsFormats
                     ThinkParamID = br.ReadInt32();
                     NPCParamID = br.ReadInt32();
                     TalkID = br.ReadInt32();
-                    UnkT04 = br.ReadInt16();
-                    ChrManipulatorAllocationParameter = br.ReadInt16();
+                    PointMoveType = br.ReadByte();
+                    br.AssertByte(0);
+                    PlatoonID = br.ReadInt16();
                     CharaInitID = br.ReadInt32();
                     CollisionPartIndex = br.ReadInt32();
                     WalkRouteIndex = br.ReadInt16();
@@ -975,8 +976,9 @@ namespace SoulsFormats
                     bw.WriteInt32(ThinkParamID);
                     bw.WriteInt32(NPCParamID);
                     bw.WriteInt32(TalkID);
-                    bw.WriteInt16(UnkT04);
-                    bw.WriteInt16(ChrManipulatorAllocationParameter);
+                    bw.WriteByte(PointMoveType);
+                    bw.WriteByte(0);
+                    bw.WriteInt16(PlatoonID);
                     bw.WriteInt32(CharaInitID);
                     bw.WriteInt32(CollisionPartIndex);
                     bw.WriteInt16(WalkRouteIndex);

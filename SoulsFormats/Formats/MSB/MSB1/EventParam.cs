@@ -345,7 +345,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT00 { get; set; }
+                public int PointLightID { get; set; }
 
                 /// <summary>
                 /// Creates a Light with default values.
@@ -356,12 +356,12 @@ namespace SoulsFormats
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {
-                    UnkT00 = br.ReadInt32();
+                    PointLightID = br.ReadInt32();
                 }
 
                 private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(UnkT00);
+                    bw.WriteInt32(PointLightID);
                 }
             }
 
@@ -442,17 +442,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public float UnkT00 { get; set; }
-
-                /// <summary>
-                /// Unknown.
-                /// </summary>
-                public float UnkT04 { get; set; }
-
-                /// <summary>
-                /// Unknown.
-                /// </summary>
-                public float UnkT08 { get; set; }
+                public Vector3 WindVecMin { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -462,17 +452,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public float UnkT10 { get; set; }
-
-                /// <summary>
-                /// Unknown.
-                /// </summary>
-                public float UnkT14 { get; set; }
-
-                /// <summary>
-                /// Unknown.
-                /// </summary>
-                public float UnkT18 { get; set; }
+                public Vector3 WindVecMax { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -482,42 +462,42 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public float UnkT20 { get; set; }
+                public float WindSwingCycle0 { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public float UnkT24 { get; set; }
+                public float WindSwingCycle1 { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public float UnkT28 { get; set; }
+                public float WindSwingCycle2 { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public float UnkT2C { get; set; }
+                public float WindSwingCycle3 { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public float UnkT30 { get; set; }
+                public float WindSwingPow0 { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public float UnkT34 { get; set; }
+                public float WindSwingPow1 { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public float UnkT38 { get; set; }
+                public float WindSwingPow2 { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public float UnkT3C { get; set; }
+                public float WindSwingPow3 { get; set; }
 
                 /// <summary>
                 /// Creates a WindSFX with default values.
@@ -528,42 +508,34 @@ namespace SoulsFormats
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {
-                    UnkT00 = br.ReadSingle();
-                    UnkT04 = br.ReadSingle();
-                    UnkT08 = br.ReadSingle();
+                    WindVecMin = br.ReadVector3();
                     UnkT0C = br.ReadSingle();
-                    UnkT10 = br.ReadSingle();
-                    UnkT14 = br.ReadSingle();
-                    UnkT18 = br.ReadSingle();
+                    WindVecMax = br.ReadVector3();
                     UnkT1C = br.ReadSingle();
-                    UnkT20 = br.ReadSingle();
-                    UnkT24 = br.ReadSingle();
-                    UnkT28 = br.ReadSingle();
-                    UnkT2C = br.ReadSingle();
-                    UnkT30 = br.ReadSingle();
-                    UnkT34 = br.ReadSingle();
-                    UnkT38 = br.ReadSingle();
-                    UnkT3C = br.ReadSingle();
+                    WindSwingCycle0 = br.ReadSingle();
+                    WindSwingCycle1 = br.ReadSingle();
+                    WindSwingCycle2 = br.ReadSingle();
+                    WindSwingCycle3 = br.ReadSingle();
+                    WindSwingPow0 = br.ReadSingle();
+                    WindSwingPow1 = br.ReadSingle();
+                    WindSwingPow2 = br.ReadSingle();
+                    WindSwingPow3 = br.ReadSingle();
                 }
 
                 private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.WriteSingle(UnkT00);
-                    bw.WriteSingle(UnkT04);
-                    bw.WriteSingle(UnkT08);
+                    bw.WriteVector3(WindVecMin);
                     bw.WriteSingle(UnkT0C);
-                    bw.WriteSingle(UnkT10);
-                    bw.WriteSingle(UnkT14);
-                    bw.WriteSingle(UnkT18);
+                    bw.WriteVector3(WindVecMax);
                     bw.WriteSingle(UnkT1C);
-                    bw.WriteSingle(UnkT20);
-                    bw.WriteSingle(UnkT24);
-                    bw.WriteSingle(UnkT28);
-                    bw.WriteSingle(UnkT2C);
-                    bw.WriteSingle(UnkT30);
-                    bw.WriteSingle(UnkT34);
-                    bw.WriteSingle(UnkT38);
-                    bw.WriteSingle(UnkT3C);
+                    bw.WriteSingle(WindSwingCycle0);
+                    bw.WriteSingle(WindSwingCycle1);
+                    bw.WriteSingle(WindSwingCycle2);
+                    bw.WriteSingle(WindSwingCycle3);
+                    bw.WriteSingle(WindSwingPow0);
+                    bw.WriteSingle(WindSwingPow1);
+                    bw.WriteSingle(WindSwingPow2);
+                    bw.WriteSingle(WindSwingPow3);
                 }
             }
 
@@ -663,7 +635,12 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short MaxNum { get; set; }
+                public byte MaxNum { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public sbyte GenType { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -727,7 +704,8 @@ namespace SoulsFormats
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {
-                    MaxNum = br.ReadInt16();
+                    MaxNum = br.ReadByte();
+                    GenType = br.ReadSByte();
                     LimitNum = br.ReadInt16();
                     MinGenNum = br.ReadInt16();
                     MaxGenNum = br.ReadInt16();
@@ -742,7 +720,8 @@ namespace SoulsFormats
 
                 private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.WriteInt16(MaxNum);
+                    bw.WriteByte(MaxNum);
+                    bw.WriteSByte(GenType);
                     bw.WriteInt16(LimitNum);
                     bw.WriteInt16(MinGenNum);
                     bw.WriteInt16(MaxGenNum);
@@ -823,6 +802,18 @@ namespace SoulsFormats
             /// </summary>
             public class ObjAct : Event
             {
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public enum StateType : ushort
+                {
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+                    Default = 0,
+                    Door = 1,
+                    Loop = 2,
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
+                }
+
                 private protected override EventType Type => EventType.ObjAct;
 
                 /// <summary>
@@ -844,7 +835,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short UnkT0A { get; set; }
+                public StateType ObjActState { get; set; }
 
                 /// <summary>
                 /// Unknown, probably enables or disables the ObjAct.
@@ -868,7 +859,7 @@ namespace SoulsFormats
                     ObjActEntityID = br.ReadInt32();
                     ObjActPartIndex = br.ReadInt32();
                     ObjActParamID = br.ReadInt16();
-                    UnkT0A = br.ReadInt16();
+                    ObjActState = br.ReadEnum16<StateType>();
                     EventFlagID = br.ReadInt32();
                 }
 
@@ -877,7 +868,7 @@ namespace SoulsFormats
                     bw.WriteInt32(ObjActEntityID);
                     bw.WriteInt32(ObjActPartIndex);
                     bw.WriteInt16(ObjActParamID);
-                    bw.WriteInt16(UnkT0A);
+                    bw.WriteUInt16((ushort)ObjActState);
                     bw.WriteInt32(EventFlagID);
                 }
 

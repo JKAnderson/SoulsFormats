@@ -499,12 +499,17 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT08 { get; set; }
+                public sbyte BreakTerm { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short UnkT0C { get; set; }
+                public sbyte NetSyncType { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public short InitAnimID { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -524,8 +529,10 @@ namespace SoulsFormats
                 {
                     br.AssertInt32(0);
                     CollisionIndex = br.ReadInt32();
-                    UnkT08 = br.ReadInt32();
-                    UnkT0C = br.ReadInt16();
+                    BreakTerm = br.ReadSByte();
+                    NetSyncType = br.ReadSByte();
+                    br.AssertInt16(0);
+                    InitAnimID = br.ReadInt16();
                     UnkT0E = br.ReadInt16();
                     UnkT10 = br.ReadInt32();
                     br.AssertInt32(0);
@@ -535,8 +542,10 @@ namespace SoulsFormats
                 {
                     bw.WriteInt32(0);
                     bw.WriteInt32(CollisionIndex);
-                    bw.WriteInt32(UnkT08);
-                    bw.WriteInt16(UnkT0C);
+                    bw.WriteSByte(BreakTerm);
+                    bw.WriteSByte(NetSyncType);
+                    bw.WriteInt16(0);
+                    bw.WriteInt16(InitAnimID);
                     bw.WriteInt16(UnkT0E);
                     bw.WriteInt32(UnkT10);
                     bw.WriteInt32(0);
@@ -593,7 +602,12 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public float UnkT14 { get; set; }
+                public byte PointMoveType { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public ushort PlatoonID { get; set; }
 
                 /// <summary>
                 /// ID in CharaInitParam determining equipment and stats for humans.
@@ -615,12 +629,12 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT38 { get; set; }
+                public int InitAnimID { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT3C { get; set; }
+                public int DamageAnimID { get; set; }
 
                 private protected EnemyBase() : base("cXXXX_XXXX")
                 {
@@ -646,14 +660,16 @@ namespace SoulsFormats
                     ThinkParamID = br.ReadInt32();
                     NPCParamID = br.ReadInt32();
                     TalkID = br.ReadInt32();
-                    UnkT14 = br.ReadSingle();
+                    PointMoveType = br.ReadByte();
+                    br.AssertByte(0);
+                    PlatoonID = br.ReadUInt16();
                     CharaInitID = br.ReadInt32();
                     CollisionIndex = br.ReadInt32();
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     MovePointIndices = br.ReadInt16s(8);
-                    UnkT38 = br.ReadInt32();
-                    UnkT3C = br.ReadInt32();
+                    InitAnimID = br.ReadInt32();
+                    DamageAnimID = br.ReadInt32();
                 }
 
                 private protected override void WriteTypeData(BinaryWriterEx bw)
@@ -663,14 +679,16 @@ namespace SoulsFormats
                     bw.WriteInt32(ThinkParamID);
                     bw.WriteInt32(NPCParamID);
                     bw.WriteInt32(TalkID);
-                    bw.WriteSingle(UnkT14);
+                    bw.WriteByte(PointMoveType);
+                    bw.WriteByte(0);
+                    bw.WriteUInt16(PlatoonID);
                     bw.WriteInt32(CharaInitID);
                     bw.WriteInt32(CollisionIndex);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt16s(MovePointIndices);
-                    bw.WriteInt32(UnkT38);
-                    bw.WriteInt32(UnkT3C);
+                    bw.WriteInt32(InitAnimID);
+                    bw.WriteInt32(DamageAnimID);
                 }
 
                 internal override void GetNames(MSB1 msb, Entries entries)

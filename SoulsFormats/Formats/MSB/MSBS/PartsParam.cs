@@ -1040,12 +1040,12 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public byte UnkT0C { get; set; }
+                public byte BreakTerm { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public bool EnableObjAnimNetSyncStructure { get; set; }
+                public bool NetSyncType { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -1102,8 +1102,8 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     ObjPartIndex1 = br.ReadInt32();
-                    UnkT0C = br.ReadByte();
-                    EnableObjAnimNetSyncStructure = br.ReadBoolean();
+                    BreakTerm = br.ReadByte();
+                    NetSyncType = br.ReadBoolean();
                     UnkT0E = br.ReadByte();
                     SetMainObjStructureBooleans = br.ReadBoolean();
                     AnimID = br.ReadInt16();
@@ -1123,8 +1123,8 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(ObjPartIndex1);
-                    bw.WriteByte(UnkT0C);
-                    bw.WriteBoolean(EnableObjAnimNetSyncStructure);
+                    bw.WriteByte(BreakTerm);
+                    bw.WriteBoolean(NetSyncType);
                     bw.WriteByte(UnkT0E);
                     bw.WriteBoolean(SetMainObjStructureBooleans);
                     bw.WriteInt16(AnimID);
@@ -1224,7 +1224,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short ChrManipulatorAllocationParameter { get; set; }
+                public short PlatoonID { get; set; }
 
                 /// <summary>
                 /// An ID in CharaInitParam that determines a human's inventory and stats.
@@ -1319,7 +1319,7 @@ namespace SoulsFormats
                     NPCParamID = br.ReadInt32();
                     UnkT10 = br.ReadInt32();
                     br.AssertInt16(0);
-                    ChrManipulatorAllocationParameter = br.ReadInt16();
+                    PlatoonID = br.ReadInt16();
                     CharaInitID = br.ReadInt32();
                     CollisionPartIndex = br.ReadInt32();
                     UnkT20 = br.ReadInt16();
@@ -1360,7 +1360,7 @@ namespace SoulsFormats
                     bw.WriteInt32(NPCParamID);
                     bw.WriteInt32(UnkT10);
                     bw.WriteInt16(0);
-                    bw.WriteInt16(ChrManipulatorAllocationParameter);
+                    bw.WriteInt16(PlatoonID);
                     bw.WriteInt32(CharaInitID);
                     bw.WriteInt32(CollisionPartIndex);
                     bw.WriteInt16(UnkT20);
