@@ -242,6 +242,18 @@ namespace SoulsFormats
                 EntityID = -1;
             }
 
+            /// <summary>
+            /// Creates a deep copy of the event.
+            /// </summary>
+            public Event DeepCopy()
+            {
+                var evnt = (Event)MemberwiseClone();
+                DeepCopyTo(evnt);
+                return evnt;
+            }
+
+            private protected virtual void DeepCopyTo(Event evnt) { }
+
             private protected Event(BinaryReaderEx br)
             {
                 long start = br.Position;
@@ -590,6 +602,12 @@ namespace SoulsFormats
                     ItemLots = new int[5] { -1, -1, -1, -1, -1 };
                 }
 
+                private protected override void DeepCopyTo(Event evnt)
+                {
+                    var treasure = (Treasure)evnt;
+                    treasure.ItemLots = (int[])ItemLots.Clone();
+                }
+
                 internal Treasure(BinaryReaderEx br) : base(br) { }
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
@@ -695,6 +713,13 @@ namespace SoulsFormats
                 {
                     SpawnPointNames = new string[4];
                     SpawnPartNames = new string[32];
+                }
+
+                private protected override void DeepCopyTo(Event evnt)
+                {
+                    var generator = (Generator)evnt;
+                    generator.SpawnPointNames = (string[])SpawnPointNames.Clone();
+                    generator.SpawnPartNames = (string[])SpawnPartNames.Clone();
                 }
 
                 internal Generator(BinaryReaderEx br) : base(br) { }

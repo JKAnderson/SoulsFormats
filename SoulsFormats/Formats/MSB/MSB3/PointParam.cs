@@ -350,19 +350,20 @@ namespace SoulsFormats
                 UnkB = new List<short>();
             }
 
-            private protected Region(Region clone)
+            /// <summary>
+            /// Creates a deep copy of the region.
+            /// </summary>
+            public Region DeepCopy()
             {
-                Name = clone.Name;
-                Position = clone.Position;
-                Rotation = clone.Rotation;
-                Shape = clone.Shape.DeepCopy();
-                ActivationPartName = clone.ActivationPartName;
-                EntityID = clone.EntityID;
-                Unk2C = clone.Unk2C;
-                UnkA = new List<short>(clone.UnkA);
-                UnkB = new List<short>(clone.UnkB);
-                MapStudioLayer = clone.MapStudioLayer;
+                var region = (Region)MemberwiseClone();
+                region.Shape = Shape.DeepCopy();
+                region.UnkA = new List<short>(UnkA);
+                region.UnkB = new List<short>(UnkB);
+                DeepCopyTo(region);
+                return region;
             }
+
+            private protected virtual void DeepCopyTo(Region region) { }
 
             private protected Region(BinaryReaderEx br)
             {
@@ -526,11 +527,6 @@ namespace SoulsFormats
                 /// </summary>
                 public General() : base($"{nameof(Region)}: {nameof(General)}") { }
 
-                /// <summary>
-                /// Creates a new General region with values copied from another.
-                /// </summary>
-                public General(General clone) : base(clone) { }
-
                 internal General(BinaryReaderEx br) : base(br) { }
             }
 
@@ -547,11 +543,6 @@ namespace SoulsFormats
                 /// Creates a Unk00 with default values.
                 /// </summary>
                 public Unk00() : base($"{nameof(Region)}: {nameof(Unk00)}") { }
-
-                /// <summary>
-                /// Creates a new Unk00 with values copied from another.
-                /// </summary>
-                public Unk00(Unk00 clone) : base(clone) { }
 
                 internal Unk00(BinaryReaderEx br) : base(br) { }
             }
@@ -574,14 +565,6 @@ namespace SoulsFormats
                 /// Creates an InvasionPoint with default values.
                 /// </summary>
                 public InvasionPoint() : base($"{nameof(Region)}: {nameof(InvasionPoint)}") { }
-
-                /// <summary>
-                /// Creates a new InvasionPoint with values copied from another.
-                /// </summary>
-                public InvasionPoint(InvasionPoint clone) : base(clone)
-                {
-                    Priority = clone.Priority;
-                }
 
                 internal InvasionPoint(BinaryReaderEx br) : base(br) { }
 
@@ -622,15 +605,6 @@ namespace SoulsFormats
                 {
                     SaveTypeData = true;
                     UnkT00 = 0x80;
-                }
-
-                /// <summary>
-                /// Creates a new EnvironmentMapPoint with values copied from another.
-                /// </summary>
-                public EnvironmentMapPoint(EnvironmentMapPoint clone) : base(clone)
-                {
-                    SaveTypeData = clone.SaveTypeData;
-                    UnkT00 = clone.UnkT00;
                 }
 
                 internal EnvironmentMapPoint(BinaryReaderEx br) : base(br) { }
@@ -704,14 +678,10 @@ namespace SoulsFormats
                     ChildRegionNames = new string[16];
                 }
 
-                /// <summary>
-                /// Creates a new Sound region with values copied from another.
-                /// </summary>
-                public Sound(Sound clone) : base(clone)
+                private protected override void DeepCopyTo(Region region)
                 {
-                    SoundType = clone.SoundType;
-                    SoundID = clone.SoundID;
-                    ChildRegionNames = (string[])clone.ChildRegionNames.Clone();
+                    var sound = (Sound)region;
+                    sound.ChildRegionNames = (string[])ChildRegionNames.Clone();
                 }
 
                 internal Sound(BinaryReaderEx br) : base(br) { }
@@ -770,15 +740,6 @@ namespace SoulsFormats
                     FFXID = -1;
                 }
 
-                /// <summary>
-                /// Creates a new SFX with values copied from another.
-                /// </summary>
-                public SFX(SFX clone) : base(clone)
-                {
-                    FFXID = clone.FFXID;
-                    StartDisabled = clone.StartDisabled;
-                }
-
                 internal SFX(BinaryReaderEx br) : base(br) { }
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
@@ -829,15 +790,6 @@ namespace SoulsFormats
                 public WindSFX() : base($"{nameof(Region)}: {nameof(WindSFX)}")
                 {
                     FFXID = -1;
-                }
-
-                /// <summary>
-                /// Creates a new WindSFX with values copied from another.
-                /// </summary>
-                public WindSFX(WindSFX clone) : base(clone)
-                {
-                    FFXID = clone.FFXID;
-                    WindAreaName = clone.WindAreaName;
                 }
 
                 internal WindSFX(BinaryReaderEx br) : base(br) { }
@@ -899,14 +851,6 @@ namespace SoulsFormats
                     UnkT00 = -1;
                 }
 
-                /// <summary>
-                /// Creates a new SpawnPoint with values copied from another.
-                /// </summary>
-                public SpawnPoint(SpawnPoint clone) : base(clone)
-                {
-                    UnkT00 = clone.UnkT00;
-                }
-
                 internal SpawnPoint(BinaryReaderEx br) : base(br) { }
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
@@ -958,16 +902,6 @@ namespace SoulsFormats
                     MessageID = -1;
                 }
 
-                /// <summary>
-                /// Creates a new Message with values copied from another.
-                /// </summary>
-                public Message(Message clone) : base(clone)
-                {
-                    MessageID = clone.MessageID;
-                    UnkT02 = clone.UnkT02;
-                    Hidden = clone.Hidden;
-                }
-
                 internal Message(BinaryReaderEx br) : base(br) { }
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
@@ -999,11 +933,6 @@ namespace SoulsFormats
                 /// </summary>
                 public WalkRoute() : base($"{nameof(Region)}: {nameof(WalkRoute)}") { }
 
-                /// <summary>
-                /// Creates a new WalkRoute with values copied from another.
-                /// </summary>
-                public WalkRoute(WalkRoute clone) : base(clone) { }
-
                 internal WalkRoute(BinaryReaderEx br) : base(br) { }
             }
 
@@ -1020,11 +949,6 @@ namespace SoulsFormats
                 /// Creates an Unk12 with default values.
                 /// </summary>
                 public Unk12() : base($"{nameof(Region)}: {nameof(Unk12)}") { }
-
-                /// <summary>
-                /// Creates a new Unk12 with values copied from another.
-                /// </summary>
-                public Unk12(Unk12 clone) : base(clone) { }
 
                 internal Unk12(BinaryReaderEx br) : base(br) { }
             }
@@ -1043,11 +967,6 @@ namespace SoulsFormats
                 /// </summary>
                 public WarpPoint() : base($"{nameof(Region)}: {nameof(WarpPoint)}") { }
 
-                /// <summary>
-                /// Creates a new WarpPoint with values copied from another.
-                /// </summary>
-                public WarpPoint(WarpPoint clone) : base(clone) { }
-
                 internal WarpPoint(BinaryReaderEx br) : base(br) { }
             }
 
@@ -1065,11 +984,6 @@ namespace SoulsFormats
                 /// </summary>
                 public ActivationArea() : base($"{nameof(Region)}: {nameof(ActivationArea)}") { }
 
-                /// <summary>
-                /// Creates a new ActivationArea with values copied from another.
-                /// </summary>
-                public ActivationArea(ActivationArea clone) : base(clone) { }
-
                 internal ActivationArea(BinaryReaderEx br) : base(br) { }
             }
 
@@ -1086,11 +1000,6 @@ namespace SoulsFormats
                 /// Creates an Event with default values.
                 /// </summary>
                 public Event() : base($"{nameof(Region)}: {nameof(Event)}") { }
-
-                /// <summary>
-                /// Creates a new Event with values copied from another.
-                /// </summary>
-                public Event(Event clone) : base(clone) { }
 
                 internal Event(BinaryReaderEx br) : base(br) { }
             }
@@ -1133,18 +1042,6 @@ namespace SoulsFormats
                 /// Creates an EnvironmentMapEffectBox with default values.
                 /// </summary>
                 public EnvironmentMapEffectBox() : base($"{nameof(Region)}: {nameof(EnvironmentMapEffectBox)}") { }
-
-                /// <summary>
-                /// Creates a new EnvironmentMapEffectBox with values copied from another.
-                /// </summary>
-                public EnvironmentMapEffectBox(EnvironmentMapEffectBox clone) : base(clone)
-                {
-                    UnkT00 = clone.UnkT00;
-                    Compare = clone.Compare;
-                    UnkT08 = clone.UnkT08;
-                    UnkT09 = clone.UnkT09;
-                    UnkT0A = clone.UnkT0A;
-                }
 
                 internal EnvironmentMapEffectBox(BinaryReaderEx br) : base(br) { }
 
@@ -1197,11 +1094,6 @@ namespace SoulsFormats
                 /// </summary>
                 public WindArea() : base($"{nameof(Region)}: {nameof(WindArea)}") { }
 
-                /// <summary>
-                /// Creates a new WindArea with values copied from another.
-                /// </summary>
-                public WindArea(WindArea clone) : base(clone) { }
-
                 internal WindArea(BinaryReaderEx br) : base(br) { }
             }
 
@@ -1223,14 +1115,6 @@ namespace SoulsFormats
                 /// Creates a MufflingBox with default values.
                 /// </summary>
                 public MufflingBox() : base($"{nameof(Region)}: {nameof(MufflingBox)}") { }
-
-                /// <summary>
-                /// Creates a new MufflingBox with values copied from another.
-                /// </summary>
-                public MufflingBox(MufflingBox clone) : base(clone)
-                {
-                    UnkT00 = clone.UnkT00;
-                }
 
                 internal MufflingBox(BinaryReaderEx br) : base(br) { }
 
@@ -1263,14 +1147,6 @@ namespace SoulsFormats
                 /// Creates a MufflingPortal with default values.
                 /// </summary>
                 public MufflingPortal() : base($"{nameof(Region)}: {nameof(MufflingPortal)}") { }
-
-                /// <summary>
-                /// Creates a new MufflingPortal with values copied from another.
-                /// </summary>
-                public MufflingPortal(MufflingPortal clone) : base(clone)
-                {
-                    UnkT00 = clone.UnkT00;
-                }
 
                 internal MufflingPortal(BinaryReaderEx br) : base(br) { }
 

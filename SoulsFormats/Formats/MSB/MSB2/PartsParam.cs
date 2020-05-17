@@ -200,6 +200,20 @@ namespace SoulsFormats
                     0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
             }
 
+            /// <summary>
+            /// Creates a deep copy of the part.
+            /// </summary>
+            public Part DeepCopy()
+            {
+                var part = (Part)MemberwiseClone();
+                part.DrawGroups = (uint[])DrawGroups.Clone();
+                part.DispGroups = (uint[])DispGroups.Clone();
+                DeepCopyTo(part);
+                return part;
+            }
+
+            private protected virtual void DeepCopyTo(Part part) { }
+
             private protected Part(BinaryReaderEx br)
             {
                 long start = br.Position;
@@ -642,6 +656,12 @@ namespace SoulsFormats
                 public ConnectCollision() : base("hXX_XXXX_XXXX")
                 {
                     MapID = new byte[4];
+                }
+
+                private protected override void DeepCopyTo(Part part)
+                {
+                    var connect = (ConnectCollision)part;
+                    connect.MapID = (byte[])MapID.Clone();
                 }
 
                 internal ConnectCollision(BinaryReaderEx br) : base(br) { }

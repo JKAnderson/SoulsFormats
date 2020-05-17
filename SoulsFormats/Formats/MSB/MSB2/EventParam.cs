@@ -159,6 +159,14 @@ namespace SoulsFormats
                 EventID = -1;
             }
 
+            /// <summary>
+            /// Creates a deep copy of the event.
+            /// </summary>
+            public Event DeepCopy()
+            {
+                return (Event)MemberwiseClone();
+            }
+
             private protected Event(BinaryReaderEx br)
             {
                 long start = br.Position;

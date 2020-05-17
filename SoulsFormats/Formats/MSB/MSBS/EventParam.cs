@@ -252,6 +252,18 @@ namespace SoulsFormats
                 EntityID = -1;
             }
 
+            /// <summary>
+            /// Creates a deep copy of the event.
+            /// </summary>
+            public Event DeepCopy()
+            {
+                var evnt = (Event)MemberwiseClone();
+                DeepCopyTo(evnt);
+                return evnt;
+            }
+
+            private protected virtual void DeepCopyTo(Event evnt) { }
+
             private protected Event(BinaryReaderEx br)
             {
                 long start = br.Position;
@@ -518,6 +530,13 @@ namespace SoulsFormats
                     SpawnPartNames = new string[32];
                 }
 
+                private protected override void DeepCopyTo(Event evnt)
+                {
+                    var generator = (Generator)evnt;
+                    generator.SpawnRegionNames = (string[])SpawnRegionNames.Clone();
+                    generator.SpawnPartNames = (string[])SpawnPartNames.Clone();
+                }
+
                 internal Generator(BinaryReaderEx br) : base(br) { }
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
@@ -731,6 +750,15 @@ namespace SoulsFormats
                         WREntries[i] = new WREntry();
                 }
 
+                private protected override void DeepCopyTo(Event evnt)
+                {
+                    var walkRoute = (WalkRoute)evnt;
+                    walkRoute.WalkRegionNames = (string[])WalkRegionNames.Clone();
+                    walkRoute.WREntries = new WREntry[WREntries.Length];
+                    for (int i = 0; i < WREntries.Length; i++)
+                        walkRoute.WREntries[i] = WREntries[i].DeepCopy();
+                }
+
                 internal WalkRoute(BinaryReaderEx br) : base(br) { }
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
@@ -806,6 +834,14 @@ namespace SoulsFormats
                     /// </summary>
                     public WREntry() { }
 
+                    /// <summary>
+                    /// Creates a deep copy of the entry.
+                    /// </summary>
+                    public WREntry DeepCopy()
+                    {
+                        return (WREntry)MemberwiseClone();
+                    }
+
                     internal WREntry(BinaryReaderEx br)
                     {
                         RegionIndex = br.ReadInt16();
@@ -864,6 +900,12 @@ namespace SoulsFormats
                 public GroupTour() : base($"{nameof(Event)}: {nameof(GroupTour)}")
                 {
                     GroupPartNames = new string[32];
+                }
+
+                private protected override void DeepCopyTo(Event evnt)
+                {
+                    var groupTour = (GroupTour)evnt;
+                    groupTour.GroupPartNames = (string[])GroupPartNames.Clone();
                 }
 
                 internal GroupTour(BinaryReaderEx br) : base(br) { }
@@ -1034,6 +1076,12 @@ namespace SoulsFormats
                     Event21PartNames = new string[32];
                 }
 
+                private protected override void DeepCopyTo(Event evnt)
+                {
+                    var event21 = (Event21)evnt;
+                    event21.Event21PartNames = (string[])Event21PartNames.Clone();
+                }
+
                 internal Event21(BinaryReaderEx br) : base(br) { }
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
@@ -1121,6 +1169,13 @@ namespace SoulsFormats
                 {
                     EnemyNames = new string[8];
                     TalkIDs = new int[8];
+                }
+
+                private protected override void DeepCopyTo(Event evnt)
+                {
+                    var talk = (Talk)evnt;
+                    talk.EnemyNames = (string[])EnemyNames.Clone();
+                    talk.TalkIDs = (int[])TalkIDs.Clone();
                 }
 
                 internal Talk(BinaryReaderEx br) : base(br) { }

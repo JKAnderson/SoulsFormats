@@ -52,6 +52,18 @@ namespace SoulsFormats
                 Bones = new List<Bone>();
             }
 
+            /// <summary>
+            /// Creates a deep copy of the part pose.
+            /// </summary>
+            public PartPose DeepCopy()
+            {
+                var pose = (PartPose)MemberwiseClone();
+                pose.Bones = new List<Bone>(Bones.Count);
+                foreach (Bone bone in Bones)
+                    pose.Bones.Add(bone.DeepCopy());
+                return pose;
+            }
+
             internal PartPose(BinaryReaderEx br)
             {
                 PartIndex = br.ReadInt16();
@@ -130,6 +142,14 @@ namespace SoulsFormats
                 {
                     Name = "Master";
                     Scale = Vector3.One;
+                }
+
+                /// <summary>
+                /// Creates a deep copy of the bone.
+                /// </summary>
+                public Bone DeepCopy()
+                {
+                    return (Bone)MemberwiseClone();
                 }
 
                 internal Bone(BinaryReaderEx br)

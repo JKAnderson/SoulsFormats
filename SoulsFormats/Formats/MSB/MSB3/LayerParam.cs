@@ -73,6 +73,14 @@ namespace SoulsFormats
                 Name = "Layer";
             }
 
+            /// <summary>
+            /// Creates a deep copy of the layer.
+            /// </summary>
+            public Layer DeepCopy()
+            {
+                return (Layer)MemberwiseClone();
+            }
+
             internal Layer(BinaryReaderEx br)
             {
                 long start = br.Position;

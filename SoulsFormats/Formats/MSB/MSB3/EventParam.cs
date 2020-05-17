@@ -202,14 +202,17 @@ namespace SoulsFormats
                 EntityID = -1;
             }
 
-            private protected Event(Event clone)
+            /// <summary>
+            /// Creates a deep copy of the event.
+            /// </summary>
+            public Event DeepCopy()
             {
-                Name = clone.Name;
-                EventID = clone.EventID;
-                PartName = clone.PartName;
-                PointName = clone.PointName;
-                EntityID = clone.EntityID;
+                var evnt = (Event)MemberwiseClone();
+                DeepCopyTo(evnt);
+                return evnt;
             }
+
+            private protected virtual void DeepCopyTo(Event evnt) { }
 
             private protected Event(BinaryReaderEx br)
             {
@@ -345,20 +348,6 @@ namespace SoulsFormats
                     ItemLot2 = -1;
                     ActionButtonParamID = -1;
                     PickupAnimID = -1;
-                }
-
-                /// <summary>
-                /// Creates a new Treasure with values copied from another.
-                /// </summary>
-                public Treasure(Treasure clone) : base(clone)
-                {
-                    PartName2 = clone.PartName2;
-                    ItemLot1 = clone.ItemLot1;
-                    ItemLot2 = clone.ItemLot2;
-                    ActionButtonParamID = clone.ActionButtonParamID;
-                    PickupAnimID = clone.PickupAnimID;
-                    InChest = clone.InChest;
-                    StartDisabled = clone.StartDisabled;
                 }
 
                 internal Treasure(BinaryReaderEx br) : base(br) { }
@@ -507,22 +496,11 @@ namespace SoulsFormats
                     SpawnPartNames = new string[32];
                 }
 
-                /// <summary>
-                /// Creates a new Generator with values copied from another.
-                /// </summary>
-                public Generator(Generator clone) : base(clone)
+                private protected override void DeepCopyTo(Event evnt)
                 {
-                    MaxNum = clone.MaxNum;
-                    LimitNum = clone.LimitNum;
-                    MinGenNum = clone.MinGenNum;
-                    MaxGenNum = clone.MaxGenNum;
-                    MinInterval = clone.MinInterval;
-                    MaxInterval = clone.MaxInterval;
-                    SessionCondition = clone.SessionCondition;
-                    UnkT14 = clone.UnkT14;
-                    UnkT18 = clone.UnkT18;
-                    SpawnPointNames = (string[])clone.SpawnPointNames.Clone();
-                    SpawnPartNames = (string[])clone.SpawnPartNames.Clone();
+                    var generator = (Generator)evnt;
+                    generator.SpawnPointNames = (string[])SpawnPointNames.Clone();
+                    generator.SpawnPartNames = (string[])SpawnPartNames.Clone();
                 }
 
                 internal Generator(BinaryReaderEx br) : base(br) { }
@@ -662,18 +640,6 @@ namespace SoulsFormats
                     ObjActStateType = ObjActState.OneState;
                 }
 
-                /// <summary>
-                /// Creates a new ObjAct with values copied from another.
-                /// </summary>
-                public ObjAct(ObjAct clone) : base(clone)
-                {
-                    ObjActEntityID = clone.ObjActEntityID;
-                    ObjActPartName = clone.ObjActPartName;
-                    ObjActParamID = clone.ObjActParamID;
-                    ObjActStateType = clone.ObjActStateType;
-                    EventFlagID = clone.EventFlagID;
-                }
-
                 internal ObjAct(BinaryReaderEx br) : base(br) { }
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
@@ -745,15 +711,6 @@ namespace SoulsFormats
                 /// </summary>
                 public MapOffset() : base($"{nameof(Event)}: {nameof(MapOffset)}") { }
 
-                /// <summary>
-                /// Creates a new MapOffset with values copied from another.
-                /// </summary>
-                public MapOffset(MapOffset clone) : base(clone)
-                {
-                    Position = clone.Position;
-                    Degree = clone.Degree;
-                }
-
                 internal MapOffset(BinaryReaderEx br) : base(br) { }
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
@@ -823,20 +780,6 @@ namespace SoulsFormats
                     UnkT10 = -1;
                 }
 
-                /// <summary>
-                /// Creates an Invasion with default values.
-                /// </summary>
-                public PseudoMultiplayer(PseudoMultiplayer clone) : base(clone)
-                {
-                    HostEntityID = clone.HostEntityID;
-                    EventFlagID = clone.EventFlagID;
-                    ActivateGoodsID = clone.ActivateGoodsID;
-                    UnkT0C = clone.UnkT0C;
-                    UnkT10 = clone.UnkT10;
-                    UnkT14 = clone.UnkT14;
-                    UnkT18 = clone.UnkT18;
-                }
-
                 internal PseudoMultiplayer(BinaryReaderEx br) : base(br) { }
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
@@ -890,13 +833,10 @@ namespace SoulsFormats
                     WalkPointNames = new string[32];
                 }
 
-                /// <summary>
-                /// Creates a new WalkRoute with values copied from another.
-                /// </summary>
-                public WalkRoute(WalkRoute clone) : base(clone)
+                private protected override void DeepCopyTo(Event evnt)
                 {
-                    UnkT00 = clone.UnkT00;
-                    WalkPointNames = (string[])clone.WalkPointNames.Clone();
+                    var walkRoute = (WalkRoute)evnt;
+                    walkRoute.WalkPointNames = (string[])WalkPointNames.Clone();
                 }
 
                 internal WalkRoute(BinaryReaderEx br) : base(br) { }
@@ -967,14 +907,10 @@ namespace SoulsFormats
                     GroupPartsNames = new string[32];
                 }
 
-                /// <summary>
-                /// Creates a new GroupTour with values copied from another.
-                /// </summary>
-                public GroupTour(GroupTour clone) : base(clone)
+                private protected override void DeepCopyTo(Event evnt)
                 {
-                    PlatoonIDScriptActivate = clone.PlatoonIDScriptActivate;
-                    State = clone.State;
-                    GroupPartsNames = (string[])clone.GroupPartsNames.Clone();
+                    var groupTour = (GroupTour)evnt;
+                    groupTour.GroupPartsNames = (string[])GroupPartsNames.Clone();
                 }
 
                 internal GroupTour(BinaryReaderEx br) : base(br) { }
@@ -1031,15 +967,6 @@ namespace SoulsFormats
                 /// Creates an Other with default values.
                 /// </summary>
                 public Other() : base($"{nameof(Event)}: {nameof(Other)}") { }
-
-                /// <summary>
-                /// Creates a new Other with values copied from another.
-                /// </summary>
-                public Other(Other clone) : base(clone)
-                {
-                    UnkT00 = clone.UnkT00;
-                    UnkT04 = clone.UnkT04;
-                }
 
                 internal Other(BinaryReaderEx br) : base(br) { }
 

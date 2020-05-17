@@ -118,6 +118,14 @@ namespace SoulsFormats
                 Name = name;
             }
 
+            /// <summary>
+            /// Creates a deep copy of the model.
+            /// </summary>
+            public Model DeepCopy()
+            {
+                return (Model)MemberwiseClone();
+            }
+
             private protected Model(BinaryReaderEx br)
             {
                 long start = br.Position;

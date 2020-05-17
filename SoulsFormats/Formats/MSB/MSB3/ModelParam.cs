@@ -159,10 +159,12 @@ namespace SoulsFormats
                 SibPath = "";
             }
 
-            private protected Model(Model clone)
+            /// <summary>
+            /// Creates a deep copy of the model.
+            /// </summary>
+            public Model DeepCopy()
             {
-                Name = clone.Name;
-                SibPath = clone.SibPath;
+                return (Model)MemberwiseClone();
             }
 
             private protected Model(BinaryReaderEx br)
@@ -282,17 +284,6 @@ namespace SoulsFormats
                     UnkT03 = true;
                 }
 
-                /// <summary>
-                /// Creates a new MapPiece with values copied from another.
-                /// </summary>
-                public MapPiece(MapPiece clone) : base(clone)
-                {
-                    UnkT00 = clone.UnkT00;
-                    UnkT01 = clone.UnkT01;
-                    UnkT02 = clone.UnkT02;
-                    UnkT03 = clone.UnkT03;
-                }
-
                 internal MapPiece(BinaryReaderEx br) : base(br) { }
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
@@ -357,17 +348,6 @@ namespace SoulsFormats
                     UnkT03 = true;
                 }
 
-                /// <summary>
-                /// Creates a new Object with values copied from another.
-                /// </summary>
-                public Object(Object clone) : base(clone)
-                {
-                    UnkT00 = clone.UnkT00;
-                    UnkT01 = clone.UnkT01;
-                    UnkT02 = clone.UnkT02;
-                    UnkT03 = clone.UnkT03;
-                }
-
                 internal Object(BinaryReaderEx br) : base(br) { }
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
@@ -408,11 +388,6 @@ namespace SoulsFormats
                 /// </summary>
                 public Enemy() : base("cXXXX") { }
 
-                /// <summary>
-                /// Creates a new Enemy with values copied from another.
-                /// </summary>
-                public Enemy(Enemy clone) : base(clone) { }
-
                 internal Enemy(BinaryReaderEx br) : base(br) { }
             }
 
@@ -428,11 +403,6 @@ namespace SoulsFormats
                 /// Creates a Player with default values.
                 /// </summary>
                 public Player() : base("c0000") { }
-
-                /// <summary>
-                /// Creates a new Player with values copied from another.
-                /// </summary>
-                public Player(Player clone) : base(clone) { }
 
                 internal Player(BinaryReaderEx br) : base(br) { }
             }
@@ -450,11 +420,6 @@ namespace SoulsFormats
                 /// </summary>
                 public Collision() : base("hXXXXXX") { }
 
-                /// <summary>
-                /// Creates a new Collision with values copied from another.
-                /// </summary>
-                public Collision(Collision clone) : base(clone) { }
-
                 internal Collision(BinaryReaderEx br) : base(br) { }
             }
 
@@ -470,11 +435,6 @@ namespace SoulsFormats
                 /// Creates an Other with default values.
                 /// </summary>
                 public Other() : base("lXXXXXX") { }
-
-                /// <summary>
-                /// Creates a new Other with values copied from another.
-                /// </summary>
-                public Other(Other clone) : base(clone) { }
 
                 internal Other(BinaryReaderEx br) : base(br) { }
             }

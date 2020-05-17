@@ -37,6 +37,22 @@ namespace SoulsFormats
             }
 
             /// <summary>
+            /// Adds a route to the appropriate list for its type; returns the route.
+            /// </summary>
+            public Route Add(Route route)
+            {
+                switch (route)
+                {
+                    case Route.MufflingBoxLink r: MufflingBoxLinks.Add(r); break;
+                    case Route.MufflingPortalLink r: MufflingPortalLinks.Add(r); break;
+
+                    default:
+                        throw new ArgumentException($"Unrecognized type {route.GetType()}.", nameof(route));
+                }
+                return route;
+            }
+
+            /// <summary>
             /// Returns every Route in the order they will be written.
             /// </summary>
             public override List<Route> GetEntries()
@@ -82,6 +98,14 @@ namespace SoulsFormats
             private protected Route(string name)
             {
                 Name = name;
+            }
+
+            /// <summary>
+            /// Creates a deep copy of the route.
+            /// </summary>
+            public Route DeepCopy()
+            {
+                return (Route)MemberwiseClone();
             }
 
             private protected Route(BinaryReaderEx br)

@@ -201,6 +201,16 @@ namespace SoulsFormats
                 Shape = new MSB.Shape.Point();
             }
 
+            /// <summary>
+            /// Creates a deep copy of the region.
+            /// </summary>
+            public Region DeepCopy()
+            {
+                var region = (Region)MemberwiseClone();
+                region.Shape = Shape.DeepCopy();
+                return region;
+            }
+
             private protected Region(BinaryReaderEx br)
             {
                 long start = br.Position;

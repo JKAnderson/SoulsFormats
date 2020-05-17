@@ -97,6 +97,16 @@ namespace SoulsFormats
                 EntityID = -1;
             }
 
+            /// <summary>
+            /// Creates a deep copy of the region.
+            /// </summary>
+            public Region DeepCopy()
+            {
+                var region = (Region)MemberwiseClone();
+                region.Shape = Shape.DeepCopy();
+                return region;
+            }
+
             internal Region(BinaryReaderEx br)
             {
                 long start = br.Position;

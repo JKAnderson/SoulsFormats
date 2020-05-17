@@ -346,6 +346,21 @@ namespace SoulsFormats
                 EntityID = -1;
             }
 
+            /// <summary>
+            /// Creates a deep copy of the region.
+            /// </summary>
+            public Region DeepCopy()
+            {
+                var region = (Region)MemberwiseClone();
+                region.Shape = Shape.DeepCopy();
+                region.UnkA = new List<short>(UnkA);
+                region.UnkB = new List<short>(UnkB);
+                DeepCopyTo(region);
+                return region;
+            }
+
+            private protected virtual void DeepCopyTo(Region region) { }
+
             private protected Region(BinaryReaderEx br)
             {
                 long start = br.Position;
@@ -679,6 +694,12 @@ namespace SoulsFormats
                 public Sound() : base($"{nameof(Region)}: {nameof(Sound)}")
                 {
                     ChildRegionNames = new string[16];
+                }
+
+                private protected override void DeepCopyTo(Region region)
+                {
+                    var sound = (Sound)region;
+                    sound.ChildRegionNames = (string[])ChildRegionNames.Clone();
                 }
 
                 internal Sound(BinaryReaderEx br) : base(br) { }

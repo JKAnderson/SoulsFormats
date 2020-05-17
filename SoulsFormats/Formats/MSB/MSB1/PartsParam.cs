@@ -306,6 +306,20 @@ namespace SoulsFormats
                 EntityID = -1;
             }
 
+            /// <summary>
+            /// Creates a deep copy of the part.
+            /// </summary>
+            public Part DeepCopy()
+            {
+                var part = (Part)MemberwiseClone();
+                part.DrawGroups = (uint[])DrawGroups.Clone();
+                part.DispGroups = (uint[])DispGroups.Clone();
+                DeepCopyTo(part);
+                return part;
+            }
+
+            private protected virtual void DeepCopyTo(Part part) { }
+
             private protected Part(BinaryReaderEx br)
             {
                 long start = br.Position;
@@ -616,6 +630,12 @@ namespace SoulsFormats
                     MovePointNames = new string[8];
                 }
 
+                private protected override void DeepCopyTo(Part part)
+                {
+                    var enemy = (EnemyBase)part;
+                    enemy.MovePointNames = (string[])MovePointNames.Clone();
+                }
+
                 private protected EnemyBase(BinaryReaderEx br) : base(br) { }
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
@@ -800,6 +820,13 @@ namespace SoulsFormats
                     LockCamParamID2 = -1;
                 }
 
+                private protected override void DeepCopyTo(Part part)
+                {
+                    var collision = (Collision)part;
+                    collision.NvmGroups = (uint[])NvmGroups.Clone();
+                    collision.VagrantEntityIDs = (int[])VagrantEntityIDs.Clone();
+                }
+
                 internal Collision(BinaryReaderEx br) : base(br) { }
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
@@ -868,6 +895,12 @@ namespace SoulsFormats
                 {
                     NvmGroups = new uint[4] {
                         0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
+                }
+
+                private protected override void DeepCopyTo(Part part)
+                {
+                    var navmesh = (Navmesh)part;
+                    navmesh.NvmGroups = (uint[])NvmGroups.Clone();
                 }
 
                 internal Navmesh(BinaryReaderEx br) : base(br) { }
@@ -945,6 +978,12 @@ namespace SoulsFormats
                 public ConnectCollision() : base("hXXXXBX_XXXX")
                 {
                     MapID = new byte[4] { 10, 2, 0, 0 };
+                }
+
+                private protected override void DeepCopyTo(Part part)
+                {
+                    var connect = (ConnectCollision)part;
+                    connect.MapID = (byte[])MapID.Clone();
                 }
 
                 internal ConnectCollision(BinaryReaderEx br) : base(br) { }

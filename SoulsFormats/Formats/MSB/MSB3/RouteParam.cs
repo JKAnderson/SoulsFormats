@@ -68,6 +68,14 @@ namespace SoulsFormats
                 Name = "XX-XX";
             }
 
+            /// <summary>
+            /// Creates a deep copy of the route.
+            /// </summary>
+            public Route DeepCopy()
+            {
+                return (Route)MemberwiseClone();
+            }
+
             internal Route(BinaryReaderEx br)
             {
                 long start = br.Position;

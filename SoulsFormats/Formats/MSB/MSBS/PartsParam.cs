@@ -322,40 +322,18 @@ namespace SoulsFormats
                     EntityGroupIDs[i] = -1;
             }
 
-            private protected Part(Part clone)
+            /// <summary>
+            /// Creates a deep copy of the part.
+            /// </summary>
+            public Part DeepCopy()
             {
-                Name = clone.Name;
-                ModelName = clone.ModelName;
-                SibPath = clone.SibPath;
-                Position = clone.Position;
-                Rotation = clone.Rotation;
-                Scale = clone.Scale;
-                EntityID = clone.EntityID;
-                UnkE04 = clone.UnkE04;
-                UnkE05 = clone.UnkE05;
-                UnkE06 = clone.UnkE06;
-                LanternID = clone.LanternID;
-                LodParamID = clone.LodParamID;
-                UnkE09 = clone.UnkE09;
-                IsPointLightShadowSrc = clone.IsPointLightShadowSrc;
-                UnkE0B = clone.UnkE0B;
-                IsShadowSrc = clone.IsShadowSrc;
-                IsStaticShadowSrc = clone.IsStaticShadowSrc;
-                IsCascade3ShadowSrc = clone.IsCascade3ShadowSrc;
-                UnkE0F = clone.UnkE0F;
-                UnkE10 = clone.UnkE10;
-                IsShadowDest = clone.IsShadowDest;
-                IsShadowOnly = clone.IsShadowOnly;
-                DrawByReflectCam = clone.DrawByReflectCam;
-                DrawOnlyReflectCam = clone.DrawOnlyReflectCam;
-                EnableOnAboveShadow = clone.EnableOnAboveShadow;
-                DisablePointLightEffect = clone.DisablePointLightEffect;
-                UnkE17 = clone.UnkE17;
-                UnkE18 = clone.UnkE18;
-                EntityGroupIDs = (int[])clone.EntityGroupIDs.Clone();
-                UnkE3C = clone.UnkE3C;
-                UnkE40 = clone.UnkE40;
+                var part = (Part)MemberwiseClone();
+                part.EntityGroupIDs = (int[])EntityGroupIDs.Clone();
+                DeepCopyTo(part);
+                return part;
             }
+
+            private protected virtual void DeepCopyTo(Part part) { }
 
             private protected Part(BinaryReaderEx br)
             {
@@ -679,13 +657,13 @@ namespace SoulsFormats
                 }
 
                 /// <summary>
-                /// Clones an existing UnkStruct1.
+                /// Creates a deep copy of the struct.
                 /// </summary>
-                public UnkStruct1(UnkStruct1 clone)
+                public UnkStruct1 DeepCopy()
                 {
-                    CollisionMask = (uint[])clone.CollisionMask.Clone();
-                    Condition1 = clone.Condition1;
-                    Condition2 = clone.Condition2;
+                    var unk1 = (UnkStruct1)MemberwiseClone();
+                    unk1.CollisionMask = (uint[])CollisionMask.Clone();
+                    return unk1;
                 }
 
                 internal UnkStruct1(BinaryReaderEx br)
@@ -740,6 +718,16 @@ namespace SoulsFormats
                     DispGroups = new int[8];
                 }
 
+                /// <summary>
+                /// Creates a deep copy of the struct.
+                /// </summary>
+                public UnkStruct2 DeepCopy()
+                {
+                    var unk2 = (UnkStruct2)MemberwiseClone();
+                    unk2.DispGroups = (int[])DispGroups.Clone();
+                    return unk2;
+                }
+
                 internal UnkStruct2(BinaryReaderEx br)
                 {
                     Condition = br.ReadInt32();
@@ -790,14 +778,11 @@ namespace SoulsFormats
                 public GparamConfig() { }
 
                 /// <summary>
-                /// Clones an existing GparamConfig.
+                /// Creates a deep copy of the gparam config.
                 /// </summary>
-                public GparamConfig(GparamConfig clone)
+                public GparamConfig DeepCopy()
                 {
-                    LightSetID = clone.LightSetID;
-                    FogParamID = clone.FogParamID;
-                    LightScatteringID = clone.LightScatteringID;
-                    EnvMapID = clone.EnvMapID;
+                    return (GparamConfig)MemberwiseClone();
                 }
 
                 internal GparamConfig(BinaryReaderEx br)
@@ -848,6 +833,16 @@ namespace SoulsFormats
                 public SceneGparamConfig()
                 {
                     EventIDs = new sbyte[4];
+                }
+
+                /// <summary>
+                /// Creates a deep copy of the scene gparam config.
+                /// </summary>
+                public SceneGparamConfig DeepCopy()
+                {
+                    var config = (SceneGparamConfig)MemberwiseClone();
+                    config.EventIDs = (sbyte[])EventIDs.Clone();
+                    return config;
                 }
 
                 internal SceneGparamConfig(BinaryReaderEx br)
@@ -919,6 +914,14 @@ namespace SoulsFormats
                 /// </summary>
                 public UnkStruct7() { }
 
+                /// <summary>
+                /// Creates a deep copy of the struct.
+                /// </summary>
+                public UnkStruct7 DeepCopy()
+                {
+                    return (UnkStruct7)MemberwiseClone();
+                }
+
                 internal UnkStruct7(BinaryReaderEx br)
                 {
                     Unk00 = br.ReadInt32();
@@ -979,6 +982,14 @@ namespace SoulsFormats
                     Unk1 = new UnkStruct1();
                     Gparam = new GparamConfig();
                     Unk7 = new UnkStruct7();
+                }
+
+                private protected override void DeepCopyTo(Part part)
+                {
+                    var piece = (MapPiece)part;
+                    piece.Unk1 = Unk1.DeepCopy();
+                    piece.Gparam = Gparam.DeepCopy();
+                    piece.Unk7 = Unk7.DeepCopy();
                 }
 
                 internal MapPiece(BinaryReaderEx br) : base(br) { }
@@ -1077,19 +1088,10 @@ namespace SoulsFormats
                     Gparam = new GparamConfig();
                 }
 
-                private protected ObjectBase(ObjectBase clone) : base(clone)
+                private protected override void DeepCopyTo(Part part)
                 {
-                    Gparam = new GparamConfig(clone.Gparam);
-                    ObjPartName1 = clone.ObjPartName1;
-                    UnkT0C = clone.UnkT0C;
-                    EnableObjAnimNetSyncStructure = clone.EnableObjAnimNetSyncStructure;
-                    UnkT0E = clone.UnkT0E;
-                    SetMainObjStructureBooleans = clone.SetMainObjStructureBooleans;
-                    AnimID = clone.AnimID;
-                    UnkT18 = clone.UnkT18;
-                    UnkT1A = clone.UnkT1A;
-                    ObjPartName2 = clone.ObjPartName2;
-                    ObjPartName3 = clone.ObjPartName3;
+                    var obj = (ObjectBase)part;
+                    obj.Gparam = Gparam.DeepCopy();
                 }
 
                 private protected ObjectBase(BinaryReaderEx br) : base(br) { }
@@ -1174,20 +1176,11 @@ namespace SoulsFormats
                     Unk1 = new UnkStruct1();
                 }
 
-                /// <summary>
-                /// Clones an existing Object.
-                /// </summary>
-                public Object(Object clone) : base(clone)
+                private protected override void DeepCopyTo(Part part)
                 {
-                    Unk1 = new UnkStruct1(clone.Unk1);
-                }
-
-                /// <summary>
-                /// Clones an existing DummyObject.
-                /// </summary>
-                public Object(DummyObject clone) : base(clone)
-                {
-                    Unk1 = new UnkStruct1();
+                    base.DeepCopyTo(part);
+                    var obj = (Object)part;
+                    obj.Unk1 = Unk1.DeepCopy();
                 }
 
                 internal Object(BinaryReaderEx br) : base(br) { }
@@ -1309,26 +1302,10 @@ namespace SoulsFormats
                     EventFlagID = -1;
                 }
 
-                private protected EnemyBase(EnemyBase clone) : base(clone)
+                private protected override void DeepCopyTo(Part part)
                 {
-                    Gparam = new GparamConfig(clone.Gparam);
-                    ThinkParamID = clone.ThinkParamID;
-                    NPCParamID = clone.NPCParamID;
-                    UnkT10 = clone.UnkT10;
-                    ChrManipulatorAllocationParameter = clone.ChrManipulatorAllocationParameter;
-                    CharaInitID = clone.CharaInitID;
-                    CollisionPartName = clone.CollisionPartName;
-                    UnkT20 = clone.UnkT20;
-                    UnkT22 = clone.UnkT22;
-                    UnkT24 = clone.UnkT24;
-                    BackupEventAnimID = clone.BackupEventAnimID;
-                    EventFlagID = clone.EventFlagID;
-                    EventFlagCompareState = clone.EventFlagCompareState;
-                    UnkT48 = clone.UnkT48;
-                    UnkT4C = clone.UnkT4C;
-                    UnkT50 = clone.UnkT50;
-                    UnkT78 = clone.UnkT78;
-                    UnkT84 = clone.UnkT84;
+                    var enemy = (EnemyBase)part;
+                    enemy.Gparam = Gparam.DeepCopy();
                 }
 
                 private protected EnemyBase(BinaryReaderEx br) : base(br) { }
@@ -1449,20 +1426,11 @@ namespace SoulsFormats
                     Unk1 = new UnkStruct1();
                 }
 
-                /// <summary>
-                /// Clones an existing Enemy.
-                /// </summary>
-                public Enemy(Enemy clone) : base(clone)
+                private protected override void DeepCopyTo(Part part)
                 {
-                    Unk1 = new UnkStruct1(clone.Unk1);
-                }
-
-                /// <summary>
-                /// Clones an existing DummyEnemy.
-                /// </summary>
-                public Enemy(DummyEnemy clone) : base(clone)
-                {
-                    Unk1 = new UnkStruct1();
+                    base.DeepCopyTo(part);
+                    var enemy = (Enemy)part;
+                    enemy.Unk1 = Unk1.DeepCopy();
                 }
 
                 internal Enemy(BinaryReaderEx br) : base(br) { }
@@ -1646,6 +1614,15 @@ namespace SoulsFormats
                     DisableBonfireEntityID = -1;
                 }
 
+                private protected override void DeepCopyTo(Part part)
+                {
+                    var collision = (Collision)part;
+                    collision.Unk1 = Unk1.DeepCopy();
+                    collision.Unk2 = Unk2.DeepCopy();
+                    collision.Gparam = Gparam.DeepCopy();
+                    collision.SceneGparam = SceneGparam.DeepCopy();
+                }
+
                 internal Collision(BinaryReaderEx br) : base(br) { }
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
@@ -1744,11 +1721,6 @@ namespace SoulsFormats
                 /// </summary>
                 public DummyObject() : base() { }
 
-                /// <summary>
-                /// Clones an existing DummyObject.
-                /// </summary>
-                public DummyObject(DummyObject clone) : base(clone) { }
-
                 internal DummyObject(BinaryReaderEx br) : base(br) { }
             }
 
@@ -1764,11 +1736,6 @@ namespace SoulsFormats
                 /// Creates a DummyEnemy with default values.
                 /// </summary>
                 public DummyEnemy() : base() { }
-
-                /// <summary>
-                /// Clones an existing DummyEnemy.
-                /// </summary>
-                public DummyEnemy(DummyEnemy clone) : base(clone) { }
 
                 internal DummyEnemy(BinaryReaderEx br) : base(br) { }
             }
@@ -1808,6 +1775,13 @@ namespace SoulsFormats
                 {
                     Unk2 = new UnkStruct2();
                     MapID = new byte[4];
+                }
+
+                private protected override void DeepCopyTo(Part part)
+                {
+                    var connect = (ConnectCollision)part;
+                    connect.Unk2 = Unk2.DeepCopy();
+                    connect.MapID = (byte[])MapID.Clone();
                 }
 
                 internal ConnectCollision(BinaryReaderEx br) : base(br) { }

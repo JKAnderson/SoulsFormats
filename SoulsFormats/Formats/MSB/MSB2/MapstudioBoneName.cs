@@ -34,6 +34,11 @@ namespace SoulsFormats
                 Name = "Master";
             }
 
+            public BoneName DeepCopy()
+            {
+                return (BoneName)MemberwiseClone();
+            }
+
             internal BoneName(BinaryReaderEx br)
             {
                 Name = br.ReadUTF16();
