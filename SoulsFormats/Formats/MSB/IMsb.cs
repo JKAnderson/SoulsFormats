@@ -59,12 +59,24 @@ namespace SoulsFormats
     /// <summary>
     /// A model available to be used by parts.
     /// </summary>
-    public interface IMsbModel : IMsbEntry { }
+    public interface IMsbModel : IMsbEntry
+    {
+        /// <summary>
+        /// Creates a deep copy of the model.
+        /// </summary>
+        IMsbModel DeepCopy();
+    }
 
     /// <summary>
     /// Controls miscellaneous behaviors.
     /// </summary>
-    public interface IMsbEvent : IMsbEntry { }
+    public interface IMsbEvent : IMsbEntry
+    {
+        /// <summary>
+        /// Creates a deep copy of the event.
+        /// </summary>
+        IMsbEvent DeepCopy();
+    }
 
     /// <summary>
     /// A point or trigger volume.
@@ -80,6 +92,11 @@ namespace SoulsFormats
         /// The rotation of the region, in degrees.
         /// </summary>
         Vector3 Rotation { get; set; }
+
+        /// <summary>
+        /// Creates a deep copy of the region.
+        /// </summary>
+        IMsbRegion DeepCopy();
     }
 
     /// <summary>
@@ -106,5 +123,10 @@ namespace SoulsFormats
         /// The scale of the part.
         /// </summary>
         Vector3 Scale { get; set; }
+
+        /// <summary>
+        /// Creates a deep copy of the part.
+        /// </summary>
+        IMsbPart DeepCopy();
     }
 }

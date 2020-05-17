@@ -155,6 +155,7 @@ namespace SoulsFormats
             {
                 return (Model)MemberwiseClone();
             }
+            IMsbModel IMsbModel.DeepCopy() => DeepCopy();
 
             private protected Model(BinaryReaderEx br)
             {

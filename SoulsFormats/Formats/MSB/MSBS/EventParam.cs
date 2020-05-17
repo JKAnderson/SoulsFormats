@@ -261,6 +261,7 @@ namespace SoulsFormats
                 DeepCopyTo(evnt);
                 return evnt;
             }
+            IMsbEvent IMsbEvent.DeepCopy() => DeepCopy();
 
             private protected virtual void DeepCopyTo(Event evnt) { }
 

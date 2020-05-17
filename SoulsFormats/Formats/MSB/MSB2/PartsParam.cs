@@ -211,6 +211,7 @@ namespace SoulsFormats
                 DeepCopyTo(part);
                 return part;
             }
+            IMsbPart IMsbPart.DeepCopy() => DeepCopy();
 
             private protected virtual void DeepCopyTo(Part part) { }
 

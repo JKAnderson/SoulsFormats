@@ -166,6 +166,7 @@ namespace SoulsFormats
             {
                 return (Event)MemberwiseClone();
             }
+            IMsbEvent IMsbEvent.DeepCopy() => DeepCopy();
 
             private protected Event(BinaryReaderEx br)
             {

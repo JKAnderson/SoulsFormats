@@ -358,6 +358,7 @@ namespace SoulsFormats
                 DeepCopyTo(region);
                 return region;
             }
+            IMsbRegion IMsbRegion.DeepCopy() => DeepCopy();
 
             private protected virtual void DeepCopyTo(Region region) { }
 

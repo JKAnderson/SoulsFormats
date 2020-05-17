@@ -106,6 +106,7 @@ namespace SoulsFormats
                 region.Shape = Shape.DeepCopy();
                 return region;
             }
+            IMsbRegion IMsbRegion.DeepCopy() => DeepCopy();
 
             internal Region(BinaryReaderEx br)
             {
