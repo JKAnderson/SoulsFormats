@@ -1025,14 +1025,14 @@ namespace SoulsFormats
                 {
                     base.GetNames(msb, entries);
                     CollisionName = MSB.FindName(entries.Parts, CollisionPartIndex);
-                    WalkRouteName = MSB.FindName(msb.Events.WalkRoutes, WalkRouteIndex);
+                    WalkRouteName = MSB.FindName(msb.Events.PatrolInfo, WalkRouteIndex);
                 }
 
                 internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
                     CollisionPartIndex = MSB.FindIndex(entries.Parts, CollisionName);
-                    WalkRouteIndex = (short)MSB.FindIndex(msb.Events.WalkRoutes, WalkRouteName);
+                    WalkRouteIndex = (short)MSB.FindIndex(msb.Events.PatrolInfo, WalkRouteName);
                 }
             }
 

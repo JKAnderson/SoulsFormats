@@ -9,24 +9,28 @@ namespace SoulsFormats
     {
         internal enum RegionType : uint
         {
-            General = 0xFFFFFFFF,
-            Unk00 = 0,
             InvasionPoint = 1,
             EnvironmentMapPoint = 2,
+            //Region3 = 3,
             Sound = 4,
             SFX = 5,
             WindSFX = 6,
+            //Region7 = 7,
             SpawnPoint = 8,
             Message = 9,
-            WalkRoute = 11,
-            Unk12 = 12,
+            //PseudoMultiplayer = 10,
+            PatrolRoute = 11,
+            MovementPoint = 12,
             WarpPoint = 13,
             ActivationArea = 14,
             Event = 15,
+            Logic = 0, // There are no regions of type 16 and type 0 is written in this order, so I suspect this is correct
             EnvironmentMapEffectBox = 17,
             WindArea = 18,
+            //Region19 = 19,
             MufflingBox = 20,
             MufflingPortal = 21,
+            Other = 0xFFFFFFFF,
         }
 
         /// <summary>
@@ -36,16 +40,6 @@ namespace SoulsFormats
         {
             internal override int Version => 3;
             internal override string Type => "POINT_PARAM_ST";
-
-            /// <summary>
-            /// General regions in the MSB.
-            /// </summary>
-            public List<Region.General> General { get; set; }
-
-            /// <summary>
-            /// Unk00 regions in the MSB.
-            /// </summary>
-            public List<Region.Unk00> Unk00s { get; set; }
 
             /// <summary>
             /// InvasionPoints in the MSB.
@@ -83,14 +77,14 @@ namespace SoulsFormats
             public List<Region.Message> Messages { get; set; }
 
             /// <summary>
-            /// WalkRoute points in the MSB.
+            /// PatrolRoute points in the MSB.
             /// </summary>
-            public List<Region.WalkRoute> WalkRoutes { get; set; }
+            public List<Region.PatrolRoute> PatrolRoutes { get; set; }
 
             /// <summary>
-            /// Unk12 regions in the MSB.
+            /// MovementPoints in the MSB.
             /// </summary>
-            public List<Region.Unk12> Unk12s { get; set; }
+            public List<Region.MovementPoint> MovementPoints { get; set; }
 
             /// <summary>
             /// WarpPoints in the MSB.
@@ -106,6 +100,11 @@ namespace SoulsFormats
             /// Event regions in the MSB.
             /// </summary>
             public List<Region.Event> Events { get; set; }
+
+            /// <summary>
+            /// Logic regions in the MSB.
+            /// </summary>
+            public List<Region.Logic> Logic { get; set; }
 
             /// <summary>
             /// EnvironmentMapEffectBoxes in the MSB.
@@ -128,12 +127,15 @@ namespace SoulsFormats
             public List<Region.MufflingPortal> MufflingPortals { get; set; }
 
             /// <summary>
+            /// Most likely a dumping ground for unused regions.
+            /// </summary>
+            public List<Region.Other> Others { get; set; }
+
+            /// <summary>
             /// Creates a new PointParam with no regions.
             /// </summary>
             public PointParam()
             {
-                General = new List<Region.General>();
-                Unk00s = new List<Region.Unk00>();
                 InvasionPoints = new List<Region.InvasionPoint>();
                 EnvironmentMapPoints = new List<Region.EnvironmentMapPoint>();
                 Sounds = new List<Region.Sound>();
@@ -141,15 +143,17 @@ namespace SoulsFormats
                 WindSFX = new List<Region.WindSFX>();
                 SpawnPoints = new List<Region.SpawnPoint>();
                 Messages = new List<Region.Message>();
-                WalkRoutes = new List<Region.WalkRoute>();
-                Unk12s = new List<Region.Unk12>();
+                PatrolRoutes = new List<Region.PatrolRoute>();
+                MovementPoints = new List<Region.MovementPoint>();
                 WarpPoints = new List<Region.WarpPoint>();
                 ActivationAreas = new List<Region.ActivationArea>();
                 Events = new List<Region.Event>();
+                Logic = new List<Region.Logic>();
                 EnvironmentMapEffectBoxes = new List<Region.EnvironmentMapEffectBox>();
                 WindAreas = new List<Region.WindArea>();
                 MufflingBoxes = new List<Region.MufflingBox>();
                 MufflingPortals = new List<Region.MufflingPortal>();
+                Others = new List<Region.Other>();
             }
 
             /// <summary>
@@ -159,8 +163,6 @@ namespace SoulsFormats
             {
                 switch (region)
                 {
-                    case Region.General r: General.Add(r); break;
-                    case Region.Unk00 r: Unk00s.Add(r); break;
                     case Region.InvasionPoint r: InvasionPoints.Add(r); break;
                     case Region.EnvironmentMapPoint r: EnvironmentMapPoints.Add(r); break;
                     case Region.Sound r: Sounds.Add(r); break;
@@ -168,15 +170,17 @@ namespace SoulsFormats
                     case Region.WindSFX r: WindSFX.Add(r); break;
                     case Region.SpawnPoint r: SpawnPoints.Add(r); break;
                     case Region.Message r: Messages.Add(r); break;
-                    case Region.WalkRoute r: WalkRoutes.Add(r); break;
-                    case Region.Unk12 r: Unk12s.Add(r); break;
+                    case Region.PatrolRoute r: PatrolRoutes.Add(r); break;
+                    case Region.MovementPoint r: MovementPoints.Add(r); break;
                     case Region.WarpPoint r: WarpPoints.Add(r); break;
                     case Region.ActivationArea r: ActivationAreas.Add(r); break;
                     case Region.Event r: Events.Add(r); break;
+                    case Region.Logic r: Logic.Add(r); break;
                     case Region.EnvironmentMapEffectBox r: EnvironmentMapEffectBoxes.Add(r); break;
                     case Region.WindArea r: WindAreas.Add(r); break;
                     case Region.MufflingBox r: MufflingBoxes.Add(r); break;
                     case Region.MufflingPortal r: MufflingPortals.Add(r); break;
+                    case Region.Other r: Others.Add(r); break;
 
                     default:
                         throw new ArgumentException($"Unrecognized type {region.GetType()}.", nameof(region));
@@ -192,9 +196,9 @@ namespace SoulsFormats
             {
                 return SFUtil.ConcatAll<Region>(
                     InvasionPoints, EnvironmentMapPoints, Sounds, SFX, WindSFX,
-                    SpawnPoints, Messages, WalkRoutes, Unk12s, WarpPoints,
-                    ActivationAreas, Events, Unk00s, EnvironmentMapEffectBoxes, WindAreas,
-                    MufflingBoxes, MufflingPortals, General);
+                    SpawnPoints, Messages, PatrolRoutes, MovementPoints, WarpPoints,
+                    ActivationAreas, Events, Logic, EnvironmentMapEffectBoxes, WindAreas,
+                    MufflingBoxes, MufflingPortals, Others);
             }
             IReadOnlyList<IMsbRegion> IMsbParam<IMsbRegion>.GetEntries() => GetEntries();
 
@@ -203,12 +207,6 @@ namespace SoulsFormats
                 RegionType type = br.GetEnum32<RegionType>(br.Position + 8);
                 switch (type)
                 {
-                    case RegionType.General:
-                        return General.EchoAdd(new Region.General(br));
-
-                    case RegionType.Unk00:
-                        return Unk00s.EchoAdd(new Region.Unk00(br));
-
                     case RegionType.InvasionPoint:
                         return InvasionPoints.EchoAdd(new Region.InvasionPoint(br));
 
@@ -230,11 +228,11 @@ namespace SoulsFormats
                     case RegionType.Message:
                         return Messages.EchoAdd(new Region.Message(br));
 
-                    case RegionType.WalkRoute:
-                        return WalkRoutes.EchoAdd(new Region.WalkRoute(br));
+                    case RegionType.PatrolRoute:
+                        return PatrolRoutes.EchoAdd(new Region.PatrolRoute(br));
 
-                    case RegionType.Unk12:
-                        return Unk12s.EchoAdd(new Region.Unk12(br));
+                    case RegionType.MovementPoint:
+                        return MovementPoints.EchoAdd(new Region.MovementPoint(br));
 
                     case RegionType.WarpPoint:
                         return WarpPoints.EchoAdd(new Region.WarpPoint(br));
@@ -244,6 +242,9 @@ namespace SoulsFormats
 
                     case RegionType.Event:
                         return Events.EchoAdd(new Region.Event(br));
+
+                    case RegionType.Logic:
+                        return Logic.EchoAdd(new Region.Logic(br));
 
                     case RegionType.EnvironmentMapEffectBox:
                         return EnvironmentMapEffectBoxes.EchoAdd(new Region.EnvironmentMapEffectBox(br));
@@ -256,6 +257,9 @@ namespace SoulsFormats
 
                     case RegionType.MufflingPortal:
                         return MufflingPortals.EchoAdd(new Region.MufflingPortal(br));
+
+                    case RegionType.Other:
+                        return Others.EchoAdd(new Region.Other(br));
 
                     default:
                         throw new NotImplementedException($"Unsupported region type: {type}");
@@ -515,40 +519,6 @@ namespace SoulsFormats
             }
 
             /// <summary>
-            /// Regions for random things.
-            /// </summary>
-            public class General : Region
-            {
-                private protected override RegionType Type => RegionType.General;
-                private protected override TypeDataPresence ShouldHaveTypeData => TypeDataPresence.Never;
-                private protected override bool DoesHaveTypeData => false;
-
-                /// <summary>
-                /// Creates a General with default values.
-                /// </summary>
-                public General() : base($"{nameof(Region)}: {nameof(General)}") { }
-
-                internal General(BinaryReaderEx br) : base(br) { }
-            }
-
-            /// <summary>
-            /// Unknown; only used 3 times in Catacombs.
-            /// </summary>
-            public class Unk00 : Region
-            {
-                private protected override RegionType Type => RegionType.Unk00;
-                private protected override TypeDataPresence ShouldHaveTypeData => TypeDataPresence.Never;
-                private protected override bool DoesHaveTypeData => false;
-
-                /// <summary>
-                /// Creates a Unk00 with default values.
-                /// </summary>
-                public Unk00() : base($"{nameof(Region)}: {nameof(Unk00)}") { }
-
-                internal Unk00(BinaryReaderEx br) : base(br) { }
-            }
-
-            /// <summary>
             /// A point where other players invade your world.
             /// </summary>
             public class InvasionPoint : Region
@@ -726,7 +696,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// The ID of the .fxr file to play in this region.
                 /// </summary>
-                public int FFXID { get; set; }
+                public int EffectID { get; set; }
 
                 /// <summary>
                 /// If true, the effect is off by default until enabled by event scripts.
@@ -738,14 +708,14 @@ namespace SoulsFormats
                 /// </summary>
                 public SFX() : base($"{nameof(Region)}: {nameof(SFX)}")
                 {
-                    FFXID = -1;
+                    EffectID = -1;
                 }
 
                 internal SFX(BinaryReaderEx br) : base(br) { }
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {
-                    FFXID = br.ReadInt32();
+                    EffectID = br.ReadInt32();
                     // These are not additional FFX IDs, I checked
                     br.AssertInt32(-1);
                     br.AssertInt32(-1);
@@ -756,7 +726,7 @@ namespace SoulsFormats
 
                 private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(FFXID);
+                    bw.WriteInt32(EffectID);
                     bw.WriteInt32(-1);
                     bw.WriteInt32(-1);
                     bw.WriteInt32(-1);
@@ -777,7 +747,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// ID of an .fxr file.
                 /// </summary>
-                public int FFXID { get; set; }
+                public int EffectID { get; set; }
 
                 /// <summary>
                 /// Name of a corresponding WindArea region.
@@ -790,14 +760,14 @@ namespace SoulsFormats
                 /// </summary>
                 public WindSFX() : base($"{nameof(Region)}: {nameof(WindSFX)}")
                 {
-                    FFXID = -1;
+                    EffectID = -1;
                 }
 
                 internal WindSFX(BinaryReaderEx br) : base(br) { }
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {
-                    FFXID = br.ReadInt32();
+                    EffectID = br.ReadInt32();
                     br.AssertInt32(-1);
                     br.AssertInt32(-1);
                     br.AssertInt32(-1);
@@ -808,7 +778,7 @@ namespace SoulsFormats
 
                 private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(FFXID);
+                    bw.WriteInt32(EffectID);
                     bw.WriteInt32(-1);
                     bw.WriteInt32(-1);
                     bw.WriteInt32(-1);
@@ -921,37 +891,37 @@ namespace SoulsFormats
             }
 
             /// <summary>
-            /// A point in a WalkRoute.
+            /// A point in a patrol route.
             /// </summary>
-            public class WalkRoute : Region
+            public class PatrolRoute : Region
             {
-                private protected override RegionType Type => RegionType.WalkRoute;
+                private protected override RegionType Type => RegionType.PatrolRoute;
                 private protected override TypeDataPresence ShouldHaveTypeData => TypeDataPresence.Never;
                 private protected override bool DoesHaveTypeData => false;
 
                 /// <summary>
-                /// Creates a WalkRoute with default values.
+                /// Creates a PatrolRoute with default values.
                 /// </summary>
-                public WalkRoute() : base($"{nameof(Region)}: {nameof(WalkRoute)}") { }
+                public PatrolRoute() : base($"{nameof(Region)}: {nameof(PatrolRoute)}") { }
 
-                internal WalkRoute(BinaryReaderEx br) : base(br) { }
+                internal PatrolRoute(BinaryReaderEx br) : base(br) { }
             }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public class Unk12 : Region
+            public class MovementPoint : Region
             {
-                private protected override RegionType Type => RegionType.Unk12;
+                private protected override RegionType Type => RegionType.MovementPoint;
                 private protected override TypeDataPresence ShouldHaveTypeData => TypeDataPresence.Never;
                 private protected override bool DoesHaveTypeData => false;
 
                 /// <summary>
-                /// Creates an Unk12 with default values.
+                /// Creates a MovementPoint with default values.
                 /// </summary>
-                public Unk12() : base($"{nameof(Region)}: {nameof(Unk12)}") { }
+                public MovementPoint() : base($"{nameof(Region)}: {nameof(MovementPoint)}") { }
 
-                internal Unk12(BinaryReaderEx br) : base(br) { }
+                internal MovementPoint(BinaryReaderEx br) : base(br) { }
             }
 
             /// <summary>
@@ -1003,6 +973,23 @@ namespace SoulsFormats
                 public Event() : base($"{nameof(Region)}: {nameof(Event)}") { }
 
                 internal Event(BinaryReaderEx br) : base(br) { }
+            }
+
+            /// <summary>
+            /// Unknown; only used 3 times in Catacombs.
+            /// </summary>
+            public class Logic : Region
+            {
+                private protected override RegionType Type => RegionType.Logic;
+                private protected override TypeDataPresence ShouldHaveTypeData => TypeDataPresence.Never;
+                private protected override bool DoesHaveTypeData => false;
+
+                /// <summary>
+                /// Creates a Logic with default values.
+                /// </summary>
+                public Logic() : base($"{nameof(Region)}: {nameof(Logic)}") { }
+
+                internal Logic(BinaryReaderEx br) : base(br) { }
             }
 
             /// <summary>
@@ -1166,6 +1153,23 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                 }
+            }
+
+            /// <summary>
+            /// Most likely an unused region.
+            /// </summary>
+            public class Other : Region
+            {
+                private protected override RegionType Type => RegionType.Other;
+                private protected override TypeDataPresence ShouldHaveTypeData => TypeDataPresence.Never;
+                private protected override bool DoesHaveTypeData => false;
+
+                /// <summary>
+                /// Creates an Other with default values.
+                /// </summary>
+                public Other() : base($"{nameof(Region)}: {nameof(Other)}") { }
+
+                internal Other(BinaryReaderEx br) : base(br) { }
             }
         }
     }

@@ -9,10 +9,10 @@ namespace SoulsFormats
     {
         internal enum EventType : uint
         {
-            Light = 0,
+            //Light = 0,
             Sound = 1,
             SFX = 2,
-            WindSFX = 3,
+            //Wind = 3,
             Treasure = 4,
             Generator = 5,
             Message = 6,
@@ -21,11 +21,11 @@ namespace SoulsFormats
             MapOffset = 9,
             Navmesh = 10,
             Environment = 11,
-            PseudoMultiplayer = 12,
-            Wind = 13,
-            WalkRoute = 14,
+            //PseudoMultiplayer = 12,
+            WindSFX = 13,
+            PatrolInfo = 14,
             DarkLock = 15,
-            GroupTour = 16,
+            PlatoonInfo = 16,
             MultiSummon = 17,
             Other = 0xFFFFFFFF,
         }
@@ -46,7 +46,7 @@ namespace SoulsFormats
             /// <summary>
             /// Particle effects.
             /// </summary>
-            public List<Event.SFX> SFXs { get; set; }
+            public List<Event.SFX> SFX { get; set; }
 
             /// <summary>
             /// Item pickups in the open or in chests.
@@ -91,12 +91,12 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public List<Event.Wind> Winds { get; set; }
+            public List<Event.WindSFX> WindSFX { get; set; }
 
             /// <summary>
-            /// Walk routes in the MSB.
+            /// Patrol info in the MSB.
             /// </summary>
-            public List<Event.WalkRoute> WalkRoutes { get; set; }
+            public List<Event.PatrolInfo> PatrolInfo { get; set; }
 
             /// <summary>
             /// Unknown.
@@ -104,9 +104,9 @@ namespace SoulsFormats
             public List<Event.DarkLock> DarkLocks { get; set; }
 
             /// <summary>
-            /// Group tours in the MSB.
+            /// Platoon info in the MSB.
             /// </summary>
-            public List<Event.GroupTour> GroupTours { get; set; }
+            public List<Event.PlatoonInfo> PlatoonInfo { get; set; }
 
             /// <summary>
             /// Unknown.
@@ -124,7 +124,7 @@ namespace SoulsFormats
             public EventParam() : base()
             {
                 Sounds = new List<Event.Sound>();
-                SFXs = new List<Event.SFX>();
+                SFX = new List<Event.SFX>();
                 Treasures = new List<Event.Treasure>();
                 Generators = new List<Event.Generator>();
                 Messages = new List<Event.Message>();
@@ -133,10 +133,10 @@ namespace SoulsFormats
                 MapOffsets = new List<Event.MapOffset>();
                 Navmeshes = new List<Event.Navmesh>();
                 Environments = new List<Event.Environment>();
-                Winds = new List<Event.Wind>();
-                WalkRoutes = new List<Event.WalkRoute>();
+                WindSFX = new List<Event.WindSFX>();
+                PatrolInfo = new List<Event.PatrolInfo>();
                 DarkLocks = new List<Event.DarkLock>();
-                GroupTours = new List<Event.GroupTour>();
+                PlatoonInfo = new List<Event.PlatoonInfo>();
                 MultiSummons = new List<Event.MultiSummon>();
                 Others = new List<Event.Other>();
             }
@@ -149,7 +149,7 @@ namespace SoulsFormats
                 switch (evnt)
                 {
                     case Event.Sound e: Sounds.Add(e); break;
-                    case Event.SFX e: SFXs.Add(e); break;
+                    case Event.SFX e: SFX.Add(e); break;
                     case Event.Treasure e: Treasures.Add(e); break;
                     case Event.Generator e: Generators.Add(e); break;
                     case Event.Message e: Messages.Add(e); break;
@@ -158,10 +158,10 @@ namespace SoulsFormats
                     case Event.MapOffset e: MapOffsets.Add(e); break;
                     case Event.Navmesh e: Navmeshes.Add(e); break;
                     case Event.Environment e: Environments.Add(e); break;
-                    case Event.Wind e: Winds.Add(e); break;
-                    case Event.WalkRoute e: WalkRoutes.Add(e); break;
+                    case Event.WindSFX e: WindSFX.Add(e); break;
+                    case Event.PatrolInfo e: PatrolInfo.Add(e); break;
                     case Event.DarkLock e: DarkLocks.Add(e); break;
-                    case Event.GroupTour e: GroupTours.Add(e); break;
+                    case Event.PlatoonInfo e: PlatoonInfo.Add(e); break;
                     case Event.MultiSummon e: MultiSummons.Add(e); break;
                     case Event.Other e: Others.Add(e); break;
 
@@ -178,9 +178,9 @@ namespace SoulsFormats
             public override List<Event> GetEntries()
             {
                 return SFUtil.ConcatAll<Event>(
-                    Sounds, SFXs, Treasures, Generators, Messages,
+                    Sounds, SFX, Treasures, Generators, Messages,
                     ObjActs, SpawnPoints, MapOffsets, Navmeshes, Environments,
-                    Winds, WalkRoutes, DarkLocks, GroupTours, MultiSummons,
+                    WindSFX, PatrolInfo, DarkLocks, PlatoonInfo, MultiSummons,
                     Others);
             }
             IReadOnlyList<IMsbEvent> IMsbParam<IMsbEvent>.GetEntries() => GetEntries();
@@ -194,7 +194,7 @@ namespace SoulsFormats
                         return Sounds.EchoAdd(new Event.Sound(br));
 
                     case EventType.SFX:
-                        return SFXs.EchoAdd(new Event.SFX(br));
+                        return SFX.EchoAdd(new Event.SFX(br));
 
                     case EventType.Treasure:
                         return Treasures.EchoAdd(new Event.Treasure(br));
@@ -220,17 +220,17 @@ namespace SoulsFormats
                     case EventType.Environment:
                         return Environments.EchoAdd(new Event.Environment(br));
 
-                    case EventType.Wind:
-                        return Winds.EchoAdd(new Event.Wind(br));
+                    case EventType.WindSFX:
+                        return WindSFX.EchoAdd(new Event.WindSFX(br));
 
-                    case EventType.WalkRoute:
-                        return WalkRoutes.EchoAdd(new Event.WalkRoute(br));
+                    case EventType.PatrolInfo:
+                        return PatrolInfo.EchoAdd(new Event.PatrolInfo(br));
 
                     case EventType.DarkLock:
                         return DarkLocks.EchoAdd(new Event.DarkLock(br));
 
-                    case EventType.GroupTour:
-                        return GroupTours.EchoAdd(new Event.GroupTour(br));
+                    case EventType.PlatoonInfo:
+                        return PlatoonInfo.EchoAdd(new Event.PlatoonInfo(br));
 
                     case EventType.MultiSummon:
                         return MultiSummons.EchoAdd(new Event.MultiSummon(br));
@@ -1165,9 +1165,9 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public class Wind : Event
+            public class WindSFX : Event
             {
-                private protected override EventType Type => EventType.Wind;
+                private protected override EventType Type => EventType.WindSFX;
                 private protected override bool HasTypeData => true;
 
                 /// <summary>
@@ -1189,9 +1189,9 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a Wind with default values.
                 /// </summary>
-                public Wind() : base($"{nameof(Event)}: {nameof(Wind)}") { }
+                public WindSFX() : base($"{nameof(Event)}: {nameof(WindSFX)}") { }
 
-                internal Wind(BinaryReaderEx br) : base(br) { }
+                internal WindSFX(BinaryReaderEx br) : base(br) { }
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {
@@ -1225,9 +1225,9 @@ namespace SoulsFormats
             /// <summary>
             /// A simple list of points defining a path for enemies to take.
             /// </summary>
-            public class WalkRoute : Event
+            public class PatrolInfo : Event
             {
-                private protected override EventType Type => EventType.WalkRoute;
+                private protected override EventType Type => EventType.PatrolInfo;
                 private protected override bool HasTypeData => true;
 
                 /// <summary>
@@ -1244,18 +1244,18 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a WalkRoute with default values.
                 /// </summary>
-                public WalkRoute() : base($"{nameof(Event)}: {nameof(WalkRoute)}")
+                public PatrolInfo() : base($"{nameof(Event)}: {nameof(PatrolInfo)}")
                 {
                     WalkPointNames = new string[32];
                 }
 
                 private protected override void DeepCopyTo(Event evnt)
                 {
-                    var walkRoute = (WalkRoute)evnt;
+                    var walkRoute = (PatrolInfo)evnt;
                     walkRoute.WalkPointNames = (string[])WalkPointNames.Clone();
                 }
 
-                internal WalkRoute(BinaryReaderEx br) : base(br) { }
+                internal PatrolInfo(BinaryReaderEx br) : base(br) { }
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {
@@ -1327,9 +1327,9 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public class GroupTour : Event
+            public class PlatoonInfo : Event
             {
-                private protected override EventType Type => EventType.GroupTour;
+                private protected override EventType Type => EventType.PlatoonInfo;
                 private protected override bool HasTypeData => true;
 
                 /// <summary>
@@ -1351,18 +1351,18 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a GroupTour with default values.
                 /// </summary>
-                public GroupTour() : base($"{nameof(Event)}: {nameof(GroupTour)}")
+                public PlatoonInfo() : base($"{nameof(Event)}: {nameof(PlatoonInfo)}")
                 {
                     GroupPartsNames = new string[32];
                 }
 
                 private protected override void DeepCopyTo(Event evnt)
                 {
-                    var groupTour = (GroupTour)evnt;
+                    var groupTour = (PlatoonInfo)evnt;
                     groupTour.GroupPartsNames = (string[])GroupPartsNames.Clone();
                 }
 
-                internal GroupTour(BinaryReaderEx br) : base(br) { }
+                internal PlatoonInfo(BinaryReaderEx br) : base(br) { }
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {

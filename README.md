@@ -71,6 +71,7 @@ To everyone below, for either creating tools that I learned from, or helping dec
 * albeartron
 * Atvaark
 * B3LYP
+* horkrux
 * HotPocketRemix
 * katalash
 * Lance
@@ -78,4 +79,6 @@ To everyone below, for either creating tools that I learned from, or helping dec
 * Nyxojaele
 * Pav
 * SeanP
+* thefifthmatt
 * Wulf2k
+* Yoshimitsu

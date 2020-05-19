@@ -12,11 +12,10 @@ namespace SoulsFormats
             Light = 0,
             Sound = 1,
             SFX = 2,
-            WindSFX = 3,
+            Wind = 3,
             Treasure = 4,
             Generator = 5,
             Message = 6,
-            ObjAct = 7,
         }
 
         /// <summary>
@@ -39,12 +38,12 @@ namespace SoulsFormats
             /// <summary>
             /// Particle effects.
             /// </summary>
-            public List<Event.SFX> SFXs { get; set; }
+            public List<Event.SFX> SFX { get; set; }
 
             /// <summary>
-            /// Unknown.
+            /// Wind that affects SFX in the map; should only be one per map, if any.
             /// </summary>
-            public List<Event.WindSFX> WindSFXs { get; set; }
+            public List<Event.Wind> Wind { get; set; }
 
             /// <summary>
             /// Item pickups in the open or in chests.
@@ -68,8 +67,8 @@ namespace SoulsFormats
             {
                 Lights = new List<Event.Light>();
                 Sounds = new List<Event.Sound>();
-                SFXs = new List<Event.SFX>();
-                WindSFXs = new List<Event.WindSFX>();
+                SFX = new List<Event.SFX>();
+                Wind = new List<Event.Wind>();
                 Treasures = new List<Event.Treasure>();
                 Generators = new List<Event.Generator>();
                 Messages = new List<Event.Message>();
@@ -84,8 +83,8 @@ namespace SoulsFormats
                 {
                     case Event.Light e: Lights.Add(e); break;
                     case Event.Sound e: Sounds.Add(e); break;
-                    case Event.SFX e: SFXs.Add(e); break;
-                    case Event.WindSFX e: WindSFXs.Add(e); break;
+                    case Event.SFX e: SFX.Add(e); break;
+                    case Event.Wind e: Wind.Add(e); break;
                     case Event.Treasure e: Treasures.Add(e); break;
                     case Event.Generator e: Generators.Add(e); break;
                     case Event.Message e: Messages.Add(e); break;
@@ -103,7 +102,7 @@ namespace SoulsFormats
             public override List<Event> GetEntries()
             {
                 return SFUtil.ConcatAll<Event>(
-                    Lights, Sounds, SFXs, WindSFXs, Treasures,
+                    Lights, Sounds, SFX, Wind, Treasures,
                     Generators, Messages);
             }
             IReadOnlyList<IMsbEvent> IMsbParam<IMsbEvent>.GetEntries() => GetEntries();
@@ -120,10 +119,10 @@ namespace SoulsFormats
                         return Sounds.EchoAdd(new Event.Sound(br));
 
                     case EventType.SFX:
-                        return SFXs.EchoAdd(new Event.SFX(br));
+                        return SFX.EchoAdd(new Event.SFX(br));
 
-                    case EventType.WindSFX:
-                        return WindSFXs.EchoAdd(new Event.WindSFX(br));
+                    case EventType.Wind:
+                        return Wind.EchoAdd(new Event.Wind(br));
 
                     case EventType.Treasure:
                         return Treasures.EchoAdd(new Event.Treasure(br));
@@ -372,7 +371,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// ID of the effect in the ffxbnds.
                 /// </summary>
-                public int FFXID { get; set; }
+                public int EffectID { get; set; }
 
                 /// <summary>
                 /// Creates an SFX with default values.
@@ -384,22 +383,22 @@ namespace SoulsFormats
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     UnkT00 = br.ReadInt32();
-                    FFXID = br.ReadInt32();
+                    EffectID = br.ReadInt32();
                 }
 
                 private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(UnkT00);
-                    bw.WriteInt32(FFXID);
+                    bw.WriteInt32(EffectID);
                 }
             }
 
             /// <summary>
-            /// Unknown.
+            /// Wind that affects particle effects.
             /// </summary>
-            public class WindSFX : Event
+            public class Wind : Event
             {
-                private protected override EventType Type => EventType.WindSFX;
+                private protected override EventType Type => EventType.Wind;
 
                 /// <summary>
                 /// Unknown.
@@ -462,11 +461,11 @@ namespace SoulsFormats
                 public float WindSwingPow3 { get; set; }
 
                 /// <summary>
-                /// Creates a WindSFX with default values.
+                /// Creates a Wind with default values.
                 /// </summary>
-                public WindSFX() : base($"{nameof(Event)}: {nameof(WindSFX)}") { }
+                public Wind() : base($"{nameof(Event)}: {nameof(Wind)}") { }
 
-                internal WindSFX(BinaryReaderEx br) : base(br) { }
+                internal Wind(BinaryReaderEx br) : base(br) { }
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {

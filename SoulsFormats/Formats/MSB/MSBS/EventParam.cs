@@ -9,19 +9,31 @@ namespace SoulsFormats
     {
         internal enum EventType : uint
         {
+            //Light = 0,
+            //Sound = 1,
+            //SFX = 2,
+            //Wind = 3,
             Treasure = 4,
             Generator = 5,
+            //Message = 6,
             ObjAct = 7,
+            //SpawnPoint = 8,
             MapOffset = 9,
-            WalkRoute = 14,
-            GroupTour = 15,
-            Event17 = 17,
-            Event18 = 18,
-            Event20 = 20,
-            Event21 = 21,
+            //Navmesh = 10,
+            //Environment = 11,
+            //PseudoMultiplayer = 12,
+            //WindSFX = 13,
+            PatrolInfo = 14,
+            PlatoonInfo = 15,
+            //DarkSight = 16,
+            ResourceItemInfo = 17,
+            GrassLodParam = 18,
+            //AutoDrawGroupSettings = 19,
+            SkitInfo = 20,
+            PlacementGroup = 21,
             PartsGroup = 22,
             Talk = 23,
-            AutoDrawGroup = 24,
+            AutoDrawGroupCollision = 24,
             Other = 0xFFFFFFFF,
         }
 
@@ -53,32 +65,32 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public List<Event.WalkRoute> WalkRoutes { get; set; }
+            public List<Event.PatrolInfo> PatrolInfo { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public List<Event.GroupTour> GroupTours { get; set; }
+            public List<Event.PlatoonInfo> PlatoonInfo { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public List<Event.Event17> Event17s { get; set; }
+            public List<Event.ResourceItemInfo> ResourceItemInfo { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public List<Event.Event18> Event18s { get; set; }
+            public List<Event.GrassLodParam> GrassLodParams { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public List<Event.Event20> Event20s { get; set; }
+            public List<Event.SkitInfo> SkitInfo { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public List<Event.Event21> Event21s { get; set; }
+            public List<Event.PlacementGroup> PlacementGroups { get; set; }
 
             /// <summary>
             /// Unknown.
@@ -93,7 +105,7 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public List<Event.AutoDrawGroup> AutoDrawGroups { get; set; }
+            public List<Event.AutoDrawGroupCollision> AutoDrawGroupCollisions { get; set; }
 
             /// <summary>
             /// Unknown.
@@ -109,15 +121,15 @@ namespace SoulsFormats
                 Generators = new List<Event.Generator>();
                 ObjActs = new List<Event.ObjAct>();
                 MapOffsets = new List<Event.MapOffset>();
-                WalkRoutes = new List<Event.WalkRoute>();
-                GroupTours = new List<Event.GroupTour>();
-                Event17s = new List<Event.Event17>();
-                Event18s = new List<Event.Event18>();
-                Event20s = new List<Event.Event20>();
-                Event21s = new List<Event.Event21>();
+                PatrolInfo = new List<Event.PatrolInfo>();
+                PlatoonInfo = new List<Event.PlatoonInfo>();
+                ResourceItemInfo = new List<Event.ResourceItemInfo>();
+                GrassLodParams = new List<Event.GrassLodParam>();
+                SkitInfo = new List<Event.SkitInfo>();
+                PlacementGroups = new List<Event.PlacementGroup>();
                 PartsGroups = new List<Event.PartsGroup>();
                 Talks = new List<Event.Talk>();
-                AutoDrawGroups = new List<Event.AutoDrawGroup>();
+                AutoDrawGroupCollisions = new List<Event.AutoDrawGroupCollision>();
                 Others = new List<Event.Other>();
             }
 
@@ -132,15 +144,15 @@ namespace SoulsFormats
                     case Event.Generator e: Generators.Add(e); break;
                     case Event.ObjAct e: ObjActs.Add(e); break;
                     case Event.MapOffset e: MapOffsets.Add(e); break;
-                    case Event.WalkRoute e: WalkRoutes.Add(e); break;
-                    case Event.GroupTour e: GroupTours.Add(e); break;
-                    case Event.Event17 e: Event17s.Add(e); break;
-                    case Event.Event18 e: Event18s.Add(e); break;
-                    case Event.Event20 e: Event20s.Add(e); break;
-                    case Event.Event21 e: Event21s.Add(e); break;
+                    case Event.PatrolInfo e: PatrolInfo.Add(e); break;
+                    case Event.PlatoonInfo e: PlatoonInfo.Add(e); break;
+                    case Event.ResourceItemInfo e: ResourceItemInfo.Add(e); break;
+                    case Event.GrassLodParam e: GrassLodParams.Add(e); break;
+                    case Event.SkitInfo e: SkitInfo.Add(e); break;
+                    case Event.PlacementGroup e: PlacementGroups.Add(e); break;
                     case Event.PartsGroup e: PartsGroups.Add(e); break;
                     case Event.Talk e: Talks.Add(e); break;
-                    case Event.AutoDrawGroup e: AutoDrawGroups.Add(e); break;
+                    case Event.AutoDrawGroupCollision e: AutoDrawGroupCollisions.Add(e); break;
                     case Event.Other e: Others.Add(e); break;
 
                     default:
@@ -156,9 +168,9 @@ namespace SoulsFormats
             public override List<Event> GetEntries()
             {
                 return SFUtil.ConcatAll<Event>(
-                    Treasures, Generators, ObjActs, MapOffsets, WalkRoutes,
-                    GroupTours, Event17s, Event18s, Event20s, Event21s,
-                    PartsGroups, Talks, AutoDrawGroups, Others);
+                    Treasures, Generators, ObjActs, MapOffsets, PatrolInfo,
+                    PlatoonInfo, ResourceItemInfo, GrassLodParams, SkitInfo, PlacementGroups,
+                    PartsGroups, Talks, AutoDrawGroupCollisions, Others);
             }
             IReadOnlyList<IMsbEvent> IMsbParam<IMsbEvent>.GetEntries() => GetEntries();
 
@@ -179,23 +191,23 @@ namespace SoulsFormats
                     case EventType.MapOffset:
                         return MapOffsets.EchoAdd(new Event.MapOffset(br));
 
-                    case EventType.WalkRoute:
-                        return WalkRoutes.EchoAdd(new Event.WalkRoute(br));
+                    case EventType.PatrolInfo:
+                        return PatrolInfo.EchoAdd(new Event.PatrolInfo(br));
 
-                    case EventType.GroupTour:
-                        return GroupTours.EchoAdd(new Event.GroupTour(br));
+                    case EventType.PlatoonInfo:
+                        return PlatoonInfo.EchoAdd(new Event.PlatoonInfo(br));
 
-                    case EventType.Event17:
-                        return Event17s.EchoAdd(new Event.Event17(br));
+                    case EventType.ResourceItemInfo:
+                        return ResourceItemInfo.EchoAdd(new Event.ResourceItemInfo(br));
 
-                    case EventType.Event18:
-                        return Event18s.EchoAdd(new Event.Event18(br));
+                    case EventType.GrassLodParam:
+                        return GrassLodParams.EchoAdd(new Event.GrassLodParam(br));
 
-                    case EventType.Event20:
-                        return Event20s.EchoAdd(new Event.Event20(br));
+                    case EventType.SkitInfo:
+                        return SkitInfo.EchoAdd(new Event.SkitInfo(br));
 
-                    case EventType.Event21:
-                        return Event21s.EchoAdd(new Event.Event21(br));
+                    case EventType.PlacementGroup:
+                        return PlacementGroups.EchoAdd(new Event.PlacementGroup(br));
 
                     case EventType.PartsGroup:
                         return PartsGroups.EchoAdd(new Event.PartsGroup(br));
@@ -203,8 +215,8 @@ namespace SoulsFormats
                     case EventType.Talk:
                         return Talks.EchoAdd(new Event.Talk(br));
 
-                    case EventType.AutoDrawGroup:
-                        return AutoDrawGroups.EchoAdd(new Event.AutoDrawGroup(br));
+                    case EventType.AutoDrawGroupCollision:
+                        return AutoDrawGroupCollisions.EchoAdd(new Event.AutoDrawGroupCollision(br));
 
                     case EventType.Other:
                         return Others.EchoAdd(new Event.Other(br));
@@ -726,9 +738,9 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public class WalkRoute : Event
+            public class PatrolInfo : Event
             {
-                private protected override EventType Type => EventType.WalkRoute;
+                private protected override EventType Type => EventType.PatrolInfo;
                 private protected override bool HasTypeData => true;
 
                 /// <summary>
@@ -750,7 +762,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a WalkRoute with default values.
                 /// </summary>
-                public WalkRoute() : base($"{nameof(Event)}: {nameof(WalkRoute)}")
+                public PatrolInfo() : base($"{nameof(Event)}: {nameof(PatrolInfo)}")
                 {
                     WalkRegionNames = new string[32];
                     WREntries = new WREntry[5];
@@ -760,14 +772,14 @@ namespace SoulsFormats
 
                 private protected override void DeepCopyTo(Event evnt)
                 {
-                    var walkRoute = (WalkRoute)evnt;
+                    var walkRoute = (PatrolInfo)evnt;
                     walkRoute.WalkRegionNames = (string[])WalkRegionNames.Clone();
                     walkRoute.WREntries = new WREntry[WREntries.Length];
                     for (int i = 0; i < WREntries.Length; i++)
                         walkRoute.WREntries[i] = WREntries[i].DeepCopy();
                 }
 
-                internal WalkRoute(BinaryReaderEx br) : base(br) { }
+                internal PatrolInfo(BinaryReaderEx br) : base(br) { }
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {
@@ -881,9 +893,9 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public class GroupTour : Event
+            public class PlatoonInfo : Event
             {
-                private protected override EventType Type => EventType.GroupTour;
+                private protected override EventType Type => EventType.PlatoonInfo;
                 private protected override bool HasTypeData => true;
 
                 /// <summary>
@@ -905,18 +917,18 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a GroupTour with default values.
                 /// </summary>
-                public GroupTour() : base($"{nameof(Event)}: {nameof(GroupTour)}")
+                public PlatoonInfo() : base($"{nameof(Event)}: {nameof(PlatoonInfo)}")
                 {
                     GroupPartNames = new string[32];
                 }
 
                 private protected override void DeepCopyTo(Event evnt)
                 {
-                    var groupTour = (GroupTour)evnt;
+                    var groupTour = (PlatoonInfo)evnt;
                     groupTour.GroupPartNames = (string[])GroupPartNames.Clone();
                 }
 
-                internal GroupTour(BinaryReaderEx br) : base(br) { }
+                internal PlatoonInfo(BinaryReaderEx br) : base(br) { }
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {
@@ -952,9 +964,9 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public class Event17 : Event
+            public class ResourceItemInfo : Event
             {
-                private protected override EventType Type => EventType.Event17;
+                private protected override EventType Type => EventType.ResourceItemInfo;
                 private protected override bool HasTypeData => true;
 
                 /// <summary>
@@ -965,9 +977,9 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates an Event17 with default values.
                 /// </summary>
-                public Event17() : base($"{nameof(Event)}: {nameof(Event17)}") { }
+                public ResourceItemInfo() : base($"{nameof(Event)}: {nameof(ResourceItemInfo)}") { }
 
-                internal Event17(BinaryReaderEx br) : base(br) { }
+                internal ResourceItemInfo(BinaryReaderEx br) : base(br) { }
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {
@@ -983,34 +995,34 @@ namespace SoulsFormats
             }
 
             /// <summary>
-            /// Unknown.
+            /// Sets the grass lod parameters, apparently.
             /// </summary>
-            public class Event18 : Event
+            public class GrassLodParam : Event
             {
-                private protected override EventType Type => EventType.Event18;
+                private protected override EventType Type => EventType.GrassLodParam;
                 private protected override bool HasTypeData => true;
 
                 /// <summary>
-                /// Unknown.
+                /// ID of a row in GrassLodRangeParam.
                 /// </summary>
-                public int UnkT00 { get; set; }
+                public int GrassLodRangeParamID { get; set; }
 
                 /// <summary>
                 /// Creates an Event18 with default values.
                 /// </summary>
-                public Event18() : base($"{nameof(Event)}: {nameof(Event18)}") { }
+                public GrassLodParam() : base($"{nameof(Event)}: {nameof(GrassLodParam)}") { }
 
-                internal Event18(BinaryReaderEx br) : base(br) { }
+                internal GrassLodParam(BinaryReaderEx br) : base(br) { }
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {
-                    UnkT00 = br.ReadInt32();
+                    GrassLodRangeParamID = br.ReadInt32();
                     br.AssertPattern(0x1C, 0x00);
                 }
 
                 private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(UnkT00);
+                    bw.WriteInt32(GrassLodRangeParamID);
                     bw.WritePattern(0x1C, 0x00);
                 }
             }
@@ -1018,9 +1030,9 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public class Event20 : Event
+            public class SkitInfo : Event
             {
-                private protected override EventType Type => EventType.Event20;
+                private protected override EventType Type => EventType.SkitInfo;
                 private protected override bool HasTypeData => true;
 
                 /// <summary>
@@ -1041,9 +1053,9 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates an Event20 with default values.
                 /// </summary>
-                public Event20() : base($"{nameof(Event)}: {nameof(Event20)}") { }
+                public SkitInfo() : base($"{nameof(Event)}: {nameof(SkitInfo)}") { }
 
-                internal Event20(BinaryReaderEx br) : base(br) { }
+                internal SkitInfo(BinaryReaderEx br) : base(br) { }
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {
@@ -1065,9 +1077,9 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public class Event21 : Event
+            public class PlacementGroup : Event
             {
-                private protected override EventType Type => EventType.Event21;
+                private protected override EventType Type => EventType.PlacementGroup;
                 private protected override bool HasTypeData => true;
 
                 /// <summary>
@@ -1079,18 +1091,18 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates an Event21 with default values.
                 /// </summary>
-                public Event21() : base($"{nameof(Event)}: {nameof(Event21)}")
+                public PlacementGroup() : base($"{nameof(Event)}: {nameof(PlacementGroup)}")
                 {
                     Event21PartNames = new string[32];
                 }
 
                 private protected override void DeepCopyTo(Event evnt)
                 {
-                    var event21 = (Event21)evnt;
+                    var event21 = (PlacementGroup)evnt;
                     event21.Event21PartNames = (string[])Event21PartNames.Clone();
                 }
 
-                internal Event21(BinaryReaderEx br) : base(br) { }
+                internal PlacementGroup(BinaryReaderEx br) : base(br) { }
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {
@@ -1224,42 +1236,58 @@ namespace SoulsFormats
             }
 
             /// <summary>
-            /// Unknown.
+            /// Specifies a collision to which an autodrawgroup filming point belongs, whatever that means.
             /// </summary>
-            public class AutoDrawGroup : Event
+            public class AutoDrawGroupCollision : Event
             {
-                private protected override EventType Type => EventType.AutoDrawGroup;
+                private protected override EventType Type => EventType.AutoDrawGroupCollision;
                 private protected override bool HasTypeData => true;
 
                 /// <summary>
-                /// Unknown.
+                /// Name of the filming point for the autodrawgroup capture, probably.
                 /// </summary>
-                public int UnkT00 { get; set; }
+                public string AutoDrawGroupPointName { get; set; }
+                private int AutoDrawGroupPointIndex;
 
                 /// <summary>
-                /// Unknown.
+                /// The collision that the filming point belongs to, presumably.
                 /// </summary>
-                public int UnkT04 { get; set; }
+                public string OwningCollisionName { get; set; }
+                private int OwningCollisionIndex;
 
                 /// <summary>
-                /// Creates an AutoDrawGroup with default values.
+                /// Creates an AutoDrawGroupCollision with default values.
                 /// </summary>
-                public AutoDrawGroup() : base($"{nameof(Event)}: {nameof(AutoDrawGroup)}") { }
+                public AutoDrawGroupCollision() : base($"{nameof(Event)}: {nameof(AutoDrawGroupCollision)}") { }
 
-                internal AutoDrawGroup(BinaryReaderEx br) : base(br) { }
+                internal AutoDrawGroupCollision(BinaryReaderEx br) : base(br) { }
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {
-                    UnkT00 = br.ReadInt32();
-                    UnkT04 = br.ReadInt32();
+                    AutoDrawGroupPointIndex = br.ReadInt32();
+                    OwningCollisionIndex = br.ReadInt32();
                     br.AssertPattern(0x18, 0x00);
                 }
 
                 private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(UnkT00);
-                    bw.WriteInt32(UnkT04);
+                    bw.WriteInt32(AutoDrawGroupPointIndex);
+                    bw.WriteInt32(OwningCollisionIndex);
                     bw.WritePattern(0x18, 0x00);
+                }
+
+                internal override void GetNames(MSBS msb, Entries entries)
+                {
+                    base.GetNames(msb, entries);
+                    AutoDrawGroupPointName = MSB.FindName(msb.Regions.AutoDrawGroupPoints, AutoDrawGroupPointIndex);
+                    OwningCollisionName = MSB.FindName(msb.Parts.Collisions, OwningCollisionIndex);
+                }
+
+                internal override void GetIndices(MSBS msb, Entries entries)
+                {
+                    base.GetIndices(msb, entries);
+                    AutoDrawGroupPointIndex = MSB.FindIndex(msb.Regions.AutoDrawGroupPoints, AutoDrawGroupPointName);
+                    OwningCollisionIndex = MSB.FindIndex(msb.Parts.Collisions, OwningCollisionName);
                 }
             }
 
