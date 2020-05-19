@@ -166,7 +166,7 @@ namespace SoulsFormats
         /// </summary>
         public abstract class Event : NamedEntry, IMsbEvent
         {
-            internal abstract EventType Type { get; }
+            private protected abstract EventType Type { get; }
 
             /// <summary>
             /// The name of this event.
@@ -302,7 +302,7 @@ namespace SoulsFormats
             /// </summary>
             public class Treasure : Event
             {
-                internal override EventType Type => EventType.Treasure;
+                private protected override EventType Type => EventType.Treasure;
 
                 /// <summary>
                 /// The part the treasure is attached to.
@@ -429,7 +429,7 @@ namespace SoulsFormats
             /// </summary>
             public class Generator : Event
             {
-                internal override EventType Type => EventType.Generator;
+                private protected override EventType Type => EventType.Generator;
 
                 /// <summary>
                 /// Unknown.
@@ -611,7 +611,7 @@ namespace SoulsFormats
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
                 }
 
-                internal override EventType Type => EventType.ObjAct;
+                private protected override EventType Type => EventType.ObjAct;
 
                 /// <summary>
                 /// Unknown.
@@ -702,7 +702,7 @@ namespace SoulsFormats
             /// </summary>
             public class MapOffset : Event
             {
-                internal override EventType Type => EventType.MapOffset;
+                private protected override EventType Type => EventType.MapOffset;
 
                 /// <summary>
                 /// Position of the map offset.
@@ -739,7 +739,7 @@ namespace SoulsFormats
             /// </summary>
             public class PseudoMultiplayer : Event
             {
-                internal override EventType Type => EventType.PseudoMultiplayer;
+                private protected override EventType Type => EventType.PseudoMultiplayer;
 
                 /// <summary>
                 /// The NPC whose world you're entering.
@@ -820,7 +820,7 @@ namespace SoulsFormats
             /// </summary>
             public class WalkRoute : Event
             {
-                internal override EventType Type => EventType.WalkRoute;
+                private protected override EventType Type => EventType.WalkRoute;
 
                 /// <summary>
                 /// Unknown; probably some kind of route type.
@@ -889,7 +889,7 @@ namespace SoulsFormats
             /// </summary>
             public class GroupTour : Event
             {
-                internal override EventType Type => EventType.GroupTour;
+                private protected override EventType Type => EventType.GroupTour;
 
                 /// <summary>
                 /// Unknown.
@@ -959,7 +959,7 @@ namespace SoulsFormats
             /// </summary>
             public class Other : Event
             {
-                internal override EventType Type => EventType.Other;
+                private protected override EventType Type => EventType.Other;
 
                 /// <summary>
                 /// Unknown; possibly a sound type.

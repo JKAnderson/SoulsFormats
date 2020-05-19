@@ -70,13 +70,7 @@ namespace SoulsFormats
         protected override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
-            br.AssertASCII("MSB ");
-            br.AssertInt32(1);
-            br.AssertInt32(0x10);
-            br.AssertBoolean(false); // isBigEndian
-            br.AssertBoolean(false); // isBitBigEndian
-            br.AssertByte(1); // textEncoding
-            br.AssertSByte(-1); // is64BitOffset
+            MSB.AssertHeader(br);
 
             Entries entries;
             Models = new ModelParam();
@@ -129,13 +123,7 @@ namespace SoulsFormats
                 pose.GetIndices(lookups, entries);
 
             bw.BigEndian = false;
-            bw.WriteASCII("MSB ");
-            bw.WriteInt32(1);
-            bw.WriteInt32(0x10);
-            bw.WriteBoolean(false);
-            bw.WriteBoolean(false);
-            bw.WriteByte(1);
-            bw.WriteByte(0xFF);
+            MSB.WriteHeader(bw);
 
             Models.Write(bw, entries.Models);
             bw.FillInt64("NextParamOffset", bw.Position);

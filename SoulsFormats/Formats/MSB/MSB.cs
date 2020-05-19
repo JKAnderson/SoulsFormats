@@ -8,6 +8,28 @@ namespace SoulsFormats
     /// </summary>
     public static partial class MSB
     {
+        internal static void AssertHeader(BinaryReaderEx br)
+        {
+            br.AssertASCII("MSB ");
+            br.AssertInt32(1);
+            br.AssertInt32(0x10);
+            br.AssertBoolean(false); // isBigEndian
+            br.AssertBoolean(false); // isBitBigEndian
+            br.AssertByte(1); // textEncoding
+            br.AssertByte(0xFF); // is64BitOffset
+        }
+
+        internal static void WriteHeader(BinaryWriterEx bw)
+        {
+            bw.WriteASCII("MSB ");
+            bw.WriteInt32(1);
+            bw.WriteInt32(0x10);
+            bw.WriteBoolean(false);
+            bw.WriteBoolean(false);
+            bw.WriteByte(1);
+            bw.WriteByte(0xFF);
+        }
+
         internal static void DisambiguateNames<T>(List<T> entries) where T : IMsbEntry
         {
             bool ambiguous;
