@@ -377,22 +377,22 @@ namespace SoulsFormats
                 public int ItemLotID { get; set; }
 
                 /// <summary>
-                /// Unknown.
+                /// If not -1, uses an entry from ActionButtonParam for the pickup prompt.
                 /// </summary>
                 public int ActionButtonID { get; set; }
 
                 /// <summary>
-                /// The animation to play on pickup.
+                /// Animation to play when taking this treasure.
                 /// </summary>
                 public int PickupAnimID { get; set; }
 
                 /// <summary>
-                /// Whether the treasure is inside a container.
+                /// Changes the text of the pickup prompt.
                 /// </summary>
                 public bool InChest { get; set; }
 
                 /// <summary>
-                /// Whether the treasure should be disabled by default.
+                /// Whether the treasure should be hidden by default.
                 /// </summary>
                 public bool StartDisabled { get; set; }
 

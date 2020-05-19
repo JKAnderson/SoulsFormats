@@ -307,8 +307,8 @@ namespace SoulsFormats
                 /// <summary>
                 /// The part the treasure is attached to.
                 /// </summary>
-                public string PartName2 { get; set; }
-                private int PartIndex2;
+                public string TreasurePartName { get; set; }
+                private int TreasurePartIndex;
 
                 /// <summary>
                 /// First item lot given by this treasure.
@@ -321,7 +321,7 @@ namespace SoulsFormats
                 public int ItemLot2 { get; set; }
 
                 /// <summary>
-                /// Unknown; always -1 in vanilla.
+                /// If not -1, uses an entry from ActionButtonParam for the pickup prompt.
                 /// </summary>
                 public int ActionButtonParamID { get; set; }
 
@@ -331,12 +331,12 @@ namespace SoulsFormats
                 public int PickupAnimID { get; set; }
 
                 /// <summary>
-                /// Used for treasures inside chests, exact significance unknown.
+                /// Changes the text of the pickup prompt and causes the treasure to be uninteractible by default.
                 /// </summary>
                 public bool InChest { get; set; }
 
                 /// <summary>
-                /// Used only for Yoel's ashes treasure; in DS1, used for corpses in barrels.
+                /// Whether the treasure should be hidden by default.
                 /// </summary>
                 public bool StartDisabled { get; set; }
 
@@ -348,7 +348,7 @@ namespace SoulsFormats
                     ItemLot1 = -1;
                     ItemLot2 = -1;
                     ActionButtonParamID = -1;
-                    PickupAnimID = -1;
+                    PickupAnimID = 60070;
                 }
 
                 internal Treasure(BinaryReaderEx br) : base(br) { }
@@ -357,7 +357,7 @@ namespace SoulsFormats
                 {
                     br.AssertInt32(0);
                     br.AssertInt32(0);
-                    PartIndex2 = br.ReadInt32();
+                    TreasurePartIndex = br.ReadInt32();
                     br.AssertInt32(0);
                     ItemLot1 = br.ReadInt32();
                     ItemLot2 = br.ReadInt32();
@@ -386,7 +386,7 @@ namespace SoulsFormats
                 {
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
-                    bw.WriteInt32(PartIndex2);
+                    bw.WriteInt32(TreasurePartIndex);
                     bw.WriteInt32(0);
                     bw.WriteInt32(ItemLot1);
                     bw.WriteInt32(ItemLot2);
@@ -414,13 +414,13 @@ namespace SoulsFormats
                 internal override void GetNames(MSB3 msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    PartName2 = MSB.FindName(entries.Parts, PartIndex2);
+                    TreasurePartName = MSB.FindName(entries.Parts, TreasurePartIndex);
                 }
 
                 internal override void GetIndices(MSB3 msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    PartIndex2 = MSB.FindIndex(entries.Parts, PartName2);
+                    TreasurePartIndex = MSB.FindIndex(entries.Parts, TreasurePartName);
                 }
             }
 

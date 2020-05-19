@@ -575,7 +575,6 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a deep copy of the gparam config.
                 /// </summary>
-                /// <returns></returns>
                 public GparamConfig DeepCopy()
                 {
                     return (GparamConfig)MemberwiseClone();

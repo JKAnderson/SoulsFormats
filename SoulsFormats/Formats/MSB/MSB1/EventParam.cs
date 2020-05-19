@@ -553,17 +553,17 @@ namespace SoulsFormats
                 private int TreasurePartIndex;
 
                 /// <summary>
-                /// Five ItemLotParam IDs.
+                /// Item lots to be granted when the treasure is picked up; only the first appears to be functional.
                 /// </summary>
                 public int[] ItemLots { get; private set; }
 
                 /// <summary>
-                /// Whether the treasure is inside a container.
+                /// Changes the text of the pickup prompt.
                 /// </summary>
                 public bool InChest { get; set; }
 
                 /// <summary>
-                /// Whether the treasure should be initially hidden, used for items in breakable objects.
+                /// Whether the treasure should be hidden by default.
                 /// </summary>
                 public bool StartDisabled { get; set; }
 
