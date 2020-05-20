@@ -515,7 +515,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int SessionCondition { get; set; }
+                public byte InitialSpawnCount { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -566,7 +566,10 @@ namespace SoulsFormats
                     MaxGenNum = br.ReadInt16();
                     MinInterval = br.ReadSingle();
                     MaxInterval = br.ReadSingle();
-                    SessionCondition = br.ReadInt32();
+                    InitialSpawnCount = br.ReadByte();
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
                     UnkT14 = br.ReadSingle();
                     UnkT18 = br.ReadSingle();
                     br.AssertPattern(0x14, 0x00);
@@ -585,7 +588,10 @@ namespace SoulsFormats
                     bw.WriteInt16(MaxGenNum);
                     bw.WriteSingle(MinInterval);
                     bw.WriteSingle(MaxInterval);
-                    bw.WriteInt32(SessionCondition);
+                    bw.WriteByte(InitialSpawnCount);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
                     bw.WriteSingle(UnkT14);
                     bw.WriteSingle(UnkT18);
                     bw.WritePattern(0x14, 0x00);

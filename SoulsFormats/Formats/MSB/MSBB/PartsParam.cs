@@ -1100,7 +1100,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short DisableStart { get; set; }
+                public bool DisableStart { get; set; }
 
                 /// <summary>
                 /// If set, disables a bonfire when any enemy is on the collision.
@@ -1151,7 +1151,8 @@ namespace SoulsFormats
                     EnvLightMapSpotIndex = br.ReadInt16();
                     ReflectPlaneHeight = br.ReadSingle();
                     MapNameID = br.ReadInt16();
-                    DisableStart = br.ReadInt16();
+                    DisableStart = br.ReadBoolean();
+                    br.AssertByte(0);
                     DisableBonfireEntityID = br.ReadInt32();
                     PlayRegionID = br.ReadInt32();
                     LockCamParamID1 = br.ReadInt16();
@@ -1168,7 +1169,8 @@ namespace SoulsFormats
                     bw.WriteInt16(EnvLightMapSpotIndex);
                     bw.WriteSingle(ReflectPlaneHeight);
                     bw.WriteInt16(MapNameID);
-                    bw.WriteInt16(DisableStart);
+                    bw.WriteBoolean(DisableStart);
+                    bw.WriteByte(0);
                     bw.WriteInt32(DisableBonfireEntityID);
                     bw.WriteInt32(PlayRegionID);
                     bw.WriteInt16(LockCamParamID1);

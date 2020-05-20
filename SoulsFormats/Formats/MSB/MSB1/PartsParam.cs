@@ -803,7 +803,12 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short DisableStart { get; set; }
+                public bool DisableStart { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public byte UnkT27 { get; set; }
 
                 /// <summary>
                 /// If set, disables a bonfire when any enemy is on the collision.
@@ -857,7 +862,8 @@ namespace SoulsFormats
                     NvmGroups = br.ReadUInt32s(4);
                     VagrantEntityIDs = br.ReadInt32s(3);
                     MapNameID = br.ReadInt16();
-                    DisableStart = br.ReadInt16();
+                    DisableStart = br.ReadBoolean();
+                    UnkT27 = br.ReadByte();
                     DisableBonfireEntityID = br.ReadInt32();
                     br.AssertInt32(-1);
                     br.AssertInt32(-1);
@@ -880,7 +886,8 @@ namespace SoulsFormats
                     bw.WriteUInt32s(NvmGroups);
                     bw.WriteInt32s(VagrantEntityIDs);
                     bw.WriteInt16(MapNameID);
-                    bw.WriteInt16(DisableStart);
+                    bw.WriteBoolean(DisableStart);
+                    bw.WriteByte(UnkT27);
                     bw.WriteInt32(DisableBonfireEntityID);
                     bw.WriteInt32(-1);
                     bw.WriteInt32(-1);

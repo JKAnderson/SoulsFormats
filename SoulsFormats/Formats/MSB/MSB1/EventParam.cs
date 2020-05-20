@@ -670,7 +670,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int InitialSpawnCount { get; set; }
+                public byte InitialSpawnCount { get; set; }
 
                 /// <summary>
                 /// Points that enemies may be spawned at.
@@ -711,8 +711,8 @@ namespace SoulsFormats
                     MaxGenNum = br.ReadInt16();
                     MinInterval = br.ReadSingle();
                     MaxInterval = br.ReadSingle();
-                    InitialSpawnCount = br.ReadInt32();
-                    br.AssertPattern(0x1C, 0x00);
+                    InitialSpawnCount = br.ReadByte();
+                    br.AssertPattern(0x1F, 0x00);
                     SpawnPointIndices = br.ReadInt32s(4);
                     SpawnPartIndices = br.ReadInt32s(32);
                     br.AssertPattern(0x40, 0x00);
@@ -727,8 +727,8 @@ namespace SoulsFormats
                     bw.WriteInt16(MaxGenNum);
                     bw.WriteSingle(MinInterval);
                     bw.WriteSingle(MaxInterval);
-                    bw.WriteInt32(InitialSpawnCount);
-                    bw.WritePattern(0x1C, 0x00);
+                    bw.WriteByte(InitialSpawnCount);
+                    bw.WritePattern(0x1F, 0x00);
                     bw.WriteInt32s(SpawnPointIndices);
                     bw.WriteInt32s(SpawnPartIndices);
                     bw.WritePattern(0x40, 0x00);
@@ -805,7 +805,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public enum StateType : ushort
+                public enum StateType : byte
                 {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
                     Default = 0,
@@ -859,7 +859,8 @@ namespace SoulsFormats
                     ObjActEntityID = br.ReadInt32();
                     ObjActPartIndex = br.ReadInt32();
                     ObjActParamID = br.ReadInt16();
-                    ObjActState = br.ReadEnum16<StateType>();
+                    ObjActState = br.ReadEnum8<StateType>();
+                    br.AssertByte(0);
                     EventFlagID = br.ReadInt32();
                 }
 
@@ -868,7 +869,8 @@ namespace SoulsFormats
                     bw.WriteInt32(ObjActEntityID);
                     bw.WriteInt32(ObjActPartIndex);
                     bw.WriteInt16(ObjActParamID);
-                    bw.WriteUInt16((ushort)ObjActState);
+                    bw.WriteByte((byte)ObjActState);
+                    bw.WriteByte(0);
                     bw.WriteInt32(EventFlagID);
                 }
 

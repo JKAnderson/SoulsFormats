@@ -615,7 +615,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int InitialSpawnCount { get; set; }
+                public byte InitialSpawnCount { get; set; }
 
                 /// <summary>
                 /// Points that enemies may be spawned at.
@@ -656,8 +656,8 @@ namespace SoulsFormats
                     MaxGenNum = br.ReadInt16();
                     MinInterval = br.ReadSingle();
                     MaxInterval = br.ReadSingle();
-                    InitialSpawnCount = br.ReadInt32();
-                    br.AssertPattern(0x1C, 0x00);
+                    InitialSpawnCount = br.ReadByte();
+                    br.AssertPattern(0x1F, 0x00);
                     SpawnPointIndices = br.ReadInt32s(4);
                     SpawnPartIndices = br.ReadInt32s(32);
                     br.AssertPattern(0x40, 0x00);
@@ -672,8 +672,8 @@ namespace SoulsFormats
                     bw.WriteInt16(MaxGenNum);
                     bw.WriteSingle(MinInterval);
                     bw.WriteSingle(MaxInterval);
-                    bw.WriteInt32(InitialSpawnCount);
-                    bw.WritePattern(0x1C, 0x00);
+                    bw.WriteByte(InitialSpawnCount);
+                    bw.WritePattern(0x1F, 0x00);
                     bw.WriteInt32s(SpawnPointIndices);
                     bw.WriteInt32s(SpawnPartIndices);
                     bw.WritePattern(0x40, 0x00);

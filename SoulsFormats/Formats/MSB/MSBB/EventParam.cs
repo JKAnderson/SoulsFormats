@@ -710,7 +710,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public byte UnkT10 { get; set; }
+                public byte InitialSpawnCount { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -766,7 +766,7 @@ namespace SoulsFormats
                     MaxGenNum = br.ReadInt16();
                     MinInterval = br.ReadSingle();
                     MaxInterval = br.ReadSingle();
-                    UnkT10 = br.ReadByte();
+                    InitialSpawnCount = br.ReadByte();
                     UnkT11 = br.ReadByte();
                     UnkT12 = br.ReadByte();
                     UnkT13 = br.ReadByte();
@@ -785,7 +785,7 @@ namespace SoulsFormats
                     bw.WriteInt16(MaxGenNum);
                     bw.WriteSingle(MinInterval);
                     bw.WriteSingle(MaxInterval);
-                    bw.WriteByte(UnkT10);
+                    bw.WriteByte(InitialSpawnCount);
                     bw.WriteByte(UnkT11);
                     bw.WriteByte(UnkT12);
                     bw.WriteByte(UnkT13);

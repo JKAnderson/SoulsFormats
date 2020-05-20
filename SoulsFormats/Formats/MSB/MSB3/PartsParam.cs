@@ -1252,7 +1252,8 @@ namespace SoulsFormats
                     br.AssertInt32(-1);
                     br.AssertInt32(-1);
                     MapNameID = br.ReadInt16();
-                    DisableStart = br.AssertInt16(0, 1) == 1;
+                    DisableStart = br.ReadBoolean();
+                    br.AssertByte(0);
                     DisableBonfireEntityID = br.ReadInt32();
                     ChameleonParamID = br.ReadInt32();
                     UnkHitIndex = br.ReadInt32();
@@ -1286,7 +1287,8 @@ namespace SoulsFormats
                     bw.WriteInt32(-1);
                     bw.WriteInt32(-1);
                     bw.WriteInt16(MapNameID);
-                    bw.WriteInt16((short)(DisableStart ? 1 : 0));
+                    bw.WriteBoolean(DisableStart);
+                    bw.WriteByte(0);
                     bw.WriteInt32(DisableBonfireEntityID);
                     bw.WriteInt32(ChameleonParamID);
                     bw.WriteInt32(UnkHitIndex);
