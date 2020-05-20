@@ -6,7 +6,7 @@ namespace SoulsFormats
 {
     public partial class MSB2
     {
-        internal enum ModelType : ushort
+        internal enum ModelType : byte
         {
             MapPiece = 0,
             Object = 1,
@@ -84,7 +84,7 @@ namespace SoulsFormats
 
             internal override Model ReadEntry(BinaryReaderEx br)
             {
-                ModelType type = br.GetEnum16<ModelType>(br.Position + 8);
+                ModelType type = br.GetEnum8<ModelType>(br.Position + br.VarintSize);
                 switch (type)
                 {
                     case ModelType.MapPiece:
@@ -130,12 +130,14 @@ namespace SoulsFormats
             private protected Model(BinaryReaderEx br)
             {
                 long start = br.Position;
-                long nameOffset = br.ReadInt64();
-                br.AssertUInt16((ushort)Type);
+                long nameOffset = br.ReadVarint();
+                br.AssertByte((byte)Type);
+                br.AssertByte(0);
                 br.ReadInt16(); // ID
-                br.AssertInt32(0);
-                long typeDataOffset = br.ReadInt64();
-                br.AssertInt64(0);
+                if (br.VarintLong)
+                    br.AssertInt32(0);
+                long typeDataOffset = br.ReadVarint();
+                br.AssertVarint(0);
 
                 if (nameOffset == 0)
                     throw new InvalidDataException($"{nameof(nameOffset)} must not be 0 in type {GetType()}.");
@@ -158,25 +160,27 @@ namespace SoulsFormats
             internal override void Write(BinaryWriterEx bw, int id)
             {
                 long start = bw.Position;
-                bw.ReserveInt64("NameOffset");
-                bw.WriteUInt16((ushort)Type);
+                bw.ReserveVarint("NameOffset");
+                bw.WriteByte((byte)Type);
+                bw.WriteByte(0);
                 bw.WriteInt16((short)id);
-                bw.WriteInt32(0);
-                bw.ReserveInt64("TypeDataOffset");
-                bw.WriteInt64(0);
+                if (bw.VarintLong)
+                    bw.WriteInt32(0);
+                bw.ReserveVarint("TypeDataOffset");
+                bw.WriteVarint(0);
 
-                bw.FillInt64("NameOffset", bw.Position - start);
+                bw.FillVarint("NameOffset", bw.Position - start);
                 bw.WriteUTF16(MSB.ReambiguateName(Name), true);
-                bw.Pad(8);
+                bw.Pad(bw.VarintSize);
 
                 if (HasTypeData)
                 {
-                    bw.FillInt64("TypeDataOffset", bw.Position - start);
+                    bw.FillVarint("TypeDataOffset", bw.Position - start);
                     WriteTypeData(bw);
                 }
                 else
                 {
-                    bw.FillInt64("TypeDataOffset", 0);
+                    bw.FillVarint("TypeDataOffset", 0);
                 }
             }
 
@@ -222,16 +226,14 @@ namespace SoulsFormats
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {
-                    br.AssertInt32(0);
-                    br.AssertInt32(0);
+                    br.AssertVarint(0);
                 }
 
                 internal Object(BinaryReaderEx br) : base(br) { }
 
                 private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(0);
-                    bw.WriteInt32(0);
+                    bw.WriteVarint(0);
                 }
             }
 

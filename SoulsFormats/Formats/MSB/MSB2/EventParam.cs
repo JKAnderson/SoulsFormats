@@ -8,7 +8,7 @@ namespace SoulsFormats
 {
     public partial class MSB2
     {
-        internal enum EventType : ushort
+        internal enum EventType : byte
         {
             Light = 1,
             Shadow = 2,
@@ -111,7 +111,7 @@ namespace SoulsFormats
 
             internal override Event ReadEntry(BinaryReaderEx br)
             {
-                EventType type = br.GetEnum16<EventType>(br.Position + 0xC);
+                EventType type = br.GetEnum8<EventType>(br.Position + br.VarintSize + 4);
                 switch (type)
                 {
                     case EventType.Light:
@@ -171,11 +171,17 @@ namespace SoulsFormats
             private protected Event(BinaryReaderEx br)
             {
                 long start = br.Position;
-                long nameOffset = br.ReadInt64();
+                long nameOffset = br.ReadVarint();
                 EventID = br.ReadInt32();
-                br.AssertUInt16((ushort)Type);
-                br.ReadInt16(); // Index
-                long typeDataOffset = br.ReadInt64();
+                br.AssertByte((byte)Type);
+                br.AssertByte(0);
+                br.ReadInt16(); // ID
+                long typeDataOffset = br.ReadVarint();
+                if (!br.VarintLong)
+                {
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                }
 
                 if (nameOffset == 0)
                     throw new InvalidDataException($"{nameof(nameOffset)} must not be 0 in type {GetType()}.");
@@ -191,20 +197,26 @@ namespace SoulsFormats
 
             private protected abstract void ReadTypeData(BinaryReaderEx br);
 
-            internal override void Write(BinaryWriterEx bw, int index)
+            internal override void Write(BinaryWriterEx bw, int id)
             {
                 long start = bw.Position;
-                bw.ReserveInt64("NameOffset");
+                bw.ReserveVarint("NameOffset");
                 bw.WriteInt32(EventID);
-                bw.WriteUInt16((ushort)Type);
-                bw.WriteInt16((short)index);
-                bw.ReserveInt64("TypeDataOffset");
+                bw.WriteByte((byte)Type);
+                bw.WriteByte(0);
+                bw.WriteInt16((short)id);
+                bw.ReserveVarint("TypeDataOffset");
+                if (!bw.VarintLong)
+                {
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                }
 
-                bw.FillInt64("NameOffset", bw.Position - start);
+                bw.FillVarint("NameOffset", bw.Position - start);
                 bw.WriteUTF16(Name, true);
-                bw.Pad(8);
+                bw.Pad(bw.VarintSize);
 
-                bw.FillInt64("TypeDataOffset", bw.Position - start);
+                bw.FillVarint("TypeDataOffset", bw.Position - start);
                 WriteTypeData(bw);
             }
 
@@ -228,7 +240,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short UnkT00 { get; set; }
+                public byte UnkT00 { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -293,7 +305,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT44 { get; set; }
+                public byte UnkT44 { get; set; }
 
                 /// <summary>
                 /// Creates a Light with default values.
@@ -304,7 +316,8 @@ namespace SoulsFormats
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {
-                    UnkT00 = br.ReadInt16();
+                    UnkT00 = br.ReadByte();
+                    br.AssertByte(0);
                     br.AssertInt16(-1);
                     UnkT04 = br.ReadSingle();
                     UnkT08 = br.ReadSingle();
@@ -322,13 +335,14 @@ namespace SoulsFormats
                     ColorT38 = br.ReadRGBA();
                     ColorT3C = br.ReadRGBA();
                     UnkT40 = br.ReadSingle();
-                    UnkT44 = br.ReadInt32();
-                    br.AssertPattern(0x38, 0x00);
+                    UnkT44 = br.ReadByte();
+                    br.AssertPattern(0x3B, 0x00);
                 }
 
                 private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.WriteInt16(UnkT00);
+                    bw.WriteByte(UnkT00);
+                    bw.WriteByte(0);
                     bw.WriteInt16(-1);
                     bw.WriteSingle(UnkT04);
                     bw.WriteSingle(UnkT08);
@@ -346,8 +360,8 @@ namespace SoulsFormats
                     bw.WriteRGBA(ColorT38);
                     bw.WriteRGBA(ColorT3C);
                     bw.WriteSingle(UnkT40);
-                    bw.WriteInt32(UnkT44);
-                    bw.WritePattern(0x38, 0x00);
+                    bw.WriteByte(UnkT44);
+                    bw.WritePattern(0x3B, 0x00);
                 }
             }
 
@@ -357,11 +371,6 @@ namespace SoulsFormats
             public class Shadow : Event
             {
                 private protected override EventType Type => EventType.Shadow;
-
-                /// <summary>
-                /// Unknown.
-                /// </summary>
-                public int UnkT00 { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -381,22 +390,12 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT10 { get; set; }
-
-                /// <summary>
-                /// Unknown.
-                /// </summary>
-                public Color ColorT14 { get; set; }
+                public float UnkT14 { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
                 public float UnkT18 { get; set; }
-
-                /// <summary>
-                /// Unknown.
-                /// </summary>
-                public int UnkT1C { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -417,14 +416,14 @@ namespace SoulsFormats
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {
-                    UnkT00 = br.ReadInt32();
+                    br.AssertInt32(0);
                     UnkT04 = br.ReadSingle();
                     UnkT08 = br.ReadSingle();
                     UnkT0C = br.ReadSingle();
-                    UnkT10 = br.ReadInt32();
-                    ColorT14 = br.ReadRGBA();
+                    br.AssertInt32(0);
+                    UnkT14 = br.ReadSingle();
                     UnkT18 = br.ReadSingle();
-                    UnkT1C = br.ReadInt32();
+                    br.AssertInt32(0);
                     UnkT20 = br.ReadSingle();
                     ColorT24 = br.ReadRGBA();
                     br.AssertPattern(0x18, 0x00);
@@ -432,14 +431,14 @@ namespace SoulsFormats
 
                 private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(UnkT00);
+                    bw.WriteInt32(0);
                     bw.WriteSingle(UnkT04);
                     bw.WriteSingle(UnkT08);
                     bw.WriteSingle(UnkT0C);
-                    bw.WriteInt32(UnkT10);
-                    bw.WriteRGBA(ColorT14);
+                    bw.WriteInt32(0);
+                    bw.WriteSingle(UnkT14);
                     bw.WriteSingle(UnkT18);
-                    bw.WriteInt32(UnkT1C);
+                    bw.WriteInt32(0);
                     bw.WriteSingle(UnkT20);
                     bw.WriteRGBA(ColorT24);
                     bw.WritePattern(0x18, 0x00);
@@ -456,7 +455,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT00 { get; set; }
+                public byte UnkT00 { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -481,7 +480,17 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT14 { get; set; }
+                public byte UnkT14 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public byte UnkT15 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public byte UnkT16 { get; set; }
 
                 /// <summary>
                 /// Creates a Fog with default values.
@@ -492,24 +501,34 @@ namespace SoulsFormats
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {
-                    UnkT00 = br.ReadInt32();
+                    UnkT00 = br.ReadByte();
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
                     ColorT04 = br.ReadRGBA();
                     UnkT08 = br.ReadSingle();
                     UnkT0C = br.ReadSingle();
                     UnkT10 = br.ReadSingle();
-                    UnkT14 = br.ReadInt32();
-                    br.AssertPattern(0x10, 0x00);
+                    UnkT14 = br.ReadByte();
+                    UnkT15 = br.ReadByte();
+                    UnkT16 = br.ReadByte();
+                    br.AssertPattern(0x11, 0x00);
                 }
 
                 private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(UnkT00);
+                    bw.WriteByte(UnkT00);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
                     bw.WriteRGBA(ColorT04);
                     bw.WriteSingle(UnkT08);
                     bw.WriteSingle(UnkT0C);
                     bw.WriteSingle(UnkT10);
-                    bw.WriteInt32(UnkT14);
-                    bw.WritePattern(0x10, 0x00);
+                    bw.WriteByte(UnkT14);
+                    bw.WriteByte(UnkT15);
+                    bw.WriteByte(UnkT16);
+                    bw.WritePattern(0x11, 0x00);
                 }
             }
 
@@ -587,7 +606,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT00 { get; set; }
+                public byte UnkT00 { get; set; }
 
                 /// <summary>
                 /// Presumably the position to be warped to.
@@ -603,13 +622,19 @@ namespace SoulsFormats
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {
-                    UnkT00 = br.ReadInt32();
+                    UnkT00 = br.ReadByte();
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
                     Position = br.ReadVector3();
                 }
 
                 private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(UnkT00);
+                    bw.WriteByte(UnkT00);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
                     bw.WriteVector3(Position);
                 }
             }
@@ -624,7 +649,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT00 { get; set; }
+                public short UnkT00 { get; set; }
 
                 /// <summary>
                 /// Creates a CheapMode with default values.
@@ -635,14 +660,14 @@ namespace SoulsFormats
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {
-                    UnkT00 = br.ReadInt32();
-                    br.AssertPattern(0xC, 0x00);
+                    UnkT00 = br.ReadInt16();
+                    br.AssertPattern(0xE, 0x00);
                 }
 
                 private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(UnkT00);
-                    bw.WritePattern(0xC, 0x00);
+                    bw.WriteInt16(UnkT00);
+                    bw.WritePattern(0xE, 0x00);
                 }
             }
         }

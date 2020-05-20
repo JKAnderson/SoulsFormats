@@ -66,11 +66,14 @@ namespace SoulsFormats
 
             internal PartPose(BinaryReaderEx br)
             {
+                long start = br.Position;
                 PartIndex = br.ReadInt16();
                 short boneCount = br.ReadInt16();
-                br.AssertInt32(0);
-                br.AssertInt64(0x10); // Bones offset
+                if (br.VarintLong)
+                    br.AssertInt32(0);
+                long bonesOffset = br.ReadVarint();
 
+                br.Position = start + bonesOffset;
                 Bones = new List<Bone>(boneCount);
                 for (int i = 0; i < boneCount; i++)
                     Bones.Add(new Bone(br));
@@ -78,11 +81,14 @@ namespace SoulsFormats
 
             internal override void Write(BinaryWriterEx bw, int index)
             {
+                long start = bw.Position;
                 bw.WriteInt16(PartIndex);
                 bw.WriteInt16((short)Bones.Count);
-                bw.WriteInt32(0);
-                bw.WriteInt64(0x10);
+                if (bw.VarintLong)
+                    bw.WriteInt32(0);
+                bw.ReserveVarint("BonesOffset");
 
+                bw.FillVarint("BonesOffset", bw.Position - start);
                 foreach (Bone bone in Bones)
                     bone.Write(bw);
             }

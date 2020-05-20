@@ -119,7 +119,7 @@ namespace SoulsFormats
 
             internal override Region ReadEntry(BinaryReaderEx br)
             {
-                RegionType type = br.GetEnum8<RegionType>(br.Position + 0xA);
+                RegionType type = br.GetEnum8<RegionType>(br.Position + br.VarintSize + 2);
                 switch (type)
                 {
                     case RegionType.Region0:
@@ -215,22 +215,28 @@ namespace SoulsFormats
             private protected Region(BinaryReaderEx br)
             {
                 long start = br.Position;
-                long nameOffset = br.ReadInt64();
+                long nameOffset = br.ReadVarint();
                 Unk08 = br.ReadInt16();
                 br.AssertByte((byte)Type);
                 MSB.ShapeType shapeType = (MSB.ShapeType)br.ReadByte();
-                br.ReadInt16(); // Index
+                br.ReadInt16(); // ID
                 Unk0E = br.ReadInt16();
                 Position = br.ReadVector3();
                 Rotation = br.ReadVector3();
-                long unkOffsetA = br.ReadInt64();
-                long unkOffsetB = br.ReadInt64();
+                long unkOffsetA = br.ReadVarint();
+                long unkOffsetB = br.ReadVarint();
                 br.AssertInt32(-1);
                 br.AssertPattern(0x24, 0x00);
-                long shapeDataOffset = br.ReadInt64();
-                long typeDataOffset = br.ReadInt64();
+                long shapeDataOffset = br.ReadVarint();
+                long typeDataOffset = br.ReadVarint();
                 br.AssertInt64(0);
                 br.AssertInt64(0);
+                if (!br.VarintLong)
+                {
+                    br.AssertInt64(0);
+                    br.AssertInt64(0);
+                    br.AssertInt32(0);
+                }
 
                 Shape = MSB.Shape.Create(shapeType);
 
@@ -270,55 +276,61 @@ namespace SoulsFormats
             private protected virtual void ReadTypeData(BinaryReaderEx br)
                 => throw new NotImplementedException($"Type {GetType()} missing valid {nameof(ReadTypeData)}.");
 
-            internal override void Write(BinaryWriterEx bw, int index)
+            internal override void Write(BinaryWriterEx bw, int id)
             {
                 long start = bw.Position;
-                bw.ReserveInt64("NameOffset");
+                bw.ReserveVarint("NameOffset");
                 bw.WriteInt16(Unk08);
                 bw.WriteByte((byte)Type);
                 bw.WriteByte((byte)Shape.Type);
-                bw.WriteInt16((short)index);
+                bw.WriteInt16((short)id);
                 bw.WriteInt16(Unk0E);
                 bw.WriteVector3(Position);
                 bw.WriteVector3(Rotation);
-                bw.ReserveInt64("UnkOffsetA");
-                bw.ReserveInt64("UnkOffsetB");
+                bw.ReserveVarint("UnkOffsetA");
+                bw.ReserveVarint("UnkOffsetB");
                 bw.WriteInt32(-1);
                 bw.WritePattern(0x24, 0x00);
-                bw.ReserveInt64("ShapeDataOffset");
-                bw.ReserveInt64("TypeDataOffset");
+                bw.ReserveVarint("ShapeDataOffset");
+                bw.ReserveVarint("TypeDataOffset");
                 bw.WriteInt64(0);
                 bw.WriteInt64(0);
+                if (!bw.VarintLong)
+                {
+                    bw.WriteInt64(0);
+                    bw.WriteInt64(0);
+                    bw.WriteInt32(0);
+                }
 
-                bw.FillInt64("NameOffset", bw.Position - start);
+                bw.FillVarint("NameOffset", bw.Position - start);
                 bw.WriteUTF16(Name, true);
                 bw.Pad(4);
 
-                bw.FillInt64("UnkOffsetA", bw.Position - start);
+                bw.FillVarint("UnkOffsetA", bw.Position - start);
                 bw.WriteInt32(0);
 
-                bw.FillInt64("UnkOffsetB", bw.Position - start);
+                bw.FillVarint("UnkOffsetB", bw.Position - start);
                 bw.WriteInt32(0);
-                bw.Pad(8);
+                bw.Pad(bw.VarintSize);
 
                 if (Shape.HasShapeData)
                 {
-                    bw.FillInt64("ShapeDataOffset", bw.Position - start);
+                    bw.FillVarint("ShapeDataOffset", bw.Position - start);
                     Shape.WriteShapeData(bw);
                 }
                 else
                 {
-                    bw.FillInt64("ShapeDataOffset", 0);
+                    bw.FillVarint("ShapeDataOffset", 0);
                 }
 
                 if (HasTypeData)
                 {
-                    bw.FillInt64("TypeDataOffset", bw.Position - start);
+                    bw.FillVarint("TypeDataOffset", bw.Position - start);
                     WriteTypeData(bw);
                 }
                 else
                 {
-                    bw.FillInt64("TypeDataOffset", 0);
+                    bw.FillVarint("TypeDataOffset", 0);
                 }
             }
 
@@ -390,7 +402,9 @@ namespace SoulsFormats
                     ColorT04 = br.ReadRGBA();
                     ColorT08 = br.ReadRGBA();
                     UnkT0C = br.ReadSingle();
-                    br.AssertPattern(0x14, 0x00);
+                    br.AssertPattern(0x10, 0x00);
+                    if (br.VarintLong)
+                        br.AssertInt32(0);
                 }
 
                 private protected override void WriteTypeData(BinaryWriterEx bw)
@@ -399,7 +413,9 @@ namespace SoulsFormats
                     bw.WriteRGBA(ColorT04);
                     bw.WriteRGBA(ColorT08);
                     bw.WriteSingle(UnkT0C);
-                    bw.WritePattern(0x14, 0x00);
+                    bw.WritePattern(0x10, 0x00);
+                    if (bw.VarintLong)
+                        bw.WriteInt32(0);
                 }
             }
 
@@ -657,14 +673,18 @@ namespace SoulsFormats
                 {
                     UnkT00 = br.ReadInt32();
                     UnkT04 = br.ReadInt32();
-                    br.AssertPattern(0x1C, 0x00);
+                    br.AssertPattern(0x18, 0x00);
+                    if (br.VarintLong)
+                        br.AssertInt32(0);
                 }
 
                 private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(UnkT00);
                     bw.WriteInt32(UnkT04);
-                    bw.WritePattern(0x1C, 0x00);
+                    bw.WritePattern(0x18, 0x00);
+                    if (bw.VarintLong)
+                        bw.WriteInt32(0);
                 }
             }
         }

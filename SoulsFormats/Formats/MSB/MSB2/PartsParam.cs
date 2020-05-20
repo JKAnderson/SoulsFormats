@@ -7,7 +7,7 @@ namespace SoulsFormats
 {
     public partial class MSB2
     {
-        internal enum PartType : ushort
+        internal enum PartType : byte
         {
             MapPiece = 0,
             Object = 1,
@@ -93,7 +93,7 @@ namespace SoulsFormats
 
             internal override Part ReadEntry(BinaryReaderEx br)
             {
-                PartType type = br.GetEnum16<PartType>(br.Position + 8);
+                PartType type = br.GetEnum8<PartType>(br.Position + br.VarintSize);
                 switch (type)
                 {
                     case PartType.MapPiece:
@@ -128,7 +128,7 @@ namespace SoulsFormats
             /// The name of the part's model, referencing ModelParam.
             /// </summary>
             public string ModelName { get; set; }
-            private int ModelIndex;
+            private short ModelIndex;
 
             /// <summary>
             /// Location of the part.
@@ -183,12 +183,12 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk68 { get; set; }
+            public byte Unk6C { get; set; }
 
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int Unk6C { get; set; }
+            public byte Unk6E { get; set; }
 
             private protected Part(string name)
             {
@@ -218,10 +218,12 @@ namespace SoulsFormats
             private protected Part(BinaryReaderEx br)
             {
                 long start = br.Position;
-                long nameOffset = br.ReadInt64();
-                br.AssertUInt16((ushort)Type);
-                br.ReadInt16(); // Index
-                ModelIndex = br.ReadInt32();
+                long nameOffset = br.ReadVarint();
+                br.AssertByte((byte)Type);
+                br.AssertByte(0);
+                br.ReadInt16(); // ID
+                ModelIndex = br.ReadInt16();
+                br.AssertInt16(0);
                 Position = br.ReadVector3();
                 Rotation = br.ReadVector3();
                 Scale = br.ReadVector3();
@@ -232,10 +234,14 @@ namespace SoulsFormats
                 Unk50 = br.ReadInt32();
                 DispGroups = br.ReadUInt32s(4);
                 Unk64 = br.ReadInt32();
-                Unk68 = br.ReadInt32();
-                Unk6C = br.ReadInt32();
-                long typeDataOffset = br.ReadInt64();
-                br.AssertInt64(0);
+                br.AssertInt32(0);
+                Unk6C = br.ReadByte();
+                br.AssertByte(0);
+                Unk6E = br.ReadByte();
+                br.AssertByte(0);
+                long typeDataOffset = br.ReadVarint();
+                if (br.VarintLong)
+                    br.AssertInt64(0);
 
                 if (nameOffset == 0)
                     throw new InvalidDataException($"{nameof(nameOffset)} must not be 0 in type {GetType()}.");
@@ -251,13 +257,15 @@ namespace SoulsFormats
 
             private protected abstract void ReadTypeData(BinaryReaderEx br);
 
-            internal override void Write(BinaryWriterEx bw, int index)
+            internal override void Write(BinaryWriterEx bw, int id)
             {
                 long start = bw.Position;
-                bw.ReserveInt64("NameOffset");
-                bw.WriteUInt16((ushort)Type);
-                bw.WriteInt16((short)index);
-                bw.WriteInt32(ModelIndex);
+                bw.ReserveVarint("NameOffset");
+                bw.WriteByte((byte)Type);
+                bw.WriteByte(0);
+                bw.WriteInt16((short)id);
+                bw.WriteInt16(ModelIndex);
+                bw.WriteInt16(0);
                 bw.WriteVector3(Position);
                 bw.WriteVector3(Rotation);
                 bw.WriteVector3(Scale);
@@ -268,19 +276,24 @@ namespace SoulsFormats
                 bw.WriteInt32(Unk50);
                 bw.WriteUInt32s(DispGroups);
                 bw.WriteInt32(Unk64);
-                bw.WriteInt32(Unk68);
-                bw.WriteInt32(Unk6C);
-                bw.ReserveInt64("TypeDataOffset");
-                bw.WriteInt64(0);
+                bw.WriteInt32(0);
+                bw.WriteByte(Unk6C);
+                bw.WriteByte(0);
+                bw.WriteByte(Unk6E);
+                bw.WriteByte(0);
+                bw.ReserveVarint("TypeDataOffset");
+                if (bw.VarintLong)
+                    bw.WriteInt64(0);
 
                 long nameStart = bw.Position;
-                bw.FillInt64("NameOffset", nameStart - start);
+                int namePad = bw.VarintLong ? 0x20 : 0x2C;
+                bw.FillVarint("NameOffset", nameStart - start);
                 bw.WriteUTF16(MSB.ReambiguateName(Name), true);
-                if (bw.Position - nameStart < 0x20)
-                    bw.Position += 0x20 - (bw.Position - nameStart);
-                bw.Pad(8);
+                if (bw.Position - nameStart < namePad)
+                    bw.Position += namePad - (bw.Position - nameStart);
+                bw.Pad(bw.VarintSize);
 
-                bw.FillInt64("TypeDataOffset", bw.Position - start);
+                bw.FillVarint("TypeDataOffset", bw.Position - start);
                 WriteTypeData(bw);
             }
 
@@ -293,7 +306,7 @@ namespace SoulsFormats
 
             internal virtual void GetIndices(Lookups lookups)
             {
-                ModelIndex = FindIndex(lookups.Models, ModelName);
+                ModelIndex = (short)FindIndex(lookups.Models, ModelName);
             }
 
             /// <summary>
@@ -319,7 +332,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short UnkT02 { get; set; }
+                public byte UnkT02 { get; set; }
 
                 /// <summary>
                 /// Creates a MapPiece with default values.
@@ -331,15 +344,19 @@ namespace SoulsFormats
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     UnkT00 = br.ReadInt16();
-                    UnkT02 = br.ReadInt16();
-                    br.AssertInt32(0);
+                    UnkT02 = br.ReadByte();
+                    br.AssertByte(0);
+                    if (br.VarintLong)
+                        br.AssertInt32(0);
                 }
 
                 private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteInt16(UnkT00);
-                    bw.WriteInt16(UnkT02);
-                    bw.WriteInt32(0);
+                    bw.WriteByte(UnkT02);
+                    bw.WriteByte(0);
+                    if (bw.VarintLong)
+                        bw.WriteInt32(0);
                 }
             }
 
@@ -358,7 +375,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT04 { get; set; }
+                public short UnkT04 { get; set; }
 
                 /// <summary>
                 /// Creates an Object with default values.
@@ -370,7 +387,8 @@ namespace SoulsFormats
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     MapObjectInstanceParamID = br.ReadInt32();
-                    UnkT04 = br.ReadInt32();
+                    UnkT04 = br.ReadInt16();
+                    br.AssertInt16(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                 }
@@ -378,7 +396,8 @@ namespace SoulsFormats
                 private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(MapObjectInstanceParamID);
-                    bw.WriteInt32(UnkT04);
+                    bw.WriteInt16(UnkT04);
+                    bw.WriteInt16(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                 }
@@ -414,7 +433,12 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short UnkT10 { get; set; }
+                public byte UnkT10 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public byte UnkT11 { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -429,7 +453,17 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT14 { get; set; }
+                public byte UnkT14 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public byte UnkT15 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public byte UnkT17 { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -449,12 +483,12 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short UnkT24 { get; set; }
+                public byte UnkT26 { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short UnkT26 { get; set; }
+                public byte UnkT27 { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -464,7 +498,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short UnkT2C { get; set; }
+                public byte UnkT2C { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -479,7 +513,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short UnkT34 { get; set; }
+                public byte UnkT35 { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -489,17 +523,12 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT38 { get; set; }
-
-                /// <summary>
-                /// Unknown.
-                /// </summary>
                 public int UnkT3C { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT40 { get; set; }
+                public byte UnkT40 { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -519,24 +548,34 @@ namespace SoulsFormats
                     UnkT04 = br.ReadInt32();
                     UnkT08 = br.ReadInt32();
                     UnkT0C = br.ReadInt32();
-                    UnkT10 = br.ReadInt16();
+                    UnkT10 = br.ReadByte();
+                    UnkT11 = br.ReadByte();
                     UnkT12 = br.ReadByte();
                     UnkT13 = br.ReadByte();
-                    UnkT14 = br.ReadInt32();
+                    UnkT14 = br.ReadByte();
+                    UnkT15 = br.ReadByte();
+                    br.AssertByte(0);
+                    UnkT17 = br.ReadByte();
                     UnkT18 = br.ReadInt32();
                     UnkT1C = br.ReadInt32();
                     UnkT20 = br.ReadInt32();
-                    UnkT24 = br.ReadInt16();
-                    UnkT26 = br.ReadInt16();
+                    br.AssertInt16(0);
+                    UnkT26 = br.ReadByte();
+                    UnkT27 = br.ReadByte();
                     UnkT28 = br.ReadInt32();
-                    UnkT2C = br.ReadInt16();
+                    UnkT2C = br.ReadByte();
+                    br.AssertByte(0);
                     UnkT2E = br.ReadInt16();
                     UnkT30 = br.ReadInt32();
-                    UnkT34 = br.ReadInt16();
+                    br.AssertByte(0);
+                    UnkT35 = br.ReadByte();
                     UnkT36 = br.ReadInt16();
-                    UnkT38 = br.ReadInt32();
+                    br.AssertInt32(0);
                     UnkT3C = br.ReadInt32();
-                    UnkT40 = br.ReadInt32();
+                    UnkT40 = br.ReadByte();
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
                     UnkT44 = br.ReadInt32();
                     br.AssertPattern(0x10, 0x00);
                 }
@@ -547,24 +586,34 @@ namespace SoulsFormats
                     bw.WriteInt32(UnkT04);
                     bw.WriteInt32(UnkT08);
                     bw.WriteInt32(UnkT0C);
-                    bw.WriteInt16(UnkT10);
+                    bw.WriteByte(UnkT10);
+                    bw.WriteByte(UnkT11);
                     bw.WriteByte(UnkT12);
                     bw.WriteByte(UnkT13);
-                    bw.WriteInt32(UnkT14);
+                    bw.WriteByte(UnkT14);
+                    bw.WriteByte(UnkT15);
+                    bw.WriteByte(0);
+                    bw.WriteByte(UnkT17);
                     bw.WriteInt32(UnkT18);
                     bw.WriteInt32(UnkT1C);
                     bw.WriteInt32(UnkT20);
-                    bw.WriteInt16(UnkT24);
-                    bw.WriteInt16(UnkT26);
+                    bw.WriteInt16(0);
+                    bw.WriteByte(UnkT26);
+                    bw.WriteByte(UnkT27);
                     bw.WriteInt32(UnkT28);
-                    bw.WriteInt16(UnkT2C);
+                    bw.WriteByte(UnkT2C);
+                    bw.WriteByte(0);
                     bw.WriteInt16(UnkT2E);
                     bw.WriteInt32(UnkT30);
-                    bw.WriteInt16(UnkT34);
+                    bw.WriteByte(0);
+                    bw.WriteByte(UnkT35);
                     bw.WriteInt16(UnkT36);
-                    bw.WriteInt32(UnkT38);
+                    bw.WriteInt32(0);
                     bw.WriteInt32(UnkT3C);
-                    bw.WriteInt32(UnkT40);
+                    bw.WriteByte(UnkT40);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
                     bw.WriteInt32(UnkT44);
                     bw.WritePattern(0x10, 0x00);
                 }
@@ -649,7 +698,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT0C { get; set; }
+                public byte UnkT0C { get; set; }
 
                 /// <summary>
                 /// Creates a ConnectCollision with default values.
@@ -672,7 +721,10 @@ namespace SoulsFormats
                     CollisionIndex = br.ReadInt32();
                     MapID = br.ReadBytes(4);
                     UnkT08 = br.ReadInt32();
-                    UnkT0C = br.ReadInt32();
+                    UnkT0C = br.ReadByte();
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
                 }
 
                 private protected override void WriteTypeData(BinaryWriterEx bw)
@@ -680,7 +732,10 @@ namespace SoulsFormats
                     bw.WriteInt32(CollisionIndex);
                     bw.WriteBytes(MapID);
                     bw.WriteInt32(UnkT08);
-                    bw.WriteInt32(UnkT0C);
+                    bw.WriteByte(UnkT0C);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
                 }
 
                 internal override void GetNames(MSB2 msb, Entries entries)
