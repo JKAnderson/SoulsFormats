@@ -84,6 +84,11 @@ namespace SoulsFormats
     public interface IMsbRegion : IMsbEntry
     {
         /// <summary>
+        /// Describes the space that the region occupies.
+        /// </summary>
+        MSB.Shape Shape { get; set; }
+
+        /// <summary>
         /// The center or bottom center of the region, depending on its shape.
         /// </summary>
         Vector3 Position { get; set; }
