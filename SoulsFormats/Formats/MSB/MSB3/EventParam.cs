@@ -783,7 +783,7 @@ namespace SoulsFormats
                 public int UnkT18 { get; set; }
 
                 /// <summary>
-                /// Creates a new Invasion with the given name.
+                /// Creates a new PseudoMultiplayer with the given name.
                 /// </summary>
                 public PseudoMultiplayer() : base($"{nameof(Event)}: {nameof(PseudoMultiplayer)}")
                 {
@@ -840,7 +840,7 @@ namespace SoulsFormats
                 private short[] WalkPointIndices;
 
                 /// <summary>
-                /// Creates a WalkRoute with default values.
+                /// Creates a PatrolInfo with default values.
                 /// </summary>
                 public PatrolInfo() : base($"{nameof(Event)}: {nameof(PatrolInfo)}")
                 {
@@ -914,7 +914,7 @@ namespace SoulsFormats
                 private int[] GroupPartsIndices;
 
                 /// <summary>
-                /// Creates a GroupTour with default values.
+                /// Creates a PlatoonInfo with default values.
                 /// </summary>
                 public PlatoonInfo() : base($"{nameof(Event)}: {nameof(PlatoonInfo)}")
                 {

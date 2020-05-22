@@ -529,9 +529,9 @@ namespace SoulsFormats
                 private protected override bool HasTypeData => true;
 
                 /// <summary>
-                /// Unknown.
+                /// Not sure what this does.
                 /// </summary>
-                public int UnkT00 { get; set; }
+                public int Priority { get; set; }
 
                 /// <summary>
                 /// Creates an InvasionPoint with default values.
@@ -542,12 +542,12 @@ namespace SoulsFormats
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {
-                    UnkT00 = br.ReadInt32();
+                    Priority = br.ReadInt32();
                 }
 
                 private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(UnkT00);
+                    bw.WriteInt32(Priority);
                 }
             }
 

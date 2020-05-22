@@ -766,7 +766,7 @@ namespace SoulsFormats
                 public WREntry[] WREntries { get; set; }
 
                 /// <summary>
-                /// Creates a WalkRoute with default values.
+                /// Creates a PatrolInfo with default values.
                 /// </summary>
                 public PatrolInfo() : base($"{nameof(Event)}: {nameof(PatrolInfo)}")
                 {
@@ -921,7 +921,7 @@ namespace SoulsFormats
                 private int[] GroupPartIndices;
 
                 /// <summary>
-                /// Creates a GroupTour with default values.
+                /// Creates a PlatoonInfo with default values.
                 /// </summary>
                 public PlatoonInfo() : base($"{nameof(Event)}: {nameof(PlatoonInfo)}")
                 {
@@ -1014,7 +1014,7 @@ namespace SoulsFormats
                 public int GrassLodRangeParamID { get; set; }
 
                 /// <summary>
-                /// Creates an Event18 with default values.
+                /// Creates a GrassLodParam with default values.
                 /// </summary>
                 public GrassLodParam() : base($"{nameof(Event)}: {nameof(GrassLodParam)}") { }
 
@@ -1057,7 +1057,7 @@ namespace SoulsFormats
                 public short UnkT06 { get; set; }
 
                 /// <summary>
-                /// Creates an Event20 with default values.
+                /// Creates a SkitInfo with default values.
                 /// </summary>
                 public SkitInfo() : base($"{nameof(Event)}: {nameof(SkitInfo)}") { }
 
@@ -1095,7 +1095,7 @@ namespace SoulsFormats
                 private int[] Event21PartIndices;
 
                 /// <summary>
-                /// Creates an Event21 with default values.
+                /// Creates a PlacementGroup with default values.
                 /// </summary>
                 public PlacementGroup() : base($"{nameof(Event)}: {nameof(PlacementGroup)}")
                 {
