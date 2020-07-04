@@ -58,7 +58,7 @@ namespace SoulsFormats
             public List<Event.ObjAct> ObjActs { get; set; }
 
             /// <summary>
-            /// Shift the entire map by a certain amount.
+            /// Indicates a shift of the entire map; already accounted for in MSB positions, but must be applied to other formats such as BTL. Should only be one per map, if any.
             /// </summary>
             public List<Event.MapOffset> MapOffsets { get; set; }
 
@@ -73,12 +73,12 @@ namespace SoulsFormats
             public List<Event.PlatoonInfo> PlatoonInfo { get; set; }
 
             /// <summary>
-            /// Unknown.
+            /// Resource items such as spirit emblems placed in the map.
             /// </summary>
             public List<Event.ResourceItemInfo> ResourceItemInfo { get; set; }
 
             /// <summary>
-            /// Unknown.
+            /// Sets the grass lod parameters for the map. Should only be one per map, if any.
             /// </summary>
             public List<Event.GrassLodParam> GrassLodParams { get; set; }
 
@@ -238,7 +238,7 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
-            public int EventIndex { get; set; }
+            public int EventID { get; set; }
 
             /// <summary>
             /// Unknown.
@@ -260,7 +260,7 @@ namespace SoulsFormats
             private protected Event(string name)
             {
                 Name = name;
-                EventIndex = -1;
+                EventID = -1;
                 EntityID = -1;
             }
 
@@ -281,7 +281,7 @@ namespace SoulsFormats
             {
                 long start = br.Position;
                 long nameOffset = br.ReadInt64();
-                EventIndex = br.ReadInt32();
+                EventID = br.ReadInt32();
                 br.AssertUInt32((uint)Type);
                 br.ReadInt32(); // ID
                 br.AssertInt32(0);
@@ -318,7 +318,7 @@ namespace SoulsFormats
             {
                 long start = bw.Position;
                 bw.ReserveInt64("NameOffset");
-                bw.WriteInt32(EventIndex);
+                bw.WriteInt32(EventID);
                 bw.WriteUInt32((uint)Type);
                 bw.WriteInt32(id);
                 bw.WriteInt32(0);
@@ -968,7 +968,7 @@ namespace SoulsFormats
             }
 
             /// <summary>
-            /// Unknown.
+            /// A resource item placed in the map; uses the base Event's region for positioning.
             /// </summary>
             public class ResourceItemInfo : Event
             {
@@ -976,12 +976,12 @@ namespace SoulsFormats
                 private protected override bool HasTypeData => true;
 
                 /// <summary>
-                /// Unknown.
+                /// ID of a row in ResourceItemLotParam that determines the resource(s) to give.
                 /// </summary>
-                public int UnkT00 { get; set; }
+                public int ResourceItemLotParamID { get; set; }
 
                 /// <summary>
-                /// Creates an Event17 with default values.
+                /// Creates a ResourceItemInfo with default values.
                 /// </summary>
                 public ResourceItemInfo() : base($"{nameof(Event)}: {nameof(ResourceItemInfo)}") { }
 
@@ -989,19 +989,19 @@ namespace SoulsFormats
 
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {
-                    UnkT00 = br.ReadInt32();
+                    ResourceItemLotParamID = br.ReadInt32();
                     br.AssertPattern(0x1C, 0x00);
                 }
 
                 private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(UnkT00);
+                    bw.WriteInt32(ResourceItemLotParamID);
                     bw.WritePattern(0x1C, 0x00);
                 }
             }
 
             /// <summary>
-            /// Sets the grass lod parameters, apparently.
+            /// Sets the grass lod parameters for the map.
             /// </summary>
             public class GrassLodParam : Event
             {
@@ -1049,12 +1049,22 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short UnkT04 { get; set; }
+                public byte UnkT04 { get; set; }
 
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public short UnkT06 { get; set; }
+                public byte UnkT05 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public byte UnkT06 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public byte UnkT07 { get; set; }
 
                 /// <summary>
                 /// Creates a SkitInfo with default values.
@@ -1066,16 +1076,20 @@ namespace SoulsFormats
                 private protected override void ReadTypeData(BinaryReaderEx br)
                 {
                     UnkT00 = br.ReadInt32();
-                    UnkT04 = br.ReadInt16();
-                    UnkT06 = br.ReadInt16();
+                    UnkT04 = br.ReadByte();
+                    UnkT05 = br.ReadByte();
+                    UnkT06 = br.ReadByte();
+                    UnkT07 = br.ReadByte();
                     br.AssertPattern(0x18, 0x00);
                 }
 
                 private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(UnkT00);
-                    bw.WriteInt16(UnkT04);
-                    bw.WriteInt16(UnkT06);
+                    bw.WriteByte(UnkT04);
+                    bw.WriteByte(UnkT05);
+                    bw.WriteByte(UnkT06);
+                    bw.WriteByte(UnkT07);
                     bw.WritePattern(0x18, 0x00);
                 }
             }
