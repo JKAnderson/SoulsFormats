@@ -9,6 +9,7 @@ BND3 | .\*bnd | A general-purpose file container used before DS2
 BND4 | .\*bnd | A general-purpose file container used since DS2
 BTAB | .btab | Controls lightmap atlasing
 BTL | .btl | Configures point light sources
+BTPB | .btpb | Contains baked light probes for a map
 BXF3 | .\*bhd + .\*bdt | Equivalent to BND3 but with a separate header and data file
 BXF4 | .\*bhd + .\*bdt | Equivalent to BND4 but with a separate header and data file
 CCM | .ccm | Determines font layout and texture mapping
