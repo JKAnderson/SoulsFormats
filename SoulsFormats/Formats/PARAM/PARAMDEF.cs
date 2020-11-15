@@ -41,6 +41,7 @@ namespace SoulsFormats
         // 103 - Ninja Blade, Another Century's Episode: R
         // 104 - Dark Souls, Steel Battalion: Heavy Armor
         // 201 - Bloodborne
+        // 202 - Dark Souls 3
         public short FormatVersion { get; set; }
 
         /// <summary>
@@ -63,18 +64,31 @@ namespace SoulsFormats
         /// </summary>
         protected override void Read(BinaryReaderEx br)
         {
-            BigEndian = br.GetSByte(0x2C) == -1;
-            br.BigEndian = BigEndian;
+            br.BigEndian = BigEndian = br.GetSByte(0x2C) == -1;
+            FormatVersion = br.GetInt16(0x2E);
 
             br.ReadInt32(); // File size
             short headerSize = br.AssertInt16(0x30, 0xFF);
             DataVersion = br.ReadInt16();
             short fieldCount = br.ReadInt16();
-            short fieldSize = br.AssertInt16(0x6C, 0x8C, 0xAC, 0xB0, 0xD0);
-            ParamType = br.ReadFixStr(0x20);
-            br.ReadByte(); // Big-endian
+            short fieldSize = br.AssertInt16(0x68, 0x6C, 0x8C, 0xAC, 0xB0, 0xD0);
+
+            if (FormatVersion >= 202)
+            {
+                br.AssertInt32(0);
+                ParamType = br.GetShiftJIS(br.ReadInt64());
+                br.AssertInt64(0);
+                br.AssertInt64(0);
+                br.AssertInt32(0);
+            }
+            else
+            {
+                ParamType = br.ReadFixStr(0x20);
+            }
+
+            br.AssertSByte(0, -1); // Big-endian
             Unicode = br.ReadBoolean();
-            FormatVersion = br.AssertInt16(101, 102, 103, 104, 201);
+            br.AssertInt16(101, 102, 103, 104, 201, 202); // Format version
             if (FormatVersion >= 200)
                 br.AssertInt64(0x38);
 
@@ -83,7 +97,7 @@ namespace SoulsFormats
 
             // Please note that for version 103 this value is wrong.
             if (!(FormatVersion == 101 && fieldSize == 0x8C || FormatVersion == 102 && fieldSize == 0xAC || FormatVersion == 103 && fieldSize == 0x6C
-                || FormatVersion == 104 && fieldSize == 0xB0 || FormatVersion == 201 && fieldSize == 0xD0))
+                || FormatVersion == 104 && fieldSize == 0xB0 || FormatVersion == 201 && fieldSize == 0xD0 || FormatVersion == 202 && fieldSize == 0x68))
                 throw new InvalidDataException($"Unexpected field size 0x{fieldSize:X} for version {FormatVersion}.");
 
             Fields = new List<Field>(fieldCount);
@@ -96,7 +110,7 @@ namespace SoulsFormats
         /// </summary>
         public override bool Validate(out Exception ex)
         {
-            if (!(FormatVersion == 101 || FormatVersion == 102 || FormatVersion == 103 || FormatVersion == 104 || FormatVersion == 201))
+            if (!(FormatVersion == 101 || FormatVersion == 102 || FormatVersion == 103 || FormatVersion == 104 || FormatVersion == 201 || FormatVersion == 201))
             {
                 ex = new InvalidDataException($"Unknown version: {FormatVersion}");
                 return false;
@@ -144,8 +158,22 @@ namespace SoulsFormats
                 bw.WriteInt16(0xB0);
             else if (FormatVersion == 201)
                 bw.WriteInt16(0xD0);
+            else if (FormatVersion == 202)
+                bw.WriteInt16(0x68);
 
-            bw.WriteFixStr(ParamType, 0x20, (byte)(FormatVersion >= 200 ? 0x00 : 0x20));
+            if (FormatVersion >= 202)
+            {
+                bw.WriteInt32(0);
+                bw.ReserveInt64("ParamTypeOffset");
+                bw.WriteInt64(0);
+                bw.WriteInt64(0);
+                bw.WriteInt32(0);
+            }
+            else
+            {
+                bw.WriteFixStr(ParamType, 0x20, (byte)(FormatVersion >= 200 ? 0x00 : 0x20));
+            }
+
             bw.WriteSByte((sbyte)(BigEndian ? -1 : 0));
             bw.WriteBoolean(Unicode);
             bw.WriteInt16(FormatVersion);
@@ -154,6 +182,12 @@ namespace SoulsFormats
 
             for (int i = 0; i < Fields.Count; i++)
                 Fields[i].Write(bw, this, i);
+
+            if (FormatVersion >= 202)
+            {
+                bw.FillInt64("ParamTypeOffset", bw.Position);
+                bw.WriteShiftJIS(ParamType, true);
+            }
 
             long descriptionsStart = bw.Position;
             for (int i = 0; i < Fields.Count; i++)
@@ -438,6 +472,21 @@ namespace SoulsFormats
             /// </summary>
             public int SortID { get; set; }
 
+            /// <summary>
+            /// Unknown; appears to be an identifier. May be null, only supported in versions >= 200, only present in version 202 so far.
+            /// </summary>
+            public string UnkB8 { get; set; }
+
+            /// <summary>
+            /// Unknown; appears to be a param type. May be null, only supported in versions >= 200, only present in version 202 so far.
+            /// </summary>
+            public string UnkC0 { get; set; }
+
+            /// <summary>
+            /// Unknown; appears to be a display string. May be null, only supported in versions >= 200, only present in version 202 so far.
+            /// </summary>
+            public string UnkC8 { get; set; }
+
             private static readonly Regex arrayLengthRx = new Regex(@"^(?<name>.+?)\s*\[\s*(?<length>\d+)\s*\]\s*$");
             private static readonly Regex bitSizeRx = new Regex(@"^(?<name>.+?)\s*\:\s*(?<size>\d+)\s*$");
 
@@ -466,7 +515,9 @@ namespace SoulsFormats
 
             internal Field(BinaryReaderEx br, PARAMDEF def)
             {
-                if (def.Unicode)
+                if (def.FormatVersion >= 202)
+                    DisplayName = br.GetUTF16(br.ReadInt64());
+                else if (def.Unicode)
                     DisplayName = br.ReadFixStrW(0x40);
                 else
                     DisplayName = br.ReadFixStr(0x40);
