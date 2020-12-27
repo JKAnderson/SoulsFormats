@@ -110,7 +110,7 @@ namespace SoulsFormats
         /// </summary>
         public override bool Validate(out Exception ex)
         {
-            if (!(FormatVersion == 101 || FormatVersion == 102 || FormatVersion == 103 || FormatVersion == 104 || FormatVersion == 201 || FormatVersion == 201))
+            if (!(FormatVersion == 101 || FormatVersion == 102 || FormatVersion == 103 || FormatVersion == 104 || FormatVersion == 201 || FormatVersion == 202))
             {
                 ex = new InvalidDataException($"Unknown version: {FormatVersion}");
                 return false;
@@ -189,18 +189,21 @@ namespace SoulsFormats
                 bw.WriteShiftJIS(ParamType, true);
             }
 
-            long descriptionsStart = bw.Position;
+            long fieldStringsStart = bw.Position;
+            var sharedStringOffsets = new Dictionary<string, long>();
             for (int i = 0; i < Fields.Count; i++)
-                Fields[i].WriteDescription(bw, this, i);
+                Fields[i].WriteStrings(bw, this, i, sharedStringOffsets);
 
-            if (FormatVersion >= 104)
+            if (FormatVersion >= 104 && FormatVersion < 202)
             {
-                long descriptionsLength = bw.Position - descriptionsStart;
-                if (descriptionsLength % 0x10 != 0)
-                    bw.WritePattern((int)(0x10 - descriptionsLength % 0x10), 0x00);
+                long fieldStringsLength = bw.Position - fieldStringsStart;
+                if (fieldStringsLength % 0x10 != 0)
+                    bw.WritePattern((int)(0x10 - fieldStringsLength % 0x10), 0x00);
             }
             else
             {
+                if (FormatVersion >= 202 && bw.Position % 0x10 == 0)
+                    bw.WritePattern(0x10, 0x00);
                 bw.Pad(0x10);
             }
             bw.FillInt32("FileSize", (int)bw.Position);
@@ -487,8 +490,8 @@ namespace SoulsFormats
             /// </summary>
             public string UnkC8 { get; set; }
 
-            private static readonly Regex arrayLengthRx = new Regex(@"^(?<name>.+?)\s*\[\s*(?<length>\d+)\s*\]\s*$");
-            private static readonly Regex bitSizeRx = new Regex(@"^(?<name>.+?)\s*\:\s*(?<size>\d+)\s*$");
+            private static readonly Regex arrayLengthRx = new Regex(@"^\s*(?<name>.+?)\s*\[\s*(?<length>\d+)\s*\]\s*$");
+            private static readonly Regex bitSizeRx = new Regex(@"^\s*(?<name>.+?)\s*\:\s*(?<size>\d+)\s*$");
 
             /// <summary>
             /// Creates a Field with placeholder values.
@@ -542,13 +545,18 @@ namespace SoulsFormats
                 else
                     descriptionOffset = br.ReadInt32();
 
-                InternalType = br.ReadFixStr(0x20);
+                if (def.FormatVersion >= 202)
+                    InternalType = br.GetASCII(br.ReadInt64()).Trim();
+                else
+                    InternalType = br.ReadFixStr(0x20).Trim();
 
                 BitSize = -1;
                 if (def.FormatVersion >= 102)
                 {
-                    // A few fields in DS1 FaceGenParam have a trailing space in the name
-                    InternalName = br.ReadFixStr(0x20).Trim();
+                    if (def.FormatVersion >= 202)
+                        InternalName = br.GetASCII(br.ReadInt64()).Trim();
+                    else
+                        InternalName = br.ReadFixStr(0x20).Trim();
 
                     Match match = bitSizeRx.Match(InternalName);
                     if (match.Success)
@@ -572,7 +580,19 @@ namespace SoulsFormats
                     SortID = br.ReadInt32();
 
                 if (def.FormatVersion >= 200)
-                    br.AssertPattern(0x1C, 0x00);
+                {
+                    br.AssertInt32(0);
+                    long unkB8Offset = br.ReadInt64();
+                    long unkC0Offset = br.ReadInt64();
+                    long unkC8Offset = br.ReadInt64();
+
+                    if (unkB8Offset != 0)
+                        UnkB8 = br.GetASCII(unkB8Offset);
+                    if (unkC0Offset != 0)
+                        UnkC0 = br.GetASCII(unkC0Offset);
+                    if (unkC8Offset != 0)
+                        UnkC8 = br.GetUTF16(unkC8Offset);
+                }
 
                 if (descriptionOffset != 0)
                 {
@@ -585,7 +605,9 @@ namespace SoulsFormats
 
             internal void Write(BinaryWriterEx bw, PARAMDEF def, int index)
             {
-                if (def.Unicode)
+                if (def.FormatVersion >= 202)
+                    bw.ReserveInt64($"DisplayNameOffset{index}");
+                else if (def.Unicode)
                     bw.WriteFixStrW(DisplayName, 0x40, (byte)(def.FormatVersion >= 104 ? 0x00 : 0x20));
                 else
                     bw.WriteFixStr(DisplayName, 0x40, (byte)(def.FormatVersion >= 104 ? 0x00 : 0x20));
@@ -605,29 +627,36 @@ namespace SoulsFormats
                 else
                     bw.ReserveInt32($"DescriptionOffset{index}");
 
-                bw.WriteFixStr(InternalType, 0x20, padding);
+                if (def.FormatVersion >= 202)
+                    bw.ReserveInt64($"InternalTypeOffset{index}");
+                else
+                    bw.WriteFixStr(InternalType, 0x20, padding);
 
-                if (def.FormatVersion >= 102)
-                {
-                    string internalName = InternalName;
-                    // This is accurate except for "hasTarget : 1" in SpEffect
-                    if (BitSize != -1)
-                        internalName = $"{internalName}:{BitSize}";
-                    // BB is not consistent about including [1] or not, but PTDE always does
-                    else if (ParamUtil.IsArrayType(DisplayType))
-                        internalName = $"{internalName}[{ArrayLength}]";
-                    bw.WriteFixStr(internalName, 0x20, padding);
-                }
+                if (def.FormatVersion >= 202)
+                    bw.ReserveInt64($"InternalNameOffset{index}");
+                else if (def.FormatVersion >= 102)
+                    bw.WriteFixStr(MakeInternalName(), 0x20, padding);
 
                 if (def.FormatVersion >= 104)
                     bw.WriteInt32(SortID);
 
                 if (def.FormatVersion >= 200)
-                    bw.WritePattern(0x1C, 0x00);
+                {
+                    bw.WriteInt32(0);
+                    bw.ReserveInt64($"UnkB8Offset{index}");
+                    bw.ReserveInt64($"UnkC0Offset{index}");
+                    bw.ReserveInt64($"UnkC8Offset{index}");
+                }
             }
 
-            internal void WriteDescription(BinaryWriterEx bw, PARAMDEF def, int index)
+            internal void WriteStrings(BinaryWriterEx bw, PARAMDEF def, int index, Dictionary<string, long> sharedStringOffsets)
             {
+                if (def.FormatVersion >= 202)
+                {
+                    bw.FillInt64($"DisplayNameOffset{index}", bw.Position);
+                    bw.WriteUTF16(DisplayName, true);
+                }
+
                 long descriptionOffset = 0;
                 if (Description != null)
                 {
@@ -642,6 +671,50 @@ namespace SoulsFormats
                     bw.FillInt64($"DescriptionOffset{index}", descriptionOffset);
                 else
                     bw.FillInt32($"DescriptionOffset{index}", (int)descriptionOffset);
+
+                if (def.FormatVersion >= 202)
+                {
+                    bw.FillInt64($"InternalTypeOffset{index}", bw.Position);
+                    bw.WriteASCII(InternalType, true);
+
+                    bw.FillInt64($"InternalNameOffset{index}", bw.Position);
+                    bw.WriteASCII(MakeInternalName(), true);
+                }
+
+                if (def.FormatVersion >= 200)
+                {
+                    long writeSharedStringMaybe(string str, bool unicode)
+                    {
+                        if (str == null)
+                            return 0;
+
+                        if (!sharedStringOffsets.ContainsKey(str))
+                        {
+                            sharedStringOffsets[str] = bw.Position;
+                            if (unicode)
+                                bw.WriteUTF16(str, true);
+                            else
+                                bw.WriteASCII(str, true);
+                        }
+                        return sharedStringOffsets[str];
+                    }
+
+                    bw.FillInt64($"UnkB8Offset{index}", writeSharedStringMaybe(UnkB8, false));
+                    bw.FillInt64($"UnkC0Offset{index}", writeSharedStringMaybe(UnkC0, false));
+                    bw.FillInt64($"UnkC8Offset{index}", writeSharedStringMaybe(UnkC8, true));
+                }
+            }
+
+            private string MakeInternalName()
+            {
+                // This formatting is almost 100% accurate in DS1, less so in BB, and a complete crapshoot in DS3
+                // C'est la vie.
+                if (BitSize != -1)
+                    return $"{InternalName}:{BitSize}";
+                else if (ParamUtil.IsArrayType(DisplayType))
+                    return $"{InternalName}[{ArrayLength}]";
+                else
+                    return InternalName;
             }
 
             /// <summary>
@@ -697,6 +770,10 @@ namespace SoulsFormats
                 Maximum = node.ReadSingleOrDefault("Maximum", ParamUtil.GetDefaultMaximum(DisplayType), CultureInfo.InvariantCulture);
                 Increment = node.ReadSingleOrDefault("Increment", ParamUtil.GetDefaultIncrement(DisplayType), CultureInfo.InvariantCulture);
                 SortID = node.ReadInt32OrDefault("SortID", 0);
+
+                UnkB8 = node.ReadStringIfExist("UnkB8");
+                UnkC0 = node.ReadStringIfExist("UnkC0");
+                UnkC8 = node.ReadStringIfExist("UnkC8");
             }
 
             internal void XmlSerialize(XmlWriter xw)
@@ -720,6 +797,10 @@ namespace SoulsFormats
                 xw.WriteDefaultElement("Maximum", Maximum, ParamUtil.GetDefaultMaximum(DisplayType), "R", CultureInfo.InvariantCulture);
                 xw.WriteDefaultElement("Increment", Increment, ParamUtil.GetDefaultIncrement(DisplayType), "R", CultureInfo.InvariantCulture);
                 xw.WriteDefaultElement("SortID", SortID, 0);
+
+                xw.WriteDefaultElement("UnkB8", UnkB8, null);
+                xw.WriteDefaultElement("UnkC0", UnkC0, null);
+                xw.WriteDefaultElement("UnkC8", UnkC8, null);
             }
             #endregion
         }
