@@ -42,6 +42,7 @@ NVM | .nvm | The navmesh format used in DeS and DS1
 PARAMDEF | .def, .paramdef | A companion format that specifies the format of data in a param
 PARAMTDF | .tdf | A companion format that provides friendly names for enumerated types in params
 PMDCL | .pmdcl | Places and configures static map decals in DS3
+RMB | .rmb | Controller rumble effects for all games
 TAE3 | .tae | The animation event format used in DS3
 TPF | .tpf | A container for platform-specific texture data
 
