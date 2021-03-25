@@ -321,6 +321,11 @@ namespace SoulsFormats
                 public int ItemLot2 { get; set; }
 
                 /// <summary>
+                /// Unknown.
+                /// </summary>
+                public int UnkT18 { get; set; }
+
+                /// <summary>
                 /// If not -1, uses an entry from ActionButtonParam for the pickup prompt.
                 /// </summary>
                 public int ActionButtonParamID { get; set; }
@@ -347,6 +352,7 @@ namespace SoulsFormats
                 {
                     ItemLot1 = -1;
                     ItemLot2 = -1;
+                    UnkT18 = -1;
                     ActionButtonParamID = -1;
                     PickupAnimID = 60070;
                 }
@@ -361,7 +367,7 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                     ItemLot1 = br.ReadInt32();
                     ItemLot2 = br.ReadInt32();
-                    br.AssertInt32(-1);
+                    UnkT18 = br.ReadInt32();
                     br.AssertInt32(-1);
                     br.AssertInt32(-1);
                     br.AssertInt32(-1);
@@ -390,7 +396,7 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                     bw.WriteInt32(ItemLot1);
                     bw.WriteInt32(ItemLot2);
-                    bw.WriteInt32(-1);
+                    bw.WriteInt32(UnkT18);
                     bw.WriteInt32(-1);
                     bw.WriteInt32(-1);
                     bw.WriteInt32(-1);

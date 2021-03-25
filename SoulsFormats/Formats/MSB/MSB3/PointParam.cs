@@ -699,6 +699,11 @@ namespace SoulsFormats
                 public int EffectID { get; set; }
 
                 /// <summary>
+                /// Unknown.
+                /// </summary>
+                public int UnkT04 { get; set; }
+
+                /// <summary>
                 /// If true, the effect is off by default until enabled by event scripts.
                 /// </summary>
                 public bool StartDisabled { get; set; }
@@ -709,6 +714,7 @@ namespace SoulsFormats
                 public SFX() : base($"{nameof(Region)}: {nameof(SFX)}")
                 {
                     EffectID = -1;
+                    UnkT04 = -1;
                 }
 
                 internal SFX(BinaryReaderEx br) : base(br) { }
@@ -717,7 +723,7 @@ namespace SoulsFormats
                 {
                     EffectID = br.ReadInt32();
                     // These are not additional FFX IDs, I checked
-                    br.AssertInt32(-1);
+                    UnkT04 = br.ReadInt32();
                     br.AssertInt32(-1);
                     br.AssertInt32(-1);
                     br.AssertInt32(-1);
@@ -727,7 +733,7 @@ namespace SoulsFormats
                 private protected override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(EffectID);
-                    bw.WriteInt32(-1);
+                    bw.WriteInt32(UnkT04);
                     bw.WriteInt32(-1);
                     bw.WriteInt32(-1);
                     bw.WriteInt32(-1);
