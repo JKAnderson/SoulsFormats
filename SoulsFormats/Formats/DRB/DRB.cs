@@ -747,20 +747,6 @@ namespace SoulsFormats
             bw.FillInt32($"BlockSize{name}", (int)(bw.Position - start));
             bw.FillInt32($"BlockCount{name}", count);
         }
-
-        private static Color ReadABGR(BinaryReaderEx br)
-        {
-            byte[] abgr = br.ReadBytes(4);
-            return Color.FromArgb(abgr[0], abgr[3], abgr[2], abgr[1]);
-        }
-
-        private static void WriteABGR(BinaryWriterEx bw, Color color)
-        {
-            bw.WriteByte(color.A);
-            bw.WriteByte(color.B);
-            bw.WriteByte(color.G);
-            bw.WriteByte(color.R);
-        }
         #endregion
 
         #region SoulsFile boilerplate

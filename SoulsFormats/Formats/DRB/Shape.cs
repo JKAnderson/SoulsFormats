@@ -321,19 +321,19 @@ namespace SoulsFormats
                 internal GouraudRect(BinaryReaderEx br, bool dsr) : base(br, dsr)
                 {
                     Unk00 = br.ReadInt32();
-                    TopLeftColor = ReadABGR(br);
-                    TopRightColor = ReadABGR(br);
-                    BottomRightColor = ReadABGR(br);
-                    BottomLeftColor = ReadABGR(br);
+                    TopLeftColor = br.ReadABGR();
+                    TopRightColor = br.ReadABGR();
+                    BottomRightColor = br.ReadABGR();
+                    BottomLeftColor = br.ReadABGR();
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw, Dictionary<string, int> stringOffsets)
                 {
                     bw.WriteInt32(Unk00);
-                    WriteABGR(bw, TopLeftColor);
-                    WriteABGR(bw, TopRightColor);
-                    WriteABGR(bw, BottomRightColor);
-                    WriteABGR(bw, BottomLeftColor);
+                    bw.WriteABGR(TopLeftColor);
+                    bw.WriteABGR(TopRightColor);
+                    bw.WriteABGR(BottomRightColor);
+                    bw.WriteABGR(BottomLeftColor);
                 }
             }
 
@@ -402,10 +402,10 @@ namespace SoulsFormats
                     Unk04 = br.ReadInt32();
                     Unk08 = br.ReadInt16();
                     Unk0A = br.ReadInt16();
-                    TopLeftColor = ReadABGR(br);
-                    TopRightColor = ReadABGR(br);
-                    BottomRightColor = ReadABGR(br);
-                    BottomLeftColor = ReadABGR(br);
+                    TopLeftColor = br.ReadABGR();
+                    TopRightColor = br.ReadABGR();
+                    BottomRightColor = br.ReadABGR();
+                    BottomLeftColor = br.ReadABGR();
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw, Dictionary<string, int> stringOffsets)
@@ -414,10 +414,10 @@ namespace SoulsFormats
                     bw.WriteInt32(Unk04);
                     bw.WriteInt16(Unk08);
                     bw.WriteInt16(Unk0A);
-                    WriteABGR(bw, TopLeftColor);
-                    WriteABGR(bw, TopRightColor);
-                    WriteABGR(bw, BottomRightColor);
-                    WriteABGR(bw, BottomLeftColor);
+                    bw.WriteABGR(TopLeftColor);
+                    bw.WriteABGR(TopRightColor);
+                    bw.WriteABGR(BottomRightColor);
+                    bw.WriteABGR(BottomLeftColor);
                 }
             }
 
@@ -597,14 +597,14 @@ namespace SoulsFormats
                 {
                     Unk00 = br.ReadInt32();
                     PaletteColor = br.ReadInt32();
-                    CustomColor = ReadABGR(br);
+                    CustomColor = br.ReadABGR();
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw, Dictionary<string, int> stringOffsets)
                 {
                     bw.WriteInt32(Unk00);
                     bw.WriteInt32(PaletteColor);
-                    WriteABGR(bw, CustomColor);
+                    bw.WriteABGR(CustomColor);
                 }
             }
 
@@ -801,7 +801,7 @@ namespace SoulsFormats
                     TextureIndex = br.ReadInt16();
                     Flags = (SpriteFlags)br.ReadUInt16();
                     PaletteColor = br.ReadInt32();
-                    CustomColor = ReadABGR(br);
+                    CustomColor = br.ReadABGR();
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw, Dictionary<string, int> stringOffsets)
@@ -813,7 +813,7 @@ namespace SoulsFormats
                     bw.WriteInt16(TextureIndex);
                     bw.WriteUInt16((ushort)Flags);
                     bw.WriteInt32(PaletteColor);
-                    WriteABGR(bw, CustomColor);
+                    bw.WriteABGR(CustomColor);
                 }
             }
 
@@ -988,7 +988,7 @@ namespace SoulsFormats
                     Unk01 = br.ReadByte();
                     LineSpacing = br.ReadInt16();
                     PaletteColor = br.ReadInt32();
-                    CustomColor = ReadABGR(br);
+                    CustomColor = br.ReadABGR();
                     FontSize = br.ReadInt16();
                     Alignment = (AlignFlags)br.ReadByte();
                     TextType = br.ReadEnum8<TxtType>();
@@ -1021,7 +1021,7 @@ namespace SoulsFormats
                     bw.WriteByte(Unk01);
                     bw.WriteInt16(LineSpacing);
                     bw.WriteInt32(PaletteColor);
-                    WriteABGR(bw, CustomColor);
+                    bw.WriteABGR(CustomColor);
                     bw.WriteInt16(FontSize);
                     bw.WriteByte((byte)Alignment);
                     bw.WriteByte((byte)TextType);
