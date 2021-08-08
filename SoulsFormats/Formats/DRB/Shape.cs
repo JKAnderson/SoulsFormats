@@ -7,59 +7,18 @@ namespace SoulsFormats
 {
     public partial class DRB
     {
-        /// <summary>
-        /// Possible types of a UI element.
-        /// </summary>
-        public enum ShapeType
+        internal enum ShapeType
         {
-            /// <summary>
-            /// References another element group attached to this element.
-            /// </summary>
             Dialog,
-
-            /// <summary>
-            /// A rectangle with color interpolated between each corner.
-            /// </summary>
+            GouraudFrame,
             GouraudRect,
-
-            /// <summary>
-            /// Presumably a sprite with interpolated coloring.
-            /// </summary>
             GouraudSprite,
-
-            /// <summary>
-            /// Unknown.
-            /// </summary>
             Mask,
-
-            /// <summary>
-            /// Unknown.
-            /// </summary>
             MonoFrame,
-
-            /// <summary>
-            /// A rectangle with a solid color.
-            /// </summary>
             MonoRect,
-
-            /// <summary>
-            /// An invisible element used to mark a position.
-            /// </summary>
             Null,
-
-            /// <summary>
-            /// A scrolling text field.
-            /// </summary>
             ScrollText,
-
-            /// <summary>
-            /// Displays a region of a texture.
-            /// </summary>
             Sprite,
-
-            /// <summary>
-            /// A fixed text field.
-            /// </summary>
             Text
         }
 
@@ -68,10 +27,7 @@ namespace SoulsFormats
         /// </summary>
         public abstract class Shape
         {
-            /// <summary>
-            /// The type of this element.
-            /// </summary>
-            public abstract ShapeType Type { get; }
+            internal abstract ShapeType Type { get; }
 
             /// <summary>
             /// Left bound of this element, relative to 1280x720.
@@ -106,7 +62,7 @@ namespace SoulsFormats
             /// <summary>
             /// For DSR, the behavior of scaling for this element.
             /// </summary>
-            public int ScalingType { get; set; }
+            public short ScalingMode { get; set; }
 
             internal Shape()
             {
@@ -114,7 +70,7 @@ namespace SoulsFormats
                 ScalingOriginY = -1;
             }
 
-            internal static Shape Read(BinaryReaderEx br, bool dsr, Dictionary<int, string> strings, long shprStart)
+            internal static Shape Read(BinaryReaderEx br, DRBVersion version, Dictionary<int, string> strings, long shprStart)
             {
                 int typeOffset = br.ReadInt32();
                 int shprOffset = br.ReadInt32();
@@ -124,25 +80,27 @@ namespace SoulsFormats
                 br.StepIn(shprStart + shprOffset);
                 {
                     if (type == "Dialog")
-                        result = new Dialog(br, dsr);
+                        result = new Dialog(br, version);
+                    else if (type == "GouraudFrame")
+                        result = new GouraudFrame(br, version);
                     else if (type == "GouraudRect")
-                        result = new GouraudRect(br, dsr);
+                        result = new GouraudRect(br, version);
                     else if (type == "GouraudSprite")
-                        result = new GouraudSprite(br, dsr);
+                        result = new GouraudSprite(br, version);
                     else if (type == "Mask")
-                        result = new Mask(br, dsr);
+                        result = new Mask(br, version, strings);
                     else if (type == "MonoFrame")
-                        result = new MonoFrame(br, dsr);
+                        result = new MonoFrame(br, version);
                     else if (type == "MonoRect")
-                        result = new MonoRect(br, dsr);
+                        result = new MonoRect(br, version);
                     else if (type == "Null")
-                        result = new Null(br, dsr);
+                        result = new Null(br, version);
                     else if (type == "ScrollText")
-                        result = new ScrollText(br, dsr, strings);
+                        result = new ScrollText(br, version, strings);
                     else if (type == "Sprite")
-                        result = new Sprite(br, dsr);
+                        result = new Sprite(br, version);
                     else if (type == "Text")
-                        result = new Text(br, dsr, strings);
+                        result = new Text(br, version, strings);
                     else
                         throw new InvalidDataException($"Unknown shape type: {type}");
                 }
@@ -150,39 +108,41 @@ namespace SoulsFormats
                 return result;
             }
 
-            internal Shape(BinaryReaderEx br, bool dsr)
+            internal Shape(BinaryReaderEx br, DRBVersion version)
             {
                 LeftEdge = br.ReadInt16();
                 TopEdge = br.ReadInt16();
                 RightEdge = br.ReadInt16();
                 BottomEdge = br.ReadInt16();
 
-                if (dsr && Type != ShapeType.Null)
+                if (version == DRBVersion.DarkSoulsRemastered && Type != ShapeType.Null)
                 {
                     ScalingOriginX = br.ReadInt16();
                     ScalingOriginY = br.ReadInt16();
-                    ScalingType = br.ReadInt32();
+                    ScalingMode = br.ReadInt16();
+                    br.AssertInt16(0);
                 }
                 else
                 {
                     ScalingOriginX = -1;
                     ScalingOriginY = -1;
-                    ScalingType = 0;
+                    ScalingMode = 0;
                 }
             }
 
-            internal void WriteData(BinaryWriterEx bw, bool dsr, Dictionary<string, int> stringOffsets)
+            internal void WriteData(BinaryWriterEx bw, DRBVersion version, Dictionary<string, int> stringOffsets)
             {
                 bw.WriteInt16(LeftEdge);
                 bw.WriteInt16(TopEdge);
                 bw.WriteInt16(RightEdge);
                 bw.WriteInt16(BottomEdge);
 
-                if (dsr && Type != ShapeType.Null)
+                if (version == DRBVersion.DarkSoulsRemastered && Type != ShapeType.Null)
                 {
                     bw.WriteInt16(ScalingOriginX);
                     bw.WriteInt16(ScalingOriginY);
-                    bw.WriteInt32(ScalingType);
+                    bw.WriteInt16(ScalingMode);
+                    bw.WriteInt16(0);
                 }
 
                 WriteSpecific(bw, stringOffsets);
@@ -205,497 +165,36 @@ namespace SoulsFormats
             }
 
             /// <summary>
-            /// References another element group attached to this element.
+            /// Color blending mode of various shapes.
             /// </summary>
-            public class Dialog : Shape
+            public enum BlendingMode : byte
             {
                 /// <summary>
-                /// The type of this element.
+                /// No transparency.
                 /// </summary>
-                public override ShapeType Type => ShapeType.Dialog;
+                Opaque = 0,
 
                 /// <summary>
-                /// Dlg referenced by this element; must be found in the DRB's Dlg list.
+                /// Alpha transparency.
                 /// </summary>
-                public Dlg Dlg { get; set; }
-                internal short DlgIndex;
+                Alpha = 1,
 
                 /// <summary>
-                /// Unknown; always 0 or 1.
+                /// Color is added to the underlying color value.
                 /// </summary>
-                public byte Unk02 { get; set; }
+                Add = 2,
 
                 /// <summary>
-                /// Unknown; always 1.
+                /// Color is subtracted from the underlying color value.
                 /// </summary>
-                public byte Unk03 { get; set; }
-
-                /// <summary>
-                /// Unknown.
-                /// </summary>
-                public int Unk04 { get; set; }
-
-                /// <summary>
-                /// Unknown.
-                /// </summary>
-                public int Unk08 { get; set; }
-
-                /// <summary>
-                /// Unknown.
-                /// </summary>
-                public int Unk0C { get; set; }
-
-                /// <summary>
-                /// Creates a Dialog with default values.
-                /// </summary>
-                public Dialog()
-                {
-                    DlgIndex = -1;
-                    Unk03 = 1;
-                }
-
-                internal Dialog(BinaryReaderEx br, bool dsr) : base(br, dsr)
-                {
-                    DlgIndex = br.ReadInt16();
-                    Unk02 = br.ReadByte();
-                    Unk03 = br.ReadByte();
-                    Unk04 = br.ReadInt32();
-                    Unk08 = br.ReadInt32();
-                    Unk0C = br.ReadInt32();
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw, Dictionary<string, int> stringOffsets)
-                {
-                    bw.WriteInt16(DlgIndex);
-                    bw.WriteByte(Unk02);
-                    bw.WriteByte(Unk03);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                }
+                Subtract = 3,
             }
 
             /// <summary>
-            /// A rectangle with color interpolated between each corner.
-            /// </summary>
-            public class GouraudRect : Shape
-            {
-                /// <summary>
-                /// The type of this element.
-                /// </summary>
-                public override ShapeType Type => ShapeType.GouraudRect;
-
-                /// <summary>
-                /// Unknown; always 1.
-                /// </summary>
-                public int Unk00 { get; set; }
-
-                /// <summary>
-                /// The color of the top left corner of the rectangle.
-                /// </summary>
-                public Color TopLeftColor { get; set; }
-
-                /// <summary>
-                /// The color of the top right corner of the rectangle.
-                /// </summary>
-                public Color TopRightColor { get; set; }
-
-                /// <summary>
-                /// The color of the bottom right corner of the rectangle.
-                /// </summary>
-                public Color BottomRightColor { get; set; }
-
-                /// <summary>
-                /// The color of the bottom left corner of the rectangle.
-                /// </summary>
-                public Color BottomLeftColor { get; set; }
-
-                /// <summary>
-                /// Creates a GouraudRect with default values.
-                /// </summary>
-                public GouraudRect() : base()
-                {
-                    Unk00 = 1;
-                }
-
-                internal GouraudRect(BinaryReaderEx br, bool dsr) : base(br, dsr)
-                {
-                    Unk00 = br.ReadInt32();
-                    TopLeftColor = br.ReadABGR();
-                    TopRightColor = br.ReadABGR();
-                    BottomRightColor = br.ReadABGR();
-                    BottomLeftColor = br.ReadABGR();
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw, Dictionary<string, int> stringOffsets)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteABGR(TopLeftColor);
-                    bw.WriteABGR(TopRightColor);
-                    bw.WriteABGR(BottomRightColor);
-                    bw.WriteABGR(BottomLeftColor);
-                }
-            }
-
-            /// <summary>
-            /// Presumably a sprite with interpolated coloring.
-            /// </summary>
-            public class GouraudSprite : Shape
-            {
-                /// <summary>
-                /// The type of this element.
-                /// </summary>
-                public override ShapeType Type => ShapeType.GouraudSprite;
-
-                /// <summary>
-                /// Unknown; always 0.
-                /// </summary>
-                public int Unk00 { get; set; }
-
-                /// <summary>
-                /// Unknown; always 0.
-                /// </summary>
-                public int Unk04 { get; set; }
-
-                /// <summary>
-                /// Unknown; always -1.
-                /// </summary>
-                public short Unk08 { get; set; }
-
-                /// <summary>
-                /// Unknown; always 256.
-                /// </summary>
-                public short Unk0A { get; set; }
-
-                /// <summary>
-                /// The color of the top left corner of the sprite.
-                /// </summary>
-                public Color TopLeftColor { get; set; }
-
-                /// <summary>
-                /// The color of the top right corner of the sprite.
-                /// </summary>
-                public Color TopRightColor { get; set; }
-
-                /// <summary>
-                /// The color of the bottom right corner of the sprite.
-                /// </summary>
-                public Color BottomRightColor { get; set; }
-
-                /// <summary>
-                /// The color of the bottom left corner of the sprite.
-                /// </summary>
-                public Color BottomLeftColor { get; set; }
-
-                /// <summary>
-                /// Creates a GouraudSprite with default values.
-                /// </summary>
-                public GouraudSprite()
-                {
-                    Unk08 = -1;
-                    Unk0A = 256;
-                }
-
-                internal GouraudSprite(BinaryReaderEx br, bool dsr) : base(br, dsr)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadInt32();
-                    Unk08 = br.ReadInt16();
-                    Unk0A = br.ReadInt16();
-                    TopLeftColor = br.ReadABGR();
-                    TopRightColor = br.ReadABGR();
-                    BottomRightColor = br.ReadABGR();
-                    BottomLeftColor = br.ReadABGR();
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw, Dictionary<string, int> stringOffsets)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt16(Unk08);
-                    bw.WriteInt16(Unk0A);
-                    bw.WriteABGR(TopLeftColor);
-                    bw.WriteABGR(TopRightColor);
-                    bw.WriteABGR(BottomRightColor);
-                    bw.WriteABGR(BottomLeftColor);
-                }
-            }
-
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public class Mask : Shape
-            {
-                /// <summary>
-                /// The type of this element.
-                /// </summary>
-                public override ShapeType Type => ShapeType.Mask;
-
-                /// <summary>
-                /// Unknown.
-                /// </summary>
-                public int Unk00 { get; set; }
-
-                /// <summary>
-                /// Unknown; always 1.
-                /// </summary>
-                public int Unk04 { get; set; }
-
-                /// <summary>
-                /// Unknown; always 0.
-                /// </summary>
-                public int Unk08 { get; set; }
-
-                /// <summary>
-                /// Unknown; always 0.
-                /// </summary>
-                public byte Unk0C { get; set; }
-
-                /// <summary>
-                /// Unknown; always 0.
-                /// </summary>
-                public byte Unk0D { get; set; }
-
-                /// <summary>
-                /// Unknown; always 0.
-                /// </summary>
-                public byte Unk0E { get; set; }
-
-                /// <summary>
-                /// Creates a Mask with default values.
-                /// </summary>
-                public Mask() : base()
-                {
-                    Unk04 = 1;
-                }
-
-                internal Mask(BinaryReaderEx br, bool dsr) : base(br, dsr)
-                {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadInt32();
-                    Unk08 = br.ReadInt32();
-                    Unk0C = br.ReadByte();
-                    Unk0D = br.ReadByte();
-                    Unk0E = br.ReadByte();
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw, Dictionary<string, int> stringOffsets)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                    bw.WriteByte(Unk0C);
-                    bw.WriteByte(Unk0D);
-                    bw.WriteByte(Unk0E);
-                }
-            }
-
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public class MonoFrame : Shape
-            {
-                /// <summary>
-                /// The type of this element.
-                /// </summary>
-                public override ShapeType Type => ShapeType.MonoFrame;
-
-                /// <summary>
-                /// Unknown; always 1.
-                /// </summary>
-                public byte Unk00 { get; set; }
-
-                /// <summary>
-                /// Unknown; always 0.
-                /// </summary>
-                public byte Unk01 { get; set; }
-
-                /// <summary>
-                /// Unknown; always 0.
-                /// </summary>
-                public byte Unk02 { get; set; }
-
-                /// <summary>
-                /// Unknown; always 1-3.
-                /// </summary>
-                public byte Unk03 { get; set; }
-
-                /// <summary>
-                /// Unknown; always 0-7.
-                /// </summary>
-                public int Unk04 { get; set; }
-
-                /// <summary>
-                /// Unknown; possibly a color.
-                /// </summary>
-                public int Unk08 { get; set; }
-
-                /// <summary>
-                /// Creates a MonoFrame with default values.
-                /// </summary>
-                public MonoFrame() : base()
-                {
-                    Unk00 = 1;
-                    Unk03 = 1;
-                }
-
-                internal MonoFrame(BinaryReaderEx br, bool dsr) : base(br, dsr)
-                {
-                    Unk00 = br.ReadByte();
-                    Unk01 = br.ReadByte();
-                    Unk02 = br.ReadByte();
-                    Unk03 = br.ReadByte();
-                    Unk04 = br.ReadInt32();
-                    Unk08 = br.ReadInt32();
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw, Dictionary<string, int> stringOffsets)
-                {
-                    bw.WriteByte(Unk00);
-                    bw.WriteByte(Unk01);
-                    bw.WriteByte(Unk02);
-                    bw.WriteByte(Unk03);
-                    bw.WriteInt32(Unk04);
-                    bw.WriteInt32(Unk08);
-                }
-            }
-
-            /// <summary>
-            /// A rectangle with a solid color.
-            /// </summary>
-            public class MonoRect : Shape
-            {
-                /// <summary>
-                /// The type of this element.
-                /// </summary>
-                public override ShapeType Type => ShapeType.MonoRect;
-
-                /// <summary>
-                /// Unknown; always 1.
-                /// </summary>
-                public int Unk00 { get; set; }
-
-                /// <summary>
-                /// Chooses a color from a palette of 1-80, or 0 to use a custom color.
-                /// </summary>
-                public int PaletteColor { get; set; }
-
-                /// <summary>
-                /// When PaletteColor is 0, specifies the color of the rectangle.
-                /// </summary>
-                public Color CustomColor { get; set; }
-
-                /// <summary>
-                /// Creates a MonoRect with default values.
-                /// </summary>
-                public MonoRect() : base()
-                {
-                    Unk00 = 1;
-                }
-
-                internal MonoRect(BinaryReaderEx br, bool dsr) : base(br, dsr)
-                {
-                    Unk00 = br.ReadInt32();
-                    PaletteColor = br.ReadInt32();
-                    CustomColor = br.ReadABGR();
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw, Dictionary<string, int> stringOffsets)
-                {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(PaletteColor);
-                    bw.WriteABGR(CustomColor);
-                }
-            }
-
-            /// <summary>
-            /// An invisible element used to mark a position.
-            /// </summary>
-            public class Null : Shape
-            {
-                /// <summary>
-                /// The type of this element.
-                /// </summary>
-                public override ShapeType Type => ShapeType.Null;
-
-                /// <summary>
-                /// Creates a Null with default values.
-                /// </summary>
-                public Null() : base() { }
-
-                internal Null(BinaryReaderEx br, bool dsr) : base(br, dsr) { }
-
-                internal override void WriteSpecific(BinaryWriterEx bw, Dictionary<string, int> stringOffsets) { }
-            }
-
-            /// <summary>
-            /// A scrolling text field.
-            /// </summary>
-            public class ScrollText : TextBase
-            {
-                /// <summary>
-                /// The type of this element.
-                /// </summary>
-                public override ShapeType Type => ShapeType.ScrollText;
-
-                /// <summary>
-                /// Unknown; always 0.
-                /// </summary>
-                public int Unk1C { get; set; }
-
-                /// <summary>
-                /// Unknown; always 0.
-                /// </summary>
-                public int Unk20 { get; set; }
-
-                /// <summary>
-                /// Unknown; always 15 or 100.
-                /// </summary>
-                public int Unk24 { get; set; }
-
-                /// <summary>
-                /// Unknown; always 0.
-                /// </summary>
-                public int Unk28 { get; set; }
-
-                /// <summary>
-                /// Unknown; always 0.
-                /// </summary>
-                public short Unk2C { get; set; }
-
-                /// <summary>
-                /// Creates a ScrollText with default values.
-                /// </summary>
-                public ScrollText() : base()
-                {
-                    Unk24 = 15;
-                }
-
-                internal ScrollText(BinaryReaderEx br, bool dsr, Dictionary<int, string> strings) : base(br, dsr, strings)
-                {
-                    Unk1C = br.ReadInt32();
-                    Unk20 = br.ReadInt32();
-                    Unk24 = br.ReadInt32();
-                    Unk28 = br.ReadInt32();
-                    Unk2C = br.ReadInt16();
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw, Dictionary<string, int> stringOffsets)
-                {
-                    base.WriteSpecific(bw, stringOffsets);
-                    bw.WriteInt32(Unk1C);
-                    bw.WriteInt32(Unk20);
-                    bw.WriteInt32(Unk24);
-                    bw.WriteInt32(Unk28);
-                    bw.WriteInt16(Unk2C);
-                }
-            }
-
-            /// <summary>
-            /// Indicates the display properties of a Sprite.
+            /// Rotation and mirroring properties of a Sprite.
             /// </summary>
             [Flags]
-            public enum SpriteFlags : ushort
+            public enum SpriteOrientation : byte
             {
                 /// <summary>
                 /// No modification.
@@ -721,28 +220,13 @@ namespace SoulsFormats
                 /// Flip texture horizontally.
                 /// </summary>
                 FlipHorizontal = 0x80,
-
-                /// <summary>
-                /// Allow alpha transparency.
-                /// </summary>
-                Alpha = 0x100,
-
-                /// <summary>
-                /// Overlay the texture on the underlying visual.
-                /// </summary>
-                Overlay = 0x200,
             }
 
             /// <summary>
             /// Displays a region of a texture.
             /// </summary>
-            public class Sprite : Shape
+            public abstract class SpriteBase : Shape
             {
-                /// <summary>
-                /// The type of this element.
-                /// </summary>
-                public override ShapeType Type => ShapeType.Sprite;
-
                 /// <summary>
                 /// Left bound of the texture region displayed by this element.
                 /// </summary>
@@ -764,44 +248,34 @@ namespace SoulsFormats
                 public short TexBottomEdge { get; set; }
 
                 /// <summary>
-                /// The texture to display, indexing textures in menu.tpf.
+                /// The texture to display, indexing menu.tpf.
                 /// </summary>
                 public short TextureIndex { get; set; }
 
                 /// <summary>
-                /// Flags modifying how the texture is displayed.
+                /// Flags modifying the orientation of the texture.
                 /// </summary>
-                public SpriteFlags Flags { get; set; }
+                public SpriteOrientation Orientation { get; set; }
 
                 /// <summary>
-                /// Tints the sprite from a palette of 1-80, or 0 to use custom color below.
+                /// Color blending mode.
                 /// </summary>
-                public int PaletteColor { get; set; }
+                public BlendingMode BlendMode { get; set; }
 
-                /// <summary>
-                /// Tints the sprite a certain color.
-                /// </summary>
-                public Color CustomColor { get; set; }
-
-                /// <summary>
-                /// Creates a Sprite with default values.
-                /// </summary>
-                public Sprite() : base()
+                internal SpriteBase() : base()
                 {
-                    Flags = SpriteFlags.Alpha;
-                    CustomColor = Color.White;
+                    BlendMode = BlendingMode.Alpha;
                 }
 
-                internal Sprite(BinaryReaderEx br, bool dsr) : base(br, dsr)
+                internal SpriteBase(BinaryReaderEx br, DRBVersion version) : base(br, version)
                 {
                     TexLeftEdge = br.ReadInt16();
                     TexTopEdge = br.ReadInt16();
                     TexRightEdge = br.ReadInt16();
                     TexBottomEdge = br.ReadInt16();
                     TextureIndex = br.ReadInt16();
-                    Flags = (SpriteFlags)br.ReadUInt16();
-                    PaletteColor = br.ReadInt32();
-                    CustomColor = br.ReadABGR();
+                    Orientation = (SpriteOrientation)br.ReadByte();
+                    BlendMode = br.ReadEnum8<BlendingMode>();
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw, Dictionary<string, int> stringOffsets)
@@ -811,9 +285,8 @@ namespace SoulsFormats
                     bw.WriteInt16(TexRightEdge);
                     bw.WriteInt16(TexBottomEdge);
                     bw.WriteInt16(TextureIndex);
-                    bw.WriteUInt16((ushort)Flags);
-                    bw.WriteInt32(PaletteColor);
-                    bw.WriteABGR(CustomColor);
+                    bw.WriteByte((byte)Orientation);
+                    bw.WriteByte((byte)BlendMode);
                 }
             }
 
@@ -871,58 +344,14 @@ namespace SoulsFormats
             }
 
             /// <summary>
-            /// A fixed text field.
-            /// </summary>
-            public class Text : TextBase
-            {
-                /// <summary>
-                /// The type of this element.
-                /// </summary>
-                public override ShapeType Type => ShapeType.Text;
-
-                /// <summary>
-                /// Unknown; always 0.
-                /// </summary>
-                public int Unk1C { get; set; }
-
-                /// <summary>
-                /// Unknown; always 0.
-                /// </summary>
-                public short Unk20 { get; set; }
-
-                /// <summary>
-                /// Creates a Text with default values.
-                /// </summary>
-                public Text() : base() { }
-
-                internal Text(BinaryReaderEx br, bool dsr, Dictionary<int, string> strings) : base(br, dsr, strings)
-                {
-                    Unk1C = br.ReadInt32();
-                    Unk20 = br.ReadInt16();
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw, Dictionary<string, int> stringOffsets)
-                {
-                    base.WriteSpecific(bw, stringOffsets);
-                    bw.WriteInt32(Unk1C);
-                    bw.WriteInt16(Unk20);
-                }
-            }
-
-            /// <summary>
             /// Either a fixed text or scrolling text element.
             /// </summary>
             public abstract class TextBase : Shape
             {
                 /// <summary>
-                /// Unknown; always 0-2.
+                /// Color blending mode.
                 /// </summary>
-                public byte Unk00 { get; set; }
-
-                /// <summary>
-                /// Unknown; always 1.
-                /// </summary>
-                public byte Unk01 { get; set; }
+                public BlendingMode BlendMode { get; set; }
 
                 /// <summary>
                 /// Distance between each line of text.
@@ -930,12 +359,12 @@ namespace SoulsFormats
                 public short LineSpacing { get; set; }
 
                 /// <summary>
-                /// Chooses a color from a palette of 1-80, or 0 to use a custom color.
+                /// Index of a color in the menu color param, or 0 to use the CustomColor.
                 /// </summary>
                 public int PaletteColor { get; set; }
 
                 /// <summary>
-                /// When PaletteColor is 0, specifies the color of the text.
+                /// Custom color used when PaletteColor is 0.
                 /// </summary>
                 public Color CustomColor { get; set; }
 
@@ -955,11 +384,6 @@ namespace SoulsFormats
                 public TxtType TextType { get; set; }
 
                 /// <summary>
-                /// Unknown; always 0x1C.
-                /// </summary>
-                public int Unk10 { get; set; }
-
-                /// <summary>
                 /// The maximum characters to display.
                 /// </summary>
                 public int CharLength { get; set; }
@@ -974,25 +398,30 @@ namespace SoulsFormats
                 /// </summary>
                 public int TextID { get; set; }
 
+                /// <summary>
+                /// An unknown optional structure which is always present in practice.
+                /// </summary>
+                public UnknownA Unknown { get; set; }
+
                 internal TextBase() : base()
                 {
-                    Unk01 = 1;
+                    BlendMode = BlendingMode.Alpha;
                     TextType = TxtType.FMG;
-                    Unk10 = 0x1C;
                     TextID = -1;
+                    Unknown = new UnknownA();
                 }
 
-                internal TextBase(BinaryReaderEx br, bool dsr, Dictionary<int, string> strings) : base(br, dsr)
+                internal TextBase(BinaryReaderEx br, DRBVersion version, Dictionary<int, string> strings) : base(br, version)
                 {
-                    Unk00 = br.ReadByte();
-                    Unk01 = br.ReadByte();
+                    BlendMode = br.ReadEnum8<BlendingMode>();
+                    bool unk01 = br.ReadBoolean();
                     LineSpacing = br.ReadInt16();
                     PaletteColor = br.ReadInt32();
-                    CustomColor = br.ReadABGR();
+                    CustomColor = ReadColor(br);
                     FontSize = br.ReadInt16();
                     Alignment = (AlignFlags)br.ReadByte();
                     TextType = br.ReadEnum8<TxtType>();
-                    Unk10 = br.ReadInt32();
+                    br.AssertInt32(0x1C); // Local offset to variable data below
 
                     if (TextType == TxtType.Literal)
                     {
@@ -1013,19 +442,26 @@ namespace SoulsFormats
                         TextLiteral = null;
                         TextID = -1;
                     }
+
+                    ReadSubtype(br);
+
+                    if (unk01)
+                        Unknown = new UnknownA(br);
                 }
+
+                internal virtual void ReadSubtype(BinaryReaderEx br) { }
 
                 internal override void WriteSpecific(BinaryWriterEx bw, Dictionary<string, int> stringOffsets)
                 {
-                    bw.WriteByte(Unk00);
-                    bw.WriteByte(Unk01);
+                    bw.WriteByte((byte)BlendMode);
+                    bw.WriteBoolean(Unknown != null);
                     bw.WriteInt16(LineSpacing);
                     bw.WriteInt32(PaletteColor);
-                    bw.WriteABGR(CustomColor);
+                    WriteColor(bw, CustomColor);
                     bw.WriteInt16(FontSize);
                     bw.WriteByte((byte)Alignment);
                     bw.WriteByte((byte)TextType);
-                    bw.WriteInt32(Unk10);
+                    bw.WriteInt32(0x1C);
 
                     if (TextType == TxtType.Literal)
                     {
@@ -1040,7 +476,718 @@ namespace SoulsFormats
                     {
                         bw.WriteInt32(CharLength);
                     }
+
+                    WriteSubtype(bw);
+
+                    Unknown?.Write(bw);
                 }
+
+                internal virtual void WriteSubtype(BinaryWriterEx bw) { }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public class UnknownA
+                {
+                    /// <summary>
+                    /// Unknown; always 0.
+                    /// </summary>
+                    public int Unk00 { get; set; }
+
+                    /// <summary>
+                    /// Unknown optional structure, null if not present.
+                    /// </summary>
+                    public UnknownB SubUnknown { get; set; }
+
+                    /// <summary>
+                    /// Creates an UnknownA with default values.
+                    /// </summary>
+                    public UnknownA() { }
+
+                    internal UnknownA(BinaryReaderEx br)
+                    {
+                        Unk00 = br.ReadInt32();
+                        short unk04 = br.AssertInt16(0, 1);
+                        if (unk04 == 1)
+                            SubUnknown = new UnknownB(br);
+                    }
+
+                    internal void Write(BinaryWriterEx bw)
+                    {
+                        bw.WriteInt32(Unk00);
+                        bw.WriteInt16((short)(SubUnknown == null ? 0 : 1));
+                        SubUnknown?.Write(bw);
+                    }
+                }
+
+                /// <summary>
+                /// Unknown structure only observed in Shadow Assault: Tenchu.
+                /// </summary>
+                public class UnknownB
+                {
+                    /// <summary>
+                    /// Unknown; always 0.
+                    /// </summary>
+                    public int Unk00 { get; set; }
+
+                    /// <summary>
+                    /// Unknown; always 0xFF.
+                    /// </summary>
+                    public short Unk04 { get; set; }
+
+                    /// <summary>
+                    /// Unknown; always 0 or 2.
+                    /// </summary>
+                    public short Unk06 { get; set; }
+
+                    /// <summary>
+                    /// Unknown; always 0 or 2.
+                    /// </summary>
+                    public short Unk08 { get; set; }
+
+                    /// <summary>
+                    /// Creates an UnknownB with default values.
+                    /// </summary>
+                    public UnknownB()
+                    {
+                        Unk04 = 0xFF;
+                    }
+
+                    internal UnknownB(BinaryReaderEx br)
+                    {
+                        Unk00 = br.ReadInt32();
+                        Unk04 = br.ReadInt16();
+                        Unk06 = br.ReadInt16();
+                        Unk08 = br.ReadInt16();
+                    }
+
+                    internal void Write(BinaryWriterEx bw)
+                    {
+                        bw.WriteInt32(Unk00);
+                        bw.WriteInt16(Unk04);
+                        bw.WriteInt16(Unk06);
+                        bw.WriteInt16(Unk08);
+                    }
+                }
+            }
+
+            /// <summary>
+            /// Displays another referenced group of elements.
+            /// </summary>
+            public class Dialog : Shape
+            {
+                internal override ShapeType Type => ShapeType.Dialog;
+
+                /// <summary>
+                /// Dlg referenced by this element; must be found in the parent DRB's Dlg list.
+                /// </summary>
+                public Dlg Dlg { get; set; }
+                internal short DlgIndex;
+
+                /// <summary>
+                /// Unknown; always 0 or 1.
+                /// </summary>
+                public byte Unk02 { get; set; }
+
+                /// <summary>
+                /// Unknown; always 0 or 1. Determines whether the optional structure is loaded.
+                /// </summary>
+                public byte Unk03 { get; set; }
+
+                /// <summary>
+                /// Index of a color in the menu color param, or 0 to use the CustomColor.
+                /// </summary>
+                public int PaletteColor { get; set; }
+
+                /// <summary>
+                /// Custom color used when PaletteColor is 0.
+                /// </summary>
+                public Color CustomColor { get; set; }
+
+                /// <summary>
+                /// An unknown, optional, and unused structure; only loaded if Unk03 is non-zero.
+                /// </summary>
+                public UnknownA Unknown { get; set; }
+
+                /// <summary>
+                /// Creates a Dialog with default values.
+                /// </summary>
+                public Dialog()
+                {
+                    DlgIndex = -1;
+                    Unk02 = 1;
+                    Unk03 = 1;
+                    CustomColor = Color.White;
+                }
+
+                internal Dialog(BinaryReaderEx br, DRBVersion version) : base(br, version)
+                {
+                    DlgIndex = br.ReadInt16();
+                    Unk02 = br.ReadByte();
+                    Unk03 = br.ReadByte();
+                    PaletteColor = br.ReadInt32();
+                    CustomColor = ReadColor(br);
+                    bool unk0C = br.ReadBoolean();
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+                    br.AssertByte(0);
+
+                    if (unk0C)
+                        Unknown = new UnknownA(br);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw, Dictionary<string, int> stringOffsets)
+                {
+                    bw.WriteInt16(DlgIndex);
+                    bw.WriteByte(Unk02);
+                    bw.WriteByte(Unk03);
+                    bw.WriteInt32(PaletteColor);
+                    WriteColor(bw, CustomColor);
+                    bw.WriteByte((byte)(Unknown == null ? 0 : 1));
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                    bw.WriteByte(0);
+                }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public class UnknownA
+                {
+                    /// <summary>
+                    /// Unknown.
+                    /// </summary>
+                    public short Unk00 { get; set; }
+
+                    /// <summary>
+                    /// Unknown.
+                    /// </summary>
+                    public short Unk02 { get; set; }
+
+                    /// <summary>
+                    /// Unknown.
+                    /// </summary>
+                    public int Unk04 { get; set; }
+
+                    /// <summary>
+                    /// Creates an UnknownA with default values.
+                    /// </summary>
+                    public UnknownA() { }
+
+                    internal UnknownA(BinaryReaderEx br)
+                    {
+                        Unk00 = br.ReadInt16();
+                        Unk02 = br.ReadInt16();
+                        Unk04 = br.ReadInt32();
+                    }
+
+                    internal void Write(BinaryWriterEx bw)
+                    {
+                        bw.WriteInt16(Unk00);
+                        bw.WriteInt16(Unk02);
+                        bw.WriteInt32(Unk04);
+                    }
+                }
+            }
+
+            /// <summary>
+            /// A rectangular frame with color interpolated between each corner.
+            /// </summary>
+            public class GouraudFrame : Shape
+            {
+                internal override ShapeType Type => ShapeType.GouraudFrame;
+
+                /// <summary>
+                /// Color blending mode.
+                /// </summary>
+                public BlendingMode BlendMode { get; set; }
+
+                /// <summary>
+                /// Thickness of the border.
+                /// </summary>
+                public byte Thickness { get; set; }
+
+                /// <summary>
+                /// The color at the top left corner.
+                /// </summary>
+                public Color TopLeftColor { get; set; }
+
+                /// <summary>
+                /// The color at the top right corner.
+                /// </summary>
+                public Color TopRightColor { get; set; }
+
+                /// <summary>
+                /// The color at the bottom right corner.
+                /// </summary>
+                public Color BottomRightColor { get; set; }
+
+                /// <summary>
+                /// The color at the bottom left corner.
+                /// </summary>
+                public Color BottomLeftColor { get; set; }
+
+                /// <summary>
+                /// Creates a GouraudFrame with default values.
+                /// </summary>
+                public GouraudFrame() : base()
+                {
+                    BlendMode = BlendingMode.Alpha;
+                    Thickness = 1;
+                    TopLeftColor = Color.Black;
+                    TopRightColor = Color.Black;
+                    BottomRightColor = Color.Black;
+                    BottomLeftColor = Color.Black;
+                }
+
+                internal GouraudFrame(BinaryReaderEx br, DRBVersion version) : base(br, version)
+                {
+                    BlendMode = br.ReadEnum8<BlendingMode>();
+                    br.AssertInt16(0);
+                    Thickness = br.ReadByte();
+                    TopLeftColor = ReadColor(br);
+                    TopRightColor = ReadColor(br);
+                    BottomRightColor = ReadColor(br);
+                    BottomLeftColor = ReadColor(br);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw, Dictionary<string, int> stringOffsets)
+                {
+                    bw.WriteByte((byte)BlendMode);
+                    bw.WriteInt16(0);
+                    bw.WriteByte(Thickness);
+                    WriteColor(bw, TopLeftColor);
+                    WriteColor(bw, TopRightColor);
+                    WriteColor(bw, BottomRightColor);
+                    WriteColor(bw, BottomLeftColor);
+                }
+            }
+
+            /// <summary>
+            /// A rectangle with color interpolated between each corner.
+            /// </summary>
+            public class GouraudRect : Shape
+            {
+                internal override ShapeType Type => ShapeType.GouraudRect;
+
+                /// <summary>
+                /// Color blending mode.
+                /// </summary>
+                public BlendingMode BlendMode { get; set; }
+
+                /// <summary>
+                /// The color at the top left corner.
+                /// </summary>
+                public Color TopLeftColor { get; set; }
+
+                /// <summary>
+                /// The color at the top right corner.
+                /// </summary>
+                public Color TopRightColor { get; set; }
+
+                /// <summary>
+                /// The color at the bottom right corner.
+                /// </summary>
+                public Color BottomRightColor { get; set; }
+
+                /// <summary>
+                /// The color at the bottom left corner.
+                /// </summary>
+                public Color BottomLeftColor { get; set; }
+
+                /// <summary>
+                /// Creates a GouraudRect with default values.
+                /// </summary>
+                public GouraudRect() : base()
+                {
+                    BlendMode = BlendingMode.Alpha;
+                    TopLeftColor = Color.Black;
+                    TopRightColor = Color.Black;
+                    BottomRightColor = Color.Black;
+                    BottomLeftColor = Color.Black;
+                }
+
+                internal GouraudRect(BinaryReaderEx br, DRBVersion version) : base(br, version)
+                {
+                    BlendMode = br.ReadEnum8<BlendingMode>();
+                    br.AssertInt16(0);
+                    br.AssertByte(0);
+                    TopLeftColor = ReadColor(br);
+                    TopRightColor = ReadColor(br);
+                    BottomRightColor = ReadColor(br);
+                    BottomLeftColor = ReadColor(br);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw, Dictionary<string, int> stringOffsets)
+                {
+                    bw.WriteByte((byte)BlendMode);
+                    bw.WriteInt16(0);
+                    bw.WriteByte(0);
+                    WriteColor(bw, TopLeftColor);
+                    WriteColor(bw, TopRightColor);
+                    WriteColor(bw, BottomRightColor);
+                    WriteColor(bw, BottomLeftColor);
+                }
+            }
+
+            /// <summary>
+            /// Displays a texture region with color interpolated between each corner.
+            /// </summary>
+            public class GouraudSprite : SpriteBase
+            {
+                internal override ShapeType Type => ShapeType.GouraudSprite;
+
+                /// <summary>
+                /// The color at the top left corner.
+                /// </summary>
+                public Color TopLeftColor { get; set; }
+
+                /// <summary>
+                /// The color at the top right corner.
+                /// </summary>
+                public Color TopRightColor { get; set; }
+
+                /// <summary>
+                /// The color at the bottom right corner.
+                /// </summary>
+                public Color BottomRightColor { get; set; }
+
+                /// <summary>
+                /// The color at the bottom left corner.
+                /// </summary>
+                public Color BottomLeftColor { get; set; }
+
+                /// <summary>
+                /// Creates a GouraudSprite with default values.
+                /// </summary>
+                public GouraudSprite() : base()
+                {
+                    TopLeftColor = Color.White;
+                    TopRightColor = Color.White;
+                    BottomRightColor = Color.White;
+                    BottomLeftColor = Color.White;
+                }
+
+                internal GouraudSprite(BinaryReaderEx br, DRBVersion version) : base(br, version)
+                {
+                    TopLeftColor = ReadColor(br);
+                    TopRightColor = ReadColor(br);
+                    BottomRightColor = ReadColor(br);
+                    BottomLeftColor = ReadColor(br);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw, Dictionary<string, int> stringOffsets)
+                {
+                    base.WriteSpecific(bw, stringOffsets);
+                    WriteColor(bw, TopLeftColor);
+                    WriteColor(bw, TopRightColor);
+                    WriteColor(bw, BottomRightColor);
+                    WriteColor(bw, BottomLeftColor);
+                }
+            }
+
+            /// <summary>
+            /// Unknown.
+            /// </summary>
+            public class Mask : Shape
+            {
+                internal override ShapeType Type => ShapeType.Mask;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public string DlgoName { get; set; }
+
+                /// <summary>
+                /// Unknown; always 1.
+                /// </summary>
+                public byte Unk04 { get; set; }
+
+                /// <summary>
+                /// Unknown; always 0.
+                /// </summary>
+                public int Unk05 { get; set; }
+
+                /// <summary>
+                /// Unknown; always 0.
+                /// </summary>
+                public int Unk09 { get; set; }
+
+                /// <summary>
+                /// Unknown; always 0.
+                /// </summary>
+                public short Unk0D { get; set; }
+
+                /// <summary>
+                /// Creates a Mask with default values.
+                /// </summary>
+                public Mask() : base()
+                {
+                    Unk04 = 1;
+                }
+
+                internal Mask(BinaryReaderEx br, DRBVersion version, Dictionary<int, string> strings) : base(br, version)
+                {
+                    DlgoName = strings[br.ReadInt32()];
+                    Unk04 = br.ReadByte();
+                    Unk05 = br.ReadInt32();
+                    Unk09 = br.ReadInt32();
+                    Unk0D = br.ReadInt16();
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw, Dictionary<string, int> stringOffsets)
+                {
+                    bw.WriteInt32(stringOffsets[DlgoName]);
+                    bw.WriteByte(Unk04);
+                    bw.WriteInt32(Unk05);
+                    bw.WriteInt32(Unk09);
+                    bw.WriteInt16(Unk0D);
+                }
+            }
+
+            /// <summary>
+            /// A rectangular frame with a solid color.
+            /// </summary>
+            public class MonoFrame : Shape
+            {
+                internal override ShapeType Type => ShapeType.MonoFrame;
+
+                /// <summary>
+                /// Color blending mode.
+                /// </summary>
+                public BlendingMode BlendMode { get; set; }
+
+                /// <summary>
+                /// Thickness of the border.
+                /// </summary>
+                public byte Thickness { get; set; }
+
+                /// <summary>
+                /// Index of a color in the menu color param, or 0 to use the CustomColor.
+                /// </summary>
+                public int PaletteColor { get; set; }
+
+                /// <summary>
+                /// Custom color used when PaletteColor is 0.
+                /// </summary>
+                public Color CustomColor { get; set; }
+
+                /// <summary>
+                /// Creates a MonoFrame with default values.
+                /// </summary>
+                public MonoFrame() : base()
+                {
+                    BlendMode = BlendingMode.Alpha;
+                    Thickness = 1;
+                    CustomColor = Color.Black;
+                }
+
+                internal MonoFrame(BinaryReaderEx br, DRBVersion version) : base(br, version)
+                {
+                    BlendMode = br.ReadEnum8<BlendingMode>();
+                    br.AssertInt16(0);
+                    Thickness = br.ReadByte();
+                    PaletteColor = br.ReadInt32();
+                    CustomColor = ReadColor(br);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw, Dictionary<string, int> stringOffsets)
+                {
+                    bw.WriteByte((byte)BlendMode);
+                    bw.WriteInt16(0);
+                    bw.WriteByte(Thickness);
+                    bw.WriteInt32(PaletteColor);
+                    WriteColor(bw, CustomColor);
+                }
+            }
+
+            /// <summary>
+            /// A rectangle with a solid color.
+            /// </summary>
+            public class MonoRect : Shape
+            {
+                internal override ShapeType Type => ShapeType.MonoRect;
+
+                /// <summary>
+                /// Color blending mode.
+                /// </summary>
+                public BlendingMode BlendMode { get; set; }
+
+                /// <summary>
+                /// Index of a color in the menu color param, or 0 to use the CustomColor.
+                /// </summary>
+                public int PaletteColor { get; set; }
+
+                /// <summary>
+                /// Custom color used when PaletteColor is 0.
+                /// </summary>
+                public Color CustomColor { get; set; }
+
+                /// <summary>
+                /// Creates a MonoRect with default values.
+                /// </summary>
+                public MonoRect() : base()
+                {
+                    BlendMode = BlendingMode.Alpha;
+                    CustomColor = Color.Black;
+                }
+
+                internal MonoRect(BinaryReaderEx br, DRBVersion version) : base(br, version)
+                {
+                    BlendMode = br.ReadEnum8<BlendingMode>();
+                    br.AssertInt16(0);
+                    br.AssertByte(0);
+                    PaletteColor = br.ReadInt32();
+                    CustomColor = ReadColor(br);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw, Dictionary<string, int> stringOffsets)
+                {
+                    bw.WriteByte((byte)BlendMode);
+                    bw.WriteInt16(0);
+                    bw.WriteByte(0);
+                    bw.WriteInt32(PaletteColor);
+                    WriteColor(bw, CustomColor);
+                }
+            }
+
+            /// <summary>
+            /// An invisible element used to mark a position.
+            /// </summary>
+            public class Null : Shape
+            {
+                internal override ShapeType Type => ShapeType.Null;
+
+                /// <summary>
+                /// Creates a Null with default values.
+                /// </summary>
+                public Null() : base() { }
+
+                internal Null(BinaryReaderEx br, DRBVersion version) : base(br, version) { }
+
+                internal override void WriteSpecific(BinaryWriterEx bw, Dictionary<string, int> stringOffsets) { }
+            }
+
+            /// <summary>
+            /// A scrolling text field.
+            /// </summary>
+            public class ScrollText : TextBase
+            {
+                internal override ShapeType Type => ShapeType.ScrollText;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public short UnkX00 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public short UnkX02 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public short UnkX04 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public short UnkX06 { get; set; }
+
+                /// <summary>
+                /// Unknown; always 15 or 100.
+                /// </summary>
+                public short ScrollSpeed { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public short UnkX0A { get; set; }
+
+                /// <summary>
+                /// Creates a ScrollText with default values.
+                /// </summary>
+                public ScrollText() : base()
+                {
+                    ScrollSpeed = 15;
+                }
+
+                internal ScrollText(BinaryReaderEx br, DRBVersion version, Dictionary<int, string> strings) : base(br, version, strings) { }
+
+                internal override void ReadSubtype(BinaryReaderEx br)
+                {
+                    UnkX00 = br.ReadInt16();
+                    UnkX02 = br.ReadInt16();
+                    UnkX04 = br.ReadInt16();
+                    UnkX06 = br.ReadInt16();
+                    ScrollSpeed = br.ReadInt16();
+                    UnkX0A = br.ReadInt16();
+                }
+
+                internal override void WriteSubtype(BinaryWriterEx bw)
+                {
+                    bw.WriteInt16(UnkX00);
+                    bw.WriteInt16(UnkX02);
+                    bw.WriteInt16(UnkX04);
+                    bw.WriteInt16(UnkX06);
+                    bw.WriteInt16(ScrollSpeed);
+                    bw.WriteInt16(UnkX0A);
+                }
+            }
+
+            /// <summary>
+            /// Displays a texture region with color tinting.
+            /// </summary>
+            public class Sprite : SpriteBase
+            {
+                internal override ShapeType Type => ShapeType.Sprite;
+
+                /// <summary>
+                /// Index of a color in the menu color param, or 0 to use the CustomColor.
+                /// </summary>
+                public int PaletteColor { get; set; }
+
+                /// <summary>
+                /// Custom color used when PaletteColor is 0.
+                /// </summary>
+                public Color CustomColor { get; set; }
+
+                /// <summary>
+                /// Creates a Sprite with default values.
+                /// </summary>
+                public Sprite() : base()
+                {
+                    CustomColor = Color.White;
+                }
+
+                internal Sprite(BinaryReaderEx br, DRBVersion version) : base(br, version)
+                {
+                    PaletteColor = br.ReadInt32();
+                    CustomColor = ReadColor(br);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw, Dictionary<string, int> stringOffsets)
+                {
+                    base.WriteSpecific(bw, stringOffsets);
+                    bw.WriteInt32(PaletteColor);
+                    WriteColor(bw, CustomColor);
+                }
+            }
+
+            /// <summary>
+            /// A fixed text field.
+            /// </summary>
+            public class Text : TextBase
+            {
+                internal override ShapeType Type => ShapeType.Text;
+
+                /// <summary>
+                /// Creates a Text with default values.
+                /// </summary>
+                public Text() : base() { }
+
+                internal Text(BinaryReaderEx br, DRBVersion version, Dictionary<int, string> strings) : base(br, version, strings) { }
             }
         }
     }

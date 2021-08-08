@@ -5,14 +5,35 @@ using System.IO;
 namespace SoulsFormats
 {
     /// <summary>
-    /// A UI configuration format used in DS1.
+    /// A UI configuration format used until DS2. Extension: .drb
     /// </summary>
     public partial class DRB
     {
         /// <summary>
-        /// If true, Shapes have scaling information.
+        /// Supported versions of the DRB format.
         /// </summary>
-        public bool DSR { get; set; }
+        public enum DRBVersion
+        {
+            /// <summary>
+            /// Dark Souls, Demon's Souls, and Shadow Assault: Tenchu
+            /// </summary>
+            DarkSouls,
+
+            /// <summary>
+            /// Dark Souls Remastered; adds scaling information to shapes.
+            /// </summary>
+            DarkSoulsRemastered,
+        }
+
+        /// <summary>
+        /// The version of the format used for this file.
+        /// </summary>
+        public DRBVersion Version { get; set; }
+
+        /// <summary>
+        /// True for PS3/X360, false otherwise.
+        /// </summary>
+        public bool BigEndian { get; set; }
 
         /// <summary>
         /// Available UI textures for reference; not actually necessary for textures to work.
@@ -56,13 +77,13 @@ namespace SoulsFormats
                 return false;
 
             string magic = br.GetASCII(0, 4);
-            return magic == "DRB\0";
+            return magic == "DRB\0" || magic == "\0BRD";
         }
 
-        private void Read(BinaryReaderEx br, bool dsr)
+        private void Read(BinaryReaderEx br, DRBVersion version)
         {
-            br.BigEndian = false;
-            DSR = dsr;
+            br.BigEndian = BigEndian = br.GetASCII(0, 4) == "\0BRD";
+            Version = version;
 
             ReadNullBlock(br, "DRB\0");
             Dictionary<int, string> strings = ReadSTR(br);
@@ -72,7 +93,7 @@ namespace SoulsFormats
             AnipBytes = ReadBlobBytes(br, "ANIP");
             IntpBytes = ReadBlobBytes(br, "INTP");
             long scdpStart = ReadBlobBlock(br, "SCDP");
-            Dictionary<int, Shape> shapes = ReadSHAP(br, dsr, strings, shprStart);
+            Dictionary<int, Shape> shapes = ReadSHAP(br, version, strings, shprStart);
             Dictionary<int, Control> controls = ReadCTRL(br, strings, ctprStart);
             Dictionary<int, Anik> aniks = ReadANIK(br, strings);
             Dictionary<int, Anio> anios = ReadANIO(br, aniks);
@@ -112,7 +133,7 @@ namespace SoulsFormats
                     else if (Dlgs.Contains(dialog.Dlg))
                         dialog.DlgIndex = (short)Dlgs.IndexOf(dialog.Dlg);
                     else
-                        throw new InvalidDataException($"Dlg \"{dialog.Dlg.Name}\" is referenced but no found in Dlgs list.");
+                        throw new InvalidDataException($"Dlg \"{dialog.Dlg.Name}\" is referenced but not found in Dlgs list.");
                 }
             }
 
@@ -123,26 +144,26 @@ namespace SoulsFormats
                     CheckShape(dlgo.Shape);
             }
 
-            bw.BigEndian = false;
+            bw.BigEndian = BigEndian;
 
             WriteNullBlock(bw, "DRB\0");
             Dictionary<string, int> stringOffsets = WriteSTR(bw);
             WriteTEXI(bw, stringOffsets);
-            Queue<int> shprOffsets = WriteSHPR(bw, DSR, stringOffsets);
+            Queue<int> shprOffsets = WriteSHPR(bw, Version, stringOffsets);
             Queue<int> ctprOffsets = WriteCTPR(bw);
             WriteBlobBytes(bw, "ANIP", AnipBytes);
             WriteBlobBytes(bw, "INTP", IntpBytes);
             Queue<int> scdpOffsets = WriteSCDP(bw);
-            Queue<int> shapOffsets = WriteSHAP(bw, stringOffsets, shprOffsets);
-            Queue<int> ctrlOffsets = WriteCTRL(bw, stringOffsets, ctprOffsets);
+            Queue<int> dlgShapOffsets = WriteSHAP(bw, stringOffsets, shprOffsets, out Queue<int> dlgoShapOffsets);
+            Queue<int> dlgCtrlOffsets = WriteCTRL(bw, stringOffsets, ctprOffsets, out Queue<int> dlgoCtrlOffsets);
             Queue<int> anikOffsets = WriteANIK(bw, stringOffsets);
             Queue<int> anioOffsets = WriteANIO(bw, anikOffsets);
             WriteANIM(bw, stringOffsets, anioOffsets);
             Queue<int> scdkOffsets = WriteSCDK(bw, stringOffsets, scdpOffsets);
             Queue<int> scdoOffsets = WriteSCDO(bw, stringOffsets, scdkOffsets);
             WriteSCDL(bw, stringOffsets, scdoOffsets);
-            Queue<int> dlgoOffsets = WriteDLGO(bw, stringOffsets, shapOffsets, ctrlOffsets);
-            WriteDLG(bw, stringOffsets, shapOffsets, ctrlOffsets, dlgoOffsets);
+            Queue<int> dlgoOffsets = WriteDLGO(bw, stringOffsets, dlgoShapOffsets, dlgoCtrlOffsets);
+            WriteDLG(bw, stringOffsets, dlgShapOffsets, dlgCtrlOffsets, dlgoOffsets);
             WriteNullBlock(bw, "END\0");
         }
 
@@ -171,11 +192,40 @@ namespace SoulsFormats
             var stringOffsets = new Dictionary<string, int>();
             void writeString(string str)
             {
+                if (str == null)
+                    throw new InvalidDataException("DRB strings must not be null.");
+
                 if (!stringOffsets.ContainsKey(str))
                 {
                     long offset = bw.Position - start;
                     bw.WriteUTF16(str, true);
                     stringOffsets[str] = (int)offset;
+                }
+            }
+
+            void writeShapeStrings(Shape shape)
+            {
+                writeString(shape.Type.ToString());
+                if (shape is Shape.Mask mask)
+                {
+                    writeString(mask.DlgoName);
+                }
+                else if (shape is Shape.TextBase text && text.TextType == Shape.TxtType.Literal)
+                {
+                    writeString(text.TextLiteral);
+                }
+            }
+
+            foreach (Dlg dlg in Dlgs)
+            {
+                writeString(dlg.Name);
+                writeShapeStrings(dlg.Shape);
+                writeString(dlg.Control.Type.ToString());
+                foreach (Dlgo dlgo in dlg.Dlgos)
+                {
+                    writeString(dlgo.Name);
+                    writeShapeStrings(dlgo.Shape);
+                    writeString(dlgo.Control.Type.ToString());
                 }
             }
 
@@ -210,32 +260,6 @@ namespace SoulsFormats
                 }
             }
 
-            void writeShapeStrings(Shape shape)
-            {
-                writeString(shape.Type.ToString());
-                if (shape is Shape.ScrollText scrollText && scrollText.TextType == Shape.TxtType.Literal)
-                {
-                    writeString(scrollText.TextLiteral);
-                }
-                else if (shape is Shape.Text text && text.TextType == Shape.TxtType.Literal)
-                {
-                    writeString(text.TextLiteral);
-                }
-            }
-
-            foreach (Dlg dlg in Dlgs)
-            {
-                writeString(dlg.Name);
-                writeShapeStrings(dlg.Shape);
-                writeString(dlg.Control.Type.ToString());
-                foreach (Dlgo dlgo in dlg.Dlgos)
-                {
-                    writeString(dlgo.Name);
-                    writeShapeStrings(dlgo.Shape);
-                    writeString(dlgo.Control.Type.ToString());
-                }
-            }
-
             FinishBlockHeader(bw, "STR\0", start, stringOffsets.Count);
             return stringOffsets;
         }
@@ -260,7 +284,7 @@ namespace SoulsFormats
             FinishBlockHeader(bw, "TEXI", start, Textures.Count);
         }
 
-        private Queue<int> WriteSHPR(BinaryWriterEx bw, bool dsr, Dictionary<string, int> stringOffsets)
+        private Queue<int> WriteSHPR(BinaryWriterEx bw, DRBVersion version, Dictionary<string, int> stringOffsets)
         {
             long start = WriteBlobBlock(bw, "SHPR");
             var shprOffsets = new Queue<int>();
@@ -268,20 +292,16 @@ namespace SoulsFormats
             {
                 int offset = (int)(bw.Position - start);
                 shprOffsets.Enqueue(offset);
-                shape.WriteData(bw, dsr, stringOffsets);
-            }
-
-            foreach (Dlg dlg in Dlgs)
-            {
-                foreach (Dlgo dlgo in dlg.Dlgos)
-                {
-                    writeShape(dlgo.Shape);
-                }
+                shape.WriteData(bw, version, stringOffsets);
             }
 
             foreach (Dlg dlg in Dlgs)
             {
                 writeShape(dlg.Shape);
+                foreach (Dlgo dlgo in dlg.Dlgos)
+                {
+                    writeShape(dlgo.Shape);
+                }
             }
 
             FinishBlobBlock(bw, "SHPR", start);
@@ -301,15 +321,11 @@ namespace SoulsFormats
 
             foreach (Dlg dlg in Dlgs)
             {
+                writeControl(dlg.Control);
                 foreach (Dlgo dlgo in dlg.Dlgos)
                 {
                     writeControl(dlgo.Control);
                 }
-            }
-
-            foreach (Dlg dlg in Dlgs)
-            {
-                writeControl(dlg.Control);
             }
 
             FinishBlobBlock(bw, "CTPR", start);
@@ -338,45 +354,42 @@ namespace SoulsFormats
             return scdpOffsets;
         }
 
-        private Dictionary<int, Shape> ReadSHAP(BinaryReaderEx br, bool dsr, Dictionary<int, string> strings, long shprStart)
+        private Dictionary<int, Shape> ReadSHAP(BinaryReaderEx br, DRBVersion version, Dictionary<int, string> strings, long shprStart)
         {
             long start = ReadBlockHeader(br, "SHAP", out int count);
             var shapes = new Dictionary<int, Shape>(count);
             for (int i = 0; i < count; i++)
             {
                 int offset = (int)(br.Position - start);
-                shapes[offset] = Shape.Read(br, dsr, strings, shprStart);
+                shapes[offset] = Shape.Read(br, version, strings, shprStart);
             }
             br.Pad(0x10);
             return shapes;
         }
 
-        private Queue<int> WriteSHAP(BinaryWriterEx bw, Dictionary<string, int> stringOffsets, Queue<int> shprOffsets)
+        private Queue<int> WriteSHAP(BinaryWriterEx bw, Dictionary<string, int> stringOffsets, Queue<int> shprOffsets, out Queue<int> dlgoShapOffsets)
         {
             long start = WriteBlockHeader(bw, "SHAP");
-            var shapOffsets = new Queue<int>();
-            void writeShape(Shape shape)
+            var dlgShapOffsets = new Queue<int>();
+            dlgoShapOffsets = new Queue<int>();
+            int writeShape(Shape shape)
             {
                 int offset = (int)(bw.Position - start);
-                shapOffsets.Enqueue(offset);
                 shape.WriteHeader(bw, stringOffsets, shprOffsets);
+                return offset;
             }
 
             foreach (Dlg dlg in Dlgs)
             {
+                dlgShapOffsets.Enqueue(writeShape(dlg.Shape));
                 foreach (Dlgo dlgo in dlg.Dlgos)
                 {
-                    writeShape(dlgo.Shape);
+                    dlgoShapOffsets.Enqueue(writeShape(dlgo.Shape));
                 }
             }
 
-            foreach (Dlg dlg in Dlgs)
-            {
-                writeShape(dlg.Shape);
-            }
-
-            FinishBlockHeader(bw, "SHAP", start, shapOffsets.Count);
-            return shapOffsets;
+            FinishBlockHeader(bw, "SHAP", start, dlgShapOffsets.Count + dlgoShapOffsets.Count);
+            return dlgShapOffsets;
         }
 
         private Dictionary<int, Control> ReadCTRL(BinaryReaderEx br, Dictionary<int, string> strings, long ctprStart)
@@ -392,32 +405,29 @@ namespace SoulsFormats
             return controls;
         }
 
-        private Queue<int> WriteCTRL(BinaryWriterEx bw, Dictionary<string, int> stringOffsets, Queue<int> ctprOffsets)
+        private Queue<int> WriteCTRL(BinaryWriterEx bw, Dictionary<string, int> stringOffsets, Queue<int> ctprOffsets, out Queue<int> dlgoCtrlOffsets)
         {
             long start = WriteBlockHeader(bw, "CTRL");
-            var ctrlOffsets = new Queue<int>();
-            void writeControl(Control control)
+            var dlgCtrlOffsets = new Queue<int>();
+            dlgoCtrlOffsets = new Queue<int>();
+            int writeControl(Control control)
             {
                 int offset = (int)(bw.Position - start);
-                ctrlOffsets.Enqueue(offset);
                 control.WriteHeader(bw, stringOffsets, ctprOffsets);
+                return offset;
             }
 
             foreach (Dlg dlg in Dlgs)
             {
+                dlgCtrlOffsets.Enqueue(writeControl(dlg.Control));
                 foreach (Dlgo dlgo in dlg.Dlgos)
                 {
-                    writeControl(dlgo.Control);
+                    dlgoCtrlOffsets.Enqueue(writeControl(dlgo.Control));
                 }
             }
 
-            foreach (Dlg dlg in Dlgs)
-            {
-                writeControl(dlg.Control);
-            }
-
-            FinishBlockHeader(bw, "CTRL", start, ctrlOffsets.Count);
-            return ctrlOffsets;
+            FinishBlockHeader(bw, "CTRL", start, dlgCtrlOffsets.Count + dlgoCtrlOffsets.Count);
+            return dlgCtrlOffsets;
         }
 
         private Dictionary<int, Anik> ReadANIK(BinaryReaderEx br, Dictionary<int, string> strings)
@@ -654,9 +664,24 @@ namespace SoulsFormats
         #endregion
 
         #region Read/write utilities
+        private static Color ReadColor(BinaryReaderEx br)
+        {
+            uint value = br.ReadUInt32();
+            return Color.FromArgb((byte)value, (byte)(value >> 24), (byte)(value >> 16), (byte)(value >> 8));
+        }
+
+        private static void WriteColor(BinaryWriterEx bw, Color color)
+        {
+            uint value = color.A | ((uint)color.R << 24) | ((uint)color.G << 16) | ((uint)color.B << 8);
+            bw.WriteUInt32(value);
+        }
+
+        private static int FourCCToInt(string fourcc)
+            => fourcc[0] | (fourcc[1] << 8) | (fourcc[2] << 16) | (fourcc[3] << 24);
+
         private static void ReadNullBlock(BinaryReaderEx br, string name)
         {
-            br.AssertASCII(name);
+            br.AssertInt32(FourCCToInt(name));
             br.AssertInt32(0);
             br.AssertInt32(0);
             br.AssertInt32(0);
@@ -664,7 +689,7 @@ namespace SoulsFormats
 
         private static void WriteNullBlock(BinaryWriterEx bw, string name)
         {
-            bw.WriteASCII(name);
+            bw.WriteInt32(FourCCToInt(name));
             bw.WriteInt32(0);
             bw.WriteInt32(0);
             bw.WriteInt32(0);
@@ -672,7 +697,7 @@ namespace SoulsFormats
 
         private static long ReadBlobBlock(BinaryReaderEx br, string name)
         {
-            br.AssertASCII(name);
+            br.AssertInt32(FourCCToInt(name));
             int size = br.ReadInt32();
             br.AssertInt32(1);
             br.AssertInt32(0);
@@ -685,7 +710,7 @@ namespace SoulsFormats
 
         private static long WriteBlobBlock(BinaryWriterEx bw, string name)
         {
-            bw.WriteASCII(name);
+            bw.WriteInt32(FourCCToInt(name));
             bw.ReserveInt32($"BlobBlockSize{name}");
             bw.WriteInt32(1);
             bw.WriteInt32(0);
@@ -700,7 +725,7 @@ namespace SoulsFormats
 
         private static byte[] ReadBlobBytes(BinaryReaderEx br, string name)
         {
-            br.AssertASCII(name);
+            br.AssertInt32(FourCCToInt(name));
             int size = br.ReadInt32();
             br.AssertInt32(1);
             br.AssertInt32(0);
@@ -712,7 +737,7 @@ namespace SoulsFormats
 
         private static void WriteBlobBytes(BinaryWriterEx bw, string name, byte[] bytes)
         {
-            bw.WriteASCII(name);
+            bw.WriteInt32(FourCCToInt(name));
             bw.ReserveInt32("BlobSize");
             bw.WriteInt32(1);
             bw.WriteInt32(0);
@@ -725,7 +750,7 @@ namespace SoulsFormats
 
         private static long ReadBlockHeader(BinaryReaderEx br, string name, out int count)
         {
-            br.AssertASCII(name);
+            br.AssertInt32(FourCCToInt(name));
             int size = br.ReadInt32();
             count = br.ReadInt32();
             br.AssertInt32(0);
@@ -734,7 +759,7 @@ namespace SoulsFormats
 
         private static long WriteBlockHeader(BinaryWriterEx bw, string name)
         {
-            bw.WriteASCII(name);
+            bw.WriteInt32(FourCCToInt(name));
             bw.ReserveInt32($"BlockSize{name}");
             bw.ReserveInt32($"BlockCount{name}");
             bw.WriteInt32(0);
@@ -785,26 +810,26 @@ namespace SoulsFormats
         /// <summary>
         /// Loads a DRB from a byte array, automatically decompressing it if necessary.
         /// </summary>
-        public static DRB Read(byte[] bytes, bool dsr)
+        public static DRB Read(byte[] bytes, DRBVersion version)
         {
             BinaryReaderEx br = new BinaryReaderEx(false, bytes);
             DRB drb = new DRB();
             br = SFUtil.GetDecompressedBR(br, out drb.Compression);
-            drb.Read(br, dsr);
+            drb.Read(br, version);
             return drb;
         }
 
         /// <summary>
         /// Loads a DRB from the specified path, automatically decompressing it if necessary.
         /// </summary>
-        public static DRB Read(string path, bool dsr)
+        public static DRB Read(string path, DRBVersion version)
         {
             using (FileStream stream = File.OpenRead(path))
             {
                 BinaryReaderEx br = new BinaryReaderEx(false, stream);
                 DRB drb = new DRB();
                 br = SFUtil.GetDecompressedBR(br, out drb.Compression);
-                drb.Read(br, dsr);
+                drb.Read(br, version);
                 return drb;
             }
         }

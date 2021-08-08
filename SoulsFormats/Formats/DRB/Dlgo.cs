@@ -62,6 +62,19 @@ namespace SoulsFormats
             }
 
             /// <summary>
+            /// Creates a Dlgo with the given values and a default control.
+            /// </summary>
+            public Dlgo(string name, Shape shape)
+            {
+                Name = name;
+                Shape = shape;
+                if (shape is Shape.ScrollText)
+                    Control = new Control.ScrollTextDummy();
+                else
+                    Control = new Control.Static();
+            }
+
+            /// <summary>
             /// Creates a Dlgo with the given values.
             /// </summary>
             public Dlgo(string name, Shape shape, Control control)
