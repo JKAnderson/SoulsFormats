@@ -427,10 +427,6 @@ namespace SoulsFormats
 
         internal static void Compress(byte[] data, BinaryWriterEx bw, Type type)
         {
-            // Some day I hope to get Oodle compression working, but not today
-            if (type == Type.DCX_KRAK)
-                type = Type.DCX_DFLT_11000_44_9;
-
             bw.BigEndian = true;
             if (type == Type.Zlib)
                 SFUtil.WriteZlib(bw, 0xDA, data);
@@ -614,7 +610,7 @@ namespace SoulsFormats
 
         private static void CompressDCXKRAK(byte[] data, BinaryWriterEx bw)
         {
-            byte[] compressed = Oodle26.Compress(data, Oodle26.Compressor.Kraken, Oodle26.CompressionLevel.Optimal2);
+            byte[] compressed = Oodle26.Compress(data, Oodle26.OodleLZ_Compressor.OodleLZ_Compressor_Kraken, Oodle26.OodleLZ_CompressionLevel.OodleLZ_CompressionLevel_Optimal2);
 
             bw.WriteASCII("DCX\0");
             bw.WriteInt32(0x11000);
@@ -665,7 +661,7 @@ namespace SoulsFormats
             DCP_EDGE,
 
             /// <summary>
-            /// DCP header, default compression. Used in DeS test maps.
+            /// DCP header, deflate compression. Used in DeS test maps.
             /// </summary>
             DCP_DFLT,
 
