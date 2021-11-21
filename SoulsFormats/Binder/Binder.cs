@@ -123,7 +123,8 @@ namespace SoulsFormats
                 + (HasLongOffsets(format) ? 8 : 4)
                 + (HasCompression(format) ? 8 : 0)
                 + (HasIDs(format) ? 4 : 0)
-                + (HasNames(format) ? 4 : 0);
+                + (HasNames(format) ? 4 : 0)
+                + (format == Format.Names1 ? 8 : 0);
         }
 
         /// <summary>

@@ -143,6 +143,15 @@ namespace SoulsFormats
                     name = br.GetShiftJIS(nameOffset);
             }
 
+            // This is a very strange case that (as far as I know) only appears in PC save files.
+            // I do not know how to handle it elegantly and this is definitely not actually an ID,
+            // but it is non-zero in some cases.
+            if (format == Format.Names1)
+            {
+                id = br.ReadInt32();
+                br.AssertInt32(0);
+            }
+
             return new BinderFileHeader(flags, id, name, compressedSize, uncompressedSize, dataOffset);
         }
 
@@ -213,6 +222,12 @@ namespace SoulsFormats
 
             if (HasNames(format))
                 bw.ReserveInt32($"FileNameOffset{index}");
+
+            if (format == Format.Names1)
+            {
+                bw.WriteInt32(ID);
+                bw.WriteInt32(0);
+            }
         }
 
         private void WriteFileData(BinaryWriterEx bw, byte[] bytes)
