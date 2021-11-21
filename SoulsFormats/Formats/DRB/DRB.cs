@@ -175,14 +175,14 @@ namespace SoulsFormats
         #region Read/write methods
         private Dictionary<int, string> ReadSTR(BinaryReaderEx br)
         {
-            long start = ReadBlockHeader(br, "STR\0", out int count);
+            long start = ReadBlockHeader(br, "STR\0", out int count, out int size);
             var strings = new Dictionary<int, string>(count);
             for (int i = 0; i < count; i++)
             {
                 int offset = (int)(br.Position - start);
                 strings[offset] = br.ReadUTF16();
             }
-            br.Pad(0x10);
+            br.Position = start + size;
             return strings;
         }
 
@@ -266,13 +266,13 @@ namespace SoulsFormats
 
         private List<Texture> ReadTEXI(BinaryReaderEx br, Dictionary<int, string> strings)
         {
-            ReadBlockHeader(br, "TEXI", out int count);
+            long start = ReadBlockHeader(br, "TEXI", out int count, out int size);
             var textures = new List<Texture>(count);
             for (int i = 0; i < count; i++)
             {
                 textures.Add(new Texture(br, strings));
             }
-            br.Pad(0x10);
+            br.Position = start + size;
             return textures;
         }
 
@@ -356,14 +356,14 @@ namespace SoulsFormats
 
         private Dictionary<int, Shape> ReadSHAP(BinaryReaderEx br, DRBVersion version, Dictionary<int, string> strings, long shprStart)
         {
-            long start = ReadBlockHeader(br, "SHAP", out int count);
+            long start = ReadBlockHeader(br, "SHAP", out int count, out int size);
             var shapes = new Dictionary<int, Shape>(count);
             for (int i = 0; i < count; i++)
             {
                 int offset = (int)(br.Position - start);
                 shapes[offset] = Shape.Read(br, version, strings, shprStart);
             }
-            br.Pad(0x10);
+            br.Position = start + size;
             return shapes;
         }
 
@@ -394,14 +394,14 @@ namespace SoulsFormats
 
         private Dictionary<int, Control> ReadCTRL(BinaryReaderEx br, Dictionary<int, string> strings, long ctprStart)
         {
-            long start = ReadBlockHeader(br, "CTRL", out int count);
+            long start = ReadBlockHeader(br, "CTRL", out int count, out int size);
             var controls = new Dictionary<int, Control>(count);
             for (int i = 0; i < count; i++)
             {
                 int offset = (int)(br.Position - start);
                 controls[offset] = Control.Read(br, strings, ctprStart);
             }
-            br.Pad(0x10);
+            br.Position = start + size;
             return controls;
         }
 
@@ -432,14 +432,14 @@ namespace SoulsFormats
 
         private Dictionary<int, Anik> ReadANIK(BinaryReaderEx br, Dictionary<int, string> strings)
         {
-            long start = ReadBlockHeader(br, "ANIK", out int count);
+            long start = ReadBlockHeader(br, "ANIK", out int count, out int size);
             var aniks = new Dictionary<int, Anik>(count);
             for (int i = 0; i < count; i++)
             {
                 int offset = (int)(br.Position - start);
                 aniks[offset] = new Anik(br, strings);
             }
-            br.Pad(0x10);
+            br.Position = start + size;
             return aniks;
         }
 
@@ -467,14 +467,14 @@ namespace SoulsFormats
 
         private Dictionary<int, Anio> ReadANIO(BinaryReaderEx br, Dictionary<int, Anik> aniks)
         {
-            long start = ReadBlockHeader(br, "ANIO", out int count);
+            long start = ReadBlockHeader(br, "ANIO", out int count, out int size);
             var anios = new Dictionary<int, Anio>(count);
             for (int i = 0; i < count; i++)
             {
                 int offset = (int)(br.Position - start);
                 anios[offset] = new Anio(br, aniks);
             }
-            br.Pad(0x10);
+            br.Position = start + size;
             return anios;
         }
 
@@ -499,13 +499,13 @@ namespace SoulsFormats
 
         private List<Anim> ReadANIM(BinaryReaderEx br, Dictionary<int, string> strings, Dictionary<int, Anio> anios)
         {
-            ReadBlockHeader(br, "ANIM", out int count);
+            long start = ReadBlockHeader(br, "ANIM", out int count, out int size);
             var anims = new List<Anim>(count);
             for (int i = 0; i < count; i++)
             {
                 anims.Add(new Anim(br, strings, anios));
             }
-            br.Pad(0x10);
+            br.Position = start + size;
             return anims;
         }
 
@@ -521,14 +521,14 @@ namespace SoulsFormats
 
         private Dictionary<int, Scdk> ReadSCDK(BinaryReaderEx br, Dictionary<int, string> strings, long scdpStart)
         {
-            long start = ReadBlockHeader(br, "SCDK", out int count);
+            long start = ReadBlockHeader(br, "SCDK", out int count, out int size);
             var scdks = new Dictionary<int, Scdk>(count);
             for (int i = 0; i < count; i++)
             {
                 int offset = (int)(br.Position - start);
                 scdks[offset] = new Scdk(br, strings, scdpStart);
             }
-            br.Pad(0x10);
+            br.Position = start + size;
             return scdks;
         }
 
@@ -556,14 +556,14 @@ namespace SoulsFormats
 
         private Dictionary<int, Scdo> ReadSCDO(BinaryReaderEx br, Dictionary<int, string> strings, Dictionary<int, Scdk> scdks)
         {
-            long start = ReadBlockHeader(br, "SCDO", out int count);
+            long start = ReadBlockHeader(br, "SCDO", out int count, out int size);
             var scdos = new Dictionary<int, Scdo>(count);
             for (int i = 0; i < count; i++)
             {
                 int offset = (int)(br.Position - start);
                 scdos[offset] = new Scdo(br, strings, scdks);
             }
-            br.Pad(0x10);
+            br.Position = start + size;
             return scdos;
         }
 
@@ -588,13 +588,13 @@ namespace SoulsFormats
 
         private List<Scdl> ReadSCDL(BinaryReaderEx br, Dictionary<int, string> strings, Dictionary<int, Scdo> scdos)
         {
-            ReadBlockHeader(br, "SCDL", out int count);
+            long start = ReadBlockHeader(br, "SCDL", out int count, out int size);
             var scdls = new List<Scdl>(count);
             for (int i = 0; i < count; i++)
             {
                 scdls.Add(new Scdl(br, strings, scdos));
             }
-            br.Pad(0x10);
+            br.Position = start + size;
             return scdls;
         }
 
@@ -610,14 +610,14 @@ namespace SoulsFormats
 
         private Dictionary<int, Dlgo> ReadDLGO(BinaryReaderEx br, Dictionary<int, string> strings, Dictionary<int, Shape> shapes, Dictionary<int, Control> controls)
         {
-            long start = ReadBlockHeader(br, "DLGO", out int count);
+            long start = ReadBlockHeader(br, "DLGO", out int count, out int size);
             var dlgos = new Dictionary<int, Dlgo>(count);
             for (int i = 0; i < count; i++)
             {
                 int offset = (int)(br.Position - start);
                 dlgos[offset] = new Dlgo(br, strings, shapes, controls);
             }
-            br.Pad(0x10);
+            br.Position = start + size;
             return dlgos;
         }
 
@@ -642,13 +642,13 @@ namespace SoulsFormats
 
         private List<Dlg> ReadDLG(BinaryReaderEx br, Dictionary<int, string> strings, Dictionary<int, Shape> shapes, Dictionary<int, Control> controls, Dictionary<int, Dlgo> dlgos)
         {
-            ReadBlockHeader(br, "DLG\0", out int count);
+            long start = ReadBlockHeader(br, "DLG\0", out int count, out int size);
             var dlgs = new List<Dlg>(count);
             for (int i = 0; i < count; i++)
             {
                 dlgs.Add(new Dlg(br, strings, shapes, controls, dlgos));
             }
-            br.Pad(0x10);
+            br.Position = start + size;
             return dlgs;
         }
 
@@ -704,7 +704,6 @@ namespace SoulsFormats
 
             long start = br.Position;
             br.Skip(size);
-            br.Pad(0x10);
             return start;
         }
 
@@ -731,7 +730,6 @@ namespace SoulsFormats
             br.AssertInt32(0);
 
             byte[] bytes = br.ReadBytes(size);
-            br.Pad(0x10);
             return bytes;
         }
 
@@ -748,10 +746,10 @@ namespace SoulsFormats
             bw.FillInt32("BlobSize", (int)(bw.Position - start));
         }
 
-        private static long ReadBlockHeader(BinaryReaderEx br, string name, out int count)
+        private static long ReadBlockHeader(BinaryReaderEx br, string name, out int count, out int size)
         {
             br.AssertInt32(FourCCToInt(name));
-            int size = br.ReadInt32();
+            size = br.ReadInt32();
             count = br.ReadInt32();
             br.AssertInt32(0);
             return br.Position;
