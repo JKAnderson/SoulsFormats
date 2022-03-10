@@ -148,9 +148,9 @@ namespace SoulsFormats
             Float2 = 9,
 
             /// <summary>
-            /// (float[5]) Five 32-bit floats, but generally used as three. The final two are always either 1 or extremely close to 0.
+            /// (float[3]) Three 32-bit floats.
             /// </summary>
-            Float3Plus = 10,
+            Float3 = 10,
 
             /// <summary>
             /// (float[4]) Four 32-bit floats.
@@ -215,12 +215,15 @@ namespace SoulsFormats
                         case ParamType.Int2: Value = br.ReadInt32s(2); break;
                         case ParamType.Float: Value = br.ReadSingle(); break;
                         case ParamType.Float2: Value = br.ReadSingles(2); break;
-                        case ParamType.Float3Plus: Value = br.ReadSingles(5); break;
+                        // For colors that use this type, there are actually five floats in the file.
+                        // Because the extra values appear to be useless, they are being discarded
+                        // for the sake of the API not being a complete nightmare trying to preserve them.
+                        case ParamType.Float3: Value = br.ReadSingles(3); break;
                         case ParamType.Float4: Value = br.ReadSingles(4); break;
                         case ParamType.Float5: Value = br.ReadSingles(5); break;
 
-                        default: throw new NotImplementedException(
-                            $"Unimplemented value type: {Type}");
+                        default:
+                            throw new NotImplementedException($"Unimplemented value type: {Type}");
                     }
                 }
                 br.StepOut();
@@ -243,17 +246,25 @@ namespace SoulsFormats
                 bw.FillInt64($"ParamValueOffset[{index}]", bw.Position);
                 switch (Type)
                 {
+                    // These assume that the arrays are the correct length, which it probably shouldn't.
                     case ParamType.Bool: bw.WriteBoolean((bool)Value); break;
                     case ParamType.Int: bw.WriteInt32((int)Value); break;
                     case ParamType.Int2: bw.WriteInt32s((int[])Value); break;
                     case ParamType.Float: bw.WriteSingle((float)Value); break;
                     case ParamType.Float2:
-                    case ParamType.Float3Plus:
                     case ParamType.Float4:
                     case ParamType.Float5: bw.WriteSingles((float[])Value); break;
 
-                    default: throw new NotImplementedException(
-                       $"Unimplemented value type: {Type}");
+                    case ParamType.Float3:
+                        bw.WriteSingles((float[])Value);
+                        // Included on the slim chance that the aforementioned extra floats
+                        // actually do anything, since they are always 1 when present.
+                        bw.WriteSingle(1);
+                        bw.WriteSingle(1);
+                        break;
+
+                    default:
+                        throw new NotImplementedException($"Unimplemented value type: {Type}");
                 }
             }
         }
