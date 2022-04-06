@@ -25,6 +25,7 @@ ESD | .esd | Defines a set of state machines used to control characters, menus, 
 F2TR | .flver2tri | A FLVER companion format that links the vertices to the FaceGen system
 FFXDLSE | .ffx | The particle effect format used in DS2
 [FLVER](#flver) | .flv, .flver | FromSoftware's standard 3D model format
+FMB | .expb | "expression" files introduced in Elden Ring
 FMG | .fmg | A collection of strings with corresponding IDs used for most game text
 FXR3 | .fxr | The particle effect format used since DS3
 GPARAM | .fltparam, .gparam | A generic graphics configuration format
