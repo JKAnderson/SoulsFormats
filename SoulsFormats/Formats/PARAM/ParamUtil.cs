@@ -123,7 +123,7 @@ namespace SoulsFormats
             [DefType.s32] = 2147483520, // Largest representable float less than int.MaxValue
             [DefType.u32] = 4294967040, // Largest representable float less than uint.MaxValue
             [DefType.b32] = 1,
-            [DefType.f32] = float.MinValue, // I think this was a typo, but if I change it now existing defs may become inconsistent
+            [DefType.f32] = float.MaxValue,
             [DefType.angle32] = float.MaxValue,
             [DefType.f64] = float.MaxValue,
             [DefType.dummy8] = 0,
@@ -140,7 +140,7 @@ namespace SoulsFormats
             [DefType.s32] = int.MaxValue,
             [DefType.u32] = int.MaxValue, // Yes, u32 uses signed int too (usually)
             [DefType.b32] = 1,
-            [DefType.f32] = float.MinValue, // See above
+            [DefType.f32] = float.MaxValue,
             [DefType.angle32] = float.MaxValue,
             [DefType.f64] = double.MaxValue,
             [DefType.dummy8] = null,
