@@ -5,7 +5,7 @@ using System.IO.Compression;
 namespace SoulsFormats
 {
     /// <summary>
-    /// A general-purpose single compressed file wrapper used in DS1, DSR, DS2, DS3, DeS, and BB.
+    /// A general-purpose single compressed file wrapper used in most modern FromSoftware games.
     /// </summary>
     public static class DCX
     {
@@ -81,50 +81,28 @@ namespace SoulsFormats
         internal static byte[] Decompress(BinaryReaderEx br, out Type type)
         {
             br.BigEndian = true;
-            type = Type.Unknown;
-
-            string magic = br.ReadASCII(4);
+            string magic = br.GetASCII(0, 4);
             if (magic == "DCP\0")
             {
                 string format = br.GetASCII(4, 4);
-                if (format == "DFLT")
+                return format switch
                 {
-                    type = Type.DCP_DFLT;
-                }
-                else if (format == "EDGE")
-                {
-                    type = Type.DCP_EDGE;
-                }
+                    "DFLT" => DecompressDCPDFLT(br, out type),
+                    "EDGE" => DecompressDCPEDGE(br, out type),
+                    _ => throw new NotImplementedException($"Unimplemented DCP compression format \"{format}\".")
+                };
             }
             else if (magic == "DCX\0")
             {
                 string format = br.GetASCII(0x28, 4);
-                if (format == "EDGE")
+                return format switch
                 {
-                    type = Type.DCX_EDGE;
-                }
-                else if (format == "DFLT")
-                {
-                    int unk04 = br.GetInt32(0x4);
-                    int unk10 = br.GetInt32(0x10);
-                    byte unk30 = br.GetByte(0x30);
-                    byte unk38 = br.GetByte(0x38);
-
-                    if (unk04 == 0x10000 && unk10 == 0x24 && unk30 == 9 && unk38 == 0)
-                        type = Type.DCX_DFLT_10000_24_9;
-                    else if (unk04 == 0x10000 && unk10 == 0x44 && unk30 == 9 && unk38 == 0)
-                        type = Type.DCX_DFLT_10000_44_9;
-                    else if (unk04 == 0x11000 && unk10 == 0x44 && unk30 == 8 && unk38 == 0)
-                        type = Type.DCX_DFLT_11000_44_8;
-                    else if (unk04 == 0x11000 && unk10 == 0x44 && unk30 == 9 && unk38 == 0)
-                        type = Type.DCX_DFLT_11000_44_9;
-                    else if (unk04 == 0x11000 && unk10 == 0x44 && unk30 == 9 && unk38 == 15)
-                        type = Type.DCX_DFLT_11000_44_9_15;
-                }
-                else if (format == "KRAK")
-                {
-                    type = Type.DCX_KRAK;
-                }
+                    "DFLT" => DecompressDCXDFLT(br, out type),
+                    "EDGE" => DecompressDCXEDGE(br, out type),
+                    "KRAK" => DecompressDCXKRAK(br, out type),
+                    "ZSTD" => DecompressDCXZSTD(br, out type),
+                    _ => throw new NotImplementedException($"Unimplemented DCX compression format \"{format}\".")
+                };
             }
             else
             {
@@ -133,36 +111,24 @@ namespace SoulsFormats
                 if (b0 == 0x78 && (b1 == 0x01 || b1 == 0x5E || b1 == 0x9C || b1 == 0xDA))
                 {
                     type = Type.Zlib;
+                    return SFUtil.ReadZlib(br, (int)br.Length);
+                }
+                else
+                {
+                    throw new InvalidDataException($"Could not determine compression format.");
                 }
             }
-
-            br.Position = 0;
-            if (type == Type.Zlib)
-                return SFUtil.ReadZlib(br, (int)br.Length);
-            else if (type == Type.DCP_EDGE)
-                return DecompressDCPEDGE(br);
-            else if (type == Type.DCP_DFLT)
-                return DecompressDCPDFLT(br);
-            else if (type == Type.DCX_EDGE)
-                return DecompressDCXEDGE(br);
-            else if (type == Type.DCX_DFLT_10000_24_9
-                || type == Type.DCX_DFLT_10000_44_9
-                || type == Type.DCX_DFLT_11000_44_8
-                || type == Type.DCX_DFLT_11000_44_9
-                || type == Type.DCX_DFLT_11000_44_9_15)
-                return DecompressDCXDFLT(br, type);
-            else if (type == Type.DCX_KRAK)
-                return DecompressDCXKRAK(br);
-            else
-                throw new FormatException("Unknown DCX format.");
         }
 
-        private static byte[] DecompressDCPDFLT(BinaryReaderEx br)
+        private static byte[] DecompressDCPDFLT(BinaryReaderEx br, out Type type)
         {
             br.AssertASCII("DCP\0");
             br.AssertASCII("DFLT");
             br.AssertInt32(0x20);
-            br.AssertInt32(0x9000000);
+            br.AssertByte(9);
+            br.AssertByte(0);
+            br.AssertByte(0);
+            br.AssertByte(0);
             br.AssertInt32(0);
             br.AssertInt32(0);
             br.AssertInt32(0);
@@ -177,15 +143,19 @@ namespace SoulsFormats
             br.AssertASCII("DCA\0");
             br.AssertInt32(8);
 
+            type = Type.DCP_DFLT;
             return decompressed;
         }
 
-        private static byte[] DecompressDCPEDGE(BinaryReaderEx br)
+        private static byte[] DecompressDCPEDGE(BinaryReaderEx br, out Type type)
         {
             br.AssertASCII("DCP\0");
             br.AssertASCII("EDGE");
             br.AssertInt32(0x20);
-            br.AssertInt32(0x9000000);
+            br.AssertByte(9);
+            br.AssertByte(0);
+            br.AssertByte(0);
+            br.AssertByte(0);
             br.AssertInt32(0x10000);
             br.AssertInt32(0x0);
             br.AssertInt32(0x0);
@@ -200,7 +170,6 @@ namespace SoulsFormats
 
             br.AssertASCII("DCA\0");
             int dcaSize = br.ReadInt32();
-            // ???
             br.AssertASCII("EgdT");
             br.AssertInt32(0x00010000);
             br.AssertInt32(0x20);
@@ -238,17 +207,18 @@ namespace SoulsFormats
                 }
             }
 
+            type = Type.DCP_EDGE;
             return decompressed;
         }
 
-        private static byte[] DecompressDCXEDGE(BinaryReaderEx br)
+        private static byte[] DecompressDCXEDGE(BinaryReaderEx br, out Type type)
         {
             br.AssertASCII("DCX\0");
             br.AssertInt32(0x10000);
             br.AssertInt32(0x18);
             br.AssertInt32(0x24);
             br.AssertInt32(0x24);
-            int unk1 = br.ReadInt32();
+            int unk14 = br.ReadInt32();
 
             br.AssertASCII("DCS\0");
             int uncompressedSize = br.ReadInt32();
@@ -257,7 +227,10 @@ namespace SoulsFormats
             br.AssertASCII("DCP\0");
             br.AssertASCII("EDGE");
             br.AssertInt32(0x20);
-            br.AssertInt32(0x9000000);
+            br.AssertByte(9);
+            br.AssertByte(0);
+            br.AssertByte(0);
+            br.AssertByte(0);
             br.AssertInt32(0x10000);
             br.AssertInt32(0x0);
             br.AssertInt32(0x0);
@@ -278,7 +251,7 @@ namespace SoulsFormats
             int chunkCount = br.ReadInt32();
             br.AssertInt32(0x100000);
 
-            if (unk1 != 0x50 + chunkCount * 0x10)
+            if (unk14 != 0x50 + chunkCount * 0x10)
                 throw new InvalidDataException("Unexpected unk1 value in EDGE DCX.");
 
             if (egdtSize != 0x24 + chunkCount * 0x10)
@@ -309,23 +282,18 @@ namespace SoulsFormats
                 }
             }
 
+            type = Type.DCX_EDGE;
             return decompressed;
         }
 
-        private static byte[] DecompressDCXDFLT(BinaryReaderEx br, Type type)
+        private static byte[] DecompressDCXDFLT(BinaryReaderEx br, out Type type)
         {
-            int unk04 = (type == Type.DCX_DFLT_10000_24_9 || type == Type.DCX_DFLT_10000_44_9) ? 0x10000 : 0x11000;
-            int unk10 = type == Type.DCX_DFLT_10000_24_9 ? 0x24 : 0x44;
-            int unk14 = type == Type.DCX_DFLT_10000_24_9 ? 0x2C : 0x4C;
-            byte unk30 = (byte)(type == Type.DCX_DFLT_11000_44_8 ? 8 : 9);
-            byte unk38 = (byte)(type == Type.DCX_DFLT_11000_44_9_15 ? 15 : 0);
-
             br.AssertASCII("DCX\0");
-            br.AssertInt32(unk04);
+            int unk04 = br.AssertInt32(0x10000, 0x11000);
             br.AssertInt32(0x18);
             br.AssertInt32(0x24);
-            br.AssertInt32(unk10);
-            br.AssertInt32(unk14);
+            int unk10 = br.AssertInt32(0x24, 0x44);
+            br.AssertInt32(unk10 == 0x24 ? 0x2c : 0x4c);
 
             br.AssertASCII("DCS\0");
             int uncompressedSize = br.ReadInt32();
@@ -334,26 +302,38 @@ namespace SoulsFormats
             br.AssertASCII("DCP\0");
             br.AssertASCII("DFLT");
             br.AssertInt32(0x20);
-            br.AssertByte(unk30);
+            byte level = br.AssertByte(8, 9);
             br.AssertByte(0);
             br.AssertByte(0);
             br.AssertByte(0);
             br.AssertInt32(0x0);
-            br.AssertByte(unk38);
+            byte unk38 = br.AssertByte(0, 15);
             br.AssertByte(0);
             br.AssertByte(0);
             br.AssertByte(0);
             br.AssertInt32(0x0);
-            // These look suspiciously like flags
             br.AssertInt32(0x00010100);
 
             br.AssertASCII("DCA\0");
             int compressedHeaderLength = br.ReadInt32();
 
+            if (unk04 == 0x10000 && unk10 == 0x24 && level == 9 && unk38 == 0)
+                type = Type.DCX_DFLT_10000_24_9;
+            else if (unk04 == 0x10000 && unk10 == 0x44 && level == 9 && unk38 == 0)
+                type = Type.DCX_DFLT_10000_44_9;
+            else if (unk04 == 0x11000 && unk10 == 0x44 && level == 8 && unk38 == 0)
+                type = Type.DCX_DFLT_11000_44_8;
+            else if (unk04 == 0x11000 && unk10 == 0x44 && level == 9 && unk38 == 0)
+                type = Type.DCX_DFLT_11000_44_9;
+            else if (unk04 == 0x11000 && unk10 == 0x44 && level == 9 && unk38 == 15)
+                type = Type.DCX_DFLT_11000_44_9_15;
+            else
+                throw new NotImplementedException($"Unimplemented DCX DFLT permutation.");
+
             return SFUtil.ReadZlib(br, compressedSize);
         }
 
-        private static byte[] DecompressDCXKRAK(BinaryReaderEx br)
+        private static byte[] DecompressDCXKRAK(BinaryReaderEx br, out Type type)
         {
             br.AssertASCII("DCX\0");
             br.AssertInt32(0x11000);
@@ -361,22 +341,69 @@ namespace SoulsFormats
             br.AssertInt32(0x24);
             br.AssertInt32(0x44);
             br.AssertInt32(0x4C);
+
             br.AssertASCII("DCS\0");
             uint uncompressedSize = br.ReadUInt32();
             uint compressedSize = br.ReadUInt32();
+
             br.AssertASCII("DCP\0");
             br.AssertASCII("KRAK");
             br.AssertInt32(0x20);
-            br.AssertInt32(0x6000000);
+            byte level = br.AssertByte(6, 9);
+            br.AssertByte(0);
+            br.AssertByte(0);
+            br.AssertByte(0);
             br.AssertInt32(0);
             br.AssertInt32(0);
             br.AssertInt32(0);
             br.AssertInt32(0x10100);
+
             br.AssertASCII("DCA\0");
             br.AssertInt32(8);
 
+            if (level == 6)
+                type = Type.DCX_KRAK_6;
+            else if (level == 9)
+                type = Type.DCX_KRAK_9;
+            else
+                throw new NotImplementedException($"Unimplemented DCX KRAK permutation.");
+
             byte[] compressed = br.ReadBytes((int)compressedSize);
             return Oodle26.Decompress(compressed, uncompressedSize);
+        }
+
+        private static byte[] DecompressDCXZSTD(BinaryReaderEx br, out Type type)
+        {
+            br.AssertASCII("DCX\0");
+            br.AssertInt32(0x11000);
+            br.AssertInt32(0x18);
+            br.AssertInt32(0x24);
+            br.AssertInt32(0x44);
+            br.AssertInt32(0x4C);
+
+            br.AssertASCII("DCS\0");
+            uint uncompressedSize = br.ReadUInt32();
+            uint compressedSize = br.ReadUInt32();
+
+            br.AssertASCII("DCP\0");
+            br.AssertASCII("ZSTD");
+            br.AssertInt32(0x20);
+            br.AssertByte(21);
+            br.AssertByte(0);
+            br.AssertByte(0);
+            br.AssertByte(0);
+            br.AssertInt32(0);
+            br.AssertInt32(0);
+            br.AssertInt32(0);
+            br.AssertInt32(0x10100);
+
+            br.AssertASCII("DCA\0");
+            br.AssertInt32(8);
+
+            type = Type.DCX_ZSTD;
+            byte[] compressed = br.ReadBytes((int)compressedSize);
+            var decompressor = new ZstdSharp.Decompressor();
+            return decompressor.Unwrap(compressed).ToArray();
         }
 
         #region Public Compress
@@ -419,8 +446,10 @@ namespace SoulsFormats
                 || type == Type.DCX_DFLT_11000_44_9
                 || type == Type.DCX_DFLT_11000_44_9_15)
                 CompressDCXDFLT(data, bw, type);
-            else if (type == Type.DCX_KRAK)
-                CompressDCXKRAK(data, bw);
+            else if (type == Type.DCX_KRAK_6)
+                CompressDCXKRAK(data, bw, type);
+            else if (type == Type.DCX_ZSTD)
+                CompressDCXZSTD(data, bw);
             else if (type == Type.Unknown)
                 throw new ArgumentException("You cannot compress a DCX with an unknown type.");
             else
@@ -432,7 +461,10 @@ namespace SoulsFormats
             bw.WriteASCII("DCP\0");
             bw.WriteASCII("DFLT");
             bw.WriteInt32(0x20);
-            bw.WriteInt32(0x9000000);
+            bw.WriteByte(9);
+            bw.WriteByte(0);
+            bw.WriteByte(0);
+            bw.WriteByte(0);
             bw.WriteInt32(0);
             bw.WriteInt32(0);
             bw.WriteInt32(0);
@@ -469,7 +501,10 @@ namespace SoulsFormats
             bw.WriteASCII("DCP\0");
             bw.WriteASCII("EDGE");
             bw.WriteInt32(0x20);
-            bw.WriteInt32(0x9000000);
+            bw.WriteByte(9);
+            bw.WriteByte(0);
+            bw.WriteByte(0);
+            bw.WriteByte(0);
             bw.WriteInt32(0x10000);
             bw.WriteInt32(0);
             bw.WriteInt32(0);
@@ -538,66 +573,38 @@ namespace SoulsFormats
 
         private static void CompressDCXDFLT(byte[] data, BinaryWriterEx bw, Type type)
         {
+            int unk04 = (type == Type.DCX_DFLT_10000_24_9 || type == Type.DCX_DFLT_10000_44_9) ? 0x10000 : 0x11000;
+            int unk10 = type == Type.DCX_DFLT_10000_24_9 ? 0x24 : 0x44;
+            int unk14 = type == Type.DCX_DFLT_10000_24_9 ? 0x2C : 0x4C;
+            byte level = (byte)(type == Type.DCX_DFLT_11000_44_8 ? 8 : 9);
+            byte unk38 = (byte)(type == Type.DCX_DFLT_11000_44_9_15 ? 15 : 0);
+
             bw.WriteASCII("DCX\0");
-
-            if (type == Type.DCX_DFLT_10000_24_9 || type == Type.DCX_DFLT_10000_44_9)
-            {
-                bw.WriteInt32(0x10000);
-            }
-            else if (type == Type.DCX_DFLT_11000_44_8 || type == Type.DCX_DFLT_11000_44_9 || type == Type.DCX_DFLT_11000_44_9_15)
-            {
-                bw.WriteInt32(0x11000);
-            }
-
+            bw.WriteInt32(unk04);
             bw.WriteInt32(0x18);
             bw.WriteInt32(0x24);
-
-            if (type == Type.DCX_DFLT_10000_24_9)
-            {
-                bw.WriteInt32(0x24);
-                bw.WriteInt32(0x2C);
-            }
-            else if (type == Type.DCX_DFLT_10000_44_9 || type == Type.DCX_DFLT_11000_44_8 || type == Type.DCX_DFLT_11000_44_9 || type == Type.DCX_DFLT_11000_44_9_15)
-            {
-                bw.WriteInt32(0x44);
-                bw.WriteInt32(0x4C);
-            }
+            bw.WriteInt32(unk10);
+            bw.WriteInt32(unk14);
 
             bw.WriteASCII("DCS\0");
             bw.WriteInt32(data.Length);
             bw.ReserveInt32("CompressedSize");
+
             bw.WriteASCII("DCP\0");
             bw.WriteASCII("DFLT");
             bw.WriteInt32(0x20);
-
-            if (type == Type.DCX_DFLT_10000_24_9 || type == Type.DCX_DFLT_10000_44_9 || type == Type.DCX_DFLT_11000_44_9 || type == Type.DCX_DFLT_11000_44_9_15)
-            {
-                bw.WriteByte(9);
-            }
-            else if (type == Type.DCX_DFLT_11000_44_8)
-            {
-                bw.WriteByte(8);
-            }
+            bw.WriteByte(level);
             bw.WriteByte(0);
             bw.WriteByte(0);
             bw.WriteByte(0);
-
             bw.WriteInt32(0);
-
-            if (type == Type.DCX_DFLT_11000_44_9_15)
-            {
-                bw.WriteByte(15);
-            }
-            else
-            {
-                bw.WriteByte(0);
-            }
+            bw.WriteByte(unk38);
             bw.WriteByte(0);
             bw.WriteByte(0);
             bw.WriteByte(0);
-
             bw.WriteInt32(0);
             bw.WriteInt32(0x00010100);
+
             bw.WriteASCII("DCA\0");
             bw.WriteInt32(8);
 
@@ -606,9 +613,10 @@ namespace SoulsFormats
             bw.FillInt32("CompressedSize", (int)(bw.Position - compressedStart));
         }
 
-        private static void CompressDCXKRAK(byte[] data, BinaryWriterEx bw)
+        private static void CompressDCXKRAK(byte[] data, BinaryWriterEx bw, Type type)
         {
-            byte[] compressed = Oodle26.Compress(data, Oodle26.OodleLZ_Compressor.OodleLZ_Compressor_Kraken, Oodle26.OodleLZ_CompressionLevel.OodleLZ_CompressionLevel_Optimal2);
+            byte level = (byte)(type == Type.DCX_KRAK_6 ? 6 : 9);
+            byte[] compressed = Oodle26.Compress(data, Oodle26.OodleLZ_Compressor.OodleLZ_Compressor_Kraken, (Oodle26.OodleLZ_CompressionLevel)level);
 
             bw.WriteASCII("DCX\0");
             bw.WriteInt32(0x11000);
@@ -616,19 +624,63 @@ namespace SoulsFormats
             bw.WriteInt32(0x24);
             bw.WriteInt32(0x44);
             bw.WriteInt32(0x4C);
+
             bw.WriteASCII("DCS\0");
             bw.WriteUInt32((uint)data.Length);
             bw.WriteUInt32((uint)compressed.Length);
+
             bw.WriteASCII("DCP\0");
             bw.WriteASCII("KRAK");
             bw.WriteInt32(0x20);
-            bw.WriteInt32(0x6000000);
+            bw.WriteByte(level);
+            bw.WriteByte(0);
+            bw.WriteByte(0);
+            bw.WriteByte(0);
             bw.WriteInt32(0);
             bw.WriteInt32(0);
             bw.WriteInt32(0);
             bw.WriteInt32(0x10100);
+
             bw.WriteASCII("DCA\0");
             bw.WriteInt32(8);
+
+            bw.WriteBytes(compressed);
+            bw.Pad(0x10);
+        }
+
+        private static void CompressDCXZSTD(byte[] data, BinaryWriterEx bw)
+        {
+            var compressor = new ZstdSharp.Compressor(21);
+            compressor.SetParameter(ZstdSharp.Unsafe.ZSTD_cParameter.ZSTD_c_contentSizeFlag, 0);
+            compressor.SetParameter(ZstdSharp.Unsafe.ZSTD_cParameter.ZSTD_c_windowLog, 16);
+            byte[] compressed = compressor.Wrap(data).ToArray();
+
+            bw.WriteASCII("DCX\0");
+            bw.WriteInt32(0x11000);
+            bw.WriteInt32(0x18);
+            bw.WriteInt32(0x24);
+            bw.WriteInt32(0x44);
+            bw.WriteInt32(0x4C);
+
+            bw.WriteASCII("DCS\0");
+            bw.WriteUInt32((uint)data.Length);
+            bw.WriteUInt32((uint)compressed.Length);
+
+            bw.WriteASCII("DCP\0");
+            bw.WriteASCII("ZSTD");
+            bw.WriteInt32(0x20);
+            bw.WriteByte(21);
+            bw.WriteByte(0);
+            bw.WriteByte(0);
+            bw.WriteByte(0);
+            bw.WriteInt32(0);
+            bw.WriteInt32(0);
+            bw.WriteInt32(0);
+            bw.WriteInt32(0x10100);
+
+            bw.WriteASCII("DCA\0");
+            bw.WriteInt32(8);
+
             bw.WriteBytes(compressed);
             bw.Pad(0x10);
         }
@@ -694,9 +746,19 @@ namespace SoulsFormats
             DCX_DFLT_11000_44_9_15,
 
             /// <summary>
-            /// DCX header, Oodle compression. Used in Sekiro.
+            /// DCX header, Oodle compression. Used in Sekiro and Elden Ring.
             /// </summary>
-            DCX_KRAK,
+            DCX_KRAK_6,
+
+            /// <summary>
+            /// DCX header, Oodle compression. Used in Armored Core VI.
+            /// </summary>
+            DCX_KRAK_9,
+
+            /// <summary>
+            /// DCX header, Zstandard compression. Used in Elden Ring since DLC release.
+            /// </summary>
+            DCX_ZSTD,
         }
 
         /// <summary>
@@ -732,12 +794,17 @@ namespace SoulsFormats
             /// <summary>
             /// Most common compression format for Sekiro.
             /// </summary>
-            Sekiro = Type.DCX_KRAK,
+            Sekiro = Type.DCX_KRAK_6,
 
             /// <summary>
             /// Most common compression format for Elden Ring.
             /// </summary>
-            EldenRing = Type.DCX_KRAK,
+            EldenRing = Type.DCX_KRAK_6,
+
+            /// <summary>
+            /// Most common compression format for Armored Core VI.
+            /// </summary>
+            ArmoredCore6 = Type.DCX_KRAK_9,
         }
     }
 }
