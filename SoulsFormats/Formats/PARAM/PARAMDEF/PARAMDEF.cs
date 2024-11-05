@@ -40,7 +40,7 @@ namespace SoulsFormats
         // 106 - Elden Ring (deprecated ObjectParam)
         // 201 - Bloodborne
         // 202 - Dark Souls 3
-        // 203 - Elden Ring
+        // 203 - Elden Ring, Armored Core VI
         public short FormatVersion { get; set; }
 
         /// <summary>
@@ -110,12 +110,12 @@ namespace SoulsFormats
                 throw new InvalidDataException($"Unexpected header size 0x{headerSize:X} for version {FormatVersion}.");
 
             // Please note that for version 103 this value is wrong.
-            if (!(FormatVersion == 101 && fieldSize == 0x8C 
-                || FormatVersion == 102 && fieldSize == 0xAC 
+            if (!(FormatVersion == 101 && fieldSize == 0x8C
+                || FormatVersion == 102 && fieldSize == 0xAC
                 || FormatVersion == 103 && fieldSize == 0x6C
                 || FormatVersion == 104 && fieldSize == 0xB0
                 || FormatVersion == 106 && fieldSize == 0x48
-                || FormatVersion == 201 && fieldSize == 0xD0 
+                || FormatVersion == 201 && fieldSize == 0xD0
                 || FormatVersion == 202 && fieldSize == 0x68
                 || FormatVersion == 203 && fieldSize == 0x88))
                 throw new InvalidDataException($"Unexpected field size 0x{fieldSize:X} for version {FormatVersion}.");
@@ -249,8 +249,16 @@ namespace SoulsFormats
         /// </summary>
         public int GetRowSize()
         {
+            return GetFieldsSize(Fields.Count);
+        }
+
+        internal int GetFieldsSize(int fieldCount)
+        {
+            if (fieldCount < 0 || fieldCount > Fields.Count)
+                throw new ArgumentException("Count must be from 0 to total fields count.", nameof(fieldCount));
+
             int size = 0;
-            for (int i = 0; i < Fields.Count; i++)
+            for (int i = 0; i < fieldCount; i++)
             {
                 Field field = Fields[i];
                 DefType type = field.DisplayType;
@@ -262,15 +270,14 @@ namespace SoulsFormats
                 if (ParamUtil.IsBitType(type) && field.BitSize != -1)
                 {
                     int bitOffset = field.BitSize;
-                    DefType bitType = type == DefType.dummy8 ? DefType.u8 : type;
-                    int bitLimit = ParamUtil.GetBitLimit(bitType);
+                    int bitLimit = ParamUtil.GetBitLimit(type);
 
-                    for (; i < Fields.Count - 1; i++)
+                    for (; i < fieldCount - 1; i++)
                     {
                         Field nextField = Fields[i + 1];
                         DefType nextType = nextField.DisplayType;
-                        if (!ParamUtil.IsBitType(nextType) || nextField.BitSize == -1 || bitOffset + nextField.BitSize > bitLimit
-                            || (nextType == DefType.dummy8 ? DefType.u8 : nextType) != bitType)
+                        if (!ParamUtil.IsBitType(nextType) || nextField.BitSize == -1 || ParamUtil.GetBitLimit(nextType) != bitLimit
+                            || bitOffset + nextField.BitSize > bitLimit)
                             break;
                         bitOffset += nextField.BitSize;
                     }
@@ -300,20 +307,20 @@ namespace SoulsFormats
         /// <summary>
         /// Writes an XML-formatted PARAMDEF to a file using the current XML version.
         /// </summary>
-        public void XmlSerialize(string path)
+        public void XmlSerialize(string path, bool includeOffsets = false)
         {
-            XmlSerialize(path, XmlSerializer.CURRENT_XML_VERSION);
+            XmlSerialize(path, XmlSerializer.CURRENT_XML_VERSION, includeOffsets);
         }
 
         /// <summary>
         /// Writes an XML-formatted PARAMDEF to a file using the given XML version.
         /// </summary>
-        public void XmlSerialize(string path, int xmlVersion)
+        public void XmlSerialize(string path, int xmlVersion, bool includeOffsets = false)
         {
             Directory.CreateDirectory(Path.GetDirectoryName(path));
             var xws = new XmlWriterSettings { Indent = true };
             using (var xw = XmlWriter.Create(path, xws))
-                XmlSerializer.Serialize(this, xw, xmlVersion);
+                XmlSerializer.Serialize(this, xw, xmlVersion, includeOffsets);
         }
     }
 }
