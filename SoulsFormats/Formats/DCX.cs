@@ -446,7 +446,8 @@ namespace SoulsFormats
                 || type == Type.DCX_DFLT_11000_44_9
                 || type == Type.DCX_DFLT_11000_44_9_15)
                 CompressDCXDFLT(data, bw, type);
-            else if (type == Type.DCX_KRAK_6)
+            else if (type == Type.DCX_KRAK_6
+                || type == Type.DCX_KRAK_9)
                 CompressDCXKRAK(data, bw, type);
             else if (type == Type.DCX_ZSTD)
                 CompressDCXZSTD(data, bw);
